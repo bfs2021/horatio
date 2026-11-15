@@ -8397,6 +8397,31 @@
         "title": "BoonTalonsSettingIn",
         "type": "object"
       },
+      "BoonTotalsOut": {
+        "description": "The whole ledger at a glance (#977), whatever the filters: for a Harpy or a\nLesser Harpy, with who has left as the court knows it.",
+        "properties": {
+          "open_by_kind": {
+            "items": {
+              "$ref": "#/components/schemas/BoonKindCount"
+            },
+            "title": "Open By Kind",
+            "type": "array"
+          },
+          "views": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Views",
+            "type": "object"
+          }
+        },
+        "required": [
+          "views",
+          "open_by_kind"
+        ],
+        "title": "BoonTotalsOut",
+        "type": "object"
+      },
       "BoonTradeIn": {
         "properties": {
           "creditor": {
@@ -55497,12 +55522,16 @@
           "total": {
             "title": "Total",
             "type": "integer"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/BoonTotalsOut"
           }
         },
         "required": [
           "boons",
           "total",
-          "counts"
+          "counts",
+          "totals"
         ],
         "title": "TroupeBoonsOut",
         "type": "object"
@@ -87093,7 +87122,7 @@
     },
     "/api/troupes/{troupe_id}/boons": {
       "get": {
-        "description": "A page of the troupe's boons in one view of its ledger: open (standing, both\nparties in play), departed (standing, but someone on it is dead or off-field),\nsettled, void, pending, or all. Narrowed to those a character (`character_id`) or\na name only (`name`, the whole name) is on; holding `q` in either side's name, the\nreason or the conditions; of any `kind` given (several at once); made between two\nnights; still `flagged` for review; or registered at a game (`game_id`). Sorted by\n`sort` (date, debtor, creditor or kind, by weight) in `direction` (asc or desc;\nnewest first for the date, A to Z or trivial to life otherwise), ties newest\nfirst, then by id. `limit` boons from `offset` (#978).",
+        "description": "A page of the troupe's boons in one view of its ledger: open (standing, both\nparties in play), departed (standing, but someone on it is dead or off-field),\nsettled, void, pending, or all. Narrowed to those a character (`character_id`) or\na name only (`name`, the whole name) is on; holding `q` in either side's name, the\nreason or the conditions; of any `kind` given (several at once); made between two\nnights; still `flagged` for review; or registered at a game (`game_id`). Sorted by\n`sort` (date, debtor, creditor or kind, by weight) in `direction` (asc or desc;\nnewest first for the date, A to Z or trivial to life otherwise), ties newest\nfirst, then by id. `limit` boons from `offset` (#978). With them, `totals`: the\nwhole ledger's views counted, whatever the filters, and its open boons by kind\n(#977).",
         "operationId": "troupe_boons_api_troupes__troupe_id__boons_get",
         "parameters": [
           {

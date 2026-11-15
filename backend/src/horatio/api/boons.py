@@ -246,6 +246,21 @@ class BoonOut(BaseModel):
     gallant: GallantOut | None = None
 
 
+class BoonKindCount(BaseModel):
+    kind: Kind
+    count: int
+
+
+class BoonTotalsOut(BaseModel):
+    """The whole ledger at a glance (#977), whatever the filters: for a Harpy or a
+    Lesser Harpy, with who has left as the court knows it."""
+
+    # How many boons are in each view.
+    views: dict[str, int]
+    # How many open boons there are of each kind: every kind, lightest first.
+    open_by_kind: list[BoonKindCount]
+
+
 class TroupeBoonsOut(BaseModel):
     # One page of the boons in the view asked for, in the order asked for (#978).
     boons: list[BoonOut]
@@ -253,11 +268,8 @@ class TroupeBoonsOut(BaseModel):
     total: int
     # How many boons are in each view with the filters, for its tabs.
     counts: dict[str, int]
-
-
-class BoonKindCount(BaseModel):
-    kind: Kind
-    count: int
+    # The same for the whole ledger, and its open boons by kind (#977).
+    totals: BoonTotalsOut
 
 
 class TroupeBoonSummaryOut(BaseModel):
@@ -625,7 +637,9 @@ def troupe_boons(
     nights; still `flagged` for review; or registered at a game (`game_id`). Sorted by
     `sort` (date, debtor, creditor or kind, by weight) in `direction` (asc or desc;
     newest first for the date, A to Z or trivial to life otherwise), ties newest
-    first, then by id. `limit` boons from `offset` (#978)."""
+    first, then by id. `limit` boons from `offset` (#978). With them, `totals`: the
+    whole ledger's views counted, whatever the filters, and its open boons by kind
+    (#977)."""
     troupe, keeper = ledger_troupe(db, user, troupe_id)
     filters = boon_ledger.Filters(
         character_id=character_id,
@@ -640,6 +654,7 @@ def troupe_boons(
     where = boon_ledger.narrowing(troupe.id, filters)
     left = boon_ledger.gone(db, troupe.id, keeper.court)
     counts = boon_ledger.counts(db, where, left)
+    whole = boon_ledger.totals(db, troupe.id, left)
     order = direction or ("desc" if sort == "date" else "asc")
     shown = boon_ledger.page(
         db, [*where, boon_ledger.in_view(view, left)], sort, order, limit, offset
@@ -652,7 +667,18 @@ def troupe_boons(
     out = [boon_out(b, characters, users, disgraced, keeper=keeper, marked=marks) for b in shown]
     for row in out:
         row.flagged = row.id in flags
-    return TroupeBoonsOut(boons=out, total=counts[view], counts=counts)
+    return TroupeBoonsOut(
+        boons=out,
+        total=counts[view],
+        counts=counts,
+        totals=BoonTotalsOut(
+            views=whole.views,
+            open_by_kind=[
+                BoonKindCount(kind=k, count=n)  # type: ignore[arg-type]  # one of boons.KINDS
+                for k, n in whole.open_by_kind.items()
+            ],
+        ),
+    )
 
 
 @router.get("/troupes/{troupe_id}/boon-characters")

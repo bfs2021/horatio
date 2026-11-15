@@ -11,6 +11,11 @@ import { WhoPicker } from "./WhoPicker";
 
 const count = new Intl.NumberFormat("en-GB");
 
+/** Who the search is narrowed to, a character or a name, as one value to compare. */
+function whoOf(s: LedgerSearch): string {
+  return s.character ? `c:${s.character}` : s.name ? `name:${s.name}` : "";
+}
+
 // The orders a phone picks from, where the column headings are for screen readers only.
 const ORDERS: { sort: LedgerSort; direction: Direction; label: string }[] = [
   { sort: "date", direction: "desc", label: "Newest first" },
@@ -30,8 +35,10 @@ const ORDERS: { sort: LedgerSort; direction: Direction; label: string }[] = [
  * between, flagged only, at a game), with how many of those are set. "Show every boon"
  * clears all of it but the view and the order.
  *
- * `counts` follow the search and filters. `toReview` is the review queue's size, or
- * null for one who doesn't review; it is offered while it holds boons, or is open.
+ * `counts` follow the search and filters, and show only while something narrows the
+ * ledger: the totals strip above has the whole ledger's (#977). `toReview` is the
+ * review queue's size, or null for one who doesn't review; it is offered while it
+ * holds boons, or is open.
  * `games` are the troupe's games, for "At a game"; none leaves it out. `end` goes at
  * the end of the search's row, such as a menu of more for the ledger.
  */
@@ -61,14 +68,30 @@ export function BoonToolbar({
   const [cleared, setCleared] = useState(0);
   // Typing waits a moment before it searches.
   const [words, setWords] = useState(search.q);
+  // What the search box and the character box last asked for. A search set from
+  // elsewhere, such as the totals strip (#977), is followed: the boxes show it.
+  const [asked, setAsked] = useState({ q: search.q, who: whoOf(search) });
+  if (search.q !== asked.q || whoOf(search) !== asked.who) {
+    setAsked({ q: search.q, who: whoOf(search) });
+    if (search.q !== asked.q) setWords(search.q);
+    if (whoOf(search) !== asked.who) setCleared(cleared + 1);
+  }
+  const ask = (change: Partial<LedgerSearch>) => {
+    const next = { ...search, ...change };
+    setAsked({ q: next.q, who: whoOf(next) });
+    update(change);
+  };
   useEffect(() => {
     if (words === search.q) return;
-    const wait = setTimeout(() => update({ q: words }), 300);
+    const wait = setTimeout(() => ask({ q: words }), 300);
     return () => clearTimeout(wait);
   });
-  const views = [
-    ...VIEWS.filter((v) => v.value !== "pending" || (counts.pending ?? 0) > 0).map((v) => ({ value: v.value as LedgerSearch["view"], label: v.label, count: counts[v.value] ?? 0 })),
-    ...(toReview !== null && (toReview > 0 || search.view === "review") ? [{ value: "review" as const, label: "To review", count: toReview }] : []),
+  // Counted within a search only: the strip above counts the whole ledger (#977).
+  const counted = narrowed(search);
+  const views: { value: LedgerSearch["view"]; label: string; count?: number }[] = [
+    ...VIEWS.filter((v) => v.value !== "pending" || (counts.pending ?? 0) > 0).map((v) => ({ value: v.value, label: v.label, count: counted ? (counts[v.value] ?? 0) : undefined })),
+    // The queue is the whole ledger's, whatever the search: its count is in the strip.
+    ...(toReview !== null && (toReview > 0 || search.view === "review") ? [{ value: "review" as const, label: "To review" }] : []),
   ];
   const showKind = (kind: (typeof KINDS)[number]["value"]) => {
     const on = search.kinds.includes(kind);
@@ -77,7 +100,7 @@ export function BoonToolbar({
   const clear = () => {
     setWords("");
     setCleared(cleared + 1);
-    update(everyBoon(search));
+    ask(everyBoon(search));
   };
   const order = ORDERS.findIndex((o) => o.sort === search.sort && o.direction === search.direction);
 
@@ -89,18 +112,21 @@ export function BoonToolbar({
         value={search.view}
         options={views.map((v) => ({
           value: v.value,
-          label: (
-            <>
-              {v.label} <span className="text-mist">({count.format(v.count)})</span>
-            </>
-          ),
+          label:
+            v.count === undefined ? (
+              v.label
+            ) : (
+              <>
+                {v.label} <span className="text-mist">({count.format(v.count)})</span>
+              </>
+            ),
         }))}
         onChange={(view) => update({ view })}
       />
       <Select aria-label="Ledger views" className="lg:hidden" value={search.view} onChange={(e) => update({ view: e.target.value as LedgerSearch["view"] })}>
         {views.map((v) => (
           <option key={v.value} value={v.value}>
-            {v.label} ({count.format(v.count)})
+            {v.count === undefined ? v.label : `${v.label} (${count.format(v.count)})`}
           </option>
         ))}
       </Select>
@@ -159,7 +185,7 @@ export function BoonToolbar({
               characters={characters}
               who={search.character ? `c:${search.character}` : search.name ? "name" : ""}
               name={search.name}
-              onChange={(who, name) => update(who.startsWith("c:") ? { character: who.slice(2), name: "" } : { character: "", name: who === "name" ? name : "" })}
+              onChange={(who, name) => ask(who.startsWith("c:") ? { character: who.slice(2), name: "" } : { character: "", name: who === "name" ? name : "" })}
             />
           </Field>
           <Field label="Made from">

@@ -339,7 +339,7 @@ At the bottom, **What is running** shows the app the server is running, so you c
 
 ## Tools
 
-**Custodian › Tools** holds upkeep that would otherwise need a command on the server. Each tool is a card that says what it does, shows what it would change, and changes nothing until you say so. The cards that fetch files from elsewhere say what the server has now. The [import from Yorick](#importing-characters-from-yorick) is here too: its card opens it.
+**Custodian › Tools** holds upkeep that would otherwise need a command on the server. Each tool is a card that says what it does, shows what it would change, and changes nothing until you say so. The cards that fetch files from elsewhere say what the server has now. The [import from Yorick](#importing-characters-from-yorick) and the [boon ledger import](#importing-a-boon-ledger) are here too: their cards open them.
 
 ### Fitting NPC creation picks
 
@@ -495,6 +495,36 @@ A merit that gives another merit (Piece That Remains, Auspicious, Old Habits, Sh
 Importing again updates the characters it made before, rather than making them twice. It sets their names and printed traits again, and leaves anything staff added by hand. A character already given to its player is left alone.
 
 If the server restarts during a dry run or an import, the page says so. Nothing was saved: run it again.
+
+## Importing a boon ledger
+
+A troupe that kept its boon ledger in a spreadsheet can bring it into Horatio's (see [Boons](running-a-troupe.md#boons)). The import reads the sheet's own layout: a **Master** tab with a boon on each row, and a **Characters** tab giving each character's **Canonical Name** and its aliases (**Alias 1** to **Alias 11**). Columns are found by their headings, wherever they are. The tabs worked out from Master (Active, Settled, Standings and so on) aren't read, except that a **Flagged for Harpy** tab's **Review Comments** become the note on a flagged boon's flag.
+
+The sheet holds players' names and emails. It's read when you choose it, and never kept on the server. No email is put on a boon or in the report: where a row's **Input Email** is an account's here, the boon is marked as entered by that account, and otherwise by no one.
+
+1. Download the sheet as `.xlsx` (in Google Sheets, **File › Download › Microsoft Excel**).
+2. Open **Custodian › Tools**, choose **Open the boon import** on the **Import a boon ledger** card, and choose the **Troupe**.
+3. Choose **Choose the spreadsheet**, and pick the file. A dry run reads it at once and saves nothing.
+4. Read the report, and **Download the report (CSV)** to keep it or share it with the troupe's staff.
+5. Under **Import**, choose **Import into *troupe***, then **Import**. Every boon is saved at once.
+
+### What comes across
+
+- **Type** is the boon's kind: trivial, minor, major, blood or life. A row of any other type is skipped, and the report says so.
+- **Date** is the night it was made; **Reason** its reason; **Stipulation** its conditions, and where it speaks of notifying, its debtor's player is told when it's traded; **Comments** its staff note.
+- **Settled** marks it settled: called in, or forgiven where **Settled Notes** say so, on its **Settled Date** (else its **Input Date**, else its own date), with Settled Notes as the note. Settled Notes on a boon not settled go in its staff note.
+- **Flag** raises a flag on it for review, in the ledger's review queue.
+- **Owed By** and **Owed To** are matched to the troupe's characters by name, by a name the character had before a rename, or by an alias on the Characters tab, ignoring capitals, spacing, quotes and a trailing "(D)". A name that matches no character, or more than one, or text that isn't a name at all, is kept as written, as a name only. Staff can link it to a character from the boon later. A blank side is kept as "(blank in the spreadsheet)".
+
+Each boon has one line in its log, "Imported from the spreadsheet", dated from its Input Date. No one is notified, and no Gallant is offered. The troupe's log has one entry for the whole import.
+
+### The report
+
+The report counts the boons by kind and by standing or settled, and how many would be added, updated or left unchanged. It lists every name the sheet gives, matched, matched by alias, or kept as written, with how many boons each is on. It lists the rows skipped and why, rows that look like duplicates of each other or of a boon already in the ledger (they're imported anyway), and anything cut short: the ledger takes at most 2,000 characters for a side, a reason or a note.
+
+### Importing again
+
+Each boon keeps the row it came from: its **Unique ID**, else its **Response ID**, else its row number. Importing a newer sheet updates the boons it made before and adds the new rows, so it never makes a boon twice. A name that matches a character added since is linked to it. A boon anyone has changed in Horatio since it was imported (edited, traded, settled, linked, flagged…) is left as it is, and the report lists it as skipped. Rows with neither id are kept by their row number, so add rows at the bottom of the sheet between imports.
 
 ## The audit log
 

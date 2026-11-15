@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Index
+from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Index, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -33,6 +33,14 @@ class Boon(Record):
             name="status_loss",
         ),
         Index("ix_boons_troupe_id_state", "troupe_id", "state"),
+        # One boon per row of the spreadsheet it was imported from (#989).
+        Index(
+            "uq_boons_troupe_source_ref",
+            "troupe_id",
+            "source_ref",
+            unique=True,
+            postgresql_where=text("source_ref is not null"),
+        ),
     )
 
     # The troupe whose ledger it is in, and whose Boons setting says whether it shows.
@@ -73,6 +81,10 @@ class Boon(Record):
     game_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("scheduled_games.id", ondelete="SET NULL"), index=True
     )
+    # For a boon imported from the troupe's old spreadsheet (horatio.import_boons, #989):
+    # the row it came from, by the sheet's Unique ID, else its Response ID, else "row 12".
+    # An import run again finds the boons it made by it.
+    source_ref: Mapped[str | None]
 
 
 class BoonEvent(Record):

@@ -25,9 +25,7 @@ import {
   SETTLED,
   shortName,
   stateText,
-  VIEWS,
   type BoonKind,
-  type BoonView,
   type EntryRow,
   type SettledHow,
 } from "../../boons";
@@ -35,6 +33,7 @@ import { DataTable, type Column } from "../../components/DataTable";
 import { DateInput } from "../../components/DateInput";
 import { SectionLabel } from "../../components/Headings";
 import { Pager } from "../../components/Pager";
+import { SortHeading } from "../../components/SortHeading";
 import { useToast } from "../../components/Toast";
 import { useWidePage } from "../../components/widePage";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
@@ -44,6 +43,8 @@ import { AuditsCard } from "./BoonAudits";
 import { BoonExportMenu } from "./BoonExport";
 import { Boonbreakers } from "./Boonbreakers";
 import { BoonReviewQueue, ReviewPanel } from "./BoonReview";
+import { ledgerQuery, narrowed, readLedger, sortBy, writeLedger, type LedgerSearch, type LedgerSort } from "./boonSearch";
+import { BoonToolbar } from "./BoonToolbar";
 import { WhoPicker } from "./WhoPicker";
 
 /**
@@ -145,35 +146,15 @@ function Ledger({ troupeId }: { troupeId: string }) {
       },
       { replace },
     );
-  // Another view or filter starts again from the first page.
-  const fresh = () => {
-    if (page > 1) setPage(1, true);
-  };
+  // The search, view, kinds, filters and order, in the URL too (#976). A change starts
+  // again from the first page.
+  const search = readLedger(params);
+  const update = (change: Partial<LedgerSearch>) => setParams((now) => writeLedger(now, { ...readLedger(now), ...change }), { replace: true });
+  const reviewing = search.view === "review";
   // The top of the list, brought back into sight when paging from its foot.
   const top = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState<BoonView>("open");
-  // The review queue (#687) in place of the ledger's views.
-  const [reviewing, setReviewing] = useState(false);
-  const [who, setWho] = useState<{ who: string; name: string }>(() => {
-    const character = params.get("character");
-    return character ? { who: `c:${character}`, name: "" } : { who: "", name: "" };
-  });
-  const [kind, setKind] = useState<BoonKind | "">("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
   const [adding, setAdding] = useState(false);
-  // Bumped to empty the character box when the filters are cleared.
-  const [cleared, setCleared] = useState(0);
-  const query = {
-    view,
-    ...(who.who.startsWith("c:") ? { character_id: who.who.slice(2) } : {}),
-    ...(who.who === "name" && who.name.trim() ? { name: who.name.trim() } : {}),
-    ...(kind ? { kind: [kind] } : {}),
-    ...(from ? { made_from: from } : {}),
-    ...(to ? { made_to: to } : {}),
-    limit: PAGE,
-    offset: (page - 1) * PAGE,
-  };
+  const query = { ...ledgerQuery(search), limit: PAGE, offset: (page - 1) * PAGE };
   const ledger = useQuery({
     queryKey: ["troupe-boons", troupeId, query],
     queryFn: () =>
@@ -196,6 +177,12 @@ function Ledger({ troupeId }: { troupeId: string }) {
     enabled: reviews,
   });
   const toReview = review.data?.boons.length ?? 0;
+  // The troupe's games, for "At a game": staff's, as with registering at one.
+  const games = useQuery({
+    queryKey: ["boon-games", troupeId],
+    queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/boon-games", { params: { path: { troupe_id: troupeId } } })),
+    enabled: !harpy,
+  });
   // Past the last page (boons settled, or an old link): go to the last there is.
   const total = ledger.data?.total ?? 0;
   const past = ledger.isSuccess && !ledger.isPlaceholderData && page > 1 && (page - 1) * PAGE >= total;
@@ -207,14 +194,9 @@ function Ledger({ troupeId }: { troupeId: string }) {
   if (choices.error) return <ErrorText error={choices.error} />;
   const { boons, counts } = ledger.data;
   const characters = choices.data;
-  const narrowed = Boolean(who.who || kind || from || to);
-  const clear = () => {
-    setWho({ who: "", name: "" });
-    setKind("");
-    setFrom("");
-    setTo("");
-    setCleared(cleared + 1);
-    if (params.has("character") || params.has("page")) setParams({}, { replace: true });
+  const sorting = (label: string, by: LedgerSort): Pick<Column<BoonOut>, "header" | "label" | "sort"> => {
+    const way = search.sort === by ? (search.direction === "asc" ? "ascending" : "descending") : undefined;
+    return { header: <SortHeading label={label} sort={way} onSort={() => update(sortBy(search, by))} />, label, sort: way };
   };
   const turn = (to: number) => {
     setPage(to);
@@ -248,99 +230,25 @@ function Ledger({ troupeId }: { troupeId: string }) {
       {(!harpy || harpy.role === "harpy") && <Boonbreakers troupeId={troupeId} characters={characters} />}
 
       <div ref={top} className="flex scroll-mt-4 flex-col gap-3">
-        <div role="tablist" aria-label="Ledger views" className="flex flex-wrap gap-1">
-          {VIEWS.filter((v) => v.value !== "pending" || (counts.pending ?? 0) > 0).map((v) => (
-            <Button
-              key={v.value}
-              role="tab"
-              aria-selected={!reviewing && view === v.value}
-              variant={!reviewing && view === v.value ? "secondary" : "ghost"}
-              onClick={() => {
-                if (v.value !== view) fresh();
-                setView(v.value);
-                setReviewing(false);
-              }}
-            >
-              {v.label} <span className="text-mist">({counts[v.value] ?? 0})</span>
-            </Button>
-          ))}
-          {reviews && (toReview > 0 || reviewing) && (
-            <Button
-              role="tab"
-              aria-selected={reviewing}
-              variant={reviewing ? "secondary" : "ghost"}
-              onClick={() => setReviewing(true)}
-            >
-              To review <span className="text-mist">({toReview})</span>
-            </Button>
-          )}
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label="Character or name">
-            <WhoPicker
-              key={cleared}
-              characters={characters}
-              who={who.who}
-              name={who.name}
-              onChange={(w, name) => {
-                fresh();
-                setWho({ who: w, name });
-              }}
-            />
-          </Field>
-          <Field label="Kind">
-            <Select
-              value={kind}
-              onChange={(e) => {
-                fresh();
-                setKind(e.target.value as BoonKind | "");
-              }}
-            >
-              <option value="">Any kind</option>
-              {KINDS.map((k) => (
-                <option key={k.value} value={k.value}>
-                  {k.label}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Made from">
-            <DateInput
-              value={from}
-              onChange={(e) => {
-                fresh();
-                setFrom(e.target.value);
-              }}
-            />
-          </Field>
-          <Field label="Made to">
-            <DateInput
-              value={to}
-              onChange={(e) => {
-                fresh();
-                setTo(e.target.value);
-              }}
-            />
-          </Field>
-        </div>
-        <div className="flex items-center gap-2">
-          {narrowed && (
-            <Button variant="ghost" onClick={clear}>
-              Show every boon
-            </Button>
-          )}
-          {/* Exports (#986): this view, or the whole ledger; the Harpy's where the troupe lets them (#987). */}
-          {(!harpy || harpy.export) && <BoonExportMenu troupeId={troupeId} query={reviewing ? null : query} />}
-        </div>
+        <BoonToolbar
+          search={search}
+          update={update}
+          counts={counts}
+          toReview={reviews ? toReview : null}
+          characters={characters}
+          games={games.data ?? []}
+          // Exports (#986): this view, or the whole ledger; the Harpy's where the troupe lets them (#987).
+          end={(!harpy || harpy.export) && <BoonExportMenu troupeId={troupeId} query={reviewing ? null : query} />}
+        />
       </div>
 
       {reviewing ? (
         <BoonReviewQueue troupeId={troupeId} detail={(boonId) => <BoonDetail troupeId={troupeId} boonId={boonId} characters={characters} />} />
       ) : total === 0 ? (
-        <Empty>{narrowed ? "No boons match." : view === "open" ? "No open boons yet." : "None here."}</Empty>
+        <Empty>{narrowed(search) ? "No boons match." : search.view === "open" ? "No open boons yet." : "None here."}</Empty>
       ) : (
         <>
-          <BoonTable key={view} troupeId={troupeId} boons={boons} characters={characters} busy={ledger.isPlaceholderData} />
+          <BoonTable key={search.view} troupeId={troupeId} boons={boons} characters={characters} busy={ledger.isPlaceholderData} sorting={sorting} />
           <Pager label="Pages of boons" page={page} size={PAGE} shown={boons.length} total={total} onPage={turn} />
         </>
       )}
@@ -361,12 +269,25 @@ function boonLabel(boon: BoonOut): string {
  * opens its detail under it. On a phone each row folds to "Debtor owes Creditor",
  * then its kind, night and reason.
  */
-function BoonTable({ troupeId, boons, characters, busy }: { troupeId: string; boons: BoonOut[]; characters: CharacterChoice[]; busy: boolean }) {
+function BoonTable({
+  troupeId,
+  boons,
+  characters,
+  busy,
+  sorting,
+}: {
+  troupeId: string;
+  boons: BoonOut[];
+  characters: CharacterChoice[];
+  busy: boolean;
+  // A column's heading, which sorts by it (#976).
+  sorting: (label: string, by: LedgerSort) => Pick<Column<BoonOut>, "header" | "label" | "sort">;
+}) {
   const dates = useDates();
   const columns: Column<BoonOut>[] = [
     {
       key: "debtor",
-      header: "Debtor",
+      ...sorting("Debtor", "debtor"),
       phone: "title",
       cell: (b) => (
         <span className="flex flex-wrap items-center gap-x-1.5">
@@ -379,9 +300,9 @@ function BoonTable({ troupeId, boons, characters, busy }: { troupeId: string; bo
         </span>
       ),
     },
-    { key: "creditor", header: "Creditor", phone: "detail", cell: (b) => <PartyName party={b.creditor} disgraced={b.creditor_disgraced} /> },
-    { key: "kind", header: "Kind", phone: "shown", bare: true, cell: (b) => <span className="whitespace-nowrap text-gold">{kindName(b.kind)}</span> },
-    { key: "date", header: "Date", phone: "shown", bare: true, cell: (b) => <span className="whitespace-nowrap">{dates.day(b.made_on)}</span> },
+    { key: "creditor", ...sorting("Creditor", "creditor"), phone: "detail", cell: (b) => <PartyName party={b.creditor} disgraced={b.creditor_disgraced} /> },
+    { key: "kind", ...sorting("Kind", "kind"), phone: "shown", bare: true, cell: (b) => <span className="whitespace-nowrap text-gold">{kindName(b.kind)}</span> },
+    { key: "date", ...sorting("Date", "date"), phone: "shown", bare: true, cell: (b) => <span className="whitespace-nowrap">{dates.day(b.made_on)}</span> },
     {
       key: "reason",
       header: "Reason",

@@ -968,6 +968,8 @@ MESSAGES: dict[str, str] = {
     "boon.flag_cleared": "{actor} cleared a flag ({what}) on {debtor}'s {kind} boon to"
     " {creditor}{because}.",
     "boon.linked": "{actor} linked the name {name} to {linked_to} on {what}{because}.",
+    "boon.imported": "{actor} imported the boon ledger from the spreadsheet: {added} added,"
+    " {updated} updated, {unchanged} unchanged, {skipped} rows skipped.",
     # Boonbreakers (#717): on the character's log too, as the mark is public at court.
     "boon.boonbreaker": "{actor} declared {character} a Boonbreaker{as_harpy}: {voided} of their"
     " boons made void{disgraced}{because}.",

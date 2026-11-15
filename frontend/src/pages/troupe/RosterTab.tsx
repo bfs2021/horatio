@@ -25,6 +25,7 @@ import { StaffActions, TitlePill, useStaffing } from "./StaffActions";
 import type { Staffing } from "./staffActions";
 import { useCatalogue } from "../../catalogue";
 import { CardHeading } from "../../components/Headings";
+import { SortHeading } from "../../components/SortHeading";
 
 /** What the list is called, in its count, for each choice of Show. */
 const SHOW_NAMES: Record<Show, [string, string]> = {
@@ -380,24 +381,6 @@ function titleList(titles: TitlesOut | undefined): string[] {
   return (titles?.titles ?? []).map((t) => t.name);
 }
 
-/** A heading that sorts the list by its column: A to Z, Z to A, then back to the
- * list's own order. On a narrow screen the headings are for screen readers only,
- * and the list keeps its own order. */
-function SortHeading({ label, by, sort, onSort }: { label: string; by: string; sort: Sort; onSort: (by: string) => void }) {
-  const on = sort?.by === by;
-  return (
-    <>
-      <span className="lg:hidden">{label}</span>
-      <button type="button" className="inline-flex items-center gap-1 hover:text-parchment max-lg:hidden" onClick={() => onSort(by)}>
-        {label}
-        <span aria-hidden="true" className="inline-block w-2.5">
-          {on ? (sort.descending ? "↓" : "↑") : ""}
-        </span>
-      </button>
-    </>
-  );
-}
-
 /**
  * The roster's columns: who each character is and who plays it, its clan and social
  * age, how it stands here, what needs staff (or, among NPCs alone, an NPC's kind,
@@ -433,11 +416,10 @@ function rosterColumns({
   /** With a filter on equipment, the items it asks about that a character holds; null without one. */
   equipmentOf: ((e: RosterEntry) => string[]) | null;
 }): Column<RosterEntry>[] {
-  const sorted = (label: string, by: string): Pick<Column<RosterEntry>, "header" | "label" | "sort"> => ({
-    header: <SortHeading label={label} by={by} sort={sort} onSort={onSort} />,
-    label,
-    sort: sort?.by === by ? (sort.descending ? "descending" : "ascending") : undefined,
-  });
+  const sorted = (label: string, by: string): Pick<Column<RosterEntry>, "header" | "label" | "sort"> => {
+    const way = sort?.by === by ? (sort.descending ? "descending" : "ascending") : undefined;
+    return { header: <SortHeading label={label} sort={way} onSort={() => onSort(by)} />, label, sort: way };
+  };
   const clan = (e: RosterEntry) => clanText(named(e.clan), e.social_age);
   const represented = (e: RosterEntry) =>
     !e.seated && <span className="block text-xs text-mist">Represented by: {named(e.represented_by) ?? "nobody yet"}</span>;

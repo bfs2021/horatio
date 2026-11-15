@@ -1314,3 +1314,86 @@ test("the custodian imports a troupe's characters from Yorick, matching a line a
   await lead.page.goto(`${lead.page.url()}/sheet`);
   await expect(lead.page.locator('[data-free-choices="Auspicious"]')).toContainText("Rugged");
 });
+
+/**
+ * A boon spreadsheet as the troupe's old sheet has it, made up for the test: Master, with a
+ * title row above its headings, and Characters with each character's aliases. Written
+ * with the backend's openpyxl, as nothing here writes .xlsx.
+ */
+function boonSheet(master: unknown[][], characters: unknown[][]): Buffer {
+  const script = [
+    "import base64, io, json, sys",
+    "import openpyxl",
+    "data = json.loads(sys.argv[1])",
+    "book = openpyxl.Workbook()",
+    "book.active.title = 'Master'",
+    "[book.active.append(row) for row in data['master']]",
+    "tab = book.create_sheet('Characters')",
+    "[tab.append(row) for row in data['characters']]",
+    "out = io.BytesIO()",
+    "book.save(out)",
+    "print(base64.b64encode(out.getvalue()).decode())",
+  ].join("\n");
+  const out = execFileSync("uv", ["run", "python", "-c", script, JSON.stringify({ master, characters })], { cwd: "../backend", encoding: "utf8" });
+  return Buffer.from(out.trim(), "base64");
+}
+
+test("the custodian imports a troupe's boon ledger from its spreadsheet, matching an alias, and running it again changes nothing (#989)", async ({ browser }) => {
+  const custodian = await person(browser, "boonsheet-cust");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "boonsheet-lead");
+  const troupeName = `Court of Old Debts ${run}`;
+  const c = custodian.page;
+  const card = (title: string) => c.locator("section").filter({ has: c.getByRole("heading", { name: title, exact: true }) });
+  await c.reload();
+  const created = await c.request.post("/api/troupes", { headers: { "X-Horatio": "1" }, data: { name: troupeName, lead_handle: lead.handle } });
+  expect(created.status(), await created.text()).toBeLessThan(300);
+  const troupeId: string = (await created.json()).id;
+  const npc = await lead.page.request.post(`/api/troupes/${troupeId}/npcs`, { headers: { "X-Horatio": "1" }, data: { name: "Vidal" } });
+  expect(npc.status(), await npc.text()).toBe(201);
+  const on = await lead.page.request.put(`/api/troupes/${troupeId}/boon-ledger`, { headers: { "X-Horatio": "1" }, data: { on: true } });
+  expect(on.status(), await on.text()).toBe(200);
+  const sheet = boonSheet(
+    [
+      ["A made-up ledger"],
+      ["Owed By", null, "Owed To (Creditor)", "Type", "Date", "Reason", "Settled", "Settled Notes", "Flag", "Unique ID"],
+      ["'The Fox' (D)", null, "Old Tom", "Minor", "2024-03-14", "Directions to the docks", "FALSE", "", "FALSE", "U1"],
+      ["Vidal", null, "Mystery Woman", "Major", "2024-04-01", "A favour at court", "TRUE", "Paid at Elysium", "TRUE", "U2"],
+      ["Vidal", null, "Old Tom", "Favour", "2024-04-02", "", "FALSE", "", "FALSE", "U3"],
+    ],
+    [
+      ["Canonical Name", "Status", "Clan", "Player", "Alias 1"],
+      ["Vidal", "Active", "Toreador", "Nobody real", "The Fox"],
+    ],
+  );
+
+  await (await topBar(c)).getByRole("link", { name: "Custodian", exact: true }).click();
+  await c.getByRole("link", { name: "Tools", exact: true }).click();
+  await c.getByRole("link", { name: "Open the boon import" }).click();
+  await card("Import a boon ledger").getByLabel("Troupe").selectOption({ label: troupeName });
+  await expect(c).toHaveURL(new RegExp(`/custodian/tools/boon-import\\?troupe=${troupeId}$`));
+  await c.getByLabel("Boon spreadsheet").setInputFiles({ name: "Ledger.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: sheet });
+
+  // The dry run saves nothing, and says what the import would do.
+  const dry = card("Dry run");
+  await expect(dry.getByText("3 rows read: 2 boons to be added, 0 to be updated, 0 unchanged, 1 row skipped.")).toBeVisible({ timeout: 30_000 });
+  await expect(dry.getByText("1 boon flagged for review; 0 boons entered by someone with an account here.")).toBeVisible();
+  await expect(dry.getByRole("row", { name: "Minor 1 0" })).toBeVisible();
+  await expect(dry.getByRole("row", { name: "Major 0 1" })).toBeVisible();
+  const names = card("Names");
+  await names.getByText("Matched by alias (1)").click();
+  await expect(names.getByRole("listitem").filter({ hasText: "The Fox" }).getByRole("link", { name: "Vidal" })).toBeVisible();
+  await expect(names.getByRole("listitem").filter({ hasText: "Old Tom" })).toContainText("1 boon");
+  await expect(card("Rows to check").getByText("U3: its type, 'Favour', isn't trivial, minor, major, blood or life")).toBeVisible();
+  const [report] = await Promise.all([c.waitForEvent("download"), dry.getByRole("button", { name: "Download the report (CSV)" }).click()]);
+  expect(report.suggestedFilename()).toBe(`${troupeName} boon import (dry run).csv`);
+  expect(readFileSync(await report.path(), "utf8")).toContain("Skipped,U3,,");
+
+  await c.getByRole("button", { name: `Import into ${troupeName}` }).click();
+  await c.getByRole("dialog", { name: `Import into ${troupeName}?` }).getByRole("button", { name: "Import" }).click();
+  await expect(card("Imported").getByText("3 rows read: 2 boons added, 0 updated, 0 unchanged, 1 row skipped.")).toBeVisible({ timeout: 30_000 });
+
+  // The same sheet again: nothing to add or update.
+  await c.getByLabel("Boon spreadsheet").setInputFiles({ name: "Ledger.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: sheet });
+  await expect(card("Dry run").getByText("3 rows read: 0 boons to be added, 0 to be updated, 2 unchanged, 1 row skipped.")).toBeVisible({ timeout: 30_000 });
+});

@@ -173,7 +173,6 @@ function Ledger({ troupeId }: { troupeId: string }) {
     queryKey: ["boon-characters", troupeId],
     queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/boon-characters", { params: { path: { troupe_id: troupeId } } })),
   });
-  const characters = choices.data ?? [];
   const reviews = !harpy || harpy.review;
   const review = useQuery({
     queryKey: ["boon-review", troupeId],
@@ -187,9 +186,11 @@ function Ledger({ troupeId }: { troupeId: string }) {
   useEffect(() => {
     if (past) setPage(Math.max(1, Math.ceil(total / PAGE)), true);
   });
-  if (ledger.isPending) return <Loading />;
+  if (ledger.isPending || choices.isPending) return <Loading />;
   if (ledger.error) return <ErrorText error={ledger.error} />;
+  if (choices.error) return <ErrorText error={choices.error} />;
   const { boons, counts } = ledger.data;
+  const characters = choices.data;
   const narrowed = Boolean(who.who || kind || from || to);
   const clear = () => {
     setWho({ who: "", name: "" });

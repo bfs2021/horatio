@@ -59,7 +59,7 @@ export function InfluenceTab({ character, mine }: { character: CharacterOut; min
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-mist">No Elite or Underworld influence.</p>
+            <Empty>No Elite or Underworld influence.</Empty>
           )}
         </section>
         {h.entries.length === 0 && (

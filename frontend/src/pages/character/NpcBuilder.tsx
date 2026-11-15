@@ -5,7 +5,7 @@ import { HouseMark } from "../../components/HouseMark";
 import { useMemo, useState, type ReactNode } from "react";
 import { api, unwrap } from "../../api/client";
 import type { CatalogueOut, CharacterOut, SheetOut, TraitOut } from "../../api/types";
-import { Badge, Button, Card, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
+import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useAction, usePreferences, useUnavailable } from "../../hooks";
 import { PrintAndBadge } from "./Badge";
 import { NpcPicks } from "./NpcPicks";
@@ -354,7 +354,7 @@ function Section({
             </div>
           ))}
       </div>
-      {long && !q && shown.length === 0 && <p className="text-sm text-mist">None yet. Search to add some.</p>}
+      {long && !q && shown.length === 0 && <Empty>None yet. Search to add some.</Empty>}
     </Card>
   );
 }

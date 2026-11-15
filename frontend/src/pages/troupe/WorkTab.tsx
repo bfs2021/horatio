@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate, useLocation, useParams } from "react-router";
 import { api, unwrap } from "../../api/client";
+import { EmptyState } from "../../components/EmptyState";
 import { ResponseEditor } from "../../components/ResponseEditor";
 import { Badge, Button, Card, Empty, ErrorText, Loading } from "../../components/ui";
 import { useDates } from "../../dates";
@@ -21,7 +22,14 @@ export function WorkTab({ troupeId }: { troupeId: string }) {
   const cycles = useWorkCycles(troupeId);
   if (cycles.isPending) return <Loading />;
   if (cycles.error) return <ErrorText error={cycles.error} />;
-  if (!cycles.data.length) return <Empty>No downtimes to answer yet.</Empty>;
+  if (!cycles.data.length)
+    return (
+      <Card title="Downtimes to answer">
+        <EmptyState title="No downtimes to answer yet.">
+          A downtime shows here once something in it is yours to answer: assigned to you by the storytellers, or open to any narrator.
+        </EmptyState>
+      </Card>
+    );
   return (
     <Card title="Downtimes to answer">
       <ul className="divide-y divide-ash">

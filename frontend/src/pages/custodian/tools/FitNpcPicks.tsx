@@ -69,7 +69,7 @@ export function FitNpcPicks() {
           <>
             <Outcome found={preview.data} done={false} />
             <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
-              {preview.data.changed === 0 && <p className="text-sm text-mist">Nothing to fit: every NPC's picks fit its sheet already.</p>}
+              {preview.data.changed === 0 && <Empty>Nothing to fit: every NPC's picks fit its sheet already.</Empty>}
               <Button type="button" disabled={preview.data.changed === 0 || fit.isPending} onClick={() => fit.mutate(preview.data.troupe_id)}>
                 Fit {npcs(preview.data.changed)}
               </Button>

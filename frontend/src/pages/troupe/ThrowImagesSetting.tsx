@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { ThrowImagesOut, TroupeOut } from "../../api/types";
+import { Segmented } from "../../components/Segmented";
 import { Button, Card, ErrorText, Loading } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { THROW_PANEL, THEMES, type Theme } from "../../theme";
@@ -179,12 +180,7 @@ function Preview({ images }: { images: ThrowImagesOut }) {
     <section aria-label="Preview" className="mt-4 flex flex-col gap-2 text-sm">
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-mist">Preview, as the Throws tab shows them, in</span>
-        {THEMES.map((t) => (
-          <label key={t} className="flex items-center gap-1">
-            <input type="radio" name="throw-preview-theme" checked={theme === t} onChange={() => setTheme(t)} />
-            {THEME_NAMES[t]}
-          </label>
-        ))}
+        <Segmented label="Preview in" value={theme} options={THEMES.map((t) => ({ value: t, label: THEME_NAMES[t] }))} onChange={setTheme} />
       </div>
       <div
         className="flex flex-wrap justify-center gap-6 rounded-lg border border-ash p-4"

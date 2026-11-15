@@ -4,7 +4,7 @@ import { api, unwrap } from "../../api/client";
 import type { CarriedOut, ConditionOut, PlayStatusOut, PlayView, StatusChoiceIn, StatusIn } from "../../api/types";
 import { claimsText } from "../../boonStatus";
 import { pageLabel } from "../../components/TraitInfo";
-import { Badge, Button, ErrorText, Input } from "../../components/ui";
+import { Badge, Button, Empty, ErrorText, Input } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { capText, endingText, NO_RULES_YET, outsiderText, suppressedText } from "../character/status";
@@ -124,7 +124,7 @@ export function StatusTab({
           </Panel>
         );
       })}
-      {status.carried.length === 0 && !status.choosing && <p className="text-sm text-mist">No status to carry into this game.</p>}
+      {status.carried.length === 0 && !status.choosing && <Empty>No status to carry into this game.</Empty>}
       <Titles status={status} />
       <Others view={view} undo={undo} online={online} />
     </div>

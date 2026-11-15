@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { closeContextsAfterEach, run, shots, person, makeCustodian, ATTRIBUTES_AND_FOCUSES, backstoryOptional, switchFeature } from "./support";
+import { closeContextsAfterEach, run, shots, person, makeCustodian, ATTRIBUTES_AND_FOCUSES, backstoryOptional, switchFeature, troupeTab, characterTab } from "./support";
 
 /** Equipment: giving it, reading it, equipping it and finding it. */
 
@@ -71,8 +71,7 @@ test("a troupe gives equipment: a dagger from a template, a rifle by hand, refus
   // The lead gives Agnes the book's Silver Dagger from the troupe's Equipment tab.
   const l = lead.page;
   await l.goto(`/troupes/${troupe.id}`);
-  await l.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "World", exact: true }).click();
-  await l.getByRole("link", { name: "Equipment", exact: true }).click();
+  await troupeTab(l, "Equipment");
   await l.getByRole("button", { name: "Give equipment" }).click();
   let form = l.getByRole("form", { name: "Give equipment" });
   await form.getByLabel("Character").selectOption({ label: "Agnes (equip-player)" });
@@ -207,7 +206,7 @@ test("a player reads their character's equipment and what each quality does, on 
   // Nothing given yet: the player is told where equipment comes from, on both tabs.
   const p = player.page;
   await p.goto(`/characters/${odile}`);
-  await p.locator("main").getByRole("link", { name: "Equipment", exact: true }).click();
+  await characterTab(p, "Equipment");
   await expect(p.getByText("No equipment yet.")).toBeVisible();
   await expect(p.getByText(/^Your storytellers give equipment\./)).toBeVisible();
   await p.goto(`/play/characters/${odile}`);
@@ -520,8 +519,7 @@ test("players give equipment to each other in their home troupe and discard it, 
   // The troupe's Equipment tab says a discarded item isn't shown; the lead shows it, with the note and its history, and restores it.
   const l = lead.page;
   await l.goto(`/troupes/${troupe.id}`);
-  await l.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "World", exact: true }).click();
-  await l.getByRole("link", { name: "Equipment", exact: true }).click();
+  await troupeTab(l, "Equipment");
   const found = l.getByRole("table", { name: "Equipment", exact: true });
   await expect(found.getByRole("row", { name: "Silver Dagger, held by Corwin" })).toHaveCount(0);
   await l.getByRole("button", { name: "Show it" }).click();
@@ -621,8 +619,7 @@ test("a storyteller gives the Book of Nod from a character's page, its player pa
 
   // The troupe's Equipment tab finds it by its kind, and its history shows both.
   await l.goto(`/troupes/${troupe.id}`);
-  await l.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "World", exact: true }).click();
-  await l.getByRole("link", { name: "Equipment", exact: true }).click();
+  await troupeTab(l, "Equipment");
   await l.getByLabel("Kind", { exact: true }).selectOption({ label: "Vampiric texts" });
   await itemAction(l, "The Book of Nod, held by Lucan", "History");
   const history = l.getByRole("dialog", { name: "History of The Book of Nod" }).getByRole("list", { name: "The Book of Nod's history" });

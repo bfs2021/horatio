@@ -3,7 +3,7 @@ import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { EffectMadeOut, PlayEffectOut, PlayView } from "../../api/types";
 import { Dialog } from "../../components/Dialog";
-import { Button, ErrorText, Loader, Select, Textarea } from "../../components/ui";
+import { Button, Empty, ErrorText, Loader, Select, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
 
 const COUNTS = ["none", "one", "two", "three", "four"];
@@ -69,7 +69,7 @@ export function OnOtherPicker({
         {!online && !targets.data && <p className="text-mist">Picking someone needs a connection.</p>}
         {targets.isPending && online && <Loader compact />}
         {targets.error && <ErrorText error={targets.error} />}
-        {targets.data && targets.data.length === 0 && <p className="text-mist">No one else of your home troupe to pick.</p>}
+        {targets.data && targets.data.length === 0 && <Empty>No one else of your home troupe to pick.</Empty>}
         {targets.data && targets.data.length > 0 && (
           <label className="flex flex-col gap-1">
             <span className="text-xs text-mist">On whom</span>

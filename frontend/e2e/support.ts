@@ -57,40 +57,151 @@ export async function openNewTroupe(page: Page): Promise<void> {
   await expect(page.getByRole("heading", { name: "New troupe" })).toBeVisible();
 }
 
-/** Which group each of a PC's tabs is in on a phone (CharacterPage). */
-const CHARACTER_GROUPS: Record<string, string> = {
-  Sheet: "Sheet",
-  "Status & Titles": "Sheet",
-  Equipment: "Sheet",
-  Experience: "Sheet",
-  "Shared backgrounds": "Sheet",
-  Downtime: "Between games",
-  Results: "Between games",
-  Quests: "Between games",
-  Influence: "Between games",
-  Troupes: "About",
-  Backstory: "About",
-  Log: "About",
-};
+/** A tab's name, with or without a count after it ("Results 2 new", "Being built 1 being built"). */
+const tabName = (name: string) => new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( \\d+\\+? [\\w ]+)?$`);
 
-/** A tab's name, with or without a count after it ("Results 2 new"). */
-const tabName = (name: string) => new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( \\d+\\+? \\w+)?$`);
+/** Below `sm`, where a page's tabs are one section picker (#904). */
+export const isPhone = (page: Page) => (page.viewportSize()?.width ?? 1280) < 640;
+
+/**
+ * On a phone, opens the section picker named `nav` ("Troupe sections",
+ * "Character tabs") and gives its sheet, where every tab is; Escape shuts it.
+ */
+export async function openSections(page: Page, nav = "Troupe sections"): Promise<Locator> {
+  await page.locator("main").getByRole("navigation", { name: nav, exact: true }).getByRole("button").click();
+  const sheet = page.getByRole("dialog", { name: nav });
+  await expect(sheet).toBeVisible();
+  return sheet;
+}
+
+/** Shuts the section picker's sheet on a phone; nothing on a wide screen. */
+export async function shutSections(page: Page, nav = "Troupe sections") {
+  if (!isPhone(page)) return;
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: nav })).toBeHidden();
+}
+
+/**
+ * A group's tabs: its own row on a wide screen, while the group is open; on a
+ * phone, its list in the section picker's sheet, which this opens (`shutSections` shuts it).
+ */
+export async function groupTabs(page: Page, group: string, nav = "Troupe sections"): Promise<Locator> {
+  if (!isPhone(page)) return page.locator("main").getByRole("navigation", { name: group, exact: true });
+  return (await openSections(page, nav)).getByRole("list", { name: group, exact: true });
+}
+
+/** On a phone, opens a tab through the section picker named `nav`. */
+async function pickSection(page: Page, nav: string, name: string) {
+  const sheet = await openSections(page, nav);
+  await sheet.getByRole("link", { name: tabName(name) }).click();
+  await expect(sheet).toBeHidden();
+}
 
 /**
  * Opens a tab of a PC's page: in its one row on a wide screen; on a phone,
- * through its group, unless the group is open or is that tab alone.
+ * through the section picker.
  */
 export async function characterTab(page: Page, name: string) {
+  if (isPhone(page)) return pickSection(page, "Character tabs", name);
+  return page.locator("main").getByRole("link", { name: tabName(name) }).click();
+}
+
+/**
+ * That `tab` of `group` is the one open: marked in the group's own row on a wide
+ * screen; on a phone, named on the section picker ("Court, Bonds").
+ */
+export async function expectTabOpen(page: Page, group: string, tab: string, nav = "Troupe sections") {
   const main = page.locator("main");
-  if ((page.viewportSize()?.width ?? 1280) >= 640) return main.getByRole("link", { name: tabName(name) }).click();
-  const sections = main.getByRole("navigation", { name: "Tab groups" });
+  if (isPhone(page)) {
+    const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const named = group === tab ? escape(tab) : `${escape(group)}\\W+${escape(tab)}`;
+    return expect(main.getByRole("navigation", { name: nav, exact: true }).getByRole("button")).toHaveAccessibleName(new RegExp(`^${named}\\b`));
+  }
+  await expect(main.getByRole("navigation", { name: group, exact: true }).getByRole("link", { name: tabName(tab) })).toHaveAttribute("aria-current", "page");
+}
+
+/**
+ * That a tab in sight shows a count, such as "1 waiting", or none (`null`): in the
+ * open group's row on a wide screen; on a phone, in the section picker's sheet, shut again after.
+ */
+export async function expectTabCount(page: Page, tab: string, count: string | null, nav = "Troupe sections") {
+  const shown = (within: Locator) =>
+    count === null ? within.getByRole("link", { name: tab, exact: true }) : within.getByRole("link", { name: tabName(tab) }).getByLabel(count);
+  if (!isPhone(page)) return expect(shown(page.locator("main"))).toBeVisible();
+  const sheet = await openSections(page, nav);
+  await expect(shown(sheet)).toBeVisible();
+  await shutSections(page, nav);
+}
+
+/** The group(s) each of a troupe's tabs is in (troupeTabs.ts): House rules is under Customise for those who change it. */
+const TROUPE_GROUPS: Record<string, string[]> = {
+  Overview: ["Troupe"],
+  "The setting": ["Troupe"],
+  "Story bible": ["Troupe"],
+  "Who's Who": ["Troupe"],
+  News: ["Troupe"],
+  Announcements: ["Troupe"],
+  Nominations: ["Troupe"],
+  Remembrances: ["Troupe"],
+  "House rules": ["Customise", "Troupe"],
+  Staff: ["Troupe"],
+  Log: ["Troupe"],
+  Approvals: ["Characters"],
+  "Being built": ["Characters"],
+  Roster: ["Characters"],
+  Players: ["Characters"],
+  "Lines and veils": ["Characters"],
+  "At game": ["Games"],
+  Scenes: ["Games"],
+  "Award XP": ["Games"],
+  Titles: ["Court"],
+  "Court over time": ["Court"],
+  Chronicle: ["Court"],
+  Boons: ["Court"],
+  Bonds: ["Court"],
+  "Web of obligation": ["Court"],
+  Cycles: ["Downtimes"],
+  "My work": ["Downtimes"],
+  "Fill tables": ["Downtimes"],
+  "Influence log": ["Downtimes"],
+  Quests: ["Downtimes"],
+  Locations: ["World"],
+  Equipment: ["World"],
+  "Shared backgrounds": ["World"],
+  Setup: ["Customise"],
+  "Troupe settings": ["Customise"],
+  Specialisations: ["Customise"],
+  "News agencies": ["Customise"],
+  Connectors: ["Customise"],
+  "Export and import": ["Customise"],
+};
+
+/**
+ * Opens a tab of a troupe's page from wherever on it: on a wide screen through
+ * its group in the row, unless that group is open; on a phone through the
+ * section picker (#904).
+ */
+export async function troupeTab(page: Page, name: string) {
+  if (isPhone(page)) return pickSection(page, "Troupe sections", name);
+  const main = page.locator("main");
+  const sections = main.getByRole("navigation", { name: "Troupe sections" });
   await sections.waitFor();
-  const alone = sections.getByRole("link", { name: tabName(name) });
-  if (await alone.count()) return alone.click();
-  const group = CHARACTER_GROUPS[name] ?? name;
-  const tabs = main.getByRole("navigation", { name: group, exact: true });
-  if (!(await tabs.isVisible())) await sections.getByRole("link", { name: tabName(group) }).click();
-  await tabs.getByRole("link", { name: tabName(name) }).click();
+  const groups = TROUPE_GROUPS[name];
+  if (!groups) throw new Error(`No troupe tab named ${name}`);
+  let group = groups[0]!;
+  for (const g of groups) {
+    if (await sections.getByRole("link", { name: tabName(g) }).count()) {
+      group = g;
+      break;
+    }
+  }
+  const tab = main.getByRole("navigation", { name: group, exact: true }).getByRole("link", { name: tabName(name) });
+  if (await tab.isVisible()) return tab.click();
+  const groupLink = sections.getByRole("link", { name: tabName(group) });
+  await groupLink.click();
+  await expect(groupLink).toHaveAttribute("aria-current", "true");
+  // A group of one is its tab; a group of more opens its first, or the one it names.
+  if (await tab.count()) await tab.click();
 }
 
 export async function person(browser: Browser, name: string, options: BrowserContextOptions = {}): Promise<{ page: Page; email: string; handle: string }> {

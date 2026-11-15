@@ -3,8 +3,9 @@ import { useState } from "react";
 import { Link, Route, Routes, useParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { CharacterQuestsOut, PlayerQuestOut } from "../../api/types";
+import { EmptyState } from "../../components/EmptyState";
 import { useToast } from "../../components/Toast";
-import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Notice, RichText, Select, Textarea } from "../../components/ui";
+import { Badge, Button, Card, ErrorText, Field, Input, Loading, Notice, RichText, Select, Textarea } from "../../components/ui";
 import { BackLink } from "../../components/BackLink";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
@@ -64,7 +65,11 @@ function Overview({ characterId, found, staffOf }: { characterId: string; found:
       )}
       <Card title="Quests">
         {ongoing.length === 0 ? (
-          <Empty>{past.length ? "No quests under way." : "No quests yet."}</Empty>
+          <EmptyState title={past.length ? "No quests under way." : "No quests yet."}>
+            {staffOf
+              ? "A quest this character leads or joins shows here from when the storytellers start building it."
+              : `A quest this character leads or joins shows here: one the storytellers give it, or one joined in a downtime.${canAsk && !found.refusal ? " Ask for one with Ask for a quest, above." : ""}`}
+          </EmptyState>
         ) : (
           <ul className="flex flex-col gap-2">
             {ongoing.map((q) => (

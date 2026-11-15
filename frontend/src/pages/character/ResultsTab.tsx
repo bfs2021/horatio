@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { api, unwrap } from "../../api/client";
-import { Badge, Empty, ErrorText, Loading, RichText } from "../../components/ui";
+import { EmptyState } from "../../components/EmptyState";
+import { Badge, Card, ErrorText, Loading, RichText } from "../../components/ui";
 import { useDates } from "../../dates";
 import { resultParts } from "./results";
 import { isNew, markSeen, seenUpTo } from "./resultsSeen";
@@ -31,7 +32,14 @@ export function ResultsTab({ characterId }: { characterId: string }) {
   }, [characterId, results.data]);
   if (results.isPending) return <Loading />;
   if (results.error) return <ErrorText error={results.error} />;
-  if (!results.data.length) return <Empty>No downtime results have been delivered yet.</Empty>;
+  if (!results.data.length)
+    return (
+      <Card>
+        <EmptyState title="No downtime results have been delivered yet.">
+          Once the storytellers deliver a downtime's results, they show here, the newest first.
+        </EmptyState>
+      </Card>
+    );
   return (
     <div className="flex flex-col gap-4">
       {results.data.map((r, i) => {

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { LocationCatalogueOut, LocationQualityOut, OwnLocationQualityOut } from "../../api/types";
 import { Checkbox } from "../../components/Checkbox";
+import { EmptyState } from "../../components/EmptyState";
 import { Toggle } from "../../components/Toggle";
 import { Badge, Button, Card, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
@@ -129,7 +130,9 @@ function OwnQualities({ troupeId, catalogue, canEdit }: { troupeId: string; cata
     >
       <p className="mb-3 text-sm text-mist">Location qualities of the troupe's own, marked ★, with what a quest for one should ask for.</p>
       {editing === "new" && <OwnForm troupeId={troupeId} quality={null} onDone={() => setEditing(null)} />}
-      {catalogue.own.length === 0 && editing !== "new" && <p className="text-sm text-mist">None yet.</p>}
+      {catalogue.own.length === 0 && editing !== "new" && (
+        <EmptyState title="None yet.">{canEdit ? "Make one with Add a quality, above." : "The storytellers make them."}</EmptyState>
+      )}
       <ul className="divide-y divide-ash">
         {catalogue.own.map((q) => (
           <li key={q.id} className="py-2.5 text-sm">

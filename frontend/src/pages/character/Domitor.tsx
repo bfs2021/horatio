@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { CatalogueOut, CharacterOut, DomitorOut, SheetOut } from "../../api/types";
 import { useClanName } from "../../components/ClanNames";
-import { Button, Card, ErrorText, Field, Input, Select } from "../../components/ui";
+import { Button, Card, Empty, ErrorText, Field, Input, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { listed } from "./creation/notices";
 import { CAITIFF, CAITIFF_CHOOSES, caitiffChoices, clansOf, disciplineDots, domitorBody, draftMissing, inClanOf, type DomitorDraft } from "./domitor";
@@ -74,7 +74,7 @@ export function DomitorPanel({
   const open = canChange && !!catalogue && (changing || (openWhenNone && !domitor.data));
   return (
     <div className="flex flex-col gap-3">
-      {domitor.data ? <DomitorSummary domitor={domitor.data} /> : !openWhenNone && <p className="text-sm text-mist">No domitor yet.</p>}
+      {domitor.data ? <DomitorSummary domitor={domitor.data} /> : !openWhenNone && <Empty>No domitor yet.</Empty>}
       <ErrorText error={domitor.error} />
       {canChange && catalogue && !open && (
         <Button variant="secondary" className="self-start" onClick={() => setChanging(true)}>
@@ -150,7 +150,7 @@ export function DomitorForm({ character, sheet, catalogue, onDone }: { character
           <Field label="Find a vampire" hint="Your own vampires, and those in troupes whose sheets you see. Only those with a clan.">
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name…" />
           </Field>
-          {found.data && found.data.length === 0 && <p className="text-sm text-mist">No vampire found.</p>}
+          {found.data && found.data.length === 0 && <Empty>No vampire found.</Empty>}
           {found.data && found.data.length > 0 && (
             <ul aria-label="Vampires found" className="flex flex-col gap-1">
               {found.data.map((c) => (

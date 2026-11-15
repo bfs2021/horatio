@@ -6,7 +6,7 @@ import type { CatalogueOut, OwnCheckIn, OwnCheckOut } from "../../api/types";
 import { Dialog } from "../../components/Dialog";
 import { EmptyState } from "../../components/EmptyState";
 import { RowEditor, useRowEditor } from "../../components/RowEditor";
-import { Badge, Button, Card, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
+import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useRulesAction } from "../../hooks";
 import { TraitList } from "./HouseEffects";
 import {
@@ -339,7 +339,7 @@ function OwnCheckEditor({ troupeId, editing, onClose }: { troupeId: string; edit
             {!problem && preview.data && body && (
               <>
                 {preview.data.breaking.length === 0 ? (
-                  <p className="text-xs text-mist">None of the troupe's characters breaks it now.</p>
+                  <Empty>None of the troupe's characters breaks it now.</Empty>
                 ) : (
                   <div className="text-xs">
                     <p className="text-gold">

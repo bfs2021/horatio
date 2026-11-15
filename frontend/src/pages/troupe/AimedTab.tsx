@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { AimedOut, CycleOut, TargetOut } from "../../api/types";
-import { Badge, Empty, ErrorText, Loading, Select } from "../../components/ui";
+import { EmptyState } from "../../components/EmptyState";
+import { Badge, Card, ErrorText, Loading, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { COUNTER_NAMES, type Counter } from "../character/aim";
 import { cyclePath } from "./cycles";
@@ -20,7 +21,14 @@ export function AimedTab({ cycle }: { cycle: CycleOut }) {
   });
   if (aimed.isPending) return <Loading />;
   if (aimed.error) return <ErrorText error={aimed.error} />;
-  if (aimed.data.length === 0) return <Empty>No submitted action is aimed at anyone yet.</Empty>;
+  if (aimed.data.length === 0)
+    return (
+      <Card>
+        <EmptyState title="No submitted action is aimed at anyone yet.">
+          An action aimed at another character shows here once its player submits their downtime, for you to resolve spying, cancelling and observing.
+        </EmptyState>
+      </Card>
+    );
   return (
     <div className="flex flex-col gap-6">
       <p className="text-sm text-mist">Only storytellers and assistant storytellers see this. No player learns who aimed an action at them.</p>

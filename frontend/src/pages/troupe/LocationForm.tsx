@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { LocationCatalogueOut, LocationIn, LocationOut } from "../../api/types";
 import { InfoButton } from "../../components/InfoButton";
-import { Button, ErrorText, Field, Input, Notice, Select, Textarea } from "../../components/ui";
+import { Button, Empty, ErrorText, Field, Input, Notice, Select, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { WhoPicker } from "./WhoPicker";
 
@@ -263,7 +263,7 @@ export function LocationForm({
           <legend className="mb-2 font-sans text-xs tracking-wide text-mist uppercase">
             Qualities · {counted} of {most}
           </legend>
-          {d.qualities.length === 0 && <p className="text-sm text-mist">No qualities yet.</p>}
+          {d.qualities.length === 0 && <Empty>No qualities yet.</Empty>}
           <ul className="flex flex-col gap-2">
             {d.qualities.map((q, i) => {
               const known = quality(q.name);

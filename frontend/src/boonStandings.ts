@@ -23,7 +23,7 @@ export function net(value: number): string {
   return value > 0 ? `+${weight(value)}` : `−${weight(-value)}`;
 }
 
-/** Words for a net, for a screen reader or a tooltip. */
+/** Words for a net, for a screen reader. */
 export function netWords(value: number): string {
   if (value === 0) return "even";
   return value > 0 ? `owed ${weight(value)} more than they owe` : `owes ${weight(-value)} more than they're owed`;

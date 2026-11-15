@@ -162,7 +162,7 @@ test("the custodian changes a player's email, and the player confirms it from th
   await fresh.getByRole("button", { name: "Confirm new email" }).click();
   await expect(fresh.getByText(`Done: your email is now ${newEmail}.`, { exact: false })).toBeVisible();
   await fresh.screenshot(shots("email-confirmed"));
-  await fresh.getByRole("link", { name: "Sign in" }).click();
+  await fresh.getByRole("main").getByRole("link", { name: "Sign in" }).click();
   await fresh.getByLabel("Email or handle").fill(player.email);
   await fresh.getByLabel("Password").fill(PASSWORD);
   await fresh.getByRole("button", { name: "Sign in" }).click();

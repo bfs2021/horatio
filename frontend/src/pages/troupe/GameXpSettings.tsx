@@ -3,6 +3,7 @@ import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { GameXpSettings } from "../../api/types";
 import { useToast } from "../../components/Toast";
+import { Checkbox } from "../../components/Checkbox";
 import { Button, Card, ErrorText, Input } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { addBand, adjustmentText, bandLabel, BOOK_MONTHLY, capText, DEFAULTS, fromRows, PRESETS, removeBand, toRows, type BandRow } from "./gameXp";
@@ -306,25 +307,28 @@ function Editor({ troupeId, settings, onClose }: { troupeId: string; settings: G
 
       <fieldset className="flex flex-col gap-2 border-t border-ash pt-3">
         <legend className="pt-3 text-xs tracking-wide text-mist uppercase">Absentee games</legend>
-        <label className="flex items-start gap-2">
-          <input type="checkbox" className="mt-1" checked={absentee} onChange={(e) => setAbsentee(e.target.checked)} />
-          <span>
-            Record absentee games
-            <span className="block text-xs text-mist">A character who missed a game can be marked absentee for it once it has started. It never counts as attended, and gets the chart's absentee XP.</span>
-          </span>
-        </label>
-        <label className={`flex items-start gap-2 pl-6 ${absentee ? "" : "opacity-60"}`}>
-          <input type="checkbox" className="mt-1" checked={byPlayers} disabled={!absentee} onChange={(e) => setByPlayers(e.target.checked)} />
-          <span>Players can mark their own characters absentee, as well as staff</span>
-        </label>
-        <label className={`flex items-start gap-2 pl-6 ${absentee ? "" : "opacity-60"}`}>
-          <input type="checkbox" className="mt-1" checked={downtime} disabled={!absentee} onChange={(e) => setDowntime(e.target.checked)} />
-          <span>
-            Absentee downtimes
-            <span className="block text-xs text-mist">A character can submit a cycle's downtime only if it attended a game in the lookback before the cycle closes.</span>
-          </span>
-        </label>
-        <label className={`flex items-center gap-2 pl-6 ${absentee && downtime ? "" : "opacity-60"}`}>
+        <Checkbox
+          label="Record absentee games"
+          hint="A character who missed a game can be marked absentee for it once it has started. It never counts as attended, and gets the chart's absentee XP."
+          checked={absentee}
+          onChange={setAbsentee}
+        />
+        <Checkbox
+          label="Players can mark their own characters absentee, as well as staff"
+          checked={byPlayers}
+          disabled={!absentee}
+          onChange={setByPlayers}
+          className={`pl-8 ${absentee ? "" : "opacity-60"}`}
+        />
+        <Checkbox
+          label="Absentee downtimes"
+          hint="A character can submit a cycle's downtime only if it attended a game in the lookback before the cycle closes."
+          checked={downtime}
+          disabled={!absentee}
+          onChange={setDowntime}
+          className={`pl-8 ${absentee ? "" : "opacity-60"}`}
+        />
+        <label className={`flex items-center gap-2 pl-8 ${absentee && downtime ? "" : "opacity-60"}`}>
           <Input
             type="number"
             min={1}

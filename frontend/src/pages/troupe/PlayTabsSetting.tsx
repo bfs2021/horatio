@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
+import { Toggle } from "../../components/Toggle";
 import { Button, Card, ErrorText } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { TABS, tabNames, tabsOn, troupeTabs, type Tab } from "../play/tabs";
@@ -42,13 +43,14 @@ export function PlayTabsSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdi
         <div className="flex flex-col gap-2 text-sm">
           {on.length === 0 && <p className="text-gold">The Play View is off for players. Staff still run NPCs and scenes. Switch a tab on to give it back to players.</p>}
           {TABS.map(({ key, label }) => (
-            <label key={key} className="flex items-start gap-2">
-              <input type="checkbox" className="mt-1" checked={switched.includes(key) && last !== key} disabled={save.isPending || last !== null} onChange={(e) => change(key, e.target.checked)} />
-              <span>
-                {label}
-                {NOTES[key] && <span className="block text-xs text-mist">{NOTES[key]}</span>}
-              </span>
-            </label>
+            <Toggle
+              key={key}
+              label={label}
+              hint={NOTES[key]}
+              checked={switched.includes(key) && last !== key}
+              disabled={save.isPending || last !== null}
+              onChange={(on) => change(key, on)}
+            />
           ))}
           {last && (
             <div role="alertdialog" aria-label="Turn the Play View off for players" className="mt-1 flex flex-col gap-2 rounded-md border border-blood/60 bg-blood/10 p-3">

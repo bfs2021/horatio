@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { LanguagesOut } from "../../api/types";
 import { useToast } from "../../components/Toast";
+import { Checkbox } from "../../components/Checkbox";
 import { Button, Card, ErrorText, Input, Loading } from "../../components/ui";
 import { useRulesAction } from "../../hooks";
 import { chartFor, LANGUAGE_MODES, type LanguageMode, ratingsOf, readFigures, startingFigures } from "./languages";
@@ -114,13 +115,12 @@ export function LanguagesForm({
                 {read.error && <p className="text-sm text-blood-bright">{read.error}</p>}
               </fieldset>
             )}
-            <label className="flex items-start gap-2 text-sm">
-              <input type="checkbox" className="mt-1" checked={doubles} onChange={(e) => setDoubles(e.target.checked)} />
-              <span>
-                Natural Linguist doubles it
-                <span className="block text-xs text-mist">As the book has it: a character with Natural Linguist holds twice as many languages (p. 252).</span>
-              </span>
-            </label>
+            <Checkbox
+              label="Natural Linguist doubles it"
+              hint="As the book has it: a character with Natural Linguist holds twice as many languages (p. 252)."
+              checked={doubles}
+              onChange={setDoubles}
+            />
             {!blocked && <Chart ratings={ratings} doubled={doubles} />}
             <div className="flex gap-2">
               <Button type="submit" disabled={!changed || blocked || saving}>

@@ -1,5 +1,6 @@
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
+import { Toggle } from "../../components/Toggle";
 import { Card, ErrorText } from "../../components/ui";
 import { useAction } from "../../hooks";
 
@@ -33,23 +34,14 @@ export function BadgeSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit: 
       ) : (
         <div className="flex flex-col gap-3 text-sm">
           <p className="text-mist">What the troupe's game badges print. There is always room for stickers.</p>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={troupe.badge_titles} disabled={save.isPending} onChange={(e) => save.mutate({ badge_titles: e.target.checked })} />
-            Print titles
-          </label>
-          <label className="flex items-start gap-2">
-            <input
-              type="checkbox"
-              className="mt-1"
-              checked={troupe.badge_pronouns}
-              disabled={save.isPending}
-              onChange={(e) => save.mutate({ badge_pronouns: e.target.checked })}
-            />
-            <span>
-              Print character pronouns
-              <span className="block text-xs text-mist">Under the name, where its player gave them. A badge never prints the player's.</span>
-            </span>
-          </label>
+          <Toggle label="Print titles" checked={troupe.badge_titles} disabled={save.isPending} onChange={(on) => save.mutate({ badge_titles: on })} />
+          <Toggle
+            label="Print character pronouns"
+            hint="Under the name, where its player gave them. A badge never prints the player's."
+            checked={troupe.badge_pronouns}
+            disabled={save.isPending}
+            onChange={(on) => save.mutate({ badge_pronouns: on })}
+          />
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-1">Print status</legend>
             {STATUS.map((o) => (

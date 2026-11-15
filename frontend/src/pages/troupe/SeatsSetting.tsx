@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, unwrap } from "../../api/client";
 import { useClanName } from "../../components/ClanNames";
+import { Checkbox } from "../../components/Checkbox";
 import { Button, Card, ErrorText, Loading } from "../../components/ui";
 import { useAction } from "../../hooks";
 
@@ -37,16 +38,14 @@ export function SeatsSetting({ troupeId }: { troupeId: string }) {
         {clans.map((clan) => {
           const on = now.includes(clan);
           return (
-            <label key={clan} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={on}
-                // At least one clan keeps a seat.
-                disabled={save.isPending || (on && now.length === 1)}
-                onChange={(e) => toggle(clan, e.target.checked)}
-              />
-              {named(clan)}
-            </label>
+            <Checkbox
+              key={clan}
+              label={named(clan)}
+              checked={on}
+              // At least one clan keeps a seat.
+              disabled={save.isPending || (on && now.length === 1)}
+              onChange={(next) => toggle(clan, next)}
+            />
           );
         })}
       </fieldset>

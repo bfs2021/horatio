@@ -158,6 +158,32 @@ export async function creatingVampire(p: Page, name: string, clan: string, inCla
   return id as string;
 }
 
+/** Below `lg` the creation steps are one line, "Step 3 of 8 · Focuses", that opens their list in a dialog (#916). */
+const stepsInDialog = (p: Page) => (p.viewportSize()?.width ?? 1280) < 1024;
+
+/**
+ * Looks at the creation wizard's list of steps: down the side on a wide screen; on a
+ * phone, in the dialog its step line opens, closed again after `look`.
+ */
+export async function inSteps(p: Page, look: (steps: Locator) => Promise<void>) {
+  const nav = p.getByRole("navigation", { name: "Creation steps" });
+  if (!stepsInDialog(p)) return look(nav);
+  await nav.getByRole("button", { name: /^Step \d+ of \d+/ }).click();
+  const dialog = nav.getByRole("dialog", { name: "Creation steps" });
+  await look(dialog);
+  await dialog.getByRole("button", { name: "Close" }).click();
+  await expect(dialog).toBeHidden();
+}
+
+/** Goes to a creation step through the list of steps (on a phone, the list the step line opens). */
+export async function goToStep(p: Page, name: RegExp) {
+  const nav = p.getByRole("navigation", { name: "Creation steps" });
+  if (stepsInDialog(p)) await nav.getByRole("button", { name: /^Step \d+ of \d+/ }).click();
+  const list = stepsInDialog(p) ? nav.getByRole("dialog", { name: "Creation steps" }) : nav;
+  await list.getByRole("link", { name }).click();
+  await expect(nav.getByRole("dialog")).toBeHidden();
+}
+
 /** The creation wizard's slots for the picks at one rating of a category ("Skills", "Physical Focus"). */
 export function slotsAt(p: Page, section: string, rating: number) {
   return p.getByRole("group", { name: `${section} at ${rating}`, exact: true });

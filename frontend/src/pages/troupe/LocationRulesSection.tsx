@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { LocationCatalogueOut, LocationQualityOut, OwnLocationQualityOut } from "../../api/types";
+import { Checkbox } from "../../components/Checkbox";
+import { Toggle } from "../../components/Toggle";
 import { Badge, Button, Card, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { fullSuggestion, parseSuggestions, suggestionLines, suggestionText } from "./locations";
@@ -45,18 +47,24 @@ export function LocationRulesSection({ troupeId, canEdit }: { troupeId: string; 
         </p>
         <ul className="divide-y divide-ash">
           {c.options.map((o) => (
-            <li key={o.key} className="flex flex-col gap-2 py-2.5 sm:flex-row sm:items-start sm:gap-4">
-              <span className="min-w-0 flex-1 text-sm">
-                <span className="text-parchment">{o.name}</span>
-                <span className="block text-mist">{o.text}</span>
-              </span>
+            <li key={o.key} className="py-0.5">
               {canEdit ? (
-                <label className="flex shrink-0 items-center gap-2 text-sm">
-                  <input type="checkbox" checked={o.on} disabled={option.isPending} onChange={(e) => option.mutate({ key: o.key, on: e.target.checked })} />
-                  {o.on ? "On" : "Off"}
-                </label>
+                <Toggle
+                  label={<span className="text-parchment">{o.name}</span>}
+                  hint={o.text}
+                  checked={o.on}
+                  disabled={option.isPending}
+                  onChange={(on) => option.mutate({ key: o.key, on })}
+                  end
+                />
               ) : (
-                <Badge tone={o.on ? "gold" : "mist"}>{o.on ? "On" : "Off"}</Badge>
+                <div className="flex flex-col gap-2 py-2 sm:flex-row sm:items-start sm:gap-4">
+                  <span className="min-w-0 flex-1 text-sm">
+                    <span className="text-parchment">{o.name}</span>
+                    <span className="block text-mist">{o.text}</span>
+                  </span>
+                  <Badge tone={o.on ? "gold" : "mist"}>{o.on ? "On" : "Off"}</Badge>
+                </div>
               )}
             </li>
           ))}
@@ -203,10 +211,7 @@ function OwnForm({ troupeId, quality, onDone }: { troupeId: string; quality: Own
       <Field label="Detail it names (optional)" hint="Such as “Science specialisation”, asked for when it is given to a location.">
         <Input value={d.detail} onChange={(e) => set({ detail: e.target.value })} />
       </Field>
-      <label className="flex items-center gap-2 self-center text-sm">
-        <input type="checkbox" checked={d.repeatable} onChange={(e) => set({ repeatable: e.target.checked })} />
-        Can be taken more than once
-      </label>
+      <Checkbox label="Can be taken more than once" checked={d.repeatable} onChange={(repeatable) => set({ repeatable })} className="self-center" />
       <div className="sm:col-span-2">
         <Field label="Suggested requirements" hint="One to a line. “Crafts [2,3,4]” is a trait at a level by the location's rating, lowest first; anything else is kept as words.">
           <Textarea rows={3} value={d.suggested} onChange={(e) => set({ suggested: e.target.value })} />

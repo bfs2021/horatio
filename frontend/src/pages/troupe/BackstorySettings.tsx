@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { BackstoryQuestionIn, BackstoryQuestionOut, BackstoryQuestionSetOut, BackstorySettingsOut } from "../../api/types";
+import { Checkbox } from "../../components/Checkbox";
 import { Badge, Button, Card, ErrorText, Field, Input, Loading, Notice, Select, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
 
@@ -107,10 +108,11 @@ export function BackstorySettings({ troupeId }: { troupeId: string }) {
                 </label>
               ))}
             </fieldset>
-            <label className="flex min-h-10 items-center gap-2 text-sm">
-              <input type="checkbox" checked={shown.required} onChange={(e) => setDraft({ ...shown, required: e.target.checked })} />
-              Need an approved backstory before accepting a character
-            </label>
+            <Checkbox
+              label="Need an approved backstory before accepting a character"
+              checked={shown.required}
+              onChange={(required) => setDraft({ ...shown, required })}
+            />
             <div className="flex flex-wrap gap-2">
               <Button type="submit" disabled={save.isPending}>
                 Save
@@ -380,10 +382,7 @@ function QuestionForm({
           <Field label="Hint" hint="Optional.">
             <Input value={hint} maxLength={5000} onChange={(e) => setHint(e.target.value)} />
           </Field>
-          <label className="flex min-h-10 items-center gap-2 text-sm">
-            <input type="checkbox" checked={optional} onChange={(e) => setOptional(e.target.checked)} />
-            Optional
-          </label>
+          <Checkbox label="Optional" checked={optional} onChange={setOptional} />
         </>
       )}
       <Field label="Shown">
@@ -412,14 +411,12 @@ function QuestionForm({
         <fieldset className="flex flex-wrap gap-4 text-sm">
           <legend className="mb-1 text-mist">For</legend>
           {AGES.map((age) => (
-            <label key={age} className="flex min-h-10 items-center gap-2">
-              <input
-                type="checkbox"
-                checked={condition.ages.includes(age)}
-                onChange={(e) => setCondition({ ...condition, ages: e.target.checked ? [...condition.ages, age] : condition.ages.filter((a) => a !== age) })}
-              />
-              {age}
-            </label>
+            <Checkbox
+              key={age}
+              label={age}
+              checked={condition.ages.includes(age)}
+              onChange={(on) => setCondition({ ...condition, ages: on ? [...condition.ages, age] : condition.ages.filter((a) => a !== age) })}
+            />
           ))}
         </fieldset>
       )}
@@ -427,14 +424,12 @@ function QuestionForm({
         <fieldset className="flex flex-wrap gap-4 text-sm">
           <legend className="mb-1 text-mist">For</legend>
           {sects.map((sect) => (
-            <label key={sect} className="flex min-h-10 items-center gap-2">
-              <input
-                type="checkbox"
-                checked={condition.sects.includes(sect)}
-                onChange={(e) => setCondition({ ...condition, sects: e.target.checked ? [...condition.sects, sect] : condition.sects.filter((x) => x !== sect) })}
-              />
-              {sect}
-            </label>
+            <Checkbox
+              key={sect}
+              label={sect}
+              checked={condition.sects.includes(sect)}
+              onChange={(on) => setCondition({ ...condition, sects: on ? [...condition.sects, sect] : condition.sects.filter((x) => x !== sect) })}
+            />
           ))}
         </fieldset>
       )}

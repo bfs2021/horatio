@@ -38,7 +38,7 @@ Under **New character**, on the right of the Characters page (below your charact
 
 A troupe's page may also have a **Play here** link that opens this form with the troupe already chosen.
 
-Horatio then opens the creation wizard on the character's **Create** tab. Each step saves itself a moment after your last tap, and again when you leave it, so you can stop at any point and come back with **Continue creating** on the character's page. **Save and continue** goes to the next step; **Back** goes to the last. The list of steps down the side lets you jump about, and a step with a red mark has something that needs a look. You can't go past a step that still needs something essential, such as a vampire's Generation; the locked steps say which one to finish first.
+Horatio then opens the creation wizard on the character's **Create** tab. Each step saves itself a moment after your last tap, and again when you leave it, so you can stop at any point and come back with **Continue creating** on the character's page. **Save and continue** goes to the next step; **Back** goes to the last. The list of steps down the side lets you jump about: a tick marks a step that is done, and a red mark one that has something that needs a look. On a phone the steps are one line at the top, such as "Step 3 of 8 · Focuses", with arrows to the steps either side; tap the line for the whole list. You can't go past a step that still needs something essential, such as a vampire's Generation; the locked steps say which one to finish first.
 
 ### The creation wizard, step by step
 

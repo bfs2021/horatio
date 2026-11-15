@@ -7,6 +7,7 @@ import { Dialog } from "../../components/Dialog";
 import { EmptyState } from "../../components/EmptyState";
 import { Explainer } from "../../components/Explainer";
 import { Markdown } from "../../components/Markdown";
+import { Toggle } from "../../components/Toggle";
 import { Button, Card, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { useRulesAction } from "../../hooks";
 import { SECTIONS } from "../rules/rulesBrowser";
@@ -91,13 +92,14 @@ export function WrittenRulesSection({ troupeId, canEdit }: { troupeId: string; c
           )
         }
       >
-        <label className="mb-3 flex min-h-10 items-start gap-2 text-sm">
-          <input type="checkbox" className="mt-1" checked={shown} disabled={!canEdit || publish.isPending} onChange={(e) => publish.mutate(e.target.checked)} />
-          <span>
-            Show them on the troupe's profile
-            <span className="block text-xs text-mist">So people thinking of joining can read them. If the profile is public, anyone can.</span>
-          </span>
-        </label>
+        <Toggle
+          label="Show them on the troupe's profile"
+          hint="So people thinking of joining can read them. If the profile is public, anyone can."
+          checked={shown}
+          disabled={!canEdit || publish.isPending}
+          onChange={(on) => publish.mutate(on)}
+          className="mb-3"
+        />
         <ErrorText error={publish.error ?? move.error} />
         {rules.length === 0 ? (
           <EmptyState title="No written rules yet.">{canEdit ? "Add one for your players to read." : "The storytellers have written none."}</EmptyState>

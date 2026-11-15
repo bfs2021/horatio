@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, unwrap } from "../../api/client";
 import type { ClanName } from "../../clanNames";
+import { RadioList } from "../../components/RadioList";
 import { useToast } from "../../components/Toast";
 import { Card, ErrorText } from "../../components/ui";
 import { useRulesAction } from "../../hooks";
@@ -41,19 +42,23 @@ export function ClanNamesSetting({ troupeId, canEdit }: { troupeId: string; canE
         <p className="text-sm">The clan is called {now === "Banu Haqim" ? "the Banu Haqim" : "the Assamites"} here.</p>
       ) : (
         <div className="flex flex-col gap-3 text-sm">
-          <fieldset className="flex flex-col gap-2" disabled={save.isPending}>
-            <legend className="sr-only">What the clan is called</legend>
-            {NAMES.map((n) => (
-              <label key={n.value} className="flex items-start gap-2">
-                <input type="radio" name="assamite-name" className="mt-1" checked={now === n.value} onChange={() => save.mutate(n.value)} />
-                <span>
+          <RadioList
+            label="What the clan is called"
+            hideLabel
+            value={now}
+            options={NAMES.map((n) => ({
+              value: n.value,
+              label: (
+                <>
                   {n.value}
                   {n.value === "Banu Haqim" && <span className="text-mist"> (the default)</span>}
-                  <span className="block text-xs text-mist">{n.meaning}</span>
-                </span>
-              </label>
-            ))}
-          </fieldset>
+                </>
+              ),
+              hint: n.meaning,
+            }))}
+            disabled={save.isPending}
+            onChange={(name) => save.mutate(name)}
+          />
           <ErrorText error={save.error} />
         </div>
       )}

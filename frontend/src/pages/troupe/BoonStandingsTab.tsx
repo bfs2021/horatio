@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api/client";
 import type { BoonStandingsOut, BoonWeightsIn } from "../../api/types";
 import { BOON_PAGE, KINDS, kindName } from "../../boons";
 import { DEFAULT_WEIGHTS, months, net, netWords, SCOPES, share, weight, weightsLine, type Scope } from "../../boonStandings";
+import { DataTable, type Column } from "../../components/DataTable";
 import { useToast } from "../../components/Toast";
 import { Button, Card, Empty, ErrorText, Field, Input, Loading } from "../../components/ui";
 import { useWidePage } from "../../components/widePage";
@@ -14,6 +15,12 @@ type Standings = BoonStandingsOut;
 type Party = Standings["characters"][number]["who"];
 type Group = Standings["clans"][number];
 type Tally = Standings["court"][number]["owe_them"][number];
+type KindCount = Standings["by_kind"][number];
+type Standing = Standings["characters"][number];
+type Band = Standings["debt_age"][number];
+type Settled = Standings["settling"]["by_kind"][number];
+type Pair = Standings["across_clans"]["pairs"][number];
+type Mutual = Standings["mutual"][number];
 
 /** How many characters the standing list shows before "Show everyone". */
 const FIRST = 25;
@@ -210,24 +217,36 @@ function NetBar({ value, most }: { value: number; most: number }) {
   );
 }
 
-function Table({ label, head, children }: { label: string; head: ReactNode; children: ReactNode }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm" aria-label={label}>
-        <thead className="text-left text-xs text-mist">{head}</thead>
-        <tbody className="divide-y divide-ash/60">{children}</tbody>
-      </table>
-    </div>
-  );
+/** A column of figures; on a phone, a "label: value" under the row's name. */
+function figure<T>(key: string, header: string, cell: (row: T) => ReactNode): Column<T> {
+  return { key, header, phone: "shown", numeric: true, cell };
 }
 
-const num = "px-2 py-1 text-right tabular-nums";
-const cell = "px-2 py-1";
+/** A row's net, as a figure: signed, and in words for a screen reader. */
+function netColumn<T>(of: (row: T) => number): Column<T> {
+  return {
+    ...figure<T>("net", "Net", (row) => net(of(row))),
+    cellProps: (row) => ({ "aria-label": netWords(of(row)) }),
+    // A cell's aria-label doesn't reach the phone's copy, so the words come along there.
+    folded: (row) => (
+      <>
+        <span aria-hidden="true">{net(of(row))}</span>
+        <span className="sr-only">{netWords(of(row))}</span>
+      </>
+    ),
+  };
+}
+
+/** The plain bar beside the figures: left out on a phone, where the figures are enough. */
+function barColumn<T>(width: string, bar: (row: T) => ReactNode): Column<T> {
+  return { key: "bar", header: <span className="sr-only">Bar</span>, label: "Bar", phone: "detail", className: width, cell: bar };
+}
 
 function Name({ who }: { who: Party }) {
   const gone = who.standing && who.standing !== "active" && who.standing !== "inactive";
+  // A name longer than its list is wide breaks rather than pushing the page sideways.
   return (
-    <span>
+    <span className="wrap-anywhere">
       {who.name}
       {who.character_id === null && <span className="text-xs text-mist"> (name only)</span>}
       {gone && <span className="text-xs text-mist"> ({who.standing === "final_death" ? "Final Death" : who.standing === "off_field" ? "Off-field" : "retired"})</span>}
@@ -239,32 +258,19 @@ function ByKind({ standings }: { standings: Standings }) {
   const most = Math.max(0, ...standings.by_kind.map((k) => k.count));
   return (
     <Card title="Open boons by kind">
-      <Table
+      <DataTable
         label="Open boons by kind"
-        head={
-          <tr>
-            <th className={cell}>Kind</th>
-            <th className={num}>Weight</th>
-            <th className={num}>Open</th>
-            <th className={num}>Total weight</th>
-            <th className={cell}>
-              <span className="sr-only">Bar</span>
-            </th>
-          </tr>
-        }
-      >
-        {standings.by_kind.map((k) => (
-          <tr key={k.kind}>
-            <td className={cell}>{kindName(k.kind)}</td>
-            <td className={num}>{weight(k.weight)}</td>
-            <td className={num}>{k.count}</td>
-            <td className={num}>{weight(k.total)}</td>
-            <td className={`${cell} w-1/3`}>
-              <Bar value={k.count} most={most} label={`${k.count} open`} />
-            </td>
-          </tr>
-        ))}
-      </Table>
+        dense
+        rows={standings.by_kind}
+        rowKey={(k) => k.kind}
+        columns={[
+          { key: "kind", header: "Kind", phone: "title", cell: (k) => kindName(k.kind) },
+          figure<KindCount>("weight", "Weight", (k) => weight(k.weight)),
+          figure<KindCount>("open", "Open", (k) => k.count),
+          figure<KindCount>("total", "Total weight", (k) => weight(k.total)),
+          barColumn<KindCount>("w-1/3", (k) => <Bar value={k.count} most={most} label={`${k.count} open`} />),
+        ]}
+      />
     </Card>
   );
 }
@@ -280,38 +286,20 @@ function Characters({ standings }: { standings: Standings }) {
         <Empty>No open boons.</Empty>
       ) : (
         <>
-          <Table
+          <DataTable
             label="Standing by character"
-            head={
-              <tr>
-                <th className={cell}>Character</th>
-                <th className={cell}>Clan</th>
-                <th className={num}>Owes</th>
-                <th className={num}>Owed</th>
-                <th className={num}>Net</th>
-                <th className={cell}>
-                  <span className="sr-only">Bar</span>
-                </th>
-              </tr>
-            }
-          >
-            {shown.map((c) => (
-              <tr key={c.who.key}>
-                <td className={cell}>
-                  <Name who={c.who} />
-                </td>
-                <td className={`${cell} text-mist`}>{c.who.clan ?? ""}</td>
-                <td className={num}>{weight(c.owes)}</td>
-                <td className={num}>{weight(c.owed)}</td>
-                <td className={num} aria-label={netWords(c.net)}>
-                  {net(c.net)}
-                </td>
-                <td className={`${cell} w-1/4`}>
-                  <NetBar value={c.net} most={most} />
-                </td>
-              </tr>
-            ))}
-          </Table>
+            dense
+            rows={shown}
+            rowKey={(c) => c.who.key}
+            columns={[
+              { key: "character", header: "Character", phone: "title", cell: (c) => <Name who={c.who} /> },
+              { key: "clan", header: "Clan", phone: "shown", className: "text-mist", cell: (c) => c.who.clan ?? "" },
+              figure<Standing>("owes", "Owes", (c) => weight(c.owes)),
+              figure<Standing>("owed", "Owed", (c) => weight(c.owed)),
+              netColumn<Standing>((c) => c.net),
+              barColumn<Standing>("w-1/4", (c) => <NetBar value={c.net} most={most} />),
+            ]}
+          />
           {rows.length > FIRST && (
             <button type="button" className="mt-2 text-xs text-mist underline hover:text-parchment" onClick={() => setAll(!all)}>
               {all ? `Show the first ${FIRST}` : `Show everyone (${rows.length})`}
@@ -379,36 +367,20 @@ function Groups({ title, groups, label }: { title: string; groups: Group[]; labe
       {groups.length === 0 ? (
         <Empty>No open boons.</Empty>
       ) : (
-        <Table
+        <DataTable
           label={title}
-          head={
-            <tr>
-              <th className={cell}>{label}</th>
-              <th className={num}>Characters</th>
-              <th className={num}>Owes</th>
-              <th className={num}>Owed</th>
-              <th className={num}>Net</th>
-              <th className={cell}>
-                <span className="sr-only">Bar</span>
-              </th>
-            </tr>
-          }
-        >
-          {groups.map((g) => (
-            <tr key={g.label}>
-              <td className={cell}>{g.label}</td>
-              <td className={num}>{g.characters}</td>
-              <td className={num}>{weight(g.owes)}</td>
-              <td className={num}>{weight(g.owed)}</td>
-              <td className={num} aria-label={netWords(g.net)}>
-                {net(g.net)}
-              </td>
-              <td className={`${cell} w-1/4`}>
-                <NetBar value={g.net} most={most} />
-              </td>
-            </tr>
-          ))}
-        </Table>
+          dense
+          rows={groups}
+          rowKey={(g) => g.label}
+          columns={[
+            { key: "group", header: label, phone: "title", cell: (g) => g.label },
+            figure<Group>("characters", "Characters", (g) => g.characters),
+            figure<Group>("owes", "Owes", (g) => weight(g.owes)),
+            figure<Group>("owed", "Owed", (g) => weight(g.owed)),
+            netColumn<Group>((g) => g.net),
+            barColumn<Group>("w-1/4", (g) => <NetBar value={g.net} most={most} />),
+          ]}
+        />
       )}
     </Card>
   );
@@ -419,30 +391,18 @@ function DebtAge({ standings }: { standings: Standings }) {
   return (
     <Card title="Age of open debt">
       <p className="mb-2 text-xs text-mist">How long each open boon has stood, in months, from the night it was made.</p>
-      <Table
+      <DataTable
         label="Age of open debt"
-        head={
-          <tr>
-            <th className={cell}>Months</th>
-            <th className={num}>Boons</th>
-            <th className={num}>Weight</th>
-            <th className={cell}>
-              <span className="sr-only">Bar</span>
-            </th>
-          </tr>
-        }
-      >
-        {standings.debt_age.map((b) => (
-          <tr key={b.label}>
-            <td className={cell}>{b.label}</td>
-            <td className={num}>{b.count}</td>
-            <td className={num}>{weight(b.weight)}</td>
-            <td className={`${cell} w-1/2`}>
-              <Bar value={b.count} most={most} label={`${b.count} boons`} />
-            </td>
-          </tr>
-        ))}
-      </Table>
+        dense
+        rows={standings.debt_age}
+        rowKey={(b) => b.label}
+        columns={[
+          { key: "months", header: "Months", phone: "title", cell: (b) => b.label },
+          figure<Band>("boons", "Boons", (b) => b.count),
+          figure<Band>("weight", "Weight", (b) => weight(b.weight)),
+          barColumn<Band>("w-1/2", (b) => <Bar value={b.count} most={most} label={`${b.count} boons`} />),
+        ]}
+      />
     </Card>
   );
 }
@@ -454,30 +414,20 @@ function Settling({ standings }: { standings: Standings }) {
       <p className="mb-2 text-sm">
         {s.count} settled, weighing {weight(s.weight)}; half were settled within {months(s.median_months)} of being made.
       </p>
-      <Table
+      <DataTable
         label="Settled by kind"
-        head={
-          <tr>
-            <th className={cell}>Kind</th>
-            <th className={num}>Settled</th>
-            <th className={num}>Called in</th>
-            <th className={num}>Forgiven</th>
-            <th className={num}>Ignored</th>
-            <th className={num}>Typical time</th>
-          </tr>
-        }
-      >
-        {s.by_kind.map((k) => (
-          <tr key={k.kind}>
-            <td className={cell}>{kindName(k.kind)}</td>
-            <td className={num}>{k.count}</td>
-            <td className={num}>{k.called_in}</td>
-            <td className={num}>{k.forgiven}</td>
-            <td className={num}>{k.ignored}</td>
-            <td className={num}>{months(k.median_months)}</td>
-          </tr>
-        ))}
-      </Table>
+        dense
+        rows={s.by_kind}
+        rowKey={(k) => k.kind}
+        columns={[
+          { key: "kind", header: "Kind", phone: "title", cell: (k) => kindName(k.kind) },
+          figure<Settled>("settled", "Settled", (k) => k.count),
+          figure<Settled>("called", "Called in", (k) => k.called_in),
+          figure<Settled>("forgiven", "Forgiven", (k) => k.forgiven),
+          figure<Settled>("ignored", "Ignored", (k) => k.ignored),
+          figure<Settled>("typical", "Typical time", (k) => months(k.median_months)),
+        ]}
+      />
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
         <div>
           <h3 className="text-xs text-mist">Settled by the debtor&apos;s clan</h3>
@@ -528,30 +478,18 @@ function Across({ title, across, line }: { title: string; across: Standings["acr
       </p>
       {across.pairs.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2">
-          <Table
+          <DataTable
             label={`Between ${line}s`}
-            head={
-              <tr>
-                <th className={cell}>Between</th>
-                <th className={num}>Boons</th>
-                <th className={num}>Weight</th>
-                <th className={cell}>
-                  <span className="sr-only">Bar</span>
-                </th>
-              </tr>
-            }
-          >
-            {across.pairs.map((p) => (
-              <tr key={p.label}>
-                <td className={cell}>{p.label}</td>
-                <td className={num}>{p.count}</td>
-                <td className={num}>{weight(p.weight)}</td>
-                <td className={`${cell} w-1/3`}>
-                  <Bar value={p.weight} most={most} label={`Weight ${weight(p.weight)}`} />
-                </td>
-              </tr>
-            ))}
-          </Table>
+            dense
+            rows={across.pairs}
+            rowKey={(p) => p.label}
+            columns={[
+              { key: "between", header: "Between", phone: "title", cell: (p) => p.label },
+              figure<Pair>("boons", "Boons", (p) => p.count),
+              figure<Pair>("weight", "Weight", (p) => weight(p.weight)),
+              barColumn<Pair>("w-1/3", (p) => <Bar value={p.weight} most={most} label={`Weight ${weight(p.weight)}`} />),
+            ]}
+          />
           <Tallies label={`Most across ${line} lines`} tallies={across.most} />
         </div>
       )}
@@ -565,32 +503,19 @@ function Mutual({ standings }: { standings: Standings }) {
       {standings.mutual.length === 0 ? (
         <Empty>No two characters owe each other.</Empty>
       ) : (
-        <Table
+        <DataTable
           label="Owing each other"
-          head={
-            <tr>
-              <th className={cell}>Owes more</th>
-              <th className={cell}>To</th>
-              <th className={num}>Owes</th>
-              <th className={num}>Back</th>
-              <th className={num}>Difference</th>
-            </tr>
-          }
-        >
-          {standings.mutual.map((m) => (
-            <tr key={`${m.first.key}:${m.second.key}`}>
-              <td className={cell}>
-                <Name who={m.first} />
-              </td>
-              <td className={cell}>
-                <Name who={m.second} />
-              </td>
-              <td className={num}>{weight(m.owes)}</td>
-              <td className={num}>{weight(m.back)}</td>
-              <td className={num}>{weight(m.net)}</td>
-            </tr>
-          ))}
-        </Table>
+          dense
+          rows={standings.mutual}
+          rowKey={(m) => `${m.first.key}:${m.second.key}`}
+          columns={[
+            { key: "first", header: "Owes more", phone: "title", cell: (m) => <Name who={m.first} /> },
+            { key: "second", header: "To", phone: "shown", cell: (m) => <Name who={m.second} /> },
+            figure<Mutual>("owes", "Owes", (m) => weight(m.owes)),
+            figure<Mutual>("back", "Back", (m) => weight(m.back)),
+            figure<Mutual>("difference", "Difference", (m) => weight(m.net)),
+          ]}
+        />
       )}
     </Card>
   );

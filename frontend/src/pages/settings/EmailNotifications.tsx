@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, unwrap } from "../../api/client";
 import type { Preferences } from "../../api/types";
-import { Card, Loading, Notice } from "../../components/ui";
+import { SettingCard } from "../../components/SettingCard";
+import { SettingRow } from "../../components/SettingRow";
+import { Loading, Notice } from "../../components/ui";
 import { usePreferences } from "../../hooks";
-import { Choice, Setting } from "./SettingsPage";
+import { Choice, useSaveSetting } from "./PreferenceControls";
 
 type EmailKind = "email_downtime" | "email_downtime_reminders" | "email_approvals" | "email_troupe_requests" | "email_renames" | "email_pictures" | "email_titles" | "email_news" | "email_announcements";
 
@@ -21,37 +23,32 @@ const KINDS: [EmailKind, string, string][] = [
 ];
 
 /**
- * Which notifications also come by email, and whether at once or in one email a
- * day (#106). Only where the server can send email.
+ * Which notifications also come by email, a switch each, and whether at once or in
+ * one email a day (#106). Only where the server can send email.
  */
 export function EmailNotifications() {
   const prefs = usePreferences();
+  const save = useSaveSetting();
   const help = useQuery({
     queryKey: ["preferences", "email"],
     queryFn: () => unwrap(api.GET("/api/preferences/email")),
   });
   return (
-    <Card title="Notifications by email">
+    <SettingCard title="Notifications by email">
       {help.isPending ? (
         <Loading />
       ) : !help.data?.available ? (
         <Notice>Email isn't set up on this server, so notifications come only to the bell.</Notice>
       ) : (
         <>
-          <p className="text-xs text-mist">The bell always has them, unless you turn troupe news or announcements off there under Troupes. Every email has a link to stop that kind.</p>
+          <p className="text-xs text-mist">
+            Each kind switched on comes by email as well as to the bell. The bell always has them, unless you turn troupe news or announcements off there in Preferences, under
+            Troupes. Every email has a link to stop that kind.
+          </p>
           {KINDS.map(([name, label, hint]) => (
-            <Setting key={name} label={label} hint={hint}>
-              <Choice
-                name={name}
-                label={label}
-                choices={[
-                  [false, "Bell only"],
-                  [true, "Bell and email"],
-                ]}
-              />
-            </Setting>
+            <SettingRow key={name} label={label} hint={hint} checked={prefs[name]} onChange={(on) => save({ [name]: on }, `${label} by email: ${on ? "on" : "off"}`)} />
           ))}
-          <Setting label="Send emails" hint={digestHint(prefs)}>
+          <SettingRow label="Send emails" hint={digestHint(prefs)} short>
             <Choice
               name="email_digest"
               label="Send emails"
@@ -60,10 +57,10 @@ export function EmailNotifications() {
                 ["daily", "Once a day"],
               ]}
             />
-          </Setting>
+          </SettingRow>
         </>
       )}
-    </Card>
+    </SettingCard>
   );
 }
 

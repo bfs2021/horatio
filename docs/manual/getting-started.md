@@ -1,6 +1,6 @@
 # Getting started
 
-This part is for everyone: players, troupe staff and the custodian. It covers making an account, signing in, your account and settings, notifications, and the calendar link. To build your first character, go on to [Players](players.md) next.
+This part is for everyone: players, troupe staff and the custodian. It covers making an account, signing in, your account and preferences, notifications, and the calendar link. To build your first character, go on to [Players](players.md) next.
 
 ## Creating an account
 
@@ -36,7 +36,7 @@ The link works for a limited time. If nothing arrives after a few minutes, check
 
 ## Your account
 
-Choose your name at the right of the menu to open **Your account**. It has four tabs: **Profile**, **Lines and veils**, **Settings** and **This device**, which keeps your characters on your phone for games with no signal (see [Using Horatio at a game with no signal](players.md#using-horatio-at-a-game-with-no-signal)). **See your profile** at the top shows your [profile](glossary.md#profile) the way other people see it.
+Choose your name at the right of the menu to open **Your account**. It has five tabs: **Profile**, **Lines and veils**, **Preferences**, **Sign-in and email** and **This device**, which keeps your characters on your phone for games with no signal (see [Using Horatio at a game with no signal](players.md#using-horatio-at-a-game-with-no-signal)). **See your profile** at the top shows your [profile](glossary.md#profile) the way other people see it.
 
 ### Your profile
 
@@ -52,16 +52,6 @@ Choose **Save profile** when you're done. If you try to leave with changes not s
 
 ![The Profile tab, with display name, pronouns, bio, Discord username and social media links](images/getting-started/profile.png)
 
-### Your Discord account
-
-If the server has Discord set up, the **Discord account** card, under your profile, offers **Link my Discord**. Discord asks you to confirm, then tells Horatio your Discord username and nothing else. Your profile then shows that username, marked as confirmed by Discord, where a typed one is marked "typed, not checked". Staff can rely on it when they give you your character's Discord channel. Linking doesn't change how you sign in.
-
-While it's linked, your Discord username comes from Discord and can't be typed over. **Unlink Discord** forgets the link and keeps the username, unless Discord is your only way to sign in. A Discord account can be linked to only one Horatio account.
-
-### Your handle
-
-The **Handle** card, under your profile, changes your [handle](glossary.md#handle). Others see and find you by it, never by your email, and you can sign in with either. You can change it once in 30 days, and nobody else can take your old one for 90 days.
-
 ### Lines and veils
 
 The **Lines and veils** tab is where you tell your storytellers what you don't want in your games:
@@ -71,29 +61,43 @@ The **Lines and veils** tab is where you tell your storytellers what you don't w
 
 Write them in your own words, and choose **Save lines and veils**. The staff of the troupes you play in always see them. Other players see them, on the troupe's Who's Who, only if you tick **Share my lines and veils with other players in my troupes**. They are never public and never printed, and you never have to explain them.
 
-## Settings
+## Preferences
 
-The **Settings** tab of your account holds your notification emails, your email address and password, and how Horatio looks for you. Most settings take effect as soon as you choose, and a message says each change is saved. They're kept on your account, so they follow you to your phone at a game.
+The **Preferences** tab of your account holds how Horatio looks and behaves for you. Each takes effect as soon as you choose, and a message says it's saved. They're kept on your account, so they follow you to your phone at a game.
 
-![Settings: how ratings, paper, badges, dates and times show](images/getting-started/settings.png)
+![Preferences: how ratings, paper, badges, dates and times show](images/getting-started/settings.png)
 
+- **Appearance**: the **Theme**, and **Text size**, Normal or Large, everywhere but printed sheets and badges.
 - **Sheets**: show ratings as **Numbers** or **Pips**; the **Paper** printed sheets and badges are laid out for (US Letter or A4); and your **Badge size**.
 - **Dates and times**: your **Time zone** (leave it empty to follow your device), how **Dates** look (such as 20 Oct 2026), and a 12- or 24-hour **Clock**. Deadlines always show with their time zone, so players in other places agree on them.
 - **At game**: **Quick notes** (the Play View asks what each use was for), **Keep the screen awake** while the Play View is open, and which tab **The Play View opens on** (only the tabs your troupes have switched on).
-- **Appearance**: **Text size**, Normal or Large, everywhere but printed sheets and badges.
-- **Troupes**: whether a troupe's Who's Who shows you by your name or by your handle.
+- **Troupes**: whether a troupe's Who's Who shows you by your name or by your handle, and whether your troupes' news and announcements come to the bell.
+
+## Sign-in and email
+
+The **Sign-in and email** tab of your account holds how you sign in and what Horatio sends you: your email, your handle, your password, your Discord account and [which notifications come by email](#notifications-by-email).
 
 ### Changing your email
 
 The **Email** card shows the address you sign in with. To change it, choose **Change email**, give the new address and your password, and choose **Send the link**. Your email changes only when you open the link sent to the new address, within 7 days, and your old address is told. Until then you can **Send the link again** or **Cancel the change**. If the server can't send email, ask the custodian to change it for you.
 
+### Your handle
+
+The **Handle** card changes your [handle](glossary.md#handle). Others see and find you by it, never by your email, and you can sign in with either. You can change it once in 30 days, and nobody else can take your old one for 90 days.
+
 ### Changing your password
 
 In the **Password** card, give your **Current password** and a **New password** of at least 10 characters, then choose **Change password**. You stay signed in on this device, and are signed out on every other.
 
+### Your Discord account
+
+If the server has Discord set up, the **Discord account** card offers **Link my Discord**. Discord asks you to confirm, then tells Horatio your Discord username and nothing else. Your profile then shows that username, marked as confirmed by Discord, where a typed one is marked "typed, not checked". Staff can rely on it when they give you your character's Discord channel. Linking doesn't change how you sign in.
+
+While it's linked, your Discord username comes from Discord and can't be typed over. **Unlink Discord** forgets the link and keeps the username, unless Discord is your only way to sign in. A Discord account can be linked to only one Horatio account.
+
 ### When the custodian viewed as you
 
-To help with a question, the custodian can see Horatio exactly as you do, read-only, for up to 30 minutes, and must give a reason. If they ever have, a card on the Settings tab lists each time, when, and why.
+To help with a question, the custodian can see Horatio exactly as you do, read-only, for up to 30 minutes, and must give a reason. If they ever have, a card on the Sign-in and email tab lists each time, when, and why.
 
 ## Notifications
 
@@ -110,7 +114,7 @@ Choose any line to go straight to the page it's about. **Notification settings**
 
 ### Notifications by email
 
-The bell always has every notification. In **Settings**, under **Notifications by email**, you can also have each kind sent by email: choose **Bell only** or **Bell and email** for each of:
+The bell always has every notification. On **Sign-in and email**, under **Notifications by email**, you can also have each kind sent by email, by switching it on:
 
 | Kind | What it's about |
 | --- | --- |
@@ -124,7 +128,7 @@ The bell always has every notification. In **Settings**, under **Notifications b
 
 **Send emails** chooses **At once** or **Once a day**, which gathers them into one email at 8 am in your time zone. Every email has a link to stop that kind. If the server can't send email, the card says so, and notifications come only to the bell.
 
-![Notifications by email: a choice of bell only or bell and email for each kind](images/getting-started/email-notifications.png)
+![Notifications by email: a switch for each kind](images/getting-started/email-notifications.png)
 
 ## The calendar link
 

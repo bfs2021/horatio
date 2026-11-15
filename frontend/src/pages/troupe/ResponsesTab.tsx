@@ -74,17 +74,17 @@ export function ResponsesTab({ cycle }: { cycle: CycleOut }) {
       </div>
       {all.length > 0 && (
         <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-sm text-mist">
+          <label className="flex max-w-full flex-col gap-1 text-sm text-mist">
             Who has it
-            <Select className="w-auto" value={filter.assignee} onChange={(e) => setFilter({ assignee: e.target.value })}>
+            <Select className="w-auto max-w-full" value={filter.assignee} onChange={(e) => setFilter({ assignee: e.target.value })}>
               <option value="">Anyone</option>
               <AssigneeOptions staff={members} />
             </Select>
           </label>
           {questions.length > 1 && (
-            <label className="flex flex-col gap-1 text-sm text-mist">
+            <label className="flex max-w-full flex-col gap-1 text-sm text-mist">
               Question
-              <Select className="w-auto" value={filter.question} onChange={(e) => setFilter({ question: e.target.value })}>
+              <Select className="w-auto max-w-full" value={filter.question} onChange={(e) => setFilter({ question: e.target.value })}>
                 <option value="">Every question</option>
                 {questions.map((q) => (
                   <option key={q} value={q}>
@@ -95,9 +95,9 @@ export function ResponsesTab({ cycle }: { cycle: CycleOut }) {
             </label>
           )}
           {keywords.length > 1 && (
-            <label className="flex flex-col gap-1 text-sm text-mist">
+            <label className="flex max-w-full flex-col gap-1 text-sm text-mist">
               Keyword
-              <Select className="w-auto" value={filter.keyword} onChange={(e) => setFilter({ keyword: e.target.value })}>
+              <Select className="w-auto max-w-full" value={filter.keyword} onChange={(e) => setFilter({ keyword: e.target.value })}>
                 <option value="">Every keyword</option>
                 {keywords.map((k) => (
                   <option key={k} value={k}>
@@ -107,10 +107,10 @@ export function ResponsesTab({ cycle }: { cycle: CycleOut }) {
               </Select>
             </label>
           )}
-          <label className="flex flex-col gap-1 text-sm text-mist">
+          <label className="flex max-w-full flex-col gap-1 text-sm text-mist">
             Order
             <Select
-              className="w-auto"
+              className="w-auto max-w-full"
               value={inOrder ? "order" : "character"}
               onChange={(e) => {
                 setInOrder(e.target.value === "order");
@@ -273,7 +273,7 @@ function AssignSelected({ cycle, ids, staff, onDone }: { cycle: CycleOut; ids: s
         }}
       >
         <span className="text-sm text-parchment">{ids.length} selected</span>
-        <Select aria-label="Assign selected to" className="w-auto" required value={to} onChange={(e) => setTo(e.target.value)}>
+        <Select aria-label="Assign selected to" className="w-auto max-w-full" required value={to} onChange={(e) => setTo(e.target.value)}>
           <option value="" disabled>
             Assign to…
           </option>
@@ -302,7 +302,7 @@ function AssignSelect({ item, staff }: { item: WorkItemOut; staff: StaffMember[]
   );
   return (
     <>
-      <Select aria-label="Assign to" className="w-auto" value={assigneeOf(item)} onChange={(e) => assign.mutate(e.target.value)}>
+      <Select aria-label="Assign to" className="w-auto max-w-full" value={assigneeOf(item)} onChange={(e) => assign.mutate(e.target.value)}>
         <AssigneeOptions staff={staff} />
       </Select>
       {assign.error && <ErrorText error={assign.error} />}

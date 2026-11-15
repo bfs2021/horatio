@@ -29,7 +29,7 @@ import {
 const MAX_BYTES = 2 * 1024 * 1024;
 
 /**
- * Customise › Share settings (#521): the troupe's customisation, exported as a file
+ * Customise › Export and import (#521, named so in #905): the troupe's customisation, exported as a file
  * any storyteller can import, even on another Horatio; and importing a file, or
  * another troupe its storyteller runs, into this one, merging. Running staff export;
  * storytellers import.
@@ -40,7 +40,7 @@ export function ShareSettingsTab({ troupe, canImport }: { troupe: TroupeOut; can
       <p className="text-sm text-mist">
         Share this troupe's house rules, costs, wording and the rest of Customise with another troupe: start a new chronicle from these rules, or give them to another
         storyteller. An import merges: what matches is changed, the rest is added, and nothing else is reset or removed.{" "}
-        <Link to={manualLink("running-a-troupe", "customise-share-settings")} className="underline hover:text-parchment">
+        <Link to={manualLink("running-a-troupe", "customise-export-and-import")} className="underline hover:text-parchment">
           What is and isn't carried
         </Link>
       </p>

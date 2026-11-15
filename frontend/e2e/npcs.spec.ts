@@ -74,7 +74,7 @@ test("storytellers build an NPC quickly and give it a title", async ({ browser }
   await npcBadge.close();
   await p.getByRole("dialog").getByRole("button", { name: "Close" }).click();
 
-  // Titles are given on the troupe's Characters tab, where Everyone shows NPCs beside player characters.
+  // Titles are given on the troupe's Roster tab, where Everyone shows NPCs beside player characters.
   await (await topBar(p)).getByRole("link", { name: "Troupes" }).click();
   await p.getByRole("link", { name: troupeName }).click();
   await p.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "Characters", exact: true }).click();

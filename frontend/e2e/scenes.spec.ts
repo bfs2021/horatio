@@ -374,7 +374,7 @@ test("two storytellers share a troupe's named scenes: each pins, taps and sees t
   );
 });
 
-test("staff tag a scene with the setting's themes and moods, the Setting tab counts what each touches, and a player sees none of it (#880)", async ({ browser }) => {
+test("staff tag a scene with the setting's themes and moods, The setting tab counts what each touches, and a player sees none of it (#880)", async ({ browser }) => {
   const custodian = await person(browser, "scenetag-custodian");
   makeCustodian(custodian.email);
   const lead = await person(browser, "scenetag-lead");
@@ -412,7 +412,7 @@ test("staff tag a scene with the setting's themes and moods, the Setting tab cou
   await l.reload();
   await expect(l.getByRole("group", { name: "Themes and moods" })).toContainText("Betrayal");
 
-  // The Setting tab shows the staff what each touches, Rebirth nothing yet, and leads to the scene.
+  // The setting tab shows the staff what each touches, Rebirth nothing yet, and leads to the scene.
   await l.goto(`/troupes/${troupeId}/setting`);
   const touched = l.getByRole("list", { name: "Themes and moods touched" });
   await expect(touched.getByRole("listitem", { name: "Betrayal" })).toContainText("1 scene");

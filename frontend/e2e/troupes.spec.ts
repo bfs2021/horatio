@@ -56,7 +56,7 @@ test("a troupe changes what new characters start with and their downtime actions
   await expect(p.getByText("0 of 9 points")).toBeVisible();
 });
 
-test("Customise opens on Overview, a setup checklist, the features and the house rules that differ, and Checks come in folded groups that a search looks through (#377)", async ({ browser }) => {
+test("Customise opens on Setup, a setup checklist, the features and the house rules that differ, and Checks come in folded groups that a search looks through (#377)", async ({ browser }) => {
   const custodian = await person(browser, "tally-custodian");
   makeCustodian(custodian.email);
   const lead = await person(browser, "tally-lead");
@@ -66,7 +66,7 @@ test("Customise opens on Overview, a setup checklist, the features and the house
   expect(made.status(), await made.text()).toBe(201);
   const troupeId: string = (await made.json()).id;
 
-  // Customise opens on Overview: nothing is set up yet, and every rule plays as the book has it.
+  // Customise opens on Setup: nothing is set up yet, and every rule plays as the book has it.
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}`);
   await l.getByRole("link", { name: "Customise", exact: true }).click();
@@ -108,8 +108,8 @@ test("Customise opens on Overview, a setup checklist, the features and the house
   await expect(l.getByRole("button", { name: "House rules (1)" })).toBeVisible();
   await l.screenshot(shots("customise-checks"));
 
-  // Overview counts it.
-  await l.getByRole("link", { name: "Overview", exact: true }).click();
+  // Setup counts it.
+  await l.getByRole("link", { name: "Setup", exact: true }).click();
   await expect(steps.getByRole("link", { name: /^House rules\W+done/ })).toBeVisible();
   // The house rules now list Checks, linked into them.
   const differently = houseRules.getByRole("list", { name: "Played differently" });
@@ -670,10 +670,10 @@ test("players read the whole setting on its tab, in print, on the profile when s
   await rarity.getByRole("button", { name: "Save" }).click();
   await expect(rarity.getByText("uncommon (house rule: due to story)")).toBeVisible();
 
-  // Every member reads the whole document on the Setting tab.
+  // Every member reads the whole document on The setting tab.
   const p = player.page;
   await p.goto(`/troupes/${troupeId}`);
-  await p.getByRole("link", { name: "Setting", exact: true }).click();
+  await p.getByRole("link", { name: "The setting", exact: true }).click();
   await expect(p).toHaveURL(new RegExp(`/troupes/${troupeId}/setting$`));
   const doc = p.getByRole("article", { name: "Setting Style Document" });
   await expect(doc.getByRole("heading", { name: troupeName })).toBeVisible();
@@ -695,7 +695,7 @@ test("players read the whole setting on its tab, in print, on the profile when s
   // Printed, black on white, for the Storyteller table.
   await p.goto(`/print/setting/${troupeId}`);
   await expect(p.getByRole("heading", { name: troupeName })).toBeVisible();
-  await expect(p).toHaveTitle(`Print · Setting · ${troupeName} · Horatio`);
+  await expect(p).toHaveTitle(`Print · The setting · ${troupeName} · Horatio`);
 
   // On the profile only once the lead shows it there; a public profile shows it to anyone.
   await send(l, "PUT", `/api/troupes/${troupeId}/profile/public`, { public: true });
@@ -723,7 +723,7 @@ test("players read the whole setting on its tab, in print, on the profile when s
   await expect(p).toHaveURL(new RegExp(`/troupes/${troupeId}/setting$`));
 });
 
-test("a burst of changes to the setting rings one bell for the troupe's players, saying what changed and leading to the Setting tab (#881)", async ({ browser }) => {
+test("a burst of changes to the setting rings one bell for the troupe's players, saying what changed and leading to The setting tab (#881)", async ({ browser }) => {
   const custodian = await person(browser, "setbell-cust");
   makeCustodian(custodian.email);
   const lead = await person(browser, "setbell-lead");
@@ -789,7 +789,7 @@ test("staff keep a story bible beside the setting: their notes with the chronicl
   await send(l, "POST", `/api/troupes/${troupeId}/npcs`, { name: "Elder Ravel" });
   await send(l, "POST", `/api/troupes/${troupeId}/locations`, { name: "The Rookery", rating: 3, control: "named", controller_name: "The Sheriff" });
 
-  // An assistant storyteller finds it from the Setting tab, and writes two notes.
+  // An assistant storyteller finds it from The setting tab, and writes two notes.
   const a = assistant.page;
   await a.goto(`/troupes/${troupeId}/setting`);
   await a.getByRole("link", { name: "story bible", exact: true }).click();
@@ -2854,7 +2854,7 @@ test("Waiting on you shows the open cycle, a quest request and a backstory waiti
   await expect(sections.getByRole("link", { name: /^Downtimes/ }).getByLabel("1 waiting")).toBeVisible();
   await sections.getByRole("link", { name: /^Characters/ }).click();
   const characterTabs = l.getByRole("navigation", { name: "Characters", exact: true });
-  await expect(characterTabs.getByRole("link", { name: /^Characters/ }).getByLabel("1 waiting")).toBeVisible();
+  await expect(characterTabs.getByRole("link", { name: /^Roster/ }).getByLabel("1 waiting")).toBeVisible();
   // The roster marks the backstory, and the mark opens it.
   await l.getByRole("link", { name: "Backstory to read" }).filter({ visible: true }).click();
   await expect(l).toHaveURL(new RegExp(`/characters/${id}/backstory`));

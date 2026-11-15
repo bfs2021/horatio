@@ -136,7 +136,7 @@ def test_a_player_says_who_represents_a_character_of_a_clan_without_a_seat(
         e["message"] for e in log
     ]
 
-    # The Characters tab shows it for a character of a clan without a seat.
+    # The Roster tab shows it for a character of a clan without a seat.
     roster = troupe.storyteller.client.get(f"/troupes/{troupe.id}/characters").json()
     assert {e["character_name"]: (e["seated"], e["represented_by"]) for e in roster} == {
         "Bruno": (True, None),

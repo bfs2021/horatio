@@ -41,7 +41,7 @@ export function troupeTabGroups(t: TroupeTabsTroupe, can: ReturnType<typeof abil
         // About and Profile in one (#781): the old profile address comes here.
         { to: base, label: "Overview", end: true },
         // The Setting Style Document, for everyone to read before they build (#771).
-        { to: `${base}/setting`, label: "Setting" },
+        { to: `${base}/setting`, label: "The setting" },
         // Its staff-only companion (#879).
         ...(can.running && live ? [{ to: `${base}/story-bible`, label: "Story bible" }] : []),
         ...(t.whos_who ? [{ to: `${base}/whos-who`, label: "Who's Who" }] : []),
@@ -62,7 +62,7 @@ export function troupeTabGroups(t: TroupeTabsTroupe, can: ReturnType<typeof abil
       tabs: [
         ...(can.running ? [{ to: `${base}/approvals`, label: "Approvals", count: counts.approvals }] : []),
         ...(can.running && live ? [{ to: `${base}/being-built`, label: "Being built", count: counts.building ?? 0, countLabel: "being built", countInGroup: false }] : []),
-        ...(can.running ? [{ to: `${base}/characters`, label: "Characters", count: counts.characters }] : []),
+        ...(can.running ? [{ to: `${base}/characters`, label: "Roster", count: counts.characters }] : []),
         ...(can.running ? [{ to: `${base}/players`, label: "Players" }] : []),
         ...(can.staff ? [{ to: `${base}/lines-veils`, label: "Lines and veils" }] : []),
       ],
@@ -81,7 +81,7 @@ export function troupeTabGroups(t: TroupeTabsTroupe, can: ReturnType<typeof abil
       label: "Court",
       tabs: [
         ...(can.running ? [{ to: `${base}/titles`, label: "Titles" }] : []),
-        ...(can.running || (t.whos_who && t.court_history_players) ? [{ to: `${base}/court`, label: "Court" }] : []),
+        ...(can.running || (t.whos_who && t.court_history_players) ? [{ to: `${base}/court`, label: "Court over time" }] : []),
         ...(can.running || (t.whos_who && t.chronicle_players) ? [{ to: `${base}/chronicle`, label: "Chronicle" }] : []),
         ...(can.running && t.boons ? [{ to: `${base}/boons`, label: "Boons" }] : []),
         ...(can.running && bonds ? [{ to: `${base}/bonds`, label: "Bonds" }] : []),
@@ -111,13 +111,13 @@ export function troupeTabGroups(t: TroupeTabsTroupe, can: ReturnType<typeof abil
     {
       label: "Customise",
       tabs: [
-        ...(can.running ? [{ to: `${base}/customise`, label: "Overview" }] : []),
+        ...(can.running ? [{ to: `${base}/customise`, label: "Setup" }] : []),
         ...(can.running ? [{ to: `${base}/settings`, label: "Troupe settings" }] : []),
         ...(can.running ? [houseRules] : []),
         ...(can.running ? [{ to: `${base}/specializations`, label: "Specialisations" }] : []),
         ...(can.running ? [{ to: `${base}/news-agencies`, label: "News agencies" }] : []),
         ...(can.running ? [{ to: `${base}/connectors`, label: "Connectors" }] : []),
-        ...(can.running ? [{ to: `${base}/share`, label: "Share settings" }] : []),
+        ...(can.running ? [{ to: `${base}/share`, label: "Export and import" }] : []),
       ],
     },
   ];

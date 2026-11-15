@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { MotifTagOut, SettingEntryOut } from "../../api/types";
 import { Badge, Button, Card, ErrorText, Loading } from "../../components/ui";
+import { troupeSettings } from "./features";
 import { useSetting } from "./SettingDocument";
 import { toggled, touchedText } from "./motifTags";
 
@@ -67,7 +68,7 @@ function TagPicker({
       {themes.length + moods.length === 0 ? (
         <p className="text-mist">
           The troupe's setting has no themes or moods yet. Write them under{" "}
-          <Link to={`/troupes/${troupeId}/settings`} className="underline hover:text-parchment">
+          <Link to={`/troupes/${troupeId}/${troupeSettings("setting")}`} className="underline hover:text-parchment">
             Troupe settings
           </Link>
           .

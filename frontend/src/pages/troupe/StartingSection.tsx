@@ -11,6 +11,7 @@ import { Badge, Button, Card, ErrorText, Field, Input, Loading } from "../../com
 import { useRulesAction } from "../../hooks";
 import { ClanRarity } from "./ClanRarity";
 import { DefaultBloodlines } from "./DefaultBloodlines";
+import { troupeSettings } from "./features";
 import { useHouseSplat } from "./HouseSplat";
 
 /**
@@ -50,9 +51,17 @@ export function StartingSection({ troupeId, canEdit }: { troupeId: string; canEd
       <ClanRarity troupeId={troupeId} canEdit={canEdit} />
       <DefaultBloodlines troupeId={troupeId} canEdit={canEdit} />
       <p className="text-sm text-mist">
-        Starting XP, the XP floor and ceiling, blood at the start of a game, diablerie and Golconda are under{" "}
-        <Link to={`/troupes/${troupeId}/settings`} className="underline hover:text-parchment">
-          Troupe settings
+        Starting XP and the XP floor and ceiling are in Troupe settings, under{" "}
+        <Link to={`/troupes/${troupeId}/${troupeSettings("xp")}`} className="underline hover:text-parchment">
+          XP
+        </Link>
+        ; blood at the start of a game and diablerie under{" "}
+        <Link to={`/troupes/${troupeId}/${troupeSettings("blood")}`} className="underline hover:text-parchment">
+          Blood, diablerie and feeding
+        </Link>
+        ; Golconda in its{" "}
+        <Link to={`/troupes/${troupeId}/${troupeSettings()}`} className="underline hover:text-parchment">
+          Features
         </Link>
         .
       </p>

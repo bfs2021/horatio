@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { backstoryOptional, characterTab, inSteps, choosePick, choosePicks, closeContextsAfterEach, makeCustodian, openNewTroupe, openSlot, person, pickedAt, run, shots, switchFeature, topBar, troupeTab, expectTabOpen, expectTabCount, isPhone, openSections, pagePart } from "./support";
+import { backstoryOptional, characterTab, inSteps, choosePick, choosePicks, closeContextsAfterEach, makeCustodian, openNewTroupe, openSlot, person, pickedAt, run, shots, switchFeature, topBar, troupeTab, expectTabOpen, expectTabCount, isPhone, openSections, pagePart, settingsPart } from "./support";
 
 /** Downtime: a troupe's whole month, and feeding in a downtime. */
 
@@ -2178,8 +2178,8 @@ async function feedingTroupe(custodian: Person, lead: Person, player: Person, tr
   return { lead: lead.page, player: player.page, troupe: troupe.id as string, bram, agnes, cycle: cycle.id as string, send, open };
 }
 
-/** The Feeding card of Troupe settings. */
-const feedingCard = (page: Page) => page.getByRole("group", { name: "Feeding", exact: true });
+/** The Feeding card of Troupe settings, in its Blood, diablerie and feeding part (#908). */
+const feedingCard = (page: Page) => page.locator("#feature-feeding");
 
 test("a troupe that doesn't track feeding sees none of it, and switching it back on brings back what was recorded", async ({ browser }) => {
   const people = [await person(browser, "dtoff-custodian"), await person(browser, "dtoff-lead"), await person(browser, "dtoff-player")] as const;
@@ -2198,6 +2198,10 @@ test("a troupe that doesn't track feeding sees none of it, and switching it back
 
   // The lead switches feeding off in the Features list of Troupe settings; its options wait for it.
   await switchFeature(l, troupe, "Feeding", false);
+  // Its row's Settings link lands on its card, in the part of Troupe settings it is in now (#908).
+  await l.getByRole("list", { name: "Features" }).getByRole("link", { name: "Settings for Feeding" }).click();
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupe}/settings/blood#feature-feeding$`));
+  await expect(feedingCard(l)).toBeInViewport();
   await expect(feedingCard(l).getByRole("switch", { name: /^Blood Resonance/ })).toBeDisabled();
   await l.screenshot(shots("settings-feeding-off"));
   await l.goto(`/troupes/${troupe}/house-rules`);
@@ -2240,7 +2244,7 @@ test("with Blood Resonance, the player hunts for a humor and staff answer with t
   const people = [await person(browser, "dtres-custodian"), await person(browser, "dtres-lead"), await person(browser, "dtres-player")] as const;
   const { lead: l, player: b, troupe, bram, cycle, send } = await feedingTroupe(...people, `Humoral Court ${run}`);
 
-  await l.goto(`/troupes/${troupe}/settings`);
+  await settingsPart(l, troupe, "blood");
   await feedingCard(l).getByRole("switch", { name: /^Blood Resonance/ }).click();
   await expect(feedingCard(l).getByRole("switch", { name: /^Blood Resonance/ })).toBeChecked();
   await expect(l.getByText("Blood Resonance: on.")).toBeVisible();
@@ -2372,7 +2376,7 @@ test("feeding territories: a holder patrols hers, a poacher is caught there, and
   const a = holder.page;
 
   // The lead switches feeding territories on and assigns the Docks to Agnes.
-  await l.goto(`/troupes/${troupe}/settings`);
+  await settingsPart(l, troupe, "blood");
   await feedingCard(l).getByRole("switch", { name: /^Feeding territories/ }).click();
   await expect(feedingCard(l).getByRole("switch", { name: /^Feeding territories/ })).toBeChecked();
   const territories = l.locator("section").filter({ has: l.getByRole("heading", { name: "Feeding territories" }) });
@@ -2441,7 +2445,7 @@ test("with the Rack, staff lay out the cycle's vessels and a player takes one in
   const { lead: l, player: b, troupe, bram, cycle, send } = await feedingTroupe(...people, `Rack Court ${run}`);
 
   // The Rack needs Blood Resonance: it is offered once that is on.
-  await l.goto(`/troupes/${troupe}/settings`);
+  await settingsPart(l, troupe, "blood");
   const rackBox = feedingCard(l).getByRole("switch", { name: /^The Rack/ });
   await expect(rackBox).toBeDisabled();
   await feedingCard(l).getByRole("switch", { name: /^Blood Resonance/ }).click();

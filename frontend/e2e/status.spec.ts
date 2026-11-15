@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { closeContextsAfterEach, run, shots, person, makeCustodian, backstoryOptional, characterTab, builtVampire, ATTRIBUTES_AND_FOCUSES, switchFeature, troupeTab, tabSettings } from "./support";
+import { closeContextsAfterEach, run, shots, person, makeCustodian, backstoryOptional, characterTab, builtVampire, ATTRIBUTES_AND_FOCUSES, switchFeature, troupeTab, tabSettings, settingsPart } from "./support";
 
 /** Status and titles, on the sheet, on badges and at a game. */
 
@@ -82,7 +82,7 @@ test("a player keeps their own sect status, naming its patron from the home trou
 
   // The lead gives status to staff only, in the troupe's settings.
   const l = lead.page;
-  await l.goto(`/troupes/${troupeId}/settings`);
+  await settingsPart(l, troupeId, "status");
   const setting = l.locator("section").filter({ has: l.getByRole("heading", { name: "Status on sheets" }) });
   await expect(setting.getByRole("radio", { name: "Players keep their own" })).toBeChecked();
   await setting.getByLabel(/Staff only/).click();
@@ -245,11 +245,13 @@ test("a troupe names the Gangrel a pillar clan in Customise, and the Camarilla's
   await expect(card.getByText("Fleeting: 0 of 3")).toBeVisible();
 
   // The lead ticks the Gangrel among the Camarilla's pillar clans, in the troupe's settings.
-  await l.goto(`/troupes/${troupeId}/settings`);
+  await settingsPart(l, troupeId, "status");
   const setting = l.locator("section").filter({ has: l.getByRole("heading", { name: "Status bans on clans" }) });
   const pillars = setting.getByRole("region", { name: "Camarilla: Pillar clans" });
   await expect(pillars).toContainText("Not Embraced into a pillar clan: Banu Haqim, Malkavian, Nosferatu, Toreador, Tremere or Ventrue.");
-  await pillars.getByText("Choose the clans").click();
+  // Its tick boxes are folded until asked for (#908).
+  await expect(pillars.getByLabel("Brujah", { exact: true })).toBeHidden();
+  await pillars.getByText("Change the clans").click();
   await expect(pillars.getByLabel("Brujah", { exact: true })).not.toBeChecked();
   await pillars.getByLabel("Gangrel", { exact: true }).click();
   await expect(pillars.getByLabel("Gangrel", { exact: true })).toBeChecked();
@@ -262,8 +264,8 @@ test("a troupe names the Gangrel a pillar clan in Customise, and the Camarilla's
   await expect(pillarBan).toContainText("does not apply");
 
   // The core book's list, a preset, keeps the Gangrel out and the Brujah in.
-  await l.goto(`/troupes/${troupeId}/settings`);
-  await pillars.getByText("Choose the clans").click();
+  await settingsPart(l, troupeId, "status");
+  await pillars.getByText("Change the clans").click();
   await pillars.getByRole("button", { name: "As the core book (2013)" }).click();
   await expect(pillars.getByLabel("Brujah", { exact: true })).toBeChecked();
   await expect(pillars.getByLabel("Gangrel", { exact: true })).not.toBeChecked();

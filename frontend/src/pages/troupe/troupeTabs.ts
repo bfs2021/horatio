@@ -68,11 +68,12 @@ export function troupeTabGroups(t: TroupeTabsTroupe, can: ReturnType<typeof abil
       ],
     },
     {
-      // Running a game night: Scenes opens the scenes page, outside the troupe's tabs.
+      // Running a game night: Scenes opens the scenes page, outside the troupe's tabs,
+      // and says so (#922).
       label: "Games",
       tabs: [
         ...(can.running ? [{ to: `${base}/play`, label: "At game" }] : []),
-        ...(can.running ? [{ to: `/play/troupes/${t.id}/scenes`, label: "Scenes" }] : []),
+        ...(can.running ? [{ to: `/play/troupes/${t.id}/scenes`, label: "Scenes ↗", ariaLabel: "Scenes (opens the scenes page)" }] : []),
         ...(can.running ? [{ to: `${base}/xp`, label: "Award XP" }] : []),
       ],
     },

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { Link, useLocation, useParams, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
+import { BackToTop } from "../../components/BackToTop";
 import { Card, Input, Notice, PageTitle } from "../../components/ui";
 import { useMe } from "../../hooks";
 import { helpPath } from "../../manualLink";
@@ -26,7 +27,12 @@ function useYourPart(): string {
 export function HelpPage() {
   const { page = CONTENTS } = useParams();
   const found = MANUAL.pages.get(page);
-  return <div className="help-page">{!found ? <NoSuchPage name={page} /> : page === CONTENTS ? <Contents page={found} /> : <Topic page={found} />}</div>;
+  return (
+    <div className="help-page">
+      {!found ? <NoSuchPage name={page} /> : page === CONTENTS ? <Contents page={found} /> : <Topic page={found} />}
+      <BackToTop />
+    </div>
+  );
 }
 
 /** Scroll to the heading the address names, on opening the page and whenever the `#` changes.

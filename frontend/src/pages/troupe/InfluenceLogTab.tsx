@@ -8,6 +8,7 @@ import { EmptyState, FilterBar } from "../../components/EmptyState";
 import { InfoButton } from "../../components/InfoButton";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Notice, PageTabs, Select } from "../../components/ui";
 import { useConfirm } from "../../components/ConfirmDialog";
+import { useWidePage } from "../../components/widePage";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { TYPE_NAMES } from "../../influence";
@@ -28,6 +29,7 @@ const InfluenceCharts = lazy(() => import("./InfluenceCharts").then((m) => ({ de
  * assistants, and the effects targeted actions have made. Players never see it.
  */
 export function InfluenceLogTab({ troupeId }: { troupeId: string }) {
+  useWidePage();
   const base = `/troupes/${troupeId}/influence`;
   return (
     <>

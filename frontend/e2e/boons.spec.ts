@@ -588,7 +588,7 @@ test("staff write a passage of story on a side of a boon, cut to a line, and its
   await expect(p.locator(`[id="${await more.getAttribute("aria-controls")}"]`)).toHaveText(story);
 });
 
-test("staff export the ledger from its ⋯ menu: this view or the whole ledger, as a CSV file or a spreadsheet (#986)", async ({ browser }) => {
+test("staff export the ledger from its ⋯ menu: this view or the whole ledger, as a CSV file or a spreadsheet, or a workbook (#986, #988)", async ({ browser }) => {
   const custodian = await person(browser, "bexport-custodian");
   makeCustodian(custodian.email);
   const lead = await person(browser, "bexport-lead");
@@ -636,11 +636,17 @@ test("staff export the ledger from its ⋯ menu: this view or the whole ledger, 
   const book = await readFile(await whole.path());
   expect(book.subarray(0, 2).toString()).toBe("PK");
 
+  // The whole ledger as a workbook shaped like the old sheet (#988).
+  const workbook = await exported("Whole ledger as a workbook");
+  expect(workbook.suggestedFilename()).toMatch(/^debts-exported-.*-boon-ledger-\d{4}-\d{2}-\d{2}\.xlsx$/);
+  expect((await readFile(await workbook.path())).subarray(0, 2).toString()).toBe("PK");
+
   // Each export is in the troupe's log.
   const log = await (await l.request.get(`/api/troupes/${troupe.id}/log`)).json();
   const messages = log.map((e: { message: string }) => e.message);
   expect(messages).toContain("bexport-lead exported part of the boon ledger as a CSV file (1 boon).");
   expect(messages).toContain("bexport-lead exported the whole boon ledger as a spreadsheet (2 boons).");
+  expect(messages).toContain("bexport-lead exported the whole boon ledger as a workbook (2 boons).");
 });
 
 test("where the troupe lets them, the Harpy exports the ledger as they see it, and lets a Lesser Harpy export it too (#987)", async ({ browser }) => {

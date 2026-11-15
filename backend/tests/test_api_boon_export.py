@@ -374,3 +374,185 @@ def test_a_lesser_harpy_exports_only_if_the_harpy_lets_them(talons: Talons) -> N
     assert export(talons, by=iris).status_code == 403
     assert talons.ledgers(talons.iris, iris)[0]["can_export"] is False
     assert ok(talons.harpy_player.client.get(talons.talons))["exports"] is False
+
+
+# --- the workbook shaped like the old sheet (#988) ----------------------------------------
+
+TABS = ["Master", "Active", "Departed", "Settled", "Flagged"]
+GREEN, RED = "FFD9EAD3", "FFF4CCCC"
+
+
+def workbook(court: Court, by: Person | None = None) -> openpyxl.Workbook:
+    response = (by or court.troupe.storyteller).client.get(
+        f"/troupes/{court.troupe.id}/boon-workbook"
+    )
+    assert response.status_code == 200, response.text
+    assert response.headers["content-type"].startswith(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    today = datetime.now(UTC).date().isoformat()
+    assert f'-boon-ledger-{today}.xlsx"' in response.headers["content-disposition"]
+    return openpyxl.load_workbook(io.BytesIO(response.content))
+
+
+def lines(sheet: Any) -> list[dict[str, Any]]:
+    """The tab's first table by column, after checking its header is bold and frozen
+    with a filter over the whole table."""
+    header = [c.value for c in sheet[1]]
+    found: list[dict[str, Any]] = []
+    for cells in sheet.iter_rows(min_row=2):
+        if cells[0].value is None:
+            break
+        found.append({h: c for h, c in zip(header, cells, strict=False) if h is not None})
+    assert all(c.font.bold for c in sheet[1] if c.value is not None)
+    assert sheet.freeze_panes == "A2"
+    last = sheet.cell(row=1, column=len([h for h in header if h is not None])).column_letter
+    assert sheet.auto_filter.ref == f"A1:{last}{len(found) + 1}"
+    return found
+
+
+def values(line: dict[str, Any]) -> dict[str, Any]:
+    return {h: c.value for h, c in line.items()}
+
+
+def tint(line: dict[str, Any]) -> str | None:
+    fill = line["Owed By"].fill
+    return fill.start_color.rgb if fill.fill_type == "solid" else None
+
+
+def sheet_ledger(gone: Gone) -> dict[str, Any]:
+    """Gone's ledger, with a settled boon, a void one, one flagged by hand and one to
+    a name only (flagged by Horatio), after Bram, Cosima and Dario leave."""
+    settled = gone.one(gone.vidal, gone.agnes, kind="minor")
+    assert gone.act(settled, "settle", how="forgiven").status_code == 200
+    voided = gone.one(gone.agnes, gone.vidal, kind="blood")
+    assert gone.act(voided, "void", note="Entered twice").status_code == 200
+    by_hand = gone.one(gone.agnes, gone.vidal, kind="trivial", reason="A favour at Elysium")
+    ok(
+        gone.troupe.storyteller.client.post(
+            f"{gone.path}/{by_hand['id']}/flags", json={"note": "Check the night"}
+        ),
+        201,
+    )
+    named_only = gone.one(gone.vidal, named("Lucien of Paris"), kind="major")
+    gone.leave_three_ways()
+    return {"settled": settled, "void": voided, "by_hand": by_hand, "named": named_only}
+
+
+def test_the_workbook_has_the_sheets_tabs_as_the_ledger_counts_them(gone: Gone) -> None:
+    made = sheet_ledger(gone)
+
+    book = workbook(gone)
+
+    assert book.sheetnames == [*TABS, "Standings"]
+    tabs = {name: lines(book[name]) for name in TABS}
+    counts = gone.ledger("all")["counts"]
+    assert len(tabs["Master"]) == counts["all"] == 7
+    assert len(tabs["Active"]) == counts["open"]
+    assert len(tabs["Departed"]) == counts["departed"]
+    assert len(tabs["Settled"]) == counts["settled"] == 1
+    assert len(tabs["Flagged"]) == gone.ledger("all", flagged=True)["total"] == 2
+    # The export's columns, newest first, as the CSV file has them.
+    assert [c.value for c in book["Master"][1]] == HEADER
+    exported = rows(export(gone))
+    assert [line["ID"].value for line in tabs["Master"]] == [r["ID"] for r in exported]
+    # Each view's tab holds the boons its view does.
+    for tab, view in (("Active", "open"), ("Departed", "departed"), ("Settled", "settled")):
+        listed = {b["id"] for b in gone.ledger(view)["boons"]}
+        assert {line["ID"].value for line in tabs[tab]} == listed
+    # Settled green, naming someone gone pale red, the rest untinted.
+    assert [tint(line) for line in tabs["Settled"]] == [GREEN]
+    assert {tint(line) for line in tabs["Departed"]} == {RED}
+    assert {tint(line) for line in tabs["Active"]} == {None}
+    assert all(c.fill.start_color.rgb == RED for c in tabs["Departed"][0].values())
+    # The flagged, with what each flag says.
+    assert [c.value for c in book["Flagged"][1]] == [*HEADER, "Flag Comment"]
+    flagged = {line["ID"].value: values(line) for line in tabs["Flagged"]}
+    assert flagged.keys() == {made["by_hand"]["id"], made["named"]["id"]}
+    assert flagged[made["by_hand"]["id"]]["Flag"] == "Flagged"
+    assert flagged[made["by_hand"]["id"]]["Flag Comment"] == "Check the night"
+    assert flagged[made["named"]["id"]]["Flag"] == "Name not linked"
+    assert flagged[made["named"]["id"]]["Flag Comment"]
+    assert "storyteller exported the whole boon ledger as a workbook (7 boons)." in (
+        gone.messages()
+    )
+
+
+def test_the_standings_tab_is_the_standings(gone: Gone) -> None:
+    sheet_ledger(gone)
+    weights = ok(
+        gone.troupe.storyteller.client.put(
+            f"/troupes/{gone.troupe.id}/boon-weights",
+            json={"trivial": 1, "minor": 2, "major": 4, "blood": 6, "life": 12},
+        )
+    )
+    assert weights["minor"] == 2
+
+    sheet = workbook(gone)["Standings"]
+
+    standings = ok(gone.standings())
+    places = [values(line) for line in lines(sheet)]
+    assert [c.value for c in sheet[1]] == [
+        "Character",
+        "Status",
+        "Owes",
+        "Owes Weight",
+        "Owed",
+        "Owed Weight",
+        "Net",
+    ]
+    assert len(places) == len(standings["characters"])
+    assert [(p["Character"], p["Owes"], p["Owed"], p["Net"]) for p in places] == [
+        (s["who"]["name"], s["owes_count"], s["owed_count"], s["net"])
+        for s in standings["characters"]
+    ]
+    # Every boon owed is a boon in the Active tab.
+    assert sum(p["Owes"] for p in places) == gone.ledger("all")["counts"]["open"]
+    # Then, after an empty row, the open boons by kind with the troupe's weights.
+    below = len(places) + 3
+    assert [c.value for c in sheet[below]][:4] == ["Type", "Weight", "Open Boons", "Total Weight"]
+    assert sheet[below][0].font.bold
+    kinds = [[c.value for c in sheet[below + 1 + i]][:4] for i in range(5)]
+    assert kinds == [
+        [k["kind"].capitalize(), k["weight"], k["count"], k["total"]] for k in standings["by_kind"]
+    ]
+    assert [k[1] for k in kinds] == [1, 2, 4, 6, 12]
+
+
+def test_the_harpy_s_workbook_holds_only_what_they_see(gone: Gone) -> None:
+    sheet_ledger(gone)
+    harpy = gone.harpy_player
+    ok(gone.access("full"))
+    path = f"/troupes/{gone.troupe.id}/boon-workbook"
+    # Not until the troupe lets them export.
+    assert harpy.client.get(path).status_code == 403
+    for person in (gone.troupe.player, gone.troupe.narrator):
+        assert person.client.get(path).status_code == 403
+    ok(harpy_export(gone, True))
+
+    book = workbook(gone, by=harpy)
+
+    # No Standings unless the troupe lets them read them.
+    assert book.sheetnames == TABS
+    assert [c.value for c in book["Master"][1]] == HARPY_HEADER
+    assert [c.value for c in book["Flagged"][1]] == [*HARPY_HEADER, "Flag Comment"]
+    master = [values(line) for line in lines(book["Master"])]
+    assert {r["ID"] for r in master} == {b["id"] for b in gone.ledger("all", by=harpy)["boons"]}
+    # Who has left as the court knows it: Cosima's Final Death isn't known.
+    departed = lines(book["Departed"])
+    assert sorted(line["Owed By"].value for line in departed) == ["Bram", "Dario"]
+    assert len(departed) == gone.ledger("all", by=harpy)["counts"]["departed"]
+    cosima = next(line for line in lines(book["Active"]) if line["Owed By"].value == "Cosima")
+    assert tint(cosima) is None
+    assert "harpy-688 as Hestia exported the whole boon ledger as a workbook (7 boons)." in (
+        gone.messages()
+    )
+
+    ok(gone.option("full", True))
+
+    book = workbook(gone, by=harpy)
+    assert book.sheetnames == [*TABS, "Standings"]
+    theirs = ok(gone.standings(by=harpy))
+    places = {line["Character"].value: values(line) for line in lines(book["Standings"])}
+    assert places.keys() == {s["who"]["name"] for s in theirs["characters"]}
+    assert places["Cosima"]["Status"] == "Active"

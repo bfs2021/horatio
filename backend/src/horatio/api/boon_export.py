@@ -1,7 +1,8 @@
 """Exporting the boon ledger (#986, horatio.boon_export): its boons, or those in one view
 narrowed as the ledger narrows them, as a CSV file or a spreadsheet, for the troupe's
 running staff; and for its Harpy, as their character, where the troupe lets them, and a
-Lesser Harpy the Harpy lets (#987). Each export goes in the troupe's log."""
+Lesser Harpy the Harpy lets (#987); or the whole ledger as a workbook shaped like the
+troupe's old sheet (#988). Each export goes in the troupe's log."""
 
 import uuid
 from dataclasses import replace
@@ -13,7 +14,15 @@ from fastapi import APIRouter, Query, Response
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 
-from horatio import audit, boon_export, boon_ledger, boonbreakers, boons, preferences
+from horatio import (
+    audit,
+    boon_export,
+    boon_ledger,
+    boon_standings,
+    boonbreakers,
+    boons,
+    preferences,
+)
 from horatio.api.boons import (
     BoonOut,
     BoonPartyOut,
@@ -28,15 +37,17 @@ from horatio.api.boons import (
     users_of,
 )
 from horatio.auth.deps import CurrentUser, DbSession
-from horatio.boon_export import Cell, yes
+from horatio.boon_export import Cell, Tab, Table, yes
 from horatio.boon_harpy import Keeper
 from horatio.models import Boon, ScheduledGame, Troupe, User
 
 router = APIRouter(tags=["boons"])
 
 Format = Literal["csv", "xlsx"]
-# How the log names each format.
-FORMAT_NAMES = {"csv": "a CSV file", "xlsx": "a spreadsheet"}
+# How the log names each format, and the workbook shaped like the old sheet (#988).
+FORMAT_NAMES = {"csv": "a CSV file", "xlsx": "a spreadsheet", "workbook": "a workbook"}
+# The workbook's tabs of boons in one of the ledger's views, as the sheet named them.
+VIEW_TABS = (("Active", "open"), ("Departed", "departed"), ("Settled", "settled"))
 
 
 def zone_of(user: User) -> ZoneInfo:
@@ -102,6 +113,60 @@ def row(shown: BoonOut, known: boon_export.Known, game_id: uuid.UUID | None) -> 
     }
 
 
+def logged(
+    db: DbSession,
+    user: User,
+    troupe: Troupe,
+    keeper: Keeper,
+    count: int,
+    format_name: str,
+    filtered: bool,
+) -> None:
+    """The export in the troupe's log: who, as whom, how much and in what form."""
+    audit.record(
+        db,
+        user,
+        "boon.exported",
+        troupe_id=troupe.id,
+        acting=f" as {keeper.character.name}" if keeper.character is not None else "",
+        count=count,
+        format=format_name,
+        filtered=filtered,
+        what="part of the boon ledger" if filtered else "the whole boon ledger",
+        shown=f"{count} boon{'' if count == 1 else 's'}",
+    )
+
+
+def shown(
+    db: DbSession, user: User, troupe: Troupe, keeper: Keeper, found: list[Boon]
+) -> list[dict[str, Cell]]:
+    """The boons as rows by column (`row`), each as the ledger's list gives it to
+    `keeper` (horatio.api.boons.troupe_boons), with its flags and its game (staff's)."""
+    games = {b.game_id for b in found} - {None} if keeper.staff else set()
+    known = boon_export.Known(
+        flags=boon_export.flags_of(db, (b.id for b in found)),
+        games={
+            g.id: g.starts_at
+            for g in db.scalars(select(ScheduledGame).where(ScheduledGame.id.in_(games)))
+        }
+        if games
+        else {},
+        zone=zone_of(user),
+    )
+    characters = characters_of(db, found)
+    users = users_of(db, (b.submitted_by for b in found))
+    disgraced = standing_disgraced(db, found)
+    marks = boonbreakers.marked(db, troupe.id)
+    return [
+        row(
+            boon_out(b, characters, users, disgraced, keeper=keeper, marked=marks),
+            known,
+            b.game_id,
+        )
+        for b in found
+    ]
+
+
 @router.get(
     "/troupes/{troupe_id}/boon-export",
     response_class=Response,
@@ -153,51 +218,13 @@ def export_boons(
     )
     order = direction or ("desc" if sort == "date" else "asc")
     found = chosen(db, troupe, keeper, view, filters, sort, order)
-    games = {b.game_id for b in found} - {None} if keeper.staff else set()
-    zone = zone_of(user)
-    known = boon_export.Known(
-        flags=boon_export.flags_of(db, (b.id for b in found)),
-        games={
-            g.id: g.starts_at
-            for g in db.scalars(select(ScheduledGame).where(ScheduledGame.id.in_(games)))
-        }
-        if games
-        else {},
-        zone=zone,
-    )
-    # As the ledger's list has them (horatio.api.boons.troupe_boons).
-    characters = characters_of(db, found)
-    users = users_of(db, (b.submitted_by for b in found))
-    disgraced = standing_disgraced(db, found)
-    marks = boonbreakers.marked(db, troupe.id)
     columns = boon_export.header(keeper.staff)
-    rows = [
-        [cells[c] for c in columns]
-        for cells in (
-            row(
-                boon_out(b, characters, users, disgraced, keeper=keeper, marked=marks),
-                known,
-                b.game_id,
-            )
-            for b in found
-        )
-    ]
+    rows = [[cells[c] for c in columns] for cells in shown(db, user, troupe, keeper, found)]
     # Narrowed by anything at all: kinds are a list, so compared on their own.
     filtered = view != "all" or bool(kind) or replace(filters, kinds=()) != boon_ledger.Filters()
-    audit.record(
-        db,
-        user,
-        "boon.exported",
-        troupe_id=troupe.id,
-        acting=f" as {keeper.character.name}" if keeper.character is not None else "",
-        count=len(rows),
-        format=FORMAT_NAMES[file_format],
-        filtered=filtered,
-        what="part of the boon ledger" if filtered else "the whole boon ledger",
-        shown=f"{len(rows)} boon{'' if len(rows) == 1 else 's'}",
-    )
+    logged(db, user, troupe, keeper, len(rows), FORMAT_NAMES[file_format], filtered)
     db.commit()
-    today = datetime.now(UTC).astimezone(zone).date()
+    today = datetime.now(UTC).astimezone(zone_of(user)).date()
     headers = {
         "Content-Disposition": "attachment; filename="
         f'"{boon_export.file_name(troupe.name, today, file_format)}"'
@@ -209,4 +236,115 @@ def export_boons(
         )
     return Response(
         boon_export.workbook(rows, staff=keeper.staff), media_type=media, headers=headers
+    )
+
+
+def ids_in(
+    db: DbSession,
+    troupe: Troupe,
+    view: str,
+    left: frozenset[uuid.UUID],
+    filters: boon_ledger.Filters | None = None,
+) -> set[uuid.UUID]:
+    """The troupe's boons in one of the ledger's views (horatio.boon_ledger), given who
+    is gone, narrowed by `filters`."""
+    where = boon_ledger.narrowing(troupe.id, filters or boon_ledger.Filters())
+    return set(db.scalars(select(Boon.id).where(*where, boon_ledger.in_view(view, left))))
+
+
+def standings_tab(db: DbSession, user: User, troupe: Troupe) -> Tab | None:
+    """The Standings tab, for those who may read the standings (horatio.boon_standings.
+    reader; a Harpy only where the troupe lets them, #749, and as the court knows who
+    has left): each character's place on the boons still standing, net owed first,
+    then the open boons by kind with the troupe's weights. As the standings page shows
+    them by default: without boons naming someone gone."""
+    reader = boon_standings.reader(db, user, troupe)
+    if reader is None:
+        return None
+    found = boon_standings.standings_of(db, troupe, "active", reader.court)
+    places = [
+        [
+            s.who.name,
+            boons.STANDINGS.get(s.who.standing or "", ""),
+            s.owes_count,
+            s.owes,
+            s.owed_count,
+            s.owed,
+            boon_standings.rounded(s.net),
+        ]
+        for s in found.characters
+    ]
+    kinds = [[boons.KINDS[k.kind], k.weight, k.count, k.total] for k in found.by_kind]
+    return Tab(
+        "Standings",
+        [
+            Table(boon_export.STANDINGS_COLUMNS, places),
+            Table(boon_export.KIND_COLUMNS, kinds),
+        ],
+    )
+
+
+@router.get(
+    "/troupes/{troupe_id}/boon-workbook",
+    response_class=Response,
+    responses={
+        200: {
+            "content": {
+                boon_export.FORMATS["xlsx"][1]: {"schema": {"type": "string", "format": "binary"}}
+            }
+        }
+    },
+)
+def export_workbook(troupe_id: uuid.UUID, db: DbSession, user: CurrentUser) -> Response:
+    """The whole boon ledger as a workbook shaped like the troupe's old sheet (#988),
+    for those who may export it (`export_boons`), with the same columns: every boon
+    (Master, newest first); those in the Active, Departed and Settled views; those with
+    a flag still raised, with what each flag says (Flagged); and, for those who may
+    read them, the Standings. Settled boons are tinted green, others naming someone
+    gone pale red. A Harpy's holds only what their ledger and standings show them.
+    The export goes in the troupe's log."""
+    troupe, keeper = ledger_troupe(db, user, troupe_id, "export")
+    found = chosen(db, troupe, keeper, "all", boon_ledger.Filters(), "date", "desc")
+    columns = boon_export.header(keeper.staff)
+    cells = shown(db, user, troupe, keeper, found)
+    left = boon_ledger.gone(db, troupe.id, keeper.court)
+
+    def tint(b: Boon) -> str | None:
+        if b.state == "settled":
+            return boon_export.SETTLED_TINT
+        if b.debtor_id in left or b.creditor_id in left:
+            return boon_export.DEPARTED_TINT
+        return None
+
+    def table(among: set[uuid.UUID] | None, more: dict[uuid.UUID, str] | None = None) -> Table:
+        """The boons in `among` (all with None), as Master has them, in its order; with
+        `more`, a last column of it by boon."""
+        kept = [(b, c) for b, c in zip(found, cells, strict=True) if among is None or b.id in among]
+        extra = boon_export.FLAGGED_COLUMNS if more is not None else ()
+        return Table(
+            [*columns, *extra],
+            [
+                [c[n] for n in columns] + ([more.get(b.id, "")] if more is not None else [])
+                for b, c in kept
+            ],
+            [tint(b) for b, _ in kept],
+        )
+
+    flagged = ids_in(db, troupe, "all", left, boon_ledger.Filters(flagged=True))
+    tabs = [
+        Tab("Master", [table(None)]),
+        *(Tab(title, [table(ids_in(db, troupe, view, left))]) for title, view in VIEW_TABS),
+        Tab("Flagged", [table(flagged, boon_export.comments_of(db, flagged))]),
+    ]
+    standings = standings_tab(db, user, troupe)
+    if standings is not None:
+        tabs.append(standings)
+    logged(db, user, troupe, keeper, len(found), FORMAT_NAMES["workbook"], filtered=False)
+    db.commit()
+    today = datetime.now(UTC).astimezone(zone_of(user)).date()
+    name = boon_export.file_name(troupe.name, today, "xlsx", what="boon-ledger")
+    return Response(
+        boon_export.book(tabs),
+        media_type=boon_export.FORMATS["xlsx"][1],
+        headers={"Content-Disposition": f'attachment; filename="{name}"'},
     )

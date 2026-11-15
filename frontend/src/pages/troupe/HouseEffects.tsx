@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { api, unwrap } from "../../api/client";
 import type { CatalogueOut, EffectBlock, EffectChoicesOut, HousePreviewOut, HouseTraitIn, PoolChange, PoolChoiceOut } from "../../api/types";
-import { Button, ErrorText, Input, Select } from "../../components/ui";
+import { Button, Empty, ErrorText, Input, Select } from "../../components/ui";
 import {
   BLOCK_TYPES,
   EXTRA_IN_CLAN,
@@ -512,7 +512,7 @@ export function EffectsEditor({
   return (
     <fieldset className="flex flex-col gap-2">
       <legend className="mb-1 text-sm text-mist">What it does, on the sheet, at a game and between games</legend>
-      {blocks.length === 0 && <p className="text-xs text-mist">Nothing yet: it does what its description says, for you to rule on at the table.</p>}
+      {blocks.length === 0 && <Empty>Nothing yet: it does what its description says, for you to rule on at the table.</Empty>}
       {catalogue && (
         <ul className="flex flex-col gap-2">
           {blocks.map((b, i) => (
@@ -616,7 +616,7 @@ export function HousePreview({
           {preview.choosing && <p className="text-xs text-mist">Tried on {preview.sample}, as if the player chose {preview.choosing}.</p>}
           {!preview.choosing && <p className="text-xs text-mist">Tried on {preview.sample}.</p>}
           {preview.changes.length === 0 && preview.checks.length === 0 && (
-            <p className="text-xs text-mist">Nothing changes on the sheet: it does what its description says.</p>
+            <Empty>Nothing changes on the sheet: it does what its description says.</Empty>
           )}
           {preview.changes.length > 0 && (
             <ul className="list-disc pl-5">

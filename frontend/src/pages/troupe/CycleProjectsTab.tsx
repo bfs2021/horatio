@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, unwrap } from "../../api/client";
 import type { CycleOut } from "../../api/types";
-import { Empty, ErrorText, Loading } from "../../components/ui";
+import { EmptyState } from "../../components/EmptyState";
+import { Card, ErrorText, Loading } from "../../components/ui";
 import { ProjectItem } from "../character/Projects";
 
 /**
@@ -15,7 +16,12 @@ export function CycleProjectsTab({ cycle }: { cycle: CycleOut }) {
   });
   if (found.isPending) return <Loading />;
   if (found.error) return <ErrorText error={found.error} />;
-  if (found.data.length === 0) return <Empty>No projects yet. Start one from a character's Projects tab, or confirm one a player proposes.</Empty>;
+  if (found.data.length === 0)
+    return (
+      <Card>
+        <EmptyState title="No projects yet.">Start one from a character's Projects tab, or confirm one a player proposes.</EmptyState>
+      </Card>
+    );
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-mist">When the cycle is marked complete, each project goes up by the actions spent on it in submitted downtimes.</p>

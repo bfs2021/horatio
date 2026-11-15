@@ -1,4 +1,5 @@
 import type { SummonOut } from "../../api/types";
+import { Empty } from "../../components/ui";
 import { Track } from "./RetainerPools";
 
 type Tap = (change: { tracker: string; amount: number; label: string }) => void;
@@ -39,7 +40,7 @@ function SummonBlock({ summon: s, tap, dismiss }: { summon: SummonOut; tap: Tap;
         </p>
       )}
       {out.length === 0 ? (
-        <p className="text-xs text-mist">None out. Call them up with the power on the Pools tab.</p>
+        <Empty>None out. Call them up with the power on the Pools tab.</Empty>
       ) : (
         <ul className="flex flex-col gap-2">
           {out.map((a) => (

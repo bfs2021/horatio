@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { EquipmentItemOut, EquipmentOut, EquipmentHolderOut, TroupeTemplateOut } from "../../api/types";
-import { Button, ErrorText, Field, Input, Loading, Notice, Select, Textarea } from "../../components/ui";
+import { Button, Empty, ErrorText, Field, Input, Loading, Notice, Select, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { pageLabel } from "../../components/TraitInfo";
 import { NEW_ITEM, body, factsText, fromItem, fromTemplate, gradesOf, qualityChoices, qualityOf, type Draft, type Grade, type Kind } from "./equipment";
@@ -232,7 +232,7 @@ export function EquipmentEditor({
       {!text && (
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-1 text-sm text-mist">Qualities</legend>
-          {draft.qualities.length === 0 && <p className="text-sm text-mist">None yet.</p>}
+          {draft.qualities.length === 0 && <Empty>None yet.</Empty>}
           <ul aria-label="Qualities chosen" className="flex flex-col gap-2">
             {draft.qualities.map((q, i) => {
               const quality = qualityOf(book, draft.kind, q.name);

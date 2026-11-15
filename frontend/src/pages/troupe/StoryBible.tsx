@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api/client";
 import type { CharacterOut, StoryBibleNoteOut, StoryBibleOut } from "../../api/types";
 import { useClanName } from "../../components/ClanNames";
 import { Dialog } from "../../components/Dialog";
+import { EmptyState } from "../../components/EmptyState";
 import { Markdown } from "../../components/Markdown";
 import { Button, Card, ErrorText, Field, Input, Loading, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
@@ -264,7 +265,7 @@ function Notes({ troupeId, notes }: { troupeId: string; notes: StoryBibleNoteOut
       }
     >
       {notes.length === 0 ? (
-        <p className="text-sm text-mist">No notes yet: plots, secrets, what the players don't know.</p>
+        <EmptyState title="No notes yet.">Plots, secrets, what the players don't know: the staff keep them here. Start with Add a note, above.</EmptyState>
       ) : (
         <ol aria-label="Staff notes" className="divide-y divide-ash">
           {notes.map((note, n) => (

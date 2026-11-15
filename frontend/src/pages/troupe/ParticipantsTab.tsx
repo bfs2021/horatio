@@ -101,7 +101,7 @@ export function ParticipantsTab({ cycle }: { cycle: CycleOut }) {
       {all.length === 0 ? (
         <EmptyState title="No one is taking part.">{open && "Add a character whose home is this troupe to start."}</EmptyState>
       ) : shown.length === 0 ? (
-        <p className="mt-4 text-sm text-mist">{show === "not-submitted" ? "Every downtime is submitted." : "Nothing submitted yet."}</p>
+        <Empty>{show === "not-submitted" ? "Every downtime is submitted." : "Nothing submitted yet."}</Empty>
       ) : (
         <table className="mt-3 w-full text-sm">
           <thead className="max-sm:sr-only">

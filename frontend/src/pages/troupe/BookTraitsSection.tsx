@@ -8,7 +8,7 @@ import { Explainer } from "../../components/Explainer";
 import { RowEditor, useRowEditor } from "../../components/RowEditor";
 import { useToast } from "../../components/Toast";
 import { Checkbox } from "../../components/Checkbox";
-import { Badge, Button, Card, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
+import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { HouseWording } from "../../components/TroupeChange";
 import { useRulesAction } from "../../hooks";
 import { bookSummary } from "../../houseWording";
@@ -149,7 +149,7 @@ export function BookTraitsSection({ troupeId, canEdit }: { troupeId: string; can
         </div>
         {(query.trim() || category) &&
           (found.length === 0 ? (
-            <p className="mt-3 text-sm text-mist">No traits match.</p>
+            <Empty>No traits match.</Empty>
           ) : (
             <>
               <ul className="mt-3 divide-y divide-ash" aria-label="Book traits found">

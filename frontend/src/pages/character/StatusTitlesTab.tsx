@@ -7,7 +7,7 @@ import { useClanName } from "../../components/ClanNames";
 import { Dialog } from "../../components/Dialog";
 import { InfoButton } from "../../components/InfoButton";
 import { pageLabel } from "../../components/TraitInfo";
-import { Badge, Button, Card, ErrorText } from "../../components/ui";
+import { Badge, Button, Card, Empty, ErrorText } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { statusLink } from "../rules/rulesBrowser";
 import { aliasText, titleGives, titleGroups } from "../troupe/titleGroups";
@@ -301,7 +301,7 @@ function Bans({ character }: { character: CharacterOut }) {
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-mist">No status ban applies to {character.name}.</p>
+        <Empty>No status ban applies to {character.name}.</Empty>
       )}
       <Dialog title={shown?.level === "greater" ? "Greater status ban" : "Lesser status ban"} open={!!shown} onClose={() => setOpen(null)} phoneFull>
         {shown && <BanPanel character={character} status={s} ban={shown} />}

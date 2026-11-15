@@ -5,7 +5,7 @@ import type { VaulderieOut, VaulderieTroupeOut } from "../../api/types";
 import { partyIn, PLAYER_SOURCES } from "../../bonds";
 import { DateInput } from "../../components/DateInput";
 import { useToast } from "../../components/Toast";
-import { Button, ErrorText, Field, Input, Select } from "../../components/ui";
+import { Button, Empty, ErrorText, Field, Input, Select } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { participantsText, ratingName, vaulderieState } from "../../vinculum";
@@ -46,7 +46,7 @@ export function VinculumPart({ characterId, name }: { characterId: string; name:
           ))}
         </ul>
       ) : (
-        <p className="mt-1 text-sm text-mist">No Vaulderies recorded.</p>
+        <Empty>No Vaulderies recorded.</Empty>
       )}
       {v.reports.length > 0 && <ReportedVaulderies characterId={characterId} reports={v.reports} />}
       {v.report_to.length > 0 && (

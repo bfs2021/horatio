@@ -277,7 +277,11 @@ function CharacterPicker({ value, onChange, id, "aria-describedby": describedBy 
           ) : found.isError ? (
             <p className="px-3 py-2 text-sm text-mist">{found.error.message}</p>
           ) : (
-            options.length === 0 && <p className="px-3 py-2 text-sm text-mist">No character has that name.</p>
+            options.length === 0 && (
+              <div className="px-3">
+                <Empty>No character has that name.</Empty>
+              </div>
+            )
           )}
         </div>
       )}

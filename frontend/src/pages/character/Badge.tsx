@@ -4,7 +4,7 @@ import { api, unwrap } from "../../api/client";
 import type { CharacterOut } from "../../api/types";
 import { Dialog } from "../../components/Dialog";
 import { SplitLink } from "../../components/SplitLink";
-import { Button, ErrorText, Field, Textarea } from "../../components/ui";
+import { Button, Empty, ErrorText, Field, Textarea } from "../../components/ui";
 import { useAction, usePreferences } from "../../hooks";
 
 /**
@@ -96,7 +96,7 @@ export function BadgeNote({ character, troupeId, onDone }: { character: Pick<Cha
             ))}
           </ul>
         ) : (
-          <p className="mt-1 text-mist italic">Nothing others can see.</p>
+          <Empty>Nothing others can see.</Empty>
         )}
       </div>
       <Field label="Also shown on the badge" hint="Anything else others can see or sense about the character, one per line.">

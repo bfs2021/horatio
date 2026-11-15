@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { components } from "../../api/schema";
 import { Dialog } from "../../components/Dialog";
-import { Badge, Button, Card, ErrorText, Field, Input, Loading, PageTitle, Select, Textarea } from "../../components/ui";
+import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, PageTitle, Select, Textarea } from "../../components/ui";
 import { BackLink } from "../../components/BackLink";
 import { useAction } from "../../hooks";
 import { CharacterPicture } from "../character/Picture";
@@ -180,7 +180,7 @@ function Builder({
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-mist">None yet. It can have as many as its rating.</p>
+                <Empty>None yet. It can have as many as its rating.</Empty>
               )}
               <form
                 className="flex items-end gap-2"

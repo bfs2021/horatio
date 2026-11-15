@@ -5,6 +5,7 @@ import type { NotificationOut } from "../api/types";
 import { useDates } from "../dates";
 import { useAction, useNotifications } from "../hooks";
 import { Avatar } from "./Avatar";
+import { EmptyState } from "./EmptyState";
 import { PostThumb } from "./PostThumb";
 import { CountBubble } from "./ui";
 
@@ -86,7 +87,11 @@ export function NotificationBell() {
           aria-label="Notifications"
           className="fixed inset-x-4 top-16 z-20 max-h-[70vh] overflow-y-auto rounded-lg border border-ash bg-dusk shadow-xl sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:mt-2 sm:w-96"
         >
-          {items.length === 0 && <p className="p-4 text-sm text-mist">Nothing waiting.</p>}
+          {items.length === 0 && (
+            <div className="px-4 py-2">
+              <EmptyState title="Nothing waiting.">Tasks waiting on you, and messages for you, show here as they come.</EmptyState>
+            </div>
+          )}
           {tasks.length > 0 && <Group title="Waiting on you" items={tasks} onOpen={go} />}
           {messages.length > 0 && (
             <Group

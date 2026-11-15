@@ -320,7 +320,7 @@ export function RosterTab({ troupeId, canEmail = false }: { troupeId: string; ca
       ) : shown.length === 0 && waiting ? (
         <Loading label="Searching…" />
       ) : shown.length === 0 ? (
-        <p className="py-3 text-sm text-mist">{byKind.length === 0 ? "No NPCs of that kind." : "No characters match."}</p>
+        <Empty>{byKind.length === 0 ? "No NPCs of that kind." : "No characters match."}</Empty>
       ) : (
         <table
           aria-label={show === "npcs" ? "NPCs" : "Characters"}

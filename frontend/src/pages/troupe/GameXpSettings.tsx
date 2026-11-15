@@ -6,6 +6,7 @@ import { Checkbox } from "../../components/Checkbox";
 import { SettingCard, SettingForm, useSettingForm } from "../../components/SettingCard";
 import { Button, Card, ErrorText, Input } from "../../components/ui";
 import { addBand, adjustmentText, bandLabel, BOOK_MONTHLY, capText, DEFAULTS, fromRows, PRESETS, removeBand, toRows, type BandRow } from "./gameXp";
+import { SectionLabel } from "../../components/Headings";
 
 /** Said wherever absentee games are: Horatio doesn't take payments. */
 export const PAYMENTS_NOTE = "Payments aren't tracked in Horatio: marking a character absentee is the record, paid or not.";
@@ -169,9 +170,7 @@ function Editor({ troupeId, settings }: { troupeId: string; settings: GameXpSett
     <SettingForm form={form} className="gap-5">
       <section aria-labelledby="xp-bands" className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 id="xp-bands" className="text-xs tracking-wide text-mist uppercase">
-            By earned XP
-          </h3>
+          <SectionLabel id="xp-bands">By earned XP</SectionLabel>
           <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Start from a preset">
             <span className="text-xs text-mist">Start from:</span>
             {PRESETS.map((p) => (
@@ -244,9 +243,7 @@ function Editor({ troupeId, settings }: { troupeId: string; settings: GameXpSett
       </section>
 
       <section aria-labelledby="xp-adjustments" className="flex flex-col gap-2 border-t border-ash pt-3">
-        <h3 id="xp-adjustments" className="text-xs tracking-wide text-mist uppercase">
-          Adjustments
-        </h3>
+        <SectionLabel id="xp-adjustments">Adjustments</SectionLabel>
         <p className="text-xs text-mist">Ticked for a character when awarding a game, such as “Helped +1, once a month” or “Not findable −1”. Leave the limit empty for none.</p>
         {adjustments.map((a, i) => (
           <div key={a.key || i} className="flex flex-wrap items-center gap-2">

@@ -10,6 +10,7 @@ import { ChoiceSelect } from "../ChoiceSelect";
 import { canTapDots, clear, fieldProblems, keysOf, traitOf, nextCopy, pastBudgetText, pointsText, spent, tapDots, togglePoints, type Picks } from "./logic";
 import { HouseWording } from "../../../components/TroupeChange";
 import { bookSummary } from "../../../houseWording";
+import { CardHeading, SectionLabel } from "../../../components/Headings";
 
 // Long lists get a search box.
 const SEARCH_FROM = 12;
@@ -247,7 +248,7 @@ export function DotGrid({
   return (
     <section aria-label={title} className="flex flex-col gap-3">
       <div className={`flex flex-wrap items-center justify-between gap-2 ${STICKY}`}>
-        {showTitle ? <h3 className="text-base text-gold">{title}</h3> : <span />}
+        {showTitle ? <CardHeading>{title}</CardHeading> : <span />}
         <DotsLeft title={title} budget={budget.dots} used={spent(picks)} />
       </div>
       {traits.length >= SEARCH_FROM && (
@@ -255,7 +256,7 @@ export function DotGrid({
       )}
       {groups.map(([heading, traitsIn]) => (
         <div key={heading ?? "all"}>
-          {heading && <h4 className="mt-2 mb-1 font-sans text-xs tracking-wide text-mist uppercase">{heading}</h4>}
+          {heading && <SectionLabel as="h4" className="mt-2 mb-1">{heading}</SectionLabel>}
           <ul className="divide-y divide-ash/60">{traitsIn.map(row)}</ul>
         </div>
       ))}
@@ -344,7 +345,7 @@ export function PointsList({
     <section aria-label={title} className="flex flex-col gap-3">
       <div className={`flex flex-col gap-2 ${STICKY}`}>
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-base text-gold">{title}</h3>
+          <CardHeading>{title}</CardHeading>
           <Badge tone={used < budget ? "gold" : "mist"}>{pointsText(used, budget, pastBudget)}</Badge>
         </div>
         <div className="h-1.5 overflow-hidden rounded bg-ash">

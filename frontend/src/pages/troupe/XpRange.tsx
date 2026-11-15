@@ -4,6 +4,7 @@ import { api, unwrap } from "../../api/client";
 import { SettingCard, SettingForm, useSettingForm } from "../../components/SettingCard";
 import { ErrorText, Field, Input } from "../../components/ui";
 import { makeUp } from "./xpRange";
+import { SectionLabel } from "../../components/Headings";
 
 const KINDS: Record<string, string> = { game: "Game", downtime: "Downtime", set: "Set by hand" };
 
@@ -65,7 +66,7 @@ export function XpRangeCard({ troupeId, canEdit, link }: { troupeId: string; can
       )}
       {r.entries.length > 0 && (
         <>
-          <h3 className="mt-4 mb-1 font-sans text-xs text-mist uppercase">What changed them</h3>
+          <SectionLabel className="mt-4 mb-1">What changed them</SectionLabel>
           <ul className="divide-y divide-ash text-sm">
             {entries.map((e) => (
               <li key={e.id} className="flex flex-wrap justify-between gap-2 py-1.5">

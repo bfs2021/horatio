@@ -9,6 +9,7 @@ import { bookSummary } from "../../../houseWording";
 import { detailNeed } from "../fields";
 import { choose, clear, fieldProblems, move, picksLeft, seatPicks, traitOf, type Allowed, type Picks } from "./logic";
 import type { Held, RatingBar } from "./DotGrid";
+import { CardHeading } from "../../../components/Headings";
 
 /** Picks at one rating that a trait held took away, and why (Thin Blooded's discipline at 2). */
 export type Lost = { rating: number; picks: number; why: ReactNode };
@@ -303,7 +304,7 @@ export function SlotRows({
   const labelWidth = shown === "pips" ? pipsWidth(widest) : 1.5;
   return (
     <section aria-label={label} className="flex flex-col gap-3">
-      {showTitle && (heading ? <h3 className="text-base text-gold">{title}</h3> : <p className="text-base text-gold">{title}</p>)}
+      {showTitle && (heading ? <CardHeading>{title}</CardHeading> : <p className="text-base text-gold">{title}</p>)}
       {rows.map(({ rating, slots }) => (
         <div key={rating} role="group" aria-label={`${title} at ${rating}`} className="flex items-start gap-3">
           <span className="shrink-0 pt-3 text-right text-gold" style={{ width: `${labelWidth}rem` }}>

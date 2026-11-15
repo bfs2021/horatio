@@ -46,6 +46,7 @@ import {
 import { Card, ErrorText, Loading } from "../../components/ui";
 import { useWidePage } from "../../components/widePage";
 import { useDates } from "../../dates";
+import { CardHeading } from "../../components/Headings";
 
 /*
  * Boon statistics (#702), for the troupe's running staff: how the ledger has moved
@@ -744,7 +745,7 @@ function Games({ s }: { s: Statistics }) {
       </ChartFrame>
       {picked && (
         <section aria-label="The game chosen" className="rounded-lg border border-ash p-3 text-sm">
-          <h4 className="text-gold">{day(picked)}</h4>
+          <CardHeading as="h4">{day(picked)}</CardHeading>
           <p className="text-mist">
             {picked.registered === 0
               ? "No boons registered at it."

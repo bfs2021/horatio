@@ -29,7 +29,7 @@ Beside the character's name, the **⋯** button (**More for** the character) hol
 
 ### Making a character
 
-Under **New character**, on the right of the Characters page:
+Under **New character**, on the right of the Characters page (below your characters on a phone, where **New character** at the top takes you to it):
 
 1. Give it a **Name**.
 2. Choose **Which troupe will you play in?** Choosing the troupe makes its house rules apply while you build: its prices, starting points, banned traits and specialisation lists. Choose **No troupe yet (book rules)** to build by the book and bring it to a troupe later. You can change this until a troupe accepts the character. The hint under it says what XP the character starts with: 30, or the troupe's XP floor (or, where the troupe uses the New Character Incentive, its starting XP and a quarter of the XP a character could have earned there). Before you build, read the troupe's **Setting** tab: its Setting Style Document, with the chronicle's themes and moods, its teaser, how rare each clan is there, what costs differ and the rules particular to it. When the staff change it, the bell tells you what changed. While you build to a troupe's rules, its storytellers and assistant storytellers can see the character under **Being built** and read its sheet, though they can't change it.
@@ -91,7 +91,7 @@ Open the link to see the character's name and portrait. If you have no account y
 
 A character's **⋯** has **Export (backup)…**. It downloads the character as a file named for it and the day, such as `AgnesdeVries-2026-11-09.horatio-character.json` for Agnes de Vries (accents become plain letters; spaces and other letters are left out). It holds its sheet with the free dots from creation, its XP history, backstory and picture. Tick **Also include** for its equipment, Retainers and Alternate Identities, or titles and status. **Printable sheet (.html)** downloads the printable sheet as a page any browser opens, without Horatio. Retired characters can be exported too. Staff notes are never in the file.
 
-On **Your characters**, **Export all** downloads every character you have, retired ones too, in one `.zip`.
+On **Your characters**, the **⋯** beside the title (**More for your characters**) holds **Import a character** and **Export all**. **Export all** downloads every character you have, retired ones too, in one `.zip`.
 
 **Import a character** brings one back, as a new character of yours: a backup, or a character from another troupe or another Horatio.
 

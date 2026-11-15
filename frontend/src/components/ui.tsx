@@ -255,7 +255,9 @@ export function CountBubble({ count, label }: { count: number; label: string }) 
 /** A tab, with a count of what waits on it, such as "2 new" (`countLabel` says what they are).
  * `countInGroup: false` keeps a count that isn't waiting on anyone (characters being
  * built, #774) out of its group's "waiting" total. */
-/** A tab: `also` is another address under which it shows as open (see `tabOpens`). */
+/** A tab: `also` is another address under which it shows as open (see `tabOpens`).
+ * `ariaLabel` names it for a screen reader when its label alone doesn't say enough
+ * (a tab that leaves the page, #922). */
 export type Tab = { to: string; label: string; ariaLabel?: string; end?: boolean; also?: string; count?: number; countLabel?: string; countInGroup?: boolean };
 
 /** How wide the fade is at an edge of a tab bar with more beyond it. */
@@ -400,6 +402,7 @@ export function SubTabs({ label, tabs, className }: { label: string; tabs: Tab[]
         <Link
           key={t.to}
           to={t.to}
+          aria-label={t.ariaLabel}
           aria-current={tabOpens(t, pathname) ? "page" : undefined}
           className={cx(
             "shrink-0 rounded-full border px-3 py-1 text-sm whitespace-nowrap",

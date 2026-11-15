@@ -41,7 +41,7 @@ function layout(can: ReturnType<typeof abilities>, t: TroupeTabsTroupe = troupe)
 const storytellerLayout = {
   Troupe: ["Overview", "The setting", "Story bible", "Who's Who", "News", "Announcements", "Nominations", "Staff", "Log"],
   Characters: ["Approvals", "Being built", "Roster", "Players", "Lines and veils"],
-  Games: ["At game", "Scenes", "Award XP"],
+  Games: ["At game", "Scenes ↗", "Award XP"],
   Court: ["Titles", "Court over time", "Chronicle", "Boons", "Bonds", "Web of obligation"],
   Downtimes: ["Cycles", "My work", "Fill tables", "Influence log", "Quests"],
   World: ["Locations", "Equipment", "Shared backgrounds"],
@@ -131,9 +131,10 @@ describe("troupeTabGroups (#779)", () => {
     expect(has("lead_storyteller", { ...troupe, archived: true })).toBe(false);
   });
 
-  it("opens Characters on the roster, and Scenes on the scenes page", () => {
+  it("opens Characters on the roster, and Scenes on the scenes page, saying it leaves (#922)", () => {
     const groups = troupeTabGroups(troupe, abilities("storyteller", false));
     expect(groups.find((g) => g.label === "Characters")?.to).toBe("/troupes/t1/characters");
-    expect(groups.find((g) => g.label === "Games")?.tabs.find((tab) => tab.label === "Scenes")?.to).toBe("/play/troupes/t1/scenes");
+    const scenes = groups.find((g) => g.label === "Games")?.tabs.find((tab) => tab.to === "/play/troupes/t1/scenes");
+    expect(scenes).toMatchObject({ label: "Scenes ↗", ariaLabel: "Scenes (opens the scenes page)" });
   });
 });

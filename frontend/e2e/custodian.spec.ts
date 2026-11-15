@@ -125,7 +125,9 @@ test("the custodian changes a player's email, and the player confirms it from th
   const p = player.page;
   await (await topBar(p)).getByRole("link", { name: "chmail-player" }).click();
   await p.locator("main").getByRole("link", { name: "Settings", exact: true }).click();
-  await expect(p.getByText(`You sign in with ${player.email}`)).toBeVisible();
+  // The address on a line of its own (#922).
+  await expect(p.getByText("You sign in with this address, and Horatio's emails go there:")).toBeVisible();
+  await expect(p.getByText(player.email, { exact: true })).toBeVisible();
   await expect(p.getByText("Horatio can't send email here, so ask the custodian to change your email.")).toBeVisible();
 
   // The custodian changes it from the People list, with a reason. An address
@@ -237,6 +239,48 @@ test("the custodian filters People by the troupe a player's active character is 
   await filter.selectOption({ label: "Any troupe" });
   await c.getByLabel("Search people").fill(visitor.email);
   await expect(list.filter({ hasText: visitor.email })).toBeVisible();
+});
+
+test("People is wider on a wide screen, so no handle or email wraps, while Site stays narrow (#913)", async ({ browser }) => {
+  // About a desktop's width: on a phone nothing changes.
+  if (test.info().project.name === "phone") return;
+  const custodian = await person(browser, "wide-custodian", { viewport: { width: 1440, height: 900 } });
+  makeCustodian(custodian.email);
+  const c = custodian.page;
+  await c.goto("/custodian/people");
+  await c.getByLabel("Search people").fill(custodian.email);
+  const row = c.locator("main tr").filter({ hasText: custodian.email });
+  await expect(row).toBeVisible();
+
+  const width = async () => (await c.locator("main").boundingBox())!.width;
+  // Shown in full: on one line (the distinct tops of its text's boxes) and not cut short.
+  const inFull = (text: string) =>
+    row
+      .getByText(text, { exact: true })
+      .filter({ visible: true })
+      .evaluate((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const lines = new Set(Array.from(range.getClientRects(), (r) => Math.round(r.top))).size;
+        return lines === 1 && el.scrollWidth <= el.clientWidth;
+      });
+  expect(await width()).toBe(1280);
+  expect(await inFull(custodian.email)).toBe(true);
+  expect(await inFull(`@${custodian.handle}`)).toBe(true);
+  // The header lines up with the page under it.
+  expect((await c.locator("header > div").first().boundingBox())!.x).toBe((await c.locator("main").boundingBox())!.x);
+  await c.screenshot(shots("people-wide"));
+
+  // A page of text keeps the usual width.
+  await c.getByRole("link", { name: "Site", exact: true }).click();
+  await expect(c).toHaveURL(/\/custodian\/site$/);
+  expect(await width()).toBe(1024);
+
+  // At 1,024 px People is as it was.
+  await c.setViewportSize({ width: 1024, height: 900 });
+  await c.goto("/custodian/people");
+  await expect(c.getByRole("table", { name: "People" })).toBeVisible();
+  expect(await width()).toBeLessThanOrEqual(1024);
 });
 
 test("the custodian views Horatio as a player, read-only, and the player sees that they did", async ({ browser }) => {

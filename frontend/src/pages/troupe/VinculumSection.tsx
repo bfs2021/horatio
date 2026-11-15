@@ -5,6 +5,7 @@ import type { CharacterChoice, TroupeVinculumOut, VaulderieOut } from "../../api
 import { partyIn, SOURCES, type BondSource } from "../../bonds";
 import { DateInput } from "../../components/DateInput";
 import { useToast } from "../../components/Toast";
+import { Toggle } from "../../components/Toggle";
 import { Button, Card, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
@@ -79,10 +80,7 @@ export function VinculumSection({ troupeId }: { troupeId: string }) {
       </Card>
       <Card title="Vaulderie log">
         {hidden > 0 && (
-          <label className="mb-2 flex items-center gap-2 text-sm text-mist">
-            <input type="checkbox" checked={past} onChange={(e) => setPast(e.target.checked)} />
-            Show those declined or taken out ({hidden})
-          </label>
+          <Toggle label={`Show those declined or taken out (${hidden})`} checked={past} onChange={setPast} className="mb-2 text-mist" />
         )}
         {logged.length === 0 ? (
           <Empty>No Vaulderies recorded yet.</Empty>

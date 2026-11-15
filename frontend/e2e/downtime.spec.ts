@@ -2192,7 +2192,7 @@ test("a troupe that doesn't track feeding sees none of it, and switching it back
 
   // The lead switches feeding off in the Features list of Troupe settings; its options wait for it.
   await switchFeature(l, troupe, "Feeding", false);
-  await expect(feedingCard(l).getByRole("checkbox", { name: /^Blood Resonance/ })).toBeDisabled();
+  await expect(feedingCard(l).getByRole("switch", { name: /^Blood Resonance/ })).toBeDisabled();
   await l.screenshot(shots("settings-feeding-off"));
   await l.goto(`/troupes/${troupe}/house-rules`);
   await expect(l.getByText("Not tracked: no feeding in downtimes, results or at the next game")).toBeVisible();
@@ -2235,8 +2235,8 @@ test("with Blood Resonance, the player hunts for a humor and staff answer with t
   const { lead: l, player: b, troupe, bram, cycle, send } = await feedingTroupe(...people, `Humoral Court ${run}`);
 
   await l.goto(`/troupes/${troupe}/settings`);
-  await feedingCard(l).getByRole("checkbox", { name: /^Blood Resonance/ }).click();
-  await expect(feedingCard(l).getByRole("checkbox", { name: /^Blood Resonance/ })).toBeChecked();
+  await feedingCard(l).getByRole("switch", { name: /^Blood Resonance/ }).click();
+  await expect(feedingCard(l).getByRole("switch", { name: /^Blood Resonance/ })).toBeChecked();
   await expect(l.getByText("Blood Resonance: on.")).toBeVisible();
 
   // Bram hunts for sanguine blood.
@@ -2367,8 +2367,8 @@ test("feeding territories: a holder patrols hers, a poacher is caught there, and
 
   // The lead switches feeding territories on and assigns the Docks to Agnes.
   await l.goto(`/troupes/${troupe}/settings`);
-  await feedingCard(l).getByRole("checkbox", { name: /^Feeding territories/ }).click();
-  await expect(feedingCard(l).getByRole("checkbox", { name: /^Feeding territories/ })).toBeChecked();
+  await feedingCard(l).getByRole("switch", { name: /^Feeding territories/ }).click();
+  await expect(feedingCard(l).getByRole("switch", { name: /^Feeding territories/ })).toBeChecked();
   const territories = l.locator("section").filter({ has: l.getByRole("heading", { name: "Feeding territories" }) });
   await territories.getByRole("button", { name: "Add a territory" }).click();
   await territories.getByLabel("Name").fill("Docks");
@@ -2436,9 +2436,9 @@ test("with the Rack, staff lay out the cycle's vessels and a player takes one in
 
   // The Rack needs Blood Resonance: it is offered once that is on.
   await l.goto(`/troupes/${troupe}/settings`);
-  const rackBox = feedingCard(l).getByRole("checkbox", { name: /^The Rack/ });
+  const rackBox = feedingCard(l).getByRole("switch", { name: /^The Rack/ });
   await expect(rackBox).toBeDisabled();
-  await feedingCard(l).getByRole("checkbox", { name: /^Blood Resonance/ }).click();
+  await feedingCard(l).getByRole("switch", { name: /^Blood Resonance/ }).click();
   await expect(rackBox).toBeEnabled();
   await rackBox.click();
   await expect(rackBox).toBeChecked();

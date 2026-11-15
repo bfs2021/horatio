@@ -350,8 +350,8 @@ test("sire lines: a player gives a sire from the menu, staff see the sire and bo
   // The Who's Who's own settings, folded at the top of its tab for the storytellers (#784).
   await l.goto(`/troupes/${troupeId}/whos-who#settings`);
   // It changes once the troupe is saved, so click and wait for it.
-  await l.getByRole("checkbox", { name: /Show the sire lines to players/ }).click();
-  await expect(l.getByRole("checkbox", { name: /Show the sire lines to players/ })).toBeChecked();
+  await l.getByRole("switch", { name: /Show the sire lines to players/ }).click();
+  await expect(l.getByRole("switch", { name: /Show the sire lines to players/ })).toBeChecked();
   await p.reload();
   await p.getByRole("button", { name: "Sire lines" }).click();
   await expect(p.getByRole("figure", { name: "Sire lines" }).getByRole("img", { name: /^Aurelie: .*sire Mother Aldegonde/ })).toBeAttached();

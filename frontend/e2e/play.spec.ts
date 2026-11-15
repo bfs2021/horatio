@@ -138,7 +138,7 @@ test("a troupe switches Play View tabs off: Pools goes from a player's Play View
   // The lead switches Pools off in At game's settings, folded at the top of its tab (#784).
   await l.goto(`/troupes/${troupeId}/play#settings`);
   const setting = l.locator("section").filter({ has: l.getByRole("heading", { name: "Play View tabs", exact: true }) });
-  const pools = setting.getByRole("checkbox", { name: "Pools", exact: true });
+  const pools = setting.getByRole("switch", { name: "Pools", exact: true });
   await expect(pools).toBeChecked();
   await pools.click();
   await expect(pools).not.toBeChecked();
@@ -152,11 +152,11 @@ test("a troupe switches Play View tabs off: Pools goes from a player's Play View
 
   // Then every tab off: the last one says what that does before it's saved.
   for (const name of ["Sheet", /^Tracker/, /^Status/, "Equipment"]) {
-    const box = setting.getByRole("checkbox", typeof name === "string" ? { name, exact: true } : { name });
+    const box = setting.getByRole("switch", typeof name === "string" ? { name, exact: true } : { name });
     await box.click();
     await expect(box).not.toBeChecked();
   }
-  await setting.getByRole("checkbox", { name: "Throws", exact: true }).click();
+  await setting.getByRole("switch", { name: "Throws", exact: true }).click();
   const asking = setting.getByRole("alertdialog", { name: "Turn the Play View off for players" });
   await expect(asking).toContainText("the troupe doesn't use the Play View for players: their characters have no Play");
   await expect(asking).toContainText("Staff still run NPCs and scenes");
@@ -1777,7 +1777,7 @@ test("throwing by flipping the phone face down and back up, on a phone, and swit
   await p.waitForTimeout(300);
   await expect(past).toHaveCount(1);
   await p.goto("/account/settings");
-  await expect(p.getByRole("checkbox", { name: "Throw by flipping" })).not.toBeChecked();
+  await expect(p.getByRole("switch", { name: "Throw by flipping" })).not.toBeChecked();
 });
 
 test("throwing a pool from the Pools tab: the overbid, a tie on pools, a Willpower retest from the tracker and their overbid (#698)", async ({ browser }) => {

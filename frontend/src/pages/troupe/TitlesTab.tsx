@@ -7,6 +7,8 @@ import { ActionMenu, MenuGroup, MenuItem } from "../../components/ActionMenu";
 import { Dialog } from "../../components/Dialog";
 import { EmptyState } from "../../components/EmptyState";
 import { useToast } from "../../components/Toast";
+import { Checkbox } from "../../components/Checkbox";
+import { Toggle } from "../../components/Toggle";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { statusLink } from "../rules/rulesBrowser";
@@ -334,16 +336,14 @@ function TitleRow({ troupeId, title, data, held }: { troupeId: string; title: Ti
  * for them all. `worded` says so beside the box, where there is no column heading. */
 function OneHolderSwitch({ title, pending, onChange, worded = false }: { title: TitleOut; pending: boolean; onChange: (on: boolean) => void; worded?: boolean }) {
   return (
-    <label className="inline-flex items-center gap-1.5 text-xs text-mist">
-      <input
-        type="checkbox"
-        aria-label={worded ? undefined : `One holder at a time: ${title.name}`}
-        checked={title.unique}
-        disabled={pending}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      {worded && "One holder at a time"}
-    </label>
+    <Toggle
+      label={worded ? "One holder at a time" : `One holder at a time: ${title.name}`}
+      hideLabel={!worded}
+      checked={title.unique}
+      disabled={pending}
+      onChange={onChange}
+      className="text-xs text-mist"
+    />
   );
 }
 
@@ -481,27 +481,24 @@ function TitleFields({
         {choices.length ? (
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {choices.map((c) => (
-              <label key={c.name} className="flex items-center gap-1.5 text-sm">
-                <input
-                  type="checkbox"
-                  checked={title.status.includes(c.name)}
-                  onChange={(e) =>
-                    setTitle({ ...title, status: e.target.checked ? [...title.status, c.name] : title.status.filter((s) => s !== c.name) })
-                  }
-                />
-                {c.name}
-              </label>
+              <Checkbox
+                key={c.name}
+                label={c.name}
+                checked={title.status.includes(c.name)}
+                onChange={(on) => setTitle({ ...title, status: on ? [...title.status, c.name] : title.status.filter((s) => s !== c.name) })}
+              />
             ))}
           </div>
         ) : (
           <Empty>None.</Empty>
         )}
       </fieldset>
-      <label className="flex items-center gap-1.5 text-sm">
-        <input type="checkbox" checked={title.unique} onChange={(e) => setTitle({ ...title, unique: e.target.checked })} />
-        One holder at a time
-        <span className="text-xs text-mist">(players can't choose it while someone holds it)</span>
-      </label>
+      <Checkbox
+        label="One holder at a time"
+        hint="Players can't choose it while someone holds it."
+        checked={title.unique}
+        onChange={(unique) => setTitle({ ...title, unique })}
+      />
       <div>
         <Button type="submit" disabled={(naming && !title.name.trim()) || pending}>
           {save}

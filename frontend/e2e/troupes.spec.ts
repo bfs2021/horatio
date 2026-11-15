@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, characterTab, chooseDots, choosePick, closeContextsAfterEach, makeCustodian, openNewTroupe, PASSWORD, person, run, shots, tapMid, topBar, troupeTab, expectTabOpen, expectTabCount, isPhone, shutSections, groupTabs } from "./support";
 
 /** A troupe's setup: its rules, XP range, staff, profile and archiving, and asking for one. */
@@ -411,6 +411,56 @@ test("on a phone the house rules tabs wrap onto more rows, so the last shows wit
   await expect(bookTraits).toHaveAttribute("aria-current", "page");
   await expect(bookTraits).toBeInViewport();
   await l.screenshot(shots("house-rules-tabs-phone"));
+});
+
+test("on a touch screen the page tabs, info buttons, ⋯ menus and feature links are at least 40 px, and a mouse keeps them small (#903)", async ({ browser }) => {
+  const custodian = await person(browser, "tapsize-custodian");
+  makeCustodian(custodian.email);
+  const touch = { viewport: { width: 375, height: 800 }, isMobile: true, hasTouch: true };
+  const lead = await person(browser, "tapsize-lead", touch);
+  const made = await custodian.page.request.post("/api/troupes", { headers: { "X-Horatio": "1" }, data: { name: `Wide Taps ${run}`, lead_handle: lead.handle } });
+  expect(made.status(), await made.text()).toBe(201);
+  const base = `/troupes/${(await made.json()).id}`;
+  const l = lead.page;
+  const box = async (target: Locator) => {
+    await expect(target).toBeVisible();
+    return (await target.boundingBox())!;
+  };
+  const tappable = async (target: Locator) => {
+    const { width, height } = await box(target);
+    expect(width, await target.textContent()).toBeGreaterThanOrEqual(40);
+    expect(height, await target.textContent()).toBeGreaterThanOrEqual(40);
+  };
+
+  await l.goto(`${base}/house-rules/checks`);
+  const tabs = l.getByRole("navigation", { name: "House rules" }).getByRole("link");
+  await expect(tabs.first()).toBeVisible();
+  for (const tab of await tabs.all()) await tappable(tab);
+
+  await l.goto(`${base}/characters`);
+  await tappable(l.getByRole("button", { name: "More for the troupe's characters" }));
+
+  // The info button grows, but its line keeps the 20 px it had.
+  await l.goto(`${base}/equipment`);
+  const info = l.getByRole("button", { name: "About equipment" });
+  await tappable(info);
+  expect((await box(info.locator(".."))).height).toBeLessThanOrEqual(20);
+
+  // A feature's links, 16 px apart.
+  await l.goto(`${base}/settings`);
+  const open = await box(l.getByRole("link", { name: "Open Who's Who" }));
+  const settings = await box(l.getByRole("link", { name: "Settings for Who's Who" }));
+  expect(open.height).toBeGreaterThanOrEqual(40);
+  expect(settings.height).toBeGreaterThanOrEqual(40);
+  if (settings.y === open.y) expect(settings.x - (open.x + open.width)).toBeGreaterThanOrEqual(16);
+
+  // With a mouse they stay as small as they were.
+  const desk = await (await browser.newContext({ storageState: await l.context().storageState(), viewport: { width: 1280, height: 900 }, isMobile: false, hasTouch: false })).newPage();
+  await desk.goto(`${base}/equipment`);
+  const small = await box(desk.getByRole("button", { name: "About equipment" }));
+  expect(small.width).toBe(20);
+  await desk.goto(`${base}/house-rules/checks`);
+  expect((await box(desk.getByRole("navigation", { name: "House rules" }).getByRole("link", { name: "Checks", exact: true }))).height).toBeLessThan(30);
 });
 
 test("a lead prices skills at 1× for Generation background 2, and a Generation ●● character pays that in the cart (#522)", async ({ browser }) => {

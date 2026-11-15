@@ -685,8 +685,9 @@ test("staff write the setting: a theme from the book, a mood of their own, put i
   await expect(notes.getByRole("list", { name: "Storyteller notes" })).toContainText("ten years past the Embrace");
   const scope = theirs.filter({ has: a.getByRole("heading", { name: "Scope", exact: true }) });
   await scope.getByLabel("Power").fill("Neonates and ancillae.");
-  await scope.getByRole("button", { name: "Save scope" }).click();
-  await expect(scope.getByRole("button", { name: "Save scope" })).toBeDisabled();
+  await expect(scope.getByText("Not saved yet")).toBeVisible();
+  await scope.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(scope.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
   await l.reload();
   await expect(card("Scope").getByLabel("Power")).toHaveValue("Neonates and ancillae.");
   await a.screenshot(shots("setting-style"));
@@ -737,8 +738,9 @@ test("players read the whole setting on its tab, in print, on the profile when s
 
   // The lead switches on the New Character Incentive; the document gives its working.
   await l.goto(`/troupes/${troupeId}/settings`);
-  await l.getByRole("checkbox", { name: /Use the New Character Incentive/ }).click();
-  await expect(l.getByRole("checkbox", { name: /Use the New Character Incentive/ })).toBeChecked();
+  await l.getByRole("switch", { name: /Use the New Character Incentive/ }).click();
+  await expect(l.getByRole("switch", { name: /Use the New Character Incentive/ })).toBeChecked();
+  await expect(l.getByText("Saved.", { exact: true })).toBeVisible();
   await l.goto(`/troupes/${troupeId}/setting`);
   await expect(l.getByRole("region", { name: "Setting-specific mechanics" })).toContainText("+ the New Character Incentive");
   await expect(l.getByRole("link", { name: "Edit in Settings" })).toHaveAttribute("href", `/troupes/${troupeId}/settings`);
@@ -1248,13 +1250,13 @@ test("a troupe's XP floor and ceiling: new characters start at the floor, and st
   await l.getByRole("link", { name: troupeName }).click();
   await l.getByRole("link", { name: "Customise", exact: true }).click();
   await l.getByRole("link", { name: "Troupe settings", exact: true }).click();
-  await l.getByRole("button", { name: "Set by hand" }).click();
-  await l.getByLabel("Floor", { exact: true }).fill("100");
-  await l.getByLabel("Ceiling", { exact: true }).fill("120");
-  await l.getByLabel("Why", { exact: true }).fill("Chronicle began in 2019");
-  await l.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(l.getByText("(30 starting + 70 set by hand)")).toBeVisible();
-  await expect(l.getByText("(30 starting + 90 set by hand)")).toBeVisible();
+  const range = l.getByRole("region", { name: "XP floor and ceiling" });
+  await range.getByLabel("Floor", { exact: true }).fill("100");
+  await range.getByLabel("Ceiling", { exact: true }).fill("120");
+  await range.getByLabel("Why", { exact: true }).fill("Chronicle began in 2019");
+  await range.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(range.getByText("30 starting + 70 set by hand")).toBeVisible();
+  await expect(range.getByText("30 starting + 90 set by hand")).toBeVisible();
   await l.screenshot(shots("xp-range"));
 
   // Players see where the troupe stands on its page.
@@ -2553,10 +2555,12 @@ test("with Retainer upkeep on, checking in starts the night with the upkeep as i
   await l.goto(`/troupes/${troupeId}/rules/retainers`);
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/characters#settings-retainers$`));
   await expect(l.getByText("None.").first()).toBeVisible();
-  await l.getByRole("button", { name: "Change Retainer rules" }).click();
-  await l.getByLabel("Retainers cost upkeep").check();
-  await l.getByRole("button", { name: "Save" }).click();
-  await expect(l.getByText("1 Blood for each Retainer a game, taken as the night starts")).toBeVisible();
+  const retainers = l.getByRole("region", { name: "Retainers", exact: true });
+  await retainers.getByLabel("Retainers cost upkeep").check();
+  await expect(retainers.getByText("Not saved yet")).toBeVisible();
+  await retainers.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(l.getByText("Saved.", { exact: true })).toBeVisible();
+  await expect(retainers.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
 
   // The House rules tab shows it; and so does each Retainer on the sheet.
   await p.goto(`/troupes/${troupeId}/house-rules`);
@@ -2619,7 +2623,6 @@ test("staff set a tapering game XP chart and award a game by it, with an absente
   await l.goto(`/troupes/${troupeId}/settings`);
   const card = l.locator("section").filter({ has: l.getByRole("heading", { name: "Game XP chart", exact: true }) });
   await expect(card.getByText(/^Flat: everyone there gets the same XP/)).toBeVisible();
-  await card.getByRole("button", { name: "Change the game XP chart" }).click();
   await card.getByRole("button", { name: "Tapering" }).click();
   await expect(card.getByLabel("Band 2: earned XP up to")).toHaveValue("300");
   await card.getByLabel("Record absentee games").check();
@@ -2629,16 +2632,18 @@ test("staff set a tapering game XP chart and award a game by it, with an absente
   await card.getByLabel(/^Off/).check();
   await expect(card.getByText(/^Payments aren't tracked in Horatio/)).toBeVisible();
   await l.screenshot(shots("game-xp-chart-editor"));
-  await card.getByRole("button", { name: "Save" }).click();
-  await expect(l.getByText("Game XP saved.")).toBeVisible();
-  const chart = card.getByRole("table", { name: "Game XP chart" });
-  await expect(chart.getByRole("row")).toHaveCount(6);
-  await expect(chart.getByRole("row", { name: "201–300 4 XP 3 XP" })).toBeVisible();
-  await expect(card.getByText("Helped +1, once a month")).toBeVisible();
+  await card.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(l.getByText("Saved.", { exact: true })).toBeVisible();
+  await expect(card.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
+  await expect(card.getByLabel("Adjustment 1: name")).toHaveValue("Helped");
 
   // Players see it on the House rules tab.
   await player.page.goto(`/troupes/${troupeId}/house-rules`);
-  await expect(player.page.getByRole("table", { name: "Game XP chart" }).getByRole("row", { name: "501+ 1 XP 0 XP" })).toBeVisible();
+  const chart = player.page.getByRole("table", { name: "Game XP chart" });
+  await expect(chart.getByRole("row")).toHaveCount(6);
+  await expect(chart.getByRole("row", { name: "201–300 4 XP 3 XP" })).toBeVisible();
+  await expect(chart.getByRole("row", { name: "501+ 1 XP 0 XP" })).toBeVisible();
+  await expect(player.page.getByText("Helped +1, once a month")).toBeVisible();
 
   // At the game: Tamsin is checked in by hand, Ulric marked absentee.
   await l.goto(`/troupes/${troupeId}`);
@@ -2785,18 +2790,18 @@ test("a troupe's Overview switches it public at once, shows its XP range, and Wa
   await expect(l.locator("main").getByRole("link", { name: "Award XP", exact: true })).toBeVisible();
   await expect(l.getByText("Player characters from any sect may join.")).toBeVisible();
   await expect(l.getByRole("checkbox")).toHaveCount(0);
-  await expect(l.getByRole("button", { name: "Set by hand" })).toHaveCount(0);
+  await expect(l.getByLabel("Floor", { exact: true })).toHaveCount(0);
   // The lead sets them by hand in Customise's Troupe settings, with the rest of the troupe's settings.
   await l.getByRole("link", { name: "Change in Customise" }).first().click();
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/settings$`));
   for (const group of ["Who may join", "XP", "Status and titles", "Blood and diablerie"]) await expect(l.getByRole("group", { name: group, exact: true })).toBeVisible();
-  await l.getByRole("button", { name: "Set by hand" }).click();
-  await l.getByLabel("Floor", { exact: true }).fill("60");
-  await l.getByLabel("Ceiling", { exact: true }).fill("75");
-  await l.getByLabel("Why", { exact: true }).fill("Chronicle began in 2021");
-  await l.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(l.getByText("(30 starting + 30 set by hand)")).toBeVisible();
-  await expect(l.getByText("(30 starting + 45 set by hand)")).toBeVisible();
+  const range = l.getByRole("region", { name: "XP floor and ceiling" });
+  await range.getByLabel("Floor", { exact: true }).fill("60");
+  await range.getByLabel("Ceiling", { exact: true }).fill("75");
+  await range.getByLabel("Why", { exact: true }).fill("Chronicle began in 2021");
+  await range.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(range.getByText("30 starting + 30 set by hand")).toBeVisible();
+  await expect(range.getByText("30 starting + 45 set by hand")).toBeVisible();
   // Starting points leads there for them, and the log on About has the change.
   await l.goto(`/troupes/${troupeId}/house-rules/starting`);
   await expect(l.getByRole("heading", { name: "XP floor and ceiling" })).toHaveCount(0);
@@ -2859,7 +2864,7 @@ test("a troupe's Overview switches it public at once, shows its XP range, and Wa
   await expect(p.getByRole("heading", { name: "XP floor and ceiling" })).toBeVisible();
   await expect(p.getByText("60 XP", { exact: true })).toBeVisible();
   await expect(p.getByRole("heading", { name: "Waiting on you" })).toHaveCount(0);
-  await expect(p.getByRole("button", { name: "Set by hand" })).toHaveCount(0);
+  await expect(p.getByLabel("Floor", { exact: true })).toHaveCount(0);
 });
 
 test("Waiting on you shows the open cycle, a quest request and a backstory waiting, the tabs count them, and staff land on their troupes", async ({ browser }) => {

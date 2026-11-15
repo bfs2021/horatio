@@ -4,8 +4,8 @@ import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
 import { Checkbox } from "../../components/Checkbox";
-import { Card, ErrorText, Loading } from "../../components/ui";
-import { useAction, useRulesAction } from "../../hooks";
+import { SettingCard, useSaveOnChange } from "../../components/SettingCard";
+import { ErrorText, Loading } from "../../components/ui";
 import { ClanNamesSetting } from "./ClanNamesSetting";
 import { DiablerieFlaws } from "./DiablerieFlaws";
 import { FeedingSetting } from "./FeedingSetting";
@@ -35,7 +35,9 @@ export function SettingsTab({ troupe, canEdit }: { troupe: TroupeOut; canEdit: b
   return (
     <div className="flex flex-col gap-8">
       <p className="text-sm text-mist">
-        {canEdit ? "Settings for the whole troupe. Each change takes effect straight away." : `Settings for the whole troupe. Its storytellers change them${troupe.my_role === "assistant_storyteller" && !troupe.archived ? "; you write the setting with them." : "."}`}{" "}
+        {canEdit
+          ? "Settings for the whole troupe. Switches and choices save as you make them; a card with fields to type in has its own Save button."
+          : `Settings for the whole troupe. Its storytellers change them${troupe.my_role === "assistant_storyteller" && !troupe.archived ? "; you write the setting with them." : "."}`}{" "}
         A feature with a tab of its own has the rest of its settings at the top of that tab. What traits cost and what new characters start with are under House rules,
         beside this.
       </p>
@@ -127,19 +129,24 @@ export function sectsText(allowed: string[]) {
 function SectsCard({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean }) {
   // The book's sects alone: nothing else on this page needs the catalogue.
   const catalogue = useCatalogue("vampire", null, { category: "sect", enabled: canEdit });
-  const save = useRulesAction((allowed_sects: string[]) =>
-    unwrap(api.PATCH("/api/troupes/{troupe_id}", { params: { path: { troupe_id: troupe.id } }, body: { allowed_sects } })),
+  const save = useSaveOnChange(
+    (allowed_sects: string[]) => unwrap(api.PATCH("/api/troupes/{troupe_id}", { params: { path: { troupe_id: troupe.id } }, body: { allowed_sects } })),
+    { rules: true },
   );
   const allowed = troupe.allowed_sects;
   const sects = (catalogue.data?.traits ?? []).filter((t) => t.category === "sect").map((t) => t.name);
 
   return (
-    <Card title="Sects">
+    <SettingCard
+      title="Sects"
+      about={canEdit ? "Which sects player characters may join from. Leave all unticked to take any sect. NPCs are not limited." : undefined}
+      readOnly={!canEdit}
+    >
       {!canEdit ? (
         <p className="text-sm">{sectsText(allowed)}</p>
       ) : (
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-sm text-mist">Which sects may player characters join from? Leave all unticked to take any sect. NPCs are not limited.</legend>
+          <legend className="sr-only">Which sects may player characters join from?</legend>
           {sects.map((sect) => (
             <Checkbox
               key={sect}
@@ -152,27 +159,33 @@ function SectsCard({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean })
           <ErrorText error={save.error ?? catalogue.error} />
         </fieldset>
       )}
-    </Card>
+    </SettingCard>
   );
 }
 
 /** Which splats' player characters may join, and be built for the troupe: Vampire, Ghoul. At least one. */
 function SplatsCard({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean }) {
   const { splats, text } = useSplatsText(troupe);
-  const save = useAction((allowed_splats: string[]) =>
+  const save = useSaveOnChange((allowed_splats: string[]) =>
     unwrap(api.PATCH("/api/troupes/{troupe_id}", { params: { path: { troupe_id: troupe.id } }, body: { allowed_splats } })),
   );
   const allowed = troupe.allowed_splats;
 
   return (
-    <Card title="Splats">
+    <SettingCard
+      title="Splats"
+      about={
+        canEdit
+          ? "Which splats player characters may be. Tick at least one: new characters built for the troupe, and those joining it, must be one of these. NPCs are not limited."
+          : undefined
+      }
+      readOnly={!canEdit}
+    >
       {!canEdit ? (
         <p className="text-sm">{text} player characters may join.</p>
       ) : (
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-sm text-mist">
-            Which splats may player characters be? Tick at least one: new characters built for the troupe, and those joining it, must be one of these. NPCs are not limited.
-          </legend>
+          <legend className="sr-only">Which splats may player characters be?</legend>
           {splats.isPending && <Loading compact />}
           {(splats.data ?? []).map(({ splat, label }) => (
             <Checkbox
@@ -186,6 +199,6 @@ function SplatsCard({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean }
           <ErrorText error={save.error ?? splats.error} />
         </fieldset>
       )}
-    </Card>
+    </SettingCard>
   );
 }

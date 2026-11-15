@@ -3,8 +3,8 @@ import { api, unwrap } from "../../api/client";
 import type { ClanBansOut } from "../../api/types";
 import { useClanName } from "../../components/ClanNames";
 import { Checkbox } from "../../components/Checkbox";
-import { Badge, Button, Card, ErrorText } from "../../components/ui";
-import { useRulesAction } from "../../hooks";
+import { SettingCard, useSaveOnChange } from "../../components/SettingCard";
+import { Badge, Button, ErrorText } from "../../components/ui";
 
 type Ban = ClanBansOut["bans"][number];
 
@@ -38,22 +38,22 @@ export function StatusBanClans({ troupeId, canEdit }: { troupeId: string; canEdi
     queryKey: ["status-ban-clans", troupeId],
     queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/status-ban-clans", path)),
   });
-  const save = useRulesAction((body: { key: string; clans: string[] }) => unwrap(api.PUT("/api/troupes/{troupe_id}/status-ban-clans", { ...path, body })));
+  const save = useSaveOnChange((body: { key: string; clans: string[] }) => unwrap(api.PUT("/api/troupes/{troupe_id}/status-ban-clans", { ...path, body })), { rules: true });
   if (!bans.data) return <ErrorText error={bans.error} />;
   if (!bans.data.bans.length) return null;
   return (
-    <Card title="Status bans on clans">
-      <p className="mb-3 text-sm text-mist">
-        Which clans the sects&apos; status bans name here: who counts as a pillar clan, say, which the books change from one edition to the next. A bloodline goes with its
-        clan. Staff can still say a ban applies to a character, or exempt one, on its Status.
-      </p>
+    <SettingCard
+      title="Status bans on clans"
+      readOnly={!canEdit}
+      about="Which clans the sects' status bans name here: who counts as a pillar clan, say, which the books change from one edition to the next. A bloodline goes with its clan. Staff can still say a ban applies to a character, or exempt one, on its Status."
+    >
       <div className="flex flex-col gap-4">
         {bans.data.bans.map((ban) => (
           <BanClans key={ban.key} ban={ban} allClans={bans.data.all_clans} canEdit={canEdit} pending={save.isPending} onSave={(clans) => save.mutate({ key: ban.key, clans })} />
         ))}
       </div>
       <ErrorText error={save.error} />
-    </Card>
+    </SettingCard>
   );
 }
 
@@ -83,7 +83,7 @@ function BanClans({
       {own && <p className="text-xs text-mist">The book&apos;s: {named(ban.book_applies_to)}</p>}
       {canEdit && (
         <details className="mt-2">
-          <summary className="cursor-pointer text-mist hover:text-parchment">Change the clans</summary>
+          <summary className="cursor-pointer text-mist hover:text-parchment">Choose the clans</summary>
           <fieldset className="mt-2 flex flex-col gap-2" disabled={pending}>
             <legend className="mb-1 text-xs text-mist">
               {banHint(ban)} Tick none for no such ban here.

@@ -84,11 +84,10 @@ test("a player keeps their own sect status, naming its patron from the home trou
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/settings`);
   const setting = l.locator("section").filter({ has: l.getByRole("heading", { name: "Status on sheets" }) });
-  await expect(setting.getByText("Players keep their own.")).toBeVisible();
-  await setting.getByRole("button", { name: "Change who keeps status on sheets" }).click();
+  await expect(setting.getByRole("radio", { name: "Players keep their own" })).toBeChecked();
   await setting.getByLabel(/Staff only/).check();
-  await setting.getByRole("button", { name: "Save" }).click();
-  await expect(setting.getByText("Staff only.")).toBeVisible();
+  await expect(l.getByText("Saved.", { exact: true })).toBeVisible();
+  await expect(setting.getByRole("radio", { name: "Staff only" })).toBeChecked();
 
   // Now Celestine's player cannot add status, and the API refuses them.
   await p.goto(`/characters/${id}/status`);
@@ -250,7 +249,7 @@ test("a troupe names the Gangrel a pillar clan in Customise, and the Camarilla's
   const setting = l.locator("section").filter({ has: l.getByRole("heading", { name: "Status bans on clans" }) });
   const pillars = setting.getByRole("region", { name: "Camarilla: Pillar clans" });
   await expect(pillars).toContainText("Not Embraced into a pillar clan: Banu Haqim, Malkavian, Nosferatu, Toreador, Tremere or Ventrue.");
-  await pillars.getByText("Change the clans").click();
+  await pillars.getByText("Choose the clans").click();
   await expect(pillars.getByLabel("Brujah", { exact: true })).not.toBeChecked();
   await pillars.getByLabel("Gangrel", { exact: true }).click();
   await expect(pillars.getByLabel("Gangrel", { exact: true })).toBeChecked();
@@ -264,7 +263,7 @@ test("a troupe names the Gangrel a pillar clan in Customise, and the Camarilla's
 
   // The core book's list, a preset, keeps the Gangrel out and the Brujah in.
   await l.goto(`/troupes/${troupeId}/settings`);
-  await pillars.getByText("Change the clans").click();
+  await pillars.getByText("Choose the clans").click();
   await pillars.getByRole("button", { name: "As the core book (2013)" }).click();
   await expect(pillars.getByLabel("Brujah", { exact: true })).toBeChecked();
   await expect(pillars.getByLabel("Gangrel", { exact: true })).not.toBeChecked();

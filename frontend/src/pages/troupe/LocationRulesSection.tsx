@@ -3,8 +3,10 @@ import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { LocationCatalogueOut, LocationQualityOut, OwnLocationQualityOut } from "../../api/types";
 import { Checkbox } from "../../components/Checkbox";
+import { RadioList } from "../../components/RadioList";
+import { SettingCard, useSaveOnChange } from "../../components/SettingCard";
 import { Toggle } from "../../components/Toggle";
-import { Badge, Button, Card, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
+import { Badge, Button, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { fullSuggestion, parseSuggestions, suggestionLines, suggestionText } from "./locations";
 
@@ -31,20 +33,21 @@ export function LocationRulesSection({ troupeId, canEdit }: { troupeId: string; 
     queryKey: ["location-catalogue", troupeId],
     queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/locations/catalogue", path)),
   });
-  const option = useAction((body: { key: string; on: boolean }) =>
+  const option = useSaveOnChange((body: { key: string; on: boolean }) =>
     unwrap(api.PUT("/api/troupes/{troupe_id}/location-options/{key}", { params: { path: { troupe_id: troupeId, key: body.key } }, body: { on: body.on } })),
   );
-  const limit = useAction((strength: "refuse" | "note") => unwrap(api.PUT("/api/troupes/{troupe_id}/location-limit", { ...path, body: { strength } })));
+  const limit = useSaveOnChange((strength: "refuse" | "note") => unwrap(api.PUT("/api/troupes/{troupe_id}/location-limit", { ...path, body: { strength } })));
   if (catalogue.isPending) return <Loading />;
   if (catalogue.error) return <ErrorText error={catalogue.error} />;
   const c = catalogue.data;
 
   return (
     <div className="flex flex-col gap-6">
-      <Card title="House options">
-        <p className="mb-3 text-sm text-mist">
-          Changes to the book's Stock Locations ({c.book}, pp. 117–133) that many troupes play. Each is on unless switched off here.
-        </p>
+      <SettingCard
+        title="House options"
+        readOnly={!canEdit}
+        about={`Changes to the book's Stock Locations (${c.book}, pp. 117–133) that many troupes play. Each is on unless switched off here.`}
+      >
         <ul className="divide-y divide-ash">
           {c.options.map((o) => (
             <li key={o.key} className="py-0.5">
@@ -70,30 +73,26 @@ export function LocationRulesSection({ troupeId, canEdit }: { troupeId: string; 
           ))}
         </ul>
         <ErrorText error={option.error} />
-      </Card>
+      </SettingCard>
 
-      <Card title="Control limit">
-        <p className="mb-3 text-sm text-mist">
-          A character controls up to five locations, and one more for each dot of Retainers (p. {c.pages.control_page ?? "119"}). Havens don't count, nor a conglomerate whose every
-          subsidiary they control. Going over the limit:
-        </p>
+      <SettingCard
+        title="Control limit"
+        readOnly={!canEdit}
+        about={`A character controls up to five locations, and one more for each dot of Retainers (p. ${c.pages.control_page ?? "119"}). Havens don't count, nor a conglomerate whose every subsidiary they control.`}
+      >
         {canEdit ? (
-          <div className="flex flex-col gap-2">
-            {LIMITS.map((l) => (
-              <label key={l.value} className="flex items-start gap-2 text-sm">
-                <input type="radio" name="location-limit" className="mt-1" checked={c.limit === l.value} disabled={limit.isPending} onChange={() => limit.mutate(l.value)} />
-                <span>
-                  {l.label}
-                  <span className="block text-xs text-mist">{l.meaning}</span>
-                </span>
-              </label>
-            ))}
-          </div>
+          <RadioList
+            label="Going over the limit"
+            value={c.limit}
+            options={LIMITS.map((l) => ({ value: l.value, label: l.label, hint: l.meaning }))}
+            disabled={limit.isPending}
+            onChange={(strength) => limit.mutate(strength)}
+          />
         ) : (
-          <p className="text-sm">{LIMITS.find((l) => l.value === c.limit)?.label}</p>
+          <p className="text-sm">Going over the limit: {LIMITS.find((l) => l.value === c.limit)?.label}.</p>
         )}
         <ErrorText error={limit.error} />
-      </Card>
+      </SettingCard>
 
       <OwnQualities troupeId={troupeId} catalogue={c} canEdit={canEdit} />
       <Catalogue catalogue={c} />
@@ -116,8 +115,10 @@ function OwnQualities({ troupeId, catalogue, canEdit }: { troupeId: string; cata
     ),
   );
   return (
-    <Card
+    <SettingCard
       title="The troupe's qualities"
+      readOnly={!canEdit}
+      about="Location qualities of the troupe's own, marked ★, with what a quest for one should ask for."
       actions={
         canEdit &&
         editing === null && (
@@ -127,7 +128,6 @@ function OwnQualities({ troupeId, catalogue, canEdit }: { troupeId: string; cata
         )
       }
     >
-      <p className="mb-3 text-sm text-mist">Location qualities of the troupe's own, marked ★, with what a quest for one should ask for.</p>
       {editing === "new" && <OwnForm troupeId={troupeId} quality={null} onDone={() => setEditing(null)} />}
       {catalogue.own.length === 0 && editing !== "new" && <p className="text-sm text-mist">None yet.</p>}
       <ul className="divide-y divide-ash">
@@ -162,7 +162,7 @@ function OwnQualities({ troupeId, catalogue, canEdit }: { troupeId: string; cata
         ))}
       </ul>
       <ErrorText error={archive.error} />
-    </Card>
+    </SettingCard>
   );
 }
 
@@ -236,11 +236,10 @@ function OwnForm({ troupeId, quality, onDone }: { troupeId: string; quality: Own
 function Catalogue({ catalogue }: { catalogue: LocationCatalogueOut }) {
   const groups = KINDS.map((k) => ({ ...k, qualities: catalogue.qualities.filter((q) => q.kind === k.value) }));
   return (
-    <Card title="The catalogue">
-      <p className="mb-3 text-sm text-mist">
-        Each quality as played here, with its page and what a quest for it should ask for, by the location's rating. A standard location has up to its rating in qualities, a
-        prestige or iconic one twice that; only an iconic one has iconic qualities, and no location more than one supernatural quality.
-      </p>
+    <SettingCard
+      title="The catalogue"
+      about="Each quality as played here, with its page and what a quest for it should ask for, by the location's rating. A standard location has up to its rating in qualities, a prestige or iconic one twice that; only an iconic one has iconic qualities, and no location more than one supernatural quality."
+    >
       <div className="flex flex-col gap-2">
         {groups.map((g) => (
           <details key={g.value} className="rounded-md border border-ash/60 px-3 py-2">
@@ -284,7 +283,7 @@ function Catalogue({ catalogue }: { catalogue: LocationCatalogueOut }) {
           </ul>
         </details>
       </div>
-    </Card>
+    </SettingCard>
   );
 }
 

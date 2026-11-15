@@ -4,7 +4,8 @@ import { api, unwrap } from "../../api/client";
 import type { TerritoryOut } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState";
 import { useToast } from "../../components/Toast";
-import { Button, Card, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
+import { SettingCard } from "../../components/SettingCard";
+import { Button, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
 
 type Size = TerritoryOut["size"];
@@ -51,8 +52,10 @@ export function FeedingTerritories({ troupeId, canManage }: { troupeId: string; 
   const set = (change: Partial<Draft>) => editing && setEditing({ ...editing, draft: { ...editing.draft, ...change } });
 
   return (
-    <Card
+    <SettingCard
       title="Feeding territories"
+      readOnly={!canManage && "The troupe's storytellers and assistant storytellers keep this list."}
+      about="Areas where only the characters the domain's Authority names may feed. Everyone in the troupe can see them, as the domain knows them. Feeding in one stands in for a feeding action, or with the Rack, it has cards of its own; feeding in another's is poaching."
       actions={
         canManage &&
         editing === null && (
@@ -62,10 +65,6 @@ export function FeedingTerritories({ troupeId, canManage }: { troupeId: string; 
         )
       }
     >
-      <p className="mb-3 text-sm text-mist">
-        Areas where only the characters the domain's Authority names may feed. Everyone in the troupe can see them, as the domain knows them. Feeding in one stands in for a feeding
-        action, or with the Rack, it has cards of its own; feeding in another's is poaching.
-      </p>
       {list.isPending && <Loading />}
       {list.data?.length === 0 && editing === null && <EmptyState title="No feeding territories yet.">{canManage && "Add one as the Authority proclaims it."}</EmptyState>}
       <ul className="flex flex-col divide-y divide-ash text-sm">
@@ -157,6 +156,6 @@ export function FeedingTerritories({ troupeId, canManage }: { troupeId: string; 
         </form>
       )}
       <ErrorText error={list.error} />
-    </Card>
+    </SettingCard>
   );
 }

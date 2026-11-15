@@ -5,8 +5,9 @@ import { api, unwrap } from "../../api/client";
 import type { SettingEntryOut, SettingOut, SettingPresetOut } from "../../api/types";
 import { Dialog } from "../../components/Dialog";
 import { Markdown } from "../../components/Markdown";
+import { SettingCard, SettingForm, useSaveOnChange, useSettingForm } from "../../components/SettingCard";
 import { Toggle } from "../../components/Toggle";
-import { Button, Card, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
+import { Button, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { moved, type Kind } from "./settingStyle";
 
@@ -47,24 +48,32 @@ export function SettingStyle({ troupeId }: { troupeId: string }) {
   );
 }
 
+/** Who may write the document, for those who only read it here. */
+const WRITERS = "The troupe's storytellers and assistant storytellers write this.";
+
 /**
  * Where players read the whole document (#771): The setting tab, printed, and on the
  * profile when its storytellers choose, as written house rules can be.
  */
 function ShowCard({ troupeId, setting }: { troupeId: string; setting: SettingOut }) {
-  const show = useAction((on: boolean) =>
+  const show = useSaveOnChange((on: boolean) =>
     unwrap(api.PUT("/api/troupes/{troupe_id}/setting/public", { params: { path: { troupe_id: troupeId } }, body: { public: on } })),
   );
   return (
-    <Card title="Where players read it">
-      <p className="text-sm text-mist">
-        Every member reads the whole document on the{" "}
-        <Link to={`/troupes/${troupeId}/setting`} className="underline hover:text-parchment">
-          Setting
-        </Link>{" "}
-        tab, with the parts built from the troupe's settings: its sects, clan rarities, costs and mechanics. A character built to the troupe's rules shows its themes,
-        moods and teaser as it is made.
-      </p>
+    <SettingCard
+      title="Where players read it"
+      readOnly={!setting.can_publish}
+      about={
+        <>
+          Every member reads the whole document on the{" "}
+          <Link to={`/troupes/${troupeId}/setting`} className="underline hover:text-parchment">
+            Setting
+          </Link>{" "}
+          tab, with the parts built from the troupe's settings: its sects, clan rarities, costs and mechanics. A character built to the troupe's rules shows its themes, moods and
+          teaser as it is made.
+        </>
+      }
+    >
       {setting.can_publish ? (
         <Toggle
           label="Show it on the troupe's profile"
@@ -72,62 +81,51 @@ function ShowCard({ troupeId, setting }: { troupeId: string; setting: SettingOut
           checked={setting.public}
           disabled={show.isPending}
           onChange={(on) => show.mutate(on)}
-          className="mt-3"
         />
       ) : (
-        <p className="mt-3 text-sm">{setting.public ? "The troupe's profile shows it." : "The troupe's profile doesn't show it."}</p>
+        <p className="text-sm">{setting.public ? "The troupe's profile shows it." : "The troupe's profile doesn't show it."}</p>
       )}
       <ErrorText error={show.error} />
-    </Card>
+    </SettingCard>
   );
 }
 
 type Text = Pick<SettingOut, "subtitle" | "teaser" | "power" | "agency">;
 
 /** Save some of the document's text, keeping the rest as it is. */
-function useSaveText(troupeId: string, setting: SettingOut) {
-  return useAction((change: Partial<Text>) =>
-    unwrap(
-      api.PUT("/api/troupes/{troupe_id}/setting", {
-        params: { path: { troupe_id: troupeId } },
-        body: {
-          subtitle: setting.subtitle,
-          teaser: setting.teaser,
-          power: setting.power,
-          agency: setting.agency,
-          ...change,
-        },
-      }),
-    ),
+function saveText(troupeId: string, setting: SettingOut, change: Partial<Text>) {
+  return unwrap(
+    api.PUT("/api/troupes/{troupe_id}/setting", {
+      params: { path: { troupe_id: troupeId } },
+      body: {
+        subtitle: setting.subtitle,
+        teaser: setting.teaser,
+        power: setting.power,
+        agency: setting.agency,
+        ...change,
+      },
+    }),
   );
 }
 
 /** The chronicle's name from the profile, its subtitle, and its in-world teaser. */
 function TitleCard({ troupeId, setting }: { troupeId: string; setting: SettingOut }) {
-  const [subtitle, setSubtitle] = useState(setting.subtitle);
-  const [teaser, setTeaser] = useState(setting.teaser);
+  const form = useSettingForm({ subtitle: setting.subtitle, teaser: setting.teaser }, (change) => saveText(troupeId, setting, change));
   const [preview, setPreview] = useState(false);
-  const save = useSaveText(troupeId, setting);
   const name = setting.chronicle || "No chronicle name yet";
   if (!setting.can_edit) {
     return (
-      <Card title="Title and teaser">
+      <SettingCard title="Title and teaser" readOnly={WRITERS}>
         <p className="text-parchment">{name}</p>
         {setting.subtitle && <p className="text-sm text-mist">{setting.subtitle}</p>}
         <div className="mt-3">{setting.teaser ? <Markdown text={setting.teaser} /> : <p className="text-sm text-mist">No teaser yet.</p>}</div>
-      </Card>
+      </SettingCard>
     );
   }
-  const changed = subtitle !== setting.subtitle || teaser !== setting.teaser;
+  const { subtitle, teaser } = form.value;
   return (
-    <Card title="Title and teaser">
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate({ subtitle, teaser });
-        }}
-      >
+    <SettingCard title="Title and teaser" about="The chronicle's name, and the chronicle as its characters know it.">
+      <SettingForm form={form} className="gap-3">
         <p className="text-sm">
           <span className="text-mist">Chronicle: </span>
           {name}{" "}
@@ -136,7 +134,7 @@ function TitleCard({ troupeId, setting }: { troupeId: string; setting: SettingOu
           </Link>
         </p>
         <Field label="Subtitle" hint="Under the chronicle's name, such as A City Under Siege.">
-          <Input maxLength={200} value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
+          <Input maxLength={200} value={subtitle} onChange={(e) => form.set({ subtitle: e.target.value })} />
         </Field>
         <div className="flex flex-col gap-1 text-sm">
           <div className="flex items-center justify-between gap-2">
@@ -150,48 +148,34 @@ function TitleCard({ troupeId, setting }: { troupeId: string; setting: SettingOu
               {teaser.trim() ? <Markdown text={teaser} /> : <span className="text-mist">Nothing written yet.</span>}
             </div>
           ) : (
-            <Textarea aria-label="Teaser, in Markdown" rows={6} maxLength={20000} value={teaser} onChange={(e) => setTeaser(e.target.value)} />
+            <Textarea aria-label="Teaser, in Markdown" rows={6} maxLength={20000} value={teaser} onChange={(e) => form.set({ teaser: e.target.value })} />
           )}
           <span className="text-xs text-mist">The chronicle as its characters know it. The troupe's description stays the short blurb on the troupe list.</span>
         </div>
-        <ErrorText error={save.error} />
-        <div>
-          <Button type="submit" disabled={!changed || save.isPending}>
-            Save title and teaser
-          </Button>
-        </div>
-      </form>
-    </Card>
+      </SettingForm>
+    </SettingCard>
   );
 }
 
 /** The scope (MET: VTM pp. 329–330): its locale, the profile's city, and the power and agency of its characters. */
 function ScopeCard({ troupeId, setting }: { troupeId: string; setting: SettingOut }) {
-  const [power, setPower] = useState(setting.power);
-  const [agency, setAgency] = useState(setting.agency);
-  const save = useSaveText(troupeId, setting);
+  const form = useSettingForm({ power: setting.power, agency: setting.agency }, (change) => saveText(troupeId, setting, change));
   const locale = setting.locale || "Not set";
+  const about = "Where the chronicle is, and how far its characters reach (MET: VTM pp. 329–330).";
   if (!setting.can_edit) {
     return (
-      <Card title="Scope">
+      <SettingCard title="Scope" about={about} readOnly={WRITERS}>
         <dl className="flex flex-col gap-2 text-sm">
           <ScopeEntry label="Locale">{locale}</ScopeEntry>
           <ScopeEntry label="Power">{setting.power || "Not set"}</ScopeEntry>
           <ScopeEntry label="Agency">{setting.agency || "Not set"}</ScopeEntry>
         </dl>
-      </Card>
+      </SettingCard>
     );
   }
-  const changed = power !== setting.power || agency !== setting.agency;
   return (
-    <Card title="Scope">
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate({ power, agency });
-        }}
-      >
+    <SettingCard title="Scope" about={about}>
+      <SettingForm form={form} className="gap-3">
         <p className="text-sm">
           <span className="text-mist">Locale: </span>
           {locale}{" "}
@@ -200,19 +184,13 @@ function ScopeCard({ troupeId, setting }: { troupeId: string; setting: SettingOu
           </Link>
         </p>
         <Field label="Power" hint="How powerful characters are, such as neonates and ancillae only.">
-          <Textarea rows={2} maxLength={2000} value={power} onChange={(e) => setPower(e.target.value)} />
+          <Textarea rows={2} maxLength={2000} value={form.value.power} onChange={(e) => form.set({ power: e.target.value })} />
         </Field>
         <Field label="Agency" hint="How far characters can change the story, such as nothing beyond the city.">
-          <Textarea rows={2} maxLength={2000} value={agency} onChange={(e) => setAgency(e.target.value)} />
+          <Textarea rows={2} maxLength={2000} value={form.value.agency} onChange={(e) => form.set({ agency: e.target.value })} />
         </Field>
-        <ErrorText error={save.error} />
-        <div>
-          <Button type="submit" disabled={!changed || save.isPending}>
-            Save scope
-          </Button>
-        </div>
-      </form>
-    </Card>
+      </SettingForm>
+    </SettingCard>
   );
 }
 
@@ -288,8 +266,9 @@ function Entries({
   const at = shown ? entries.indexOf(shown) : -1;
   const ids = entries.map((e) => e.id);
   return (
-    <Card
+    <SettingCard
       title={title}
+      readOnly={!canEdit && WRITERS}
       actions={
         canEdit && (
           <Button variant="secondary" className="min-h-8 px-3" onClick={() => setEditing("new")}>
@@ -367,7 +346,7 @@ function Entries({
         )}
       </Dialog>
       <Remove troupeId={troupeId} entry={removing} what={removing?.name ?? ""} onDone={() => setRemoving(null)} />
-    </Card>
+    </SettingCard>
   );
 }
 
@@ -379,8 +358,9 @@ function Notes({ troupeId, entries, canEdit }: { troupeId: string; entries: Sett
   const drag = useDrag(entries, (ids) => order.mutate(ids), canEdit && !order.isPending);
   const ids = entries.map((e) => e.id);
   return (
-    <Card
+    <SettingCard
       title="Storyteller notes"
+      readOnly={!canEdit && WRITERS}
       actions={
         canEdit && (
           <Button variant="secondary" className="min-h-8 px-3" onClick={() => setEditing("new")}>
@@ -437,7 +417,7 @@ function Notes({ troupeId, entries, canEdit }: { troupeId: string; entries: Sett
         )}
       </Dialog>
       <Remove troupeId={troupeId} entry={removing} what="this note" onDone={() => setRemoving(null)} />
-    </Card>
+    </SettingCard>
   );
 }
 

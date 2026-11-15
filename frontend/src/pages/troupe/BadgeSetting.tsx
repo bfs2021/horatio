@@ -1,9 +1,9 @@
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
 import { RadioList } from "../../components/RadioList";
+import { SettingCard, useSaveOnChange } from "../../components/SettingCard";
 import { Toggle } from "../../components/Toggle";
-import { Card, ErrorText } from "../../components/ui";
-import { useAction } from "../../hooks";
+import { ErrorText } from "../../components/ui";
 
 type PrintStatus = "all" | "negative" | "none";
 
@@ -21,12 +21,12 @@ const STATUS: { value: PrintStatus; label: string; meaning: string; text: string
 /** What the troupe's game badges print: the titles held here, how much status, and
  * each character's pronouns (never the player's). */
 export function BadgeSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean }) {
-  const save = useAction((body: { badge_titles?: boolean; badge_status?: PrintStatus; badge_pronouns?: boolean }) =>
+  const save = useSaveOnChange((body: { badge_titles?: boolean; badge_status?: PrintStatus; badge_pronouns?: boolean }) =>
     unwrap(api.PATCH("/api/troupes/{troupe_id}", { params: { path: { troupe_id: troupe.id } }, body })),
   );
   const status = STATUS.find((o) => o.value === troupe.badge_status) ?? STATUS[0]!;
   return (
-    <Card title="Badges">
+    <SettingCard title="Badges" readOnly={!canEdit} about="What the troupe's game badges print. There is always room for stickers.">
       {!canEdit ? (
         <p className="text-sm">
           Badges print {troupe.badge_titles ? "titles" : "no titles"}, {status.text}
@@ -34,7 +34,6 @@ export function BadgeSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit: 
         </p>
       ) : (
         <div className="flex flex-col gap-3 text-sm">
-          <p className="text-mist">What the troupe's game badges print. There is always room for stickers.</p>
           <Toggle label="Print titles" checked={troupe.badge_titles} disabled={save.isPending} onChange={(on) => save.mutate({ badge_titles: on })} />
           <Toggle
             label="Print character pronouns"
@@ -54,6 +53,6 @@ export function BadgeSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit: 
           <ErrorText error={save.error} />
         </div>
       )}
-    </Card>
+    </SettingCard>
   );
 }

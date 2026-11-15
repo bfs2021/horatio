@@ -6,6 +6,7 @@ import type { BoonStandingsOut, BoonWeightsIn } from "../../api/types";
 import { BOON_PAGE, KINDS, kindName } from "../../boons";
 import { DEFAULT_WEIGHTS, months, net, netWords, SCOPES, share, weight, weightsLine, type Scope } from "../../boonStandings";
 import { DataTable, type Column } from "../../components/DataTable";
+import { OneLine } from "../../components/OneLine";
 import { useToast } from "../../components/Toast";
 import { Button, Card, Empty, ErrorText, Field, Input, Loading } from "../../components/ui";
 import { useWidePage } from "../../components/widePage";
@@ -247,10 +248,11 @@ function barColumn<T>(width: string, bar: (row: T) => ReactNode): Column<T> {
 
 function Name({ who }: { who: Party }) {
   const gone = who.standing && who.standing !== "active" && who.standing !== "inactive";
-  // A name longer than its list is wide breaks rather than pushing the page sideways.
+  // A name longer than its list is wide breaks rather than pushing the page sideways; a
+  // passage of story written for a name-only side is cut to a line (#990).
   return (
     <span className="wrap-anywhere">
-      {who.name}
+      {who.character_id === null ? <OneLine text={who.name} /> : who.name}
       {who.character_id === null && <span className="text-xs text-mist"> (name only)</span>}
       {gone && <span className="text-xs text-mist"> ({who.standing === "final_death" ? "Final Death" : who.standing === "off_field" ? "Off-field" : "retired"})</span>}
     </span>

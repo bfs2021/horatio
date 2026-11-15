@@ -6,7 +6,7 @@ import { arc, area, stack } from "d3-shape";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { api, unwrap } from "../../api/client";
-import { BOON_PAGE, KINDS, kindName, type BoonKind } from "../../boons";
+import { BOON_PAGE, KINDS, kindName, shortName, type BoonKind } from "../../boons";
 import {
   clanOf,
   flowPairs,
@@ -355,8 +355,9 @@ function Network({ s, troupeId, harpy }: { s: Statistics; troupeId: string; harp
       { key: "weight", label: "Weight", numeric: true },
     ],
     rows: shown.links.map((l) => ({
-      debtor: s.nodes.find((n) => n.who.key === l.debtor)?.who.name ?? "",
-      creditor: s.nodes.find((n) => n.who.key === l.creditor)?.who.name ?? "",
+      // A name-only side can be a passage of story (#990): a line of it.
+      debtor: shortName(s.nodes.find((n) => n.who.key === l.debtor)?.who.name ?? ""),
+      creditor: shortName(s.nodes.find((n) => n.who.key === l.creditor)?.who.name ?? ""),
       boons: l.count,
       weight: weight(l.shown),
     })),
@@ -518,7 +519,7 @@ function NetworkPlot({
           const n = p.node;
           const dim = near !== null && near !== n.who.key && !joined.some((l) => touches(l) && ((l.source as Placed) === p || (l.target as Placed) === p));
           const tip = {
-            title: n.who.name,
+            title: shortName(n.who.name),
             rows: [
               { label: "owed to them", value: weight(n.owed) },
               { label: "they owe", value: weight(n.owes) },
@@ -552,7 +553,7 @@ function NetworkPlot({
               <circle cx={p.x} cy={p.y} r={p.r} fill={fill(n)} stroke="var(--chart-surface)" strokeWidth={2} />
               {(p.r > 10 || near === n.who.key) && (
                 <text x={p.x} y={(p.y ?? 0) + p.r + 11} textAnchor="middle" style={{ fill: "var(--chart-ink)", fontSize: 11 }} pointerEvents="none">
-                  {n.who.name}
+                  {shortName(n.who.name, 30)}
                 </text>
               )}
             </g>
@@ -757,7 +758,7 @@ function Games({ s }: { s: Statistics }) {
           {picked.most_active.length > 0 && (
             <p className="mt-1">
               <span className="text-mist">Most active: </span>
-              {picked.most_active.map((a) => `${a.who.name} (${a.boons})`).join(", ")}
+              {picked.most_active.map((a) => `${shortName(a.who.name)} (${a.boons})`).join(", ")}
             </p>
           )}
         </section>

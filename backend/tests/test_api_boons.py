@@ -223,6 +223,29 @@ def test_a_row_that_cant_be_registered_stops_them_all(ledger: Ledger) -> None:
     assert ledger.register(row(ledger.agnes, ledger.bram, count=21)).status_code == 422
 
 
+# A passage of story where a name would be, as a troupe whose ledger is a prop writes (#990).
+STORY = ("The debt was written in silver on the night the river froze, and sealed. " * 9)[:600]
+
+
+def test_staff_write_any_text_on_either_side_up_to_2000_characters(ledger: Ledger) -> None:
+    made = ledger.one(named(STORY), named("The Moon"))
+
+    assert (made["debtor"]["name"], made["creditor"]["name"]) == (STORY.strip(), "The Moon")
+    assert made["debtor"]["character_id"] is None
+    listed = ledger.ledger()["boons"]
+    assert [b["debtor"]["name"] for b in listed] == [STORY.strip()]
+    longest = "x" * 2000
+    edited = ledger.edit(made, creditor=named(longest), note="As the plot has it")
+    assert edited.status_code == 200, edited.text
+    assert edited.json()["creditor"]["name"] == longest
+    refused = ledger.edit(made, creditor=named(longest + "x"), note="Too long")
+    assert refused.status_code == 422
+    traded = ledger.act(made, "trade", creditor=named(STORY[::-1]), note="")
+    assert traded.status_code == 200, traded.text
+    passed = ledger.act(made, "pass-on", side="debtor", to=named("Whoever holds the Moon"), note="")
+    assert passed.status_code == 200, passed.text
+
+
 def test_only_running_staff_keep_the_ledger(ledger: Ledger) -> None:
     boon = ledger.one(ledger.agnes, ledger.bram)
     for person in (ledger.troupe.narrator, ledger.troupe.player, ledger.other):

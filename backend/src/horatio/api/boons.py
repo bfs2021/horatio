@@ -80,10 +80,11 @@ class BoonLedgerIn(BaseModel):
 
 
 class BoonPartyIn(BaseModel):
-    """One side of a boon: a character in the troupe, or a name only."""
+    """One side of a boon: a character in the troupe, or a name only. Only the troupe's
+    running staff write a name longer than boons.LONGEST_NAME (`side`)."""
 
     character_id: uuid.UUID | None = None
-    name: str = Field(default="", max_length=boons.LONGEST_NAME)
+    name: str = Field(default="", max_length=boons.LONGEST_TEXT)
 
 
 class NewBoonIn(BaseModel):
@@ -473,7 +474,9 @@ def side(
     db: DbSession, troupe: Troupe, given: BoonPartyIn, which: str, keeper: Keeper | None = None
 ) -> boons.Party:
     """The side as named. A Harpy (#688) names only the characters they may pick
-    (`harpy_choices`); anyone else by name."""
+    (`harpy_choices`); anyone else by name. A name only is at most boons.LONGEST_NAME
+    characters, or boons.LONGEST_TEXT for the troupe's running staff (#990): anyone
+    else, a Harpy, a talon or a player reporting a boon (no `keeper`), the shorter."""
     if (
         keeper is not None
         and not keeper.staff
@@ -484,7 +487,8 @@ def side(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
             f"Name the {which} by name: staff link it to a character.",
         )
-    return boons.party(db, troupe, given.character_id, given.name, which)
+    longest = boons.LONGEST_TEXT if keeper is not None and keeper.staff else boons.LONGEST_NAME
+    return boons.party(db, troupe, given.character_id, given.name, which, longest)
 
 
 def no_staff_note(keeper: Keeper, note: str | None) -> None:

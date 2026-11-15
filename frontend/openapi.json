@@ -7623,7 +7623,7 @@
         "type": "object"
       },
       "BoonPartyIn": {
-        "description": "One side of a boon: a character in the troupe, or a name only.",
+        "description": "One side of a boon: a character in the troupe, or a name only. Only the troupe's\nrunning staff write a name longer than boons.LONGEST_NAME (`side`).",
         "properties": {
           "character_id": {
             "anyOf": [
@@ -7639,7 +7639,7 @@
           },
           "name": {
             "default": "",
-            "maxLength": 200,
+            "maxLength": 2000,
             "title": "Name",
             "type": "string"
           }

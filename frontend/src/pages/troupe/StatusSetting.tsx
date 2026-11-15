@@ -60,7 +60,7 @@ export function TitlesSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit:
       title="Titles on sheets"
       label="Change who chooses titles"
       options={TITLE_OPTIONS}
-      about="Who gives titles to characters whose home is here. Storytellers and assistant storytellers always can, from the Characters tab or the character's Status & Titles tab."
+      about="Who gives titles to characters whose home is here. Storytellers and assistant storytellers always can, from the Roster tab or the character's Status & Titles tab."
     />
   );
 }

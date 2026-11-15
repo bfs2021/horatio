@@ -156,7 +156,7 @@ test("represented by: a Ravnos's player says the Brujah speak for them at court,
   // Only their own: Rothgar's Brujah have a seat, and nothing to choose.
   await expect(section("Brujah").getByRole("button", { name: /Change who represents/ })).toHaveCount(0);
 
-  // Staff see it on the Characters tab.
+  // Staff see it on the Roster tab.
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/characters`);
   await expect(l.getByRole("row").filter({ hasText: "Ravindra" }).getByText("Represented by: Brujah").filter({ visible: true })).toBeVisible();
@@ -398,7 +398,7 @@ test("lines and veils: a player adds them, staff see them, another player only o
   await expect(a.getByText("Lines and veils saved.")).toBeVisible();
   await a.screenshot(shots("lines-veils-account"));
 
-  // The lead sees them on the Who's Who, the Characters tab and the troupe's list.
+  // The lead sees them on the Who's Who, the Roster tab and the troupe's list.
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/whos-who`);
   const odile = l.getByRole("article", { name: "Odile" });

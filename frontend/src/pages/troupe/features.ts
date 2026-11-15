@@ -156,10 +156,10 @@ export function features(troupe: TroupeOut): Feature[] {
     {
       key: "court_history",
       name: "The court over time, for players",
-      adds: "Who held each title, and when, on a Court tab for the troupe's players: titles are public at court, but not how each one ended, nor anyone's status. Staff always have it.",
+      adds: "Who held each title, and when, on a Court over time tab for the troupe's players: titles are public at court, but not how each one ended, nor anyone's status. Staff always have it.",
       on: troupe.court_history_players,
       state: troupe.court_history_players ? "Players see it" : "Staff only",
-      tab: { label: "Court", to: "court" },
+      tab: { label: "Court over time", to: "court" },
       switchable: true,
     },
     {

@@ -1,5 +1,5 @@
-"""Sharing a troupe's settings (horatio.troupe_settings_share), under Customise › Share
-settings: its running staff export them; its storytellers review a file, or another
+"""Sharing a troupe's settings (horatio.troupe_settings_share), under Customise › Export
+and import: its running staff export them; its storytellers review a file, or another
 troupe they run, against it, and import what they tick."""
 
 import uuid

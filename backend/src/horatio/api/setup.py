@@ -1,4 +1,4 @@
-"""How far a troupe is set up (issue #377), for the Overview tab of its Customise
+"""How far a troupe is set up (issue #377), for the Setup tab of its Customise
 group: the few things a new lead does first, each done or not, and how many house
 rules it has in each part of Rules. In one request, from what the troupe already
 holds; its other settings are on the troupe itself."""

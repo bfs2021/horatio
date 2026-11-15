@@ -1088,9 +1088,9 @@ test("the court over time: staff give a Prince and take it away, and see one fin
   await titles(["Prince"]);
   await titles([]);
 
-  // Court › Court: the Prince's row, with one bar, ended.
+  // Court › Court over time: the Prince's row, with one bar, ended.
   await p.goto(`/troupes/${troupeId}/titles`);
-  await p.getByRole("navigation", { name: "Court", exact: true }).getByRole("link", { name: "Court", exact: true }).click();
+  await p.getByRole("navigation", { name: "Court", exact: true }).getByRole("link", { name: "Court over time", exact: true }).click();
   const chart = p.getByRole("figure", { name: "Who held each title" });
   await expect(chart).toBeVisible();
   const bar = chart.getByRole("img", { name: /^Prince: Aurelio Vance: from / });

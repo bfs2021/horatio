@@ -120,7 +120,7 @@ function Choices({ label, entries, picked, onToggle }: { label: string; entries:
 }
 
 /**
- * For running staff on the Setting tab: each theme and mood with the scenes and quests
+ * For running staff on The setting tab: each theme and mood with the scenes and quests
  * tagged with it, and how often, those nothing has touched yet among them.
  */
 export function MotifsTouched({ troupeId }: { troupeId: string }) {

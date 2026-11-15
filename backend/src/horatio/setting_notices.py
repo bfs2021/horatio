@@ -1,6 +1,6 @@
 """A bell notice to a troupe's players when its Setting Style Document changes (issue
 #881), saying what changed: a theme added, the teaser rewritten, a clan's rarity
-changed. It links to the troupe's Setting tab.
+changed. It links to the troupe's setting tab (The setting).
 
 Staff often make several changes in one sitting, so a burst makes one notice: while
 a player's notice is unread and its last change came less than `GATHER` ago, the

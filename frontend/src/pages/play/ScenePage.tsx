@@ -93,7 +93,7 @@ export function ScenePage() {
     queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}", { params: { path: { troupe_id: troupeId } } })),
   });
   useTitle([scene.data?.name ?? "Scene", troupe.data?.name].filter(Boolean).join(" · "));
-  // The same query as the troupe's Characters tab, for the search.
+  // The same query as the troupe's Roster tab, for the search.
   const roster = useQuery({
     queryKey: ["roster", troupeId],
     queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/characters", { params: { path: { troupe_id: troupeId } } })),

@@ -436,7 +436,11 @@ export function PageTabs({ label, tabs, className }: { label: string; tabs: Tab[
             to={t.to}
             end={t.end}
             className={({ isActive }) =>
-              cx("shrink-0 rounded px-2.5 py-1 text-xs whitespace-nowrap", isActive ? "bg-ash text-gold" : "text-mist hover:text-parchment")
+              // At least 40 px each way on a touch screen.
+              cx(
+                "inline-flex shrink-0 items-center justify-center rounded px-2.5 py-1 text-xs whitespace-nowrap pointer-coarse:min-h-10 pointer-coarse:min-w-10",
+                isActive ? "bg-ash text-gold" : "text-mist hover:text-parchment",
+              )
             }
           >
             <span className="inline-flex items-center gap-1.5">

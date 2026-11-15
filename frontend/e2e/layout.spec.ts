@@ -23,10 +23,13 @@ async function send(page: Page, method: "GET" | "POST" | "PUT" | "PATCH", url: s
   return response.json().catch(() => ({}));
 }
 
-/** How far the page reaches past the screen's right edge, and the widest thing that takes it there. */
+/**
+ * How far the page reaches past the screen's right edge, and the widest thing that takes it there.
+ * Against the screen's own width: an emulated phone's layout viewport can widen to fit what is
+ * too wide, taking `innerWidth` and the like with it (#914).
+ */
 function overflow(page: Page) {
-  return page.evaluate(() => {
-    const width = document.documentElement.clientWidth;
+  return page.evaluate((width) => {
     const over = document.documentElement.scrollWidth - width;
     if (over <= 0) return null;
     // Inside something that scrolls or clips sideways, it doesn't widen the page.
@@ -44,7 +47,7 @@ function overflow(page: Page) {
     const el = widest?.el;
     const what = el ? `<${el.tagName.toLowerCase()} class="${(el.getAttribute("class") ?? "").slice(0, 80)}"> "${(el.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 40)}"` : "nothing found";
     return `${over}px too wide; widest: ${what}, right edge at ${Math.round(widest?.right ?? 0)}px`;
-  });
+  }, page.viewportSize()!.width);
 }
 
 /** The address with each id as "ID", to name a screen the same on every run. */

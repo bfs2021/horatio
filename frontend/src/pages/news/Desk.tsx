@@ -7,6 +7,7 @@ import { DateInput } from "../../components/DateInput";
 import { Dialog } from "../../components/Dialog";
 import { useToast } from "../../components/Toast";
 import { Badge, Button, Card, Empty, ErrorText, Field, Loading } from "../../components/ui";
+import { LinkButton } from "../../components/LinkButton";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { deskSections, discordText, KINDS, scheduleProblem, suggestedTime, type Kind } from "./posts";
@@ -34,9 +35,9 @@ export function Desk({ troupeId, kind, writes }: { troupeId: string; kind: Kind;
         <Link to=".." relative="path" className="text-sm text-mist underline hover:text-parchment">
           {words.title}, as players read it
         </Link>
-        <Link to="../write" relative="path" className="inline-flex min-h-10 items-center rounded-md bg-blood px-4 text-sm font-medium text-parchment hover:bg-blood-bright">
+        <LinkButton to="../write" relative="path">
           {writes ? `Write ${words.one}` : `Propose ${words.one}`}
-        </Link>
+        </LinkButton>
       </span>
       {!writes && <p className="text-sm text-mist">Your proposals wait here for a storyteller or assistant storyteller to publish or decline. You can change one until then.</p>}
       {sections.length === 0 && !writes && (

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
-import { Link, useParams, useSearchParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { api, unwrap } from "../api/client";
 import type { BadgeOut, StaffBadgeOut } from "../api/types";
 import { clanColour, initials } from "../components/avatar";
@@ -10,6 +10,7 @@ import { PAPERS, pageRule } from "../paper";
 import { useSevenTaps } from "./jyhad/taps";
 import { BADGE_SIZES, grid, nameSize, pages, perPageText, SQUEEZE, standing, type BadgeSize } from "./badgeLayout";
 import { useTitle } from "../title";
+import { BackLink } from "../components/BackLink";
 
 /** White with Horatio's colours as accents, or black on white for a printer without colour. */
 type Look = "horatio" | "plain";
@@ -27,7 +28,7 @@ export function TroupeBadgesPage() {
   if (badges.error) return <p className="p-8 text-black">{badges.error.message}</p>;
   return (
     <Sheets
-      back={`/troupes/${troupeId}/characters`}
+      back={{ label: "Characters", to: `/troupes/${troupeId}/characters` }}
       troupe={badges.data.troupe_name}
       printStatus={badges.data.print_status}
       items={badges.data.badges.map((b) => ({ key: b.character_id, badge: b }))}
@@ -52,7 +53,7 @@ export function CharacterBadgePage() {
   if (badges.error) return <p className="p-8 text-black">{badges.error.message}</p>;
   return (
     <Sheets
-      back={`/characters/${characterId}`}
+      back={{ label: badges.data.badges[0]?.name ?? "The character", to: `/characters/${characterId}` }}
       troupe={badges.data.troupe_name}
       printStatus={badges.data.print_status}
       items={badges.data.badges.map((b) => ({ key: b.character_id, badge: b }))}
@@ -70,7 +71,7 @@ export function StaffBadgesPage() {
   if (staff.isPending) return <p className="p-8 text-black">Loading…</p>;
   if (staff.error) return <p className="p-8 text-black">{staff.error.message}</p>;
   return (
-    <Sheets back={`/troupes/${troupeId}/characters`} troupe={staff.data.troupe_name} items={staff.data.staff.map((s, i) => ({ key: `${i}`, staff: s }))} />
+    <Sheets back={{ label: "Characters", to: `/troupes/${troupeId}/characters` }} troupe={staff.data.troupe_name} items={staff.data.staff.map((s, i) => ({ key: `${i}`, staff: s }))} />
   );
 }
 
@@ -81,7 +82,7 @@ type Item = { key: string; badge?: BadgeOut; staff?: StaffBadgeOut };
  * Print above; printed, as many to a page as the person's paper holds, touching,
  * with cut marks in the margin along every cut line.
  */
-function Sheets({ items, back, troupe, printStatus = "all" }: { items: Item[]; back: string; troupe: string | null; printStatus?: string }) {
+function Sheets({ items, back, troupe, printStatus = "all" }: { items: Item[]; back: { label: string; to: string }; troupe: string | null; printStatus?: string }) {
   // One character's badge by its name; a troupe's by the troupe's.
   const only = items.length === 1 ? (items[0]!.badge?.name ?? items[0]!.staff?.name) : undefined;
   useTitle(`Print · ${only ?? troupe ?? "Badges"}`);
@@ -98,9 +99,7 @@ function Sheets({ items, back, troupe, printStatus = "all" }: { items: Item[]; b
       <style>{pageRule(prefs.paper, "0")}</style>
       <div className="mx-auto mb-4 flex max-w-[8.5in] flex-wrap items-center justify-between gap-3 px-4 print:hidden">
         {/* A link, not history: badges open in a tab of their own. */}
-        <Link to={back} className="text-sm underline">
-          ← Back
-        </Link>
+        <BackLink print label={back.label} to={back.to} />
         <span className="text-sm">
           {items.length === 1 ? "1 badge" : `${items.length} badges`} · {perPageText(perPage, prefs.paper)}
         </span>

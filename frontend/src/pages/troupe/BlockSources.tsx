@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { InfluenceEntryOut } from "../../api/types";
 import { Button, ErrorText } from "../../components/ui";
+import { useConfirm } from "../../components/ConfirmDialog";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { cyclePath } from "./cycles";
@@ -10,6 +11,7 @@ import { cyclePath } from "./cycles";
 export function BlockSources({ troupeId, entry }: { troupeId: string; entry: InfluenceEntryOut }) {
   const dates = useDates();
   const remove = useAction((id: string) => unwrap(api.DELETE("/api/influence-blocks/{block_id}", { params: { path: { block_id: id } } })));
+  const [confirmed, confirming] = useConfirm();
   if (!entry.blocked_by?.length) return null;
   return (
     <div>
@@ -32,8 +34,8 @@ export function BlockSources({ troupeId, entry }: { troupeId: string; entry: Inf
             <Button
               variant="ghost"
               className="min-h-6 px-2 py-0"
-              onClick={() => {
-                if (window.confirm(`Take this block off ${entry.short_id}?`)) remove.mutate(b.id);
+              onClick={async () => {
+                if (await confirmed({ title: `Take this block off ${entry.short_id}?`, body: "The entry is no longer hidden by it.", action: "Take it off" })) remove.mutate(b.id);
               }}
             >
               Take it off
@@ -41,6 +43,7 @@ export function BlockSources({ troupeId, entry }: { troupeId: string; entry: Inf
           </li>
         ))}
       </ul>
+      {confirming}
       <ErrorText error={remove.error} />
     </div>
   );

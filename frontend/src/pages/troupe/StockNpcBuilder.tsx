@@ -1,10 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { components } from "../../api/schema";
 import { Dialog } from "../../components/Dialog";
 import { Badge, Button, Card, ErrorText, Field, Input, Loading, PageTitle, Select, Textarea } from "../../components/ui";
+import { BackLink } from "../../components/BackLink";
 import { useAction } from "../../hooks";
 import { CharacterPicture } from "../character/Picture";
 import { type NpcKind, groupedKinds, kindPages, resourceText } from "./npcKinds";
@@ -27,7 +28,7 @@ export function StockNpcBuilder({ troupeId }: { troupeId: string }) {
   const stock = useQuery({ queryKey: ["stock-npc", characterId], queryFn: () => unwrap(api.GET("/api/characters/{character_id}/npc/stock", path)) });
   const kinds = useQuery({ queryKey: ["npc-kinds"], queryFn: () => unwrap(api.GET("/api/npc-kinds")), staleTime: Infinity });
   const catalogue = useCatalogue("vampire", troupeId);
-  const back = <Link to={`/troupes/${troupeId}/characters?show=npcs`} className="text-sm text-mist hover:text-gold">← NPCs</Link>;
+  const back = <BackLink label="NPCs" to={`/troupes/${troupeId}/characters?show=npcs`} className="self-start" />;
   if (character.isPending || stock.isPending || kinds.isPending || catalogue.isPending) return <Loading />;
   const error = character.error ?? stock.error ?? kinds.error ?? catalogue.error;
   if (error || !character.data || !stock.data || !kinds.data || !catalogue.data) {

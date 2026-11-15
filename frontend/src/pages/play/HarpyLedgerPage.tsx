@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useState } from "react";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import { Empty, ErrorText, Loading, Select } from "../../components/ui";
+import { BackLink } from "../../components/BackLink";
 import { BoonStandingsTab } from "../troupe/BoonStandingsTab";
 import { BoonsTab, type LedgerKeeper } from "../troupe/BoonsTab";
 import { TalonsCard } from "../troupe/BoonTalons";
@@ -57,9 +58,7 @@ export function HarpyLedgerPage() {
     <div className="min-h-screen bg-night pb-16 text-parchment">
       <header className="sticky top-0 z-10 border-b border-ash bg-night/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-2">
-          <Link to={`/play/characters/${characterId}?tab=boons`} className="inline-flex min-h-10 items-center text-sm text-mist hover:text-parchment">
-            ← Play View
-          </Link>
+          <BackLink label="Play View" to={`/play/characters/${characterId}?tab=boons`} />
           <h1 className="text-lg">{heading}</h1>
         </div>
       </header>

@@ -533,8 +533,15 @@ test("a storyteller resolves an attack, its target's Defend taken off, and the t
 
   // Taken back, the counter is whole again.
   await p.goto(`/troupes/${troupeId}/influence/effects`);
-  p.once("dialog", (d) => void d.accept());
-  await p.getByRole("list", { name: "Effects and blocks" }).getByRole("button", { name: "Take back" }).click();
+  // Asked first in the app's own dialog: Cancel keeps it.
+  const takeBack = p.getByRole("list", { name: "Effects and blocks" }).getByRole("button", { name: "Take back" });
+  const asked = p.getByRole("dialog", { name: /^Take back / });
+  await takeBack.click();
+  await asked.getByRole("button", { name: "Cancel" }).click();
+  await expect(asked).toHaveCount(0);
+  await expect(takeBack).toBeVisible();
+  await takeBack.click();
+  await asked.getByRole("button", { name: "Take back" }).click();
   await expect(p.getByText("Nothing holding now.")).toBeVisible();
   await p.goto(`/play/characters/${npcs.Vasquez}`);
   await expect(p.getByRole("listitem").filter({ hasText: "Influences: The Elite" }).getByText("3 of 3 left", { exact: false })).toBeVisible();

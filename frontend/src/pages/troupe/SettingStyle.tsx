@@ -331,7 +331,7 @@ function Entries({
                 disabled={at === 0 || order.isPending}
                 onClick={() => order.mutate(moved(ids, shown.id, at - 1))}
               >
-                ← Earlier
+                ‹ Earlier
               </Button>
               <Button
                 variant="ghost"
@@ -340,7 +340,7 @@ function Entries({
                 disabled={at === entries.length - 1 || order.isPending}
                 onClick={() => order.mutate(moved(ids, shown.id, at + 1))}
               >
-                Later →
+                Later ›
               </Button>
               <Button variant="secondary" className="min-h-8 px-3" aria-label={`Edit ${shown.name}`} onClick={() => setEditing(shown)}>
                 Edit

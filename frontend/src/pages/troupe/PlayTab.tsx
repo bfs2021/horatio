@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import { LinesVeilsNote } from "../../components/LinesVeils";
 import { Badge, Button, Card, Empty, ErrorText, Loading, Notice } from "../../components/ui";
+import { LinkButton } from "../../components/LinkButton";
 import { useAction } from "../../hooks";
 
 /**
@@ -34,12 +35,7 @@ export function PlayTab({ troupeId }: { troupeId: string }) {
         <p className="mb-3 text-sm text-mist">
           Put several characters on one page, side by side, to run a scene: tap Blood, Willpower, health and Beast traits for each, with Undo and the log. Name as many scenes as you need; they are kept for the troupe, and the other staff running it can open them too.
         </p>
-        <Link
-          to={`/play/troupes/${troupeId}/scenes`}
-          className="inline-flex min-h-10 items-center rounded-md bg-blood px-4 text-sm font-medium text-parchment hover:bg-blood-bright"
-        >
-          Open the scenes
-        </Link>
+        <LinkButton to={`/play/troupes/${troupeId}/scenes`}>Open the scenes</LinkButton>
       </Card>
       <Card
         title="At game"

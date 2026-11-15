@@ -6,6 +6,7 @@ import type { ExpendableOut, GameOut, InfluenceDetailsIn, InfluenceStandingOut, 
 import { LinesVeilsNote } from "../../components/LinesVeils";
 import { useToast } from "../../components/Toast";
 import { Button, ErrorText, Input, Loader, Loading, Select } from "../../components/ui";
+import { BackLink } from "../../components/BackLink";
 import { useDates } from "../../dates";
 import { useAction, usePreferences } from "../../hooks";
 import { offered, reachNote, TYPE_NAMES } from "../../influence";
@@ -330,9 +331,7 @@ function NoPlayView({ characterId, name }: { characterId: string; name: string }
     <div className="min-h-screen bg-night pb-16 text-parchment">
       <header className="border-b border-ash">
         <div className="mx-auto flex max-w-3xl items-center px-4 py-2">
-          <Link to={`/characters/${characterId}`} className="inline-flex min-h-10 min-w-0 items-center text-sm text-mist hover:text-parchment">
-            <span className="truncate">← {name}</span>
-          </Link>
+          <BackLink label={name} to={`/characters/${characterId}`} />
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-4 pt-8 text-center">
@@ -376,9 +375,7 @@ function PlayShell({
               ← Back to the scene
             </Link>
           ) : (
-            <Link to={`/characters/${characterId}`} className="inline-flex min-h-10 min-w-0 items-center text-sm text-mist hover:text-parchment">
-              <span className="truncate">← {name ?? "Back"}</span>
-            </Link>
+            <BackLink label={name ?? "The character"} to={`/characters/${characterId}`} />
           )}
           {/* On a narrow phone with taps waiting, the pill drops below the buttons rather than off the screen. */}
           <span className="flex min-w-0 flex-wrap items-center justify-end gap-2">

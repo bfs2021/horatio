@@ -10,6 +10,8 @@ import { InfoButton } from "../../components/InfoButton";
 import { LogList } from "../../components/LogList";
 import { useToast } from "../../components/Toast";
 import { Badge, Button, Card, Empty, ErrorText, Input, Loading, Select } from "../../components/ui";
+import { useConfirm } from "../../components/ConfirmDialog";
+import { BackLink } from "../../components/BackLink";
 import { WebLink } from "../../components/WebLink";
 import { useAction } from "../../hooks";
 import { LocationForm, Warnings } from "./LocationForm";
@@ -289,9 +291,7 @@ function New({ troupeId, locations, catalogue }: Props) {
   const back = `/troupes/${troupeId}/locations`;
   return (
     <div className="flex flex-col gap-4">
-      <Link to={back} className="text-sm text-mist hover:text-gold">
-        ← All locations
-      </Link>
+      <BackLink label="All locations" to={back} className="self-start" />
       <Card title="Add a location">
         <LocationForm
           troupeId={troupeId}
@@ -323,11 +323,10 @@ function One({ troupeId, locations, catalogue, questsOn }: Props & { questsOn: b
     navigate(back);
   });
   const forfeit = useAction(() => unwrap(api.POST("/api/locations/{location_id}/forfeit", { params: { path: { location_id: locationId } } })));
+  const [confirmed, confirming] = useConfirm();
   return (
     <div className="flex flex-col gap-4">
-      <Link to={back} className="text-sm text-mist hover:text-gold">
-        ← All locations
-      </Link>
+      <BackLink label="All locations" to={back} className="self-start" />
       {location.isPending ? (
         <Loading />
       ) : location.error ? (
@@ -401,12 +400,14 @@ function One({ troupeId, locations, catalogue, questsOn }: Props & { questsOn: b
             <Button
               variant="danger"
               disabled={remove.isPending}
-              onClick={() => {
-                if (confirm(`Remove ${location.data.name} from the troupe's locations? Its log stays in the troupe's log.`)) remove.mutate(undefined);
+              onClick={async () => {
+                const ask = { title: `Remove ${location.data.name} from the troupe's locations?`, body: "Its log stays in the troupe's log.", action: "Remove" };
+                if (await confirmed(ask)) remove.mutate(undefined);
               }}
             >
               Remove location
             </Button>
+            {confirming}
             <ErrorText error={remove.error} />
           </div>
         </>

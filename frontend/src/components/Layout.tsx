@@ -8,6 +8,7 @@ import { OfflineStrip, useSendWaiting, useSignOut } from "../offline/Offline";
 import { NotificationBell } from "./NotificationBell";
 import { Splash } from "./Splash";
 import { ErrorText } from "./ui";
+import { usePageWidth, WidePages } from "./widePage";
 
 export function Layout() {
   const me = useMe();
@@ -16,6 +17,8 @@ export function Layout() {
   // Signing out clears what is kept on this device for the person (#502).
   const signOut = useSignOut();
   useSendWaiting();
+  // Table pages ask to be wider (#913); the header and footer follow, to stay aligned.
+  const page = usePageWidth();
 
   const link = ({ isActive }: { isActive: boolean }) =>
     isActive ? "text-parchment" : "text-mist hover:text-parchment";
@@ -33,7 +36,7 @@ export function Layout() {
   return (
     <div className="min-h-screen">
       <header className="relative z-20 border-b border-ash bg-dusk/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+        <div className={`mx-auto flex ${page.width} items-center justify-between gap-3 px-4 py-3`}>
           <Link to="/" className="flex items-center gap-2 font-display text-xl tracking-wider text-parchment">
             <img src="/mark-64.png" alt="" width={32} height={32} className="h-8 w-8" />
             Horatio
@@ -59,18 +62,20 @@ export function Layout() {
           )}
         </div>
         {signOut.error !== null && (
-          <div className="mx-auto max-w-5xl px-4 pb-3">
+          <div className={`mx-auto ${page.width} px-4 pb-3`}>
             <ErrorText error={signOut.error} />
           </div>
         )}
       </header>
       <OfflineStrip />
       {signOut.dialog}
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
-        <Outlet />
+      <main className={`mx-auto ${page.width} px-4 py-6 sm:py-8`}>
+        <WidePages ask={page.ask}>
+          <Outlet />
+        </WidePages>
       </main>
       {/* The Dark Pack Agreement's notices, on every page (in full on About). */}
-      <footer className="mx-auto max-w-5xl px-4 pt-2 pb-8 text-center text-xs text-mist">
+      <footer className={`mx-auto ${page.width} px-4 pt-2 pb-8 text-center text-xs text-mist`}>
         Unofficial fan-made material under Paradox Interactive's Dark Pack Agreement. Portions © Paradox Interactive AB, used with permission. ·{" "}
         <Link to="/about" className="underline hover:text-parchment">
           About Horatio

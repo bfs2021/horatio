@@ -239,6 +239,48 @@ test("the custodian filters People by the troupe a player's active character is 
   await expect(list.filter({ hasText: visitor.email })).toBeVisible();
 });
 
+test("People is wider on a wide screen, so no handle or email wraps, while Site stays narrow (#913)", async ({ browser }) => {
+  // About a desktop's width: on a phone nothing changes.
+  if (test.info().project.name === "phone") return;
+  const custodian = await person(browser, "wide-custodian", { viewport: { width: 1440, height: 900 } });
+  makeCustodian(custodian.email);
+  const c = custodian.page;
+  await c.goto("/custodian/people");
+  await c.getByLabel("Search people").fill(custodian.email);
+  const row = c.locator("main tr").filter({ hasText: custodian.email });
+  await expect(row).toBeVisible();
+
+  const width = async () => (await c.locator("main").boundingBox())!.width;
+  // Shown in full: on one line (the distinct tops of its text's boxes) and not cut short.
+  const inFull = (text: string) =>
+    row
+      .getByText(text, { exact: true })
+      .filter({ visible: true })
+      .evaluate((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const lines = new Set(Array.from(range.getClientRects(), (r) => Math.round(r.top))).size;
+        return lines === 1 && el.scrollWidth <= el.clientWidth;
+      });
+  expect(await width()).toBe(1280);
+  expect(await inFull(custodian.email)).toBe(true);
+  expect(await inFull(`@${custodian.handle}`)).toBe(true);
+  // The header lines up with the page under it.
+  expect((await c.locator("header > div").first().boundingBox())!.x).toBe((await c.locator("main").boundingBox())!.x);
+  await c.screenshot(shots("people-wide"));
+
+  // A page of text keeps the usual width.
+  await c.getByRole("link", { name: "Site", exact: true }).click();
+  await expect(c).toHaveURL(/\/custodian\/site$/);
+  expect(await width()).toBe(1024);
+
+  // At 1,024 px People is as it was.
+  await c.setViewportSize({ width: 1024, height: 900 });
+  await c.goto("/custodian/people");
+  await expect(c.getByRole("table", { name: "People" })).toBeVisible();
+  expect(await width()).toBeLessThanOrEqual(1024);
+});
+
 test("the custodian views Horatio as a player, read-only, and the player sees that they did", async ({ browser }) => {
   const custodian = await person(browser, "viewas-custodian");
   makeCustodian(custodian.email);

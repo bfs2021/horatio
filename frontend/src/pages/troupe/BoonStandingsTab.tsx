@@ -7,6 +7,7 @@ import { BOON_PAGE, KINDS, kindName } from "../../boons";
 import { DEFAULT_WEIGHTS, months, net, netWords, SCOPES, share, weight, weightsLine, type Scope } from "../../boonStandings";
 import { useToast } from "../../components/Toast";
 import { Button, Card, Empty, ErrorText, Field, Input, Loading } from "../../components/ui";
+import { useWidePage } from "../../components/widePage";
 import { useAction } from "../../hooks";
 
 type Standings = BoonStandingsOut;
@@ -28,6 +29,7 @@ const FIRST = 25;
  * only.
  */
 export function BoonStandingsTab({ troupeId, harpy = false }: { troupeId: string; harpy?: boolean }) {
+  useWidePage();
   const [scope, setScope] = useState<Scope>("active");
   const standings = useQuery({
     queryKey: ["boon-standings", troupeId, scope],

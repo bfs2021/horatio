@@ -7,6 +7,7 @@ import { partyIn } from "../../bonds";
 import { disgracedText } from "../../boonStatus";
 import {
   actionsFor,
+  ANY_TEXT_HINT,
   BOON_PAGE,
   changeText,
   emptyRow,
@@ -14,12 +15,15 @@ import {
   gallantText,
   KINDS,
   kindName,
+  LONGEST_NAME,
+  LONGEST_TEXT,
   LOSS_TEXT,
   owes,
   partyName,
   rowStarted,
   rowsTotal,
   SETTLED,
+  shortName,
   stateText,
   VIEWS,
   type BoonKind,
@@ -59,6 +63,15 @@ const HarpyMode = createContext<LedgerKeeper | null>(null);
 
 function today(dates: ReturnType<typeof useDates>) {
   return dates.toInput(new Date()).slice(0, 10);
+}
+
+/**
+ * A side written as text in the boon forms (#990): staff write up to LONGEST_TEXT, a
+ * Harpy or a talon LONGEST_NAME, as the API allows them.
+ */
+function useAnyText() {
+  const harpy = useContext(HarpyMode);
+  return { longest: harpy ? LONGEST_NAME : LONGEST_TEXT, hint: ANY_TEXT_HINT };
 }
 
 /** A picked side ("c:<id>" or "name"), from a party the API sent. */
@@ -355,6 +368,17 @@ function BoonDetail({ troupeId, boonId, characters }: { troupeId: string; boonId
   return (
     <div className="mt-3 flex flex-col gap-3 border-t border-ash pt-3">
       <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
+        {(["debtor", "creditor"] as const).map((side) => {
+          const party = b[side];
+          // A side written as text, in full where elsewhere it is cut to a line (#990).
+          if (party.character_id || shortName(party.name) === party.name) return null;
+          return (
+            <div key={side} className="contents">
+              <dt className="text-mist">{side === "debtor" ? "Debtor" : "Creditor"}</dt>
+              <dd className="whitespace-pre-line italic wrap-anywhere">{party.name}</dd>
+            </div>
+          );
+        })}
         <dt className="text-mist">Registered</dt>
         <dd>
           {dates.dateTime(b.submitted_at)}
@@ -404,7 +428,7 @@ function BoonDetail({ troupeId, boonId, characters }: { troupeId: string; boonId
       )}
       <div>
         <SectionLabel as="h4">Its log</SectionLabel>
-        <ol aria-label={`Log of ${owes(b)}`} className="mt-1 flex flex-col gap-1 text-xs">
+        <ol aria-label={`Log of ${owes(b)}`} className="mt-1 flex flex-col gap-1 text-xs wrap-anywhere">
           {(b.events ?? []).map((e) => (
             <li key={e.id}>
               <span className="text-parchment">{eventName(e.kind)}</span>
@@ -484,6 +508,7 @@ function boonPath(troupeId: string, boon: BoonOut) {
 
 function EditForm({ troupeId, boon, characters, onDone }: { troupeId: string; boon: BoonOut; characters: CharacterChoice[]; onDone: () => void }) {
   const harpy = useContext(HarpyMode);
+  const anyText = useAnyText();
   const [debtor, setDebtor] = useState(picked(boon.debtor));
   const [creditor, setCreditor] = useState(picked(boon.creditor));
   const [kind, setKind] = useState<BoonKind>(boon.kind);
@@ -526,10 +551,10 @@ function EditForm({ troupeId, boon, characters, onDone }: { troupeId: string; bo
     >
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Debtor">
-          <WhoPicker characters={characters} who={debtor.who} name={debtor.name} onChange={(who, name) => setDebtor({ who, name })} />
+          <WhoPicker characters={characters} who={debtor.who} name={debtor.name} anyText={anyText} onChange={(who, name) => setDebtor({ who, name })} />
         </Field>
         <Field label="Creditor">
-          <WhoPicker characters={characters} who={creditor.who} name={creditor.name} onChange={(who, name) => setCreditor({ who, name })} />
+          <WhoPicker characters={characters} who={creditor.who} name={creditor.name} anyText={anyText} onChange={(who, name) => setCreditor({ who, name })} />
         </Field>
         <Field label="Kind">
           <Select value={kind} onChange={(e) => setKind(e.target.value as BoonKind)}>
@@ -582,6 +607,7 @@ function MoveForm({
   pass: boolean;
   onDone: () => void;
 }) {
+  const anyText = useAnyText();
   const [side, setSide] = useState<"debtor" | "creditor">("debtor");
   const [to, setTo] = useState({ who: "", name: "" });
   const [note, setNote] = useState("");
@@ -620,18 +646,18 @@ function MoveForm({
           {(["debtor", "creditor"] as const).map((s) => (
             <label key={s} className="flex items-center gap-2">
               <input type="radio" name={`side-${boon.id}`} checked={side === s} onChange={() => setSide(s)} />
-              {s === "debtor" ? `${boon.debtor.name}'s, the debtor's` : `${boon.creditor.name}'s, the creditor's`}
+              {s === "debtor" ? `${shortName(boon.debtor.name)}'s, the debtor's` : `${shortName(boon.creditor.name)}'s, the creditor's`}
             </label>
           ))}
         </fieldset>
       ) : (
         <p className="text-sm text-mist">
-          {boon.creditor.name} trades it: the new creditor holds it, and its log keeps the trade.
+          {shortName(boon.creditor.name)} trades it: the new creditor holds it, and its log keeps the trade.
           {boon.notify_on_trade && " Its debtor's player is told."}
         </p>
       )}
       <Field label={pass ? "Passes on to" : "Traded to"}>
-        <WhoPicker characters={characters} who={to.who} name={to.name} onChange={(who, name) => setTo({ who, name })} />
+        <WhoPicker characters={characters} who={to.who} name={to.name} anyText={anyText} onChange={(who, name) => setTo({ who, name })} />
       </Field>
       <Field label="Note (optional)">
         <Input maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} />
@@ -765,6 +791,7 @@ function NoteForm({ troupeId, boon, action, onDone }: { troupeId: string; boon: 
  */
 function QuickEntry({ troupeId, characters, onDone }: { troupeId: string; characters: CharacterChoice[]; onDone: () => void }) {
   const harpy = useContext(HarpyMode);
+  const anyText = useAnyText();
   const dates = useDates();
   const toast = useToast();
   const [madeOn, setMadeOn] = useState(today(dates));
@@ -852,13 +879,20 @@ function QuickEntry({ troupeId, characters, onDone }: { troupeId: string; charac
           <li key={i} aria-label={`Boon ${i + 1}`} className="flex flex-col gap-2 rounded-md border border-ash p-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Debtor" hint="Who owes it.">
-                <WhoPicker characters={characters} who={row.debtor.who} name={row.debtor.name} onChange={(who, name) => set(i, { debtor: { who, name } })} />
+                <WhoPicker
+                  characters={characters}
+                  who={row.debtor.who}
+                  name={row.debtor.name}
+                  anyText={anyText}
+                  onChange={(who, name) => set(i, { debtor: { who, name } })}
+                />
               </Field>
               <Field label="Creditor" hint="Who it's owed to.">
                 <WhoPicker
                   characters={characters}
                   who={row.creditor.who}
                   name={row.creditor.name}
+                  anyText={anyText}
                   onChange={(who, name) => set(i, { creditor: { who, name } })}
                 />
               </Field>

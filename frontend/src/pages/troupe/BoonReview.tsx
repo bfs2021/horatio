@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { api, unwrap } from "../../api/client";
 import type { BoonOut, CharacterChoice } from "../../api/types";
-import { FLAG_NAMES, flagBody, flagText, kindName, owes, partyName, type BoonFlag } from "../../boons";
+import { FLAG_NAMES, flagBody, flagText, kindName, owes, partyName, shortName, type BoonFlag } from "../../boons";
+import { OneLine } from "../../components/OneLine";
 import { useToast } from "../../components/Toast";
 import { Badge, Button, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useDates } from "../../dates";
@@ -32,9 +33,9 @@ export function BoonReviewQueue({ troupeId, detail }: { troupeId: string; detail
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
               <p>
-                <span className="text-parchment">{partyName(boon.debtor)}</span>
+                <OneLine text={partyName(boon.debtor)} className="text-parchment" />
                 <span className="text-mist"> owes </span>
-                <span className="text-parchment">{partyName(boon.creditor)}</span>
+                <OneLine text={partyName(boon.creditor)} className="text-parchment" />
                 <span className="text-mist"> · </span>
                 <span className="text-gold">{kindName(boon.kind)}</span>
                 <span className="text-mist"> · {dates.day(boon.made_on)}</span>
@@ -174,7 +175,7 @@ function FlagRow({ troupeId, boon, flag, characters }: { troupeId: string; boon:
   const [note, setNote] = useState("");
   const [character, setCharacter] = useState("");
   const [everywhere, setEverywhere] = useState(true);
-  const name = flag.side === "debtor" ? boon.debtor.name : boon.creditor.name;
+  const name = shortName(flag.side === "debtor" ? boon.debtor.name : boon.creditor.name);
   const clear = useAction(async () => {
     await unwrap(
       api.POST("/api/troupes/{troupe_id}/boon-flags/{flag_id}/clear", {

@@ -76,7 +76,10 @@ function Side({ title, lines, who }: { title: string; lines: BoonAuditOut["owes"
             <tbody>
               {lines.map((line: AuditLine, n) => (
                 <tr key={n} className="border-b border-neutral-200 align-top break-inside-avoid">
-                  <td className="py-1 pr-2">{line.other}</td>
+                  <td className="py-1 pr-2">
+                    {/* All of it, as the ledger said it (a passage of story, even: #990), in a column no wider than this. */}
+                    <div className="max-w-64 whitespace-pre-line wrap-anywhere">{line.other}</div>
+                  </td>
                   <td className="py-1 pr-2">{kindName(line.kind)}</td>
                   <td className="py-1 pr-2 whitespace-nowrap">{dates.day(line.made_on)}</td>
                   <td className="py-1 pr-2">{line.reason}</td>

@@ -4,8 +4,9 @@ import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { HarpyLedgerOut, PlayBoonIn, PlayBoonOut, PlayBoonsOut, PlayReportOut } from "../../api/types";
 import { disgracedText } from "../../boonStatus";
-import { BOON_PAGE, BREAKER_PAGE, gallantText, KINDS, kindName, type BoonKind } from "../../boons";
+import { BOON_PAGE, BREAKER_PAGE, gallantText, KINDS, kindName, shortName, type BoonKind } from "../../boons";
 import { DateInput } from "../../components/DateInput";
+import { OneLine } from "../../components/OneLine";
 import { useToast } from "../../components/Toast";
 import { Badge, Button, Card, ErrorText, Field, Input, Loaded, Select } from "../../components/ui";
 import { useDates } from "../../dates";
@@ -326,12 +327,13 @@ function BoonRow({
   const dates = useDates();
   const [settling, setSettling] = useState(false);
   return (
-    <li className="py-2 text-sm" aria-label={`${kindName(boon.kind)} boon ${owes ? "to" : "from"} ${boon.other}`}>
+    <li className="py-2 text-sm" aria-label={`${kindName(boon.kind)} boon ${owes ? "to" : "from"} ${shortName(boon.other)}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p>
           <strong className="font-semibold text-parchment">{kindName(boon.kind)}</strong>
           <span className="text-mist"> {owes ? "to" : "from"} </span>
-          {boon.other}
+          {/* As staff wrote it, a passage of story even (#990): a line of it, and the rest under "more". */}
+          <OneLine text={boon.other} />
           {boon.other_boonbreaker && (
             <Badge tone="blood" className="ml-1">
               Boonbreaker

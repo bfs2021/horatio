@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api/client";
 import { DateInput } from "../../components/DateInput";
 import { PersonPicker } from "../../components/PersonPicker";
 import { Button, Card, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
+import { useWidePage } from "../../components/widePage";
 import { useDates } from "../../dates";
 import { auditQuery, exportHref, filtersFrom, NO_FILTERS, toParams, type AuditCharacter, type AuditEntry, type AuditFilters } from "./audit";
 
@@ -15,6 +16,7 @@ import { auditQuery, exportHref, filtersFrom, NO_FILTERS, toParams, type AuditCh
  * search can be shared or come back to. It only reads the log.
  */
 export function AuditTab() {
+  useWidePage();
   const [params, setParams] = useSearchParams();
   const applied = filtersFrom(params);
   const dates = useDates();

@@ -44,6 +44,7 @@ import {
   type Slot,
 } from "../../charts";
 import { Card, ErrorText, Loading } from "../../components/ui";
+import { useWidePage } from "../../components/widePage";
 import { useDates } from "../../dates";
 
 /*
@@ -772,6 +773,7 @@ function Games({ s }: { s: Statistics }) {
  * (#749), who has left as the court knows it and nothing that opens the staff screens.
  */
 export function BoonStatisticsPage({ troupeId, harpy = false }: { troupeId: string; harpy?: boolean }) {
+  useWidePage();
   const [scope, setScope] = useState<Scope>("active");
   const found = useQuery({
     queryKey: ["boon-statistics", troupeId, scope],

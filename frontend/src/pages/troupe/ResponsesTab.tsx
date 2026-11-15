@@ -6,6 +6,7 @@ import type { CycleOut, StaffMember, WorkItemOut } from "../../api/types";
 import { ResponseEditor } from "../../components/ResponseEditor";
 import { useToast } from "../../components/Toast";
 import { Button, Empty, ErrorText, Loading, Select } from "../../components/ui";
+import { useWidePage } from "../../components/widePage";
 import { useAction } from "../../hooks";
 import { roleLabel } from "./roles";
 import { assigneeOf, byCharacter, byStep, keywordsOf, questionsOf, responsesCount, shows, STATUS_NAMES, type ResponseFilter, type Status } from "./responsesList";
@@ -16,6 +17,7 @@ import { assigneeOf, byCharacter, byStep, keywordsOf, questionsOf, responsesCoun
  * by question, and ticked to assign several in one go.
  */
 export function ResponsesTab({ cycle }: { cycle: CycleOut }) {
+  useWidePage();
   const [filter, setFilterState] = useState<ResponseFilter>({ status: "all", assignee: "", question: "", keyword: "" });
   // By character, or in the troupe's resolution order, step by step (#509).
   const [inOrder, setInOrder] = useState(false);

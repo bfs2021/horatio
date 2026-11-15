@@ -11,6 +11,7 @@ import { LinesVeilsNote } from "../../components/LinesVeils";
 import { AtHandle } from "../../components/PersonPicker";
 import { Pronouns } from "../../components/PronounsInput";
 import { Badge, Button, Card, Empty, ErrorText, Input, Loading, Select } from "../../components/ui";
+import { useWidePage } from "../../components/widePage";
 import { useEquipmentRules } from "./EquipmentEditor";
 import { holdersLink } from "./equipmentSearch";
 import { FilterBuilder } from "./FilterBuilder";
@@ -39,6 +40,7 @@ const SHOW_NAMES: Record<Show, [string, string]> = {
  * It also imports a troupe's export (TroupeImportPage).
  */
 export function RosterTab({ troupeId, canEmail = false }: { troupeId: string; canEmail?: boolean }) {
+  useWidePage();
   const path = { params: { path: { troupe_id: troupeId } } };
   const named = useClanName();
   const roster = useQuery({ queryKey: ["roster", troupeId], queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/characters", path)) });

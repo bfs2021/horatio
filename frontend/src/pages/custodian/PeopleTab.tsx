@@ -9,6 +9,7 @@ import { LogList } from "../../components/LogList";
 import { useToast } from "../../components/Toast";
 import { Chevron } from "../../components/TraitInfo";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
+import { useWidePage } from "../../components/widePage";
 import { useDates } from "../../dates";
 import { memberSince } from "../players";
 import { ChangeEmail, EmailChanges } from "./ChangeEmail";
@@ -24,6 +25,7 @@ import { ViewAs } from "./ViewAs";
  * suspended, the reset links out now and who has reset their password, and the
  * email changes. */
 export function PeopleTab() {
+  useWidePage();
   // A link can open it searched already: a new sign-up's notice names their handle (#757).
   const [params] = useSearchParams();
   const [q, setQ] = useState(() => params.get("q") ?? "");

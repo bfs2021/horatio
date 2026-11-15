@@ -103,12 +103,12 @@ const COLUMNS: Column<PlayerSummary>[] = [
     bare: true,
     className: "text-mist",
     cell: (p) => (
-      <span className="block max-w-44 truncate xl:max-w-60" title={`@${p.handle}`}>
+      <span className="block max-w-44 truncate xl:max-w-60">
         @{p.handle}
       </span>
     ),
     folded: (p) => (
-      <span className="block truncate text-mist" title={`@${p.handle}`}>
+      <span className="block truncate text-mist">
         @{p.handle}
       </span>
     ),
@@ -119,7 +119,7 @@ const COLUMNS: Column<PlayerSummary>[] = [
     phone: "detail",
     className: "text-mist",
     cell: (p) => (
-      <span className="block max-w-64 truncate xl:max-w-96" title={p.email}>
+      <span className="block max-w-64 truncate xl:max-w-96">
         {p.email}
       </span>
     ),

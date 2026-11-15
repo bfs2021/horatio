@@ -70,7 +70,7 @@ export function BoonStandingsTab({ troupeId, harpy = false }: { troupeId: string
         <fieldset className="flex flex-wrap items-center gap-2 text-sm">
           <legend className="sr-only">Who is counted</legend>
           {SCOPES.map((o) => (
-            <label key={o.value} className="flex items-center gap-1" title={o.meaning}>
+            <label key={o.value} className="flex items-center gap-1">
               <input type="radio" name="boon-standings-scope" checked={scope === o.value} onChange={() => setScope(o.value)} />
               {o.label}
             </label>
@@ -112,9 +112,11 @@ function Totals({ totals }: { totals: Standings["totals"] }) {
   return (
     <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5" aria-label="The whole ledger">
       {tiles.map(([label, value, meaning]) => (
-        <div key={label} className="rounded border border-ash px-3 py-2" title={meaning}>
+        <div key={label} className="rounded border border-ash px-3 py-2">
           <dt className="text-xs text-mist">{label}</dt>
           <dd className="text-xl text-parchment tabular-nums">{value}</dd>
+          {/* What it counts, under the number: a hover title never shows on a phone. */}
+          <dd className="text-xs leading-tight text-mist">{meaning}</dd>
         </div>
       ))}
     </dl>
@@ -193,9 +195,9 @@ function Weights({ troupeId, weights, defaults }: { troupeId: string; weights: B
 }
 
 /** A plain bar for one measure, in gold; the number is always beside it. */
-function Bar({ value, most, label }: { value: number; most: number; label: string }) {
+function Bar({ value, most }: { value: number; most: number }) {
   return (
-    <div className="h-2 w-full min-w-16 rounded bg-ash/60" title={label} aria-hidden="true">
+    <div className="h-2 w-full min-w-16 rounded bg-ash/60" aria-hidden="true">
       <div className="h-full rounded bg-gold" style={{ width: `${share(value, most)}%` }} />
     </div>
   );
@@ -209,7 +211,7 @@ function Bar({ value, most, label }: { value: number; most: number; label: strin
 function NetBar({ value, most }: { value: number; most: number }) {
   const half = share(Math.abs(value), most) / 2;
   return (
-    <div className="relative h-2 w-full min-w-20" title={netWords(value)} aria-hidden="true">
+    <div className="relative h-2 w-full min-w-20" aria-hidden="true">
       <div className="absolute inset-y-[-2px] left-1/2 w-px bg-line" />
       {value > 0 && <div className="absolute inset-y-0 left-1/2 rounded-r bg-gold" style={{ width: `${half}%` }} />}
       {value < 0 && <div className="absolute inset-y-0 right-1/2 rounded-l bg-mist" style={{ width: `${half}%` }} />}
@@ -268,7 +270,7 @@ function ByKind({ standings }: { standings: Standings }) {
           figure<KindCount>("weight", "Weight", (k) => weight(k.weight)),
           figure<KindCount>("open", "Open", (k) => k.count),
           figure<KindCount>("total", "Total weight", (k) => weight(k.total)),
-          barColumn<KindCount>("w-1/3", (k) => <Bar value={k.count} most={most} label={`${k.count} open`} />),
+          barColumn<KindCount>("w-1/3", (k) => <Bar value={k.count} most={most} />),
         ]}
       />
     </Card>
@@ -400,7 +402,7 @@ function DebtAge({ standings }: { standings: Standings }) {
           { key: "months", header: "Months", phone: "title", cell: (b) => b.label },
           figure<Band>("boons", "Boons", (b) => b.count),
           figure<Band>("weight", "Weight", (b) => weight(b.weight)),
-          barColumn<Band>("w-1/2", (b) => <Bar value={b.count} most={most} label={`${b.count} boons`} />),
+          barColumn<Band>("w-1/2", (b) => <Bar value={b.count} most={most} />),
         ]}
       />
     </Card>
@@ -446,9 +448,14 @@ function Settling({ standings }: { standings: Standings }) {
           <h3 className="text-xs text-mist">Call their boons in</h3>
           <ul className="text-sm">
             {s.calls_in.map((c) => (
-              <li key={c.who.key} className="flex justify-between gap-2" title={`Called in ${weight(c.called_in)}, still holds ${weight(c.open)}`}>
-                <Name who={c.who} />
-                <span className="text-mist tabular-nums">{c.rate}%</span>
+              <li key={c.who.key}>
+                <span className="flex justify-between gap-2">
+                  <Name who={c.who} />
+                  <span className="text-mist tabular-nums">{c.rate}%</span>
+                </span>
+                <span className="block text-xs text-mist tabular-nums">
+                  called in {weight(c.called_in)}, still holds {weight(c.open)}
+                </span>
               </li>
             ))}
           </ul>
@@ -457,7 +464,7 @@ function Settling({ standings }: { standings: Standings }) {
           <h3 className="text-xs text-mist">Leave them standing</h3>
           <ul className="text-sm">
             {s.leaves.map((c) => (
-              <li key={c.who.key} className="flex justify-between gap-2" title={`Holds ${weight(c.open)}, has called in none`}>
+              <li key={c.who.key} className="flex justify-between gap-2">
                 <Name who={c.who} />
                 <span className="text-mist tabular-nums">holds {weight(c.open)}</span>
               </li>
@@ -487,7 +494,7 @@ function Across({ title, across, line }: { title: string; across: Standings["acr
               { key: "between", header: "Between", phone: "title", cell: (p) => p.label },
               figure<Pair>("boons", "Boons", (p) => p.count),
               figure<Pair>("weight", "Weight", (p) => weight(p.weight)),
-              barColumn<Pair>("w-1/3", (p) => <Bar value={p.weight} most={most} label={`Weight ${weight(p.weight)}`} />),
+              barColumn<Pair>("w-1/3", (p) => <Bar value={p.weight} most={most} />),
             ]}
           />
           <Tallies label={`Most across ${line} lines`} tallies={across.most} />

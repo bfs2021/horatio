@@ -149,6 +149,8 @@ test("staff see the boon standings: each character's net by the troupe's weights
   await expect(standing.getByRole("row", { name: /Casimir Wode/ })).toContainText("+2");
   await expect(standing.getByRole("row", { name: /Isolde Fenwright/ })).toContainText("−2");
   await expect(l.getByRole("table", { name: "Owing each other" })).toContainText("Isolde Fenwright");
+  // Each total says what it counts, under its number (#919).
+  await expect(l.getByRole("definition").filter({ hasText: "Standing, with everyone on them in play." })).toBeVisible();
 
   // The troupe weighs a major boon at 4: the sums follow.
   await l.getByRole("button", { name: "Change" }).click();

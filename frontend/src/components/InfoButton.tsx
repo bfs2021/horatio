@@ -71,7 +71,8 @@ export function InfoButton({ label, children, className }: { label: string; chil
         aria-expanded={open}
         aria-controls={id}
         onClick={toggle}
-        className="relative inline-grid h-5 w-5 place-items-center rounded-full text-mist before:absolute before:-inset-2 before:content-[''] hover:text-parchment aria-expanded:text-gold"
+        // On a touch screen the button is 40 px square, its negative margin keeping the 20 px it takes in the line.
+        className="relative inline-grid h-5 w-5 place-items-center rounded-full text-mist before:absolute before:-inset-2 before:content-[''] hover:text-parchment aria-expanded:text-gold pointer-coarse:-m-2.5 pointer-coarse:h-10 pointer-coarse:w-10 pointer-coarse:before:hidden"
       >
         {/* Drawn, not a letter, so it adds no text to the line it sits in. */}
         <svg viewBox="0 0 20 20" aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">

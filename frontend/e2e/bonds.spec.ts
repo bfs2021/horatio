@@ -10,6 +10,8 @@ import {
   shots,
   troupeTab,
   expectTabOpen,
+  tabSettings,
+  closeTabSettings,
 } from "./support";
 
 /** Blood bonds: the troupe's setting, staff recording drinks on the Bonds screen, players reporting them (#661), and who sees them. */
@@ -76,14 +78,17 @@ test("staff record three drinks and the thrall's player sees a full bond; the re
   await bonds.getByRole("switch", { name: "Blood bonds" }).click();
   await expect(l.getByText("Blood bonds: switched on.")).toBeVisible();
   await expect(bonds).toContainText("Staff manages");
-  // Their Settings, folded at the top of the Bonds tab, choose how they're kept: off is the switch's alone.
+  // Their Settings, behind the Bonds tab's Settings button, choose how they're kept: off is the switch's alone.
   await bonds.getByRole("link", { name: "Settings for Blood bonds" }).click();
-  await expect(l.getByRole("radio", { name: /^Staff manages/ })).toBeChecked();
-  await expect(l.getByRole("radio", { name: /^Players manage/ })).toBeEnabled();
-  await expect(l.getByRole("radio", { name: /^Off/ })).toHaveCount(0);
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/bonds#settings$`));
+  const settings = await tabSettings(l, "Bonds");
+  await expect(settings.getByRole("radio", { name: /^Staff manages/ })).toBeChecked();
+  await expect(settings.getByRole("radio", { name: /^Players manage/ })).toBeEnabled();
+  await expect(settings.getByRole("radio", { name: /^Off/ })).toHaveCount(0);
+  await closeTabSettings(settings);
 
   // The first drink, on the Bonds screen under Court, where its Settings are.
-  await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/bonds#settings$`));
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/bonds$`));
   await expectTabOpen(l, "Court", "Bonds");
   await expect(l.getByText("No blood bonds yet.")).toBeVisible();
   await l.getByRole("button", { name: "Record a drink" }).click();

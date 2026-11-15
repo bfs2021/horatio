@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { closeContextsAfterEach, run, shots, person, makeCustodian, backstoryOptional, characterTab, builtVampire, ATTRIBUTES_AND_FOCUSES, switchFeature, troupeTab } from "./support";
+import { closeContextsAfterEach, run, shots, person, makeCustodian, backstoryOptional, characterTab, builtVampire, ATTRIBUTES_AND_FOCUSES, switchFeature, troupeTab, tabSettings } from "./support";
 
 /** Status and titles, on the sheet, on badges and at a game. */
 
@@ -300,9 +300,9 @@ test("with a boon ledger, the ban on no boons registered with the Harpy is judge
   await expect(boonsBan).toContainText("does not apply");
   await expect(card.getByText("Fleeting: 0 of 5")).toBeVisible();
 
-  // The lead has the ledger judge it, in the Boons tab's settings (#784).
+  // The lead has the ledger judge it, in the Boons tab's settings (#784, #909).
   await l.goto(`/troupes/${troupeId}/boons#settings`);
-  const judge = l.getByRole("switch", { name: /Judge “No boons registered” from the boon ledger/ });
+  const judge = (await tabSettings(l, "Boons")).getByRole("switch", { name: /Judge “No boons registered” from the boon ledger/ });
   await judge.check();
   await expect(l.getByText("The boon ledger now judges the ban on no boons registered with the Harpy.")).toBeVisible();
   await expect(judge).toBeChecked();
@@ -604,7 +604,7 @@ test("a troupe chooses whether its badges print titles and status: by default al
 
   // In At game's settings (#784), the lead turns titles off and prints negative status only.
   await l.goto(`/troupes/${troupeId}/play#settings`);
-  const setting = l.locator("section").filter({ has: l.getByRole("heading", { name: "Badges", exact: true }) });
+  const setting = (await tabSettings(l, "At game")).locator("section").filter({ has: l.getByRole("heading", { name: "Badges", exact: true }) });
   await expect(setting.getByLabel("Print titles")).toBeChecked();
   await expect(setting.getByLabel(/^All/)).toBeChecked();
   // Each saves as it is clicked, and shows once saved.
@@ -783,7 +783,7 @@ test("where the troupe chooses the night's status at check-in, an elder Senescha
   // The lead switches the house rule on in At game's settings (#784), and the players' House rules tab says so.
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/play#settings`);
-  const card = l.locator("section").filter({ has: l.getByRole("heading", { name: "The night's status" }) });
+  const card = (await tabSettings(l, "At game")).locator("section").filter({ has: l.getByRole("heading", { name: "The night's status" }) });
   await card.getByLabel("Choose the night's status at check-in").click();
   await expect(card.getByLabel("Choose the night's status at check-in")).toBeChecked();
   await p.goto(`/troupes/${troupeId}/house-rules`);

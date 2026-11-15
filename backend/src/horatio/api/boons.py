@@ -737,7 +737,7 @@ def trade(
 ) -> BoonOut:
     """Its creditor traded it: another holds it now. If its conditions ask, its
     debtor's player is told."""
-    troupe, keeper = ledger_troupe(db, user, troupe_id, "edit")
+    troupe, keeper = ledger_troupe(db, user, troupe_id, "settle")
     boon = troupe_boon(db, troupe, boon_id)
     to = side(db, troupe, body.creditor, "creditor", keeper)
     boons.trade(db, user, boon, to, body.note, keeper.character)
@@ -751,7 +751,7 @@ def pass_on(
 ) -> BoonOut:
     """Move the debtor's or the creditor's side of a standing boon to another, such
     as a broodmate after a death."""
-    troupe, keeper = ledger_troupe(db, user, troupe_id, "edit")
+    troupe, keeper = ledger_troupe(db, user, troupe_id, "settle")
     boon = troupe_boon(db, troupe, boon_id)
     to = side(db, troupe, body.to, body.side, keeper)
     boons.pass_on(db, user, boon, body.side, to, body.note, keeper.character)
@@ -764,7 +764,7 @@ def settle(
     troupe_id: uuid.UUID, boon_id: uuid.UUID, body: BoonSettleIn, db: DbSession, user: CurrentUser
 ) -> BoonOut:
     """The boon is settled: called in, forgiven, or formally ignored (p. 397)."""
-    troupe, keeper = ledger_troupe(db, user, troupe_id, "edit")
+    troupe, keeper = ledger_troupe(db, user, troupe_id, "settle")
     boon = troupe_boon(db, troupe, boon_id)
     boons.settle(db, user, boon, body.how, body.note, as_character=keeper.character)
     db.commit()
@@ -776,7 +776,7 @@ def void(
     troupe_id: uuid.UUID, boon_id: uuid.UUID, body: BoonNoteIn, db: DbSession, user: CurrentUser
 ) -> BoonOut:
     """The boon never stood, or no longer counts, with a note: entered by mistake, say."""
-    troupe, keeper = ledger_troupe(db, user, troupe_id, "edit")
+    troupe, keeper = ledger_troupe(db, user, troupe_id, "settle")
     boon = troupe_boon(db, troupe, boon_id)
     boons.void(db, user, boon, body.note, keeper.character)
     db.commit()
@@ -788,7 +788,7 @@ def reopen(
     troupe_id: uuid.UUID, boon_id: uuid.UUID, body: BoonNoteIn, db: DbSession, user: CurrentUser
 ) -> BoonOut:
     """A settled or void boon stands again, with a note."""
-    troupe, keeper = ledger_troupe(db, user, troupe_id, "edit")
+    troupe, keeper = ledger_troupe(db, user, troupe_id, "settle")
     boon = troupe_boon(db, troupe, boon_id)
     boons.reopen(db, user, boon, body.note, keeper.character)
     db.commit()
@@ -950,7 +950,10 @@ class HarpyLedgerOut(BaseModel):
     # What the troupe calls one of its Lesser Harpies: "Lesser Harpy" or "Talon".
     talon_word: str = "Lesser Harpy"
     can_add: bool = True
+    # Correct boons: edit what one says, and link a name to a character.
     can_edit: bool = True
+    # Settle and move boons: trade, pass on, settle, void and reopen them (#984).
+    can_settle: bool = True
     can_review: bool = True
     can_audit: bool = True
     # The Harpy may give others access to the ledger now (#689).
@@ -1177,6 +1180,7 @@ def harpy_ledgers(db: DbSession, user: User, character: Character) -> list[Harpy
             talon_word=boon_talons.ONE[t.boon_talon_word],
             can_add=t.boon_harpy == "full",
             can_edit=t.boon_harpy == "full",
+            can_settle=t.boon_harpy == "full",
             can_audit=t.boon_harpy == "full",
             gives_access=boon_talons.enabled(t),
             sees_standings=boon_harpy.reads_standings(t),
@@ -1192,12 +1196,13 @@ def harpy_ledgers(db: DbSession, user: User, character: Character) -> list[Harpy
                 troupe_id=t.id,
                 troupe_name=t.name,
                 access="full",
-                to_review=len(boon_reviews.queue(db, t)) if talon.can_edit else 0,
+                to_review=len(boon_reviews.queue(db, t)) if talon.can_settle else 0,
                 role="talon",
                 talon_word=boon_talons.ONE[t.boon_talon_word],
                 can_add=talon.can_add,
                 can_edit=talon.can_edit,
-                can_review=talon.can_edit,
+                can_settle=talon.can_settle,
+                can_review=talon.can_settle,
                 can_audit=talon.can_audit,
                 sees_standings=boon_harpy.reads_standings(t),
             )

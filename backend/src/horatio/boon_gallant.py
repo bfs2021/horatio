@@ -18,9 +18,9 @@ either way the answer goes in the boon's own log, so the offer is answered once.
 Reopening and settling the boon again makes a new offer.
 
 Who answers:
-- Whoever may settle the boon in the ledger (horatio.boon_harpy.keeper, "edit"): the
+- Whoever may settle the boon in the ledger (horatio.boon_harpy.keeper, "settle"): the
   troupe's running staff, a Harpy with the full ledger (#688), or a Lesser Harpy the
-  Harpy let edit it (#689), either offer, as their character for a Harpy.
+  Harpy let settle boons (#689, #984), either offer, as their character for a Harpy.
 - The creditor's player, a Social Nobility offer only, from the Play View's Boons tab,
   where the troupe shows creditors their boons and lets players keep their own status.
   Where only staff add or remove status, staff and the Harpy answer it.
@@ -125,8 +125,8 @@ def offer(db: Session, boon: Boon) -> Offer | None:
 
 def keeper_answers(keeper: Keeper | None) -> bool:
     """Whoever may settle boons in the ledger answers any offer: its running staff
-    (None, or a staff `Keeper`), or a Harpy or Lesser Harpy who may edit it."""
-    return keeper is None or "edit" in keeper.can
+    (None, or a staff `Keeper`), or a Harpy or Lesser Harpy who may settle boons."""
+    return keeper is None or "settle" in keeper.can
 
 
 def player_answers(troupe: Troupe, found: Offer, user: User) -> bool:

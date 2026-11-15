@@ -179,7 +179,7 @@ const HARPY: { value: HarpyAccess; label: string; hint: string; summary: string 
   {
     value: "full",
     label: "The full ledger",
-    hint: "The Harpy registers, edits, trades, passes on and settles boons, and reviews what players report.",
+    hint: "This is how the Harpy edits boons: they register, correct, trade, pass on and settle them, and review what players report, from their Play View. Lesser Harpies are set below.",
     summary: "The Harpy keeps the full ledger, and reviews the boons players report.",
   },
 ];

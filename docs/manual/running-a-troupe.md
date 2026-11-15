@@ -296,7 +296,7 @@ The NPC's **IC chat** tab lists its recent messages, newest first, with when eac
 
 ## Titles and status
 
-**Court › Titles** lists the titles the troupe gives in tables: those held first, with who holds them, then the vacant ones by sect, folded away under **Show vacant**. Each row has the title, its sect, the status it gives, whether it is a **House rule** (a title the troupe added), and its **One holder at a time** switch. On a phone each row folds into a short card, with the switch under it.
+**Court › Titles** lists the titles the troupe gives in tables: those held first, with who holds them, then the vacant ones by sect, folded away under **Show vacant**. Each row has the title, its sect, the status it gives, whether it is a **House rule** (a title the troupe added), and its **One holder at a time** switch. On a phone each row folds into a short card, with its holder, sect and the status it gives under the title, then the switch.
 
 - **One holder at a time** is a house rule you set title by title, for the book's titles and your own alike. It's off for every title until you switch it on, so several characters may hold a Prince, say, where your game runs two domains. Switched on, players can't choose the title while someone holds it, though staff can still give it. For a title with other names (a Baron is also an Advocate), it is for them all. Each change goes in the troupe's log.
 - **Add a title** makes a title of the troupe's own: its name, its sect (or any sect), the status it gives, and whether it is one holder at a time.
@@ -436,7 +436,7 @@ Publishing, editing a published announcement, pinning and unpinning, unpublishin
 
 - **Give equipment** gives an item: weapons, protective gear and other gear with the book's qualities, or a Vampiric Text. Start from the book's items or the troupe's own templates; **Save as a template** keeps one for next time.
 - An item can be made special, with any number of qualities and effects of the troupe's own. A special item shows **Special, by** its troupe on its row.
-- The list is a table: each item, who holds it, its kind, qualities and grade, and when and by whom it was given. On a phone, each item folds into a card. Choose an item's name to read what it does.
+- The list is a table: each item, who holds it, its kind, qualities and grade, and when and by whom it was given. On a phone, each item folds into a card, with the same details under its name, each with what it is: **Held by**, **Kind** and so on. Choose an item's name to read what it does.
 - Each item's **⋯**, at the end of its row, holds **History** (an item given from a downtime response says so there, linking to the response), and, while it's held, **Change…**, **Move…** (to another home character), **Discard…** and **Take back…** (with a reason; its player is told). A discarded item's **⋯** offers **Restore to** its last holder instead.
 - **Find items** searches by words, holder, kind, quality, grade, who gave it and when, held or discarded.
 - **Export CSV** downloads the list; **Find these characters** opens the Roster on the holders.
@@ -450,7 +450,7 @@ Publishing, editing a published announcement, pinning and unpinning, unpublishin
 **World › Locations** is the troupe's record of the places that matter in its chronicle, and its characters' havens, with who controls each. Storytellers and assistant storytellers keep it; players and narrators never see it, except that a player keeps part of their own Haven from their sheet (see below).
 
 - **Add a location** adds one.
-- The list is a table of each location's name, type, controller, qualities (negative ones in red), influence area and whether it is locked. On a phone each row folds into a short card.
+- The list is a table of each location's name, type, controller, qualities (negative ones in red), influence area and whether it is locked. On a phone each row folds into a short card, with the same details under its name, each with what it is: **Type**, **Controller** and so on.
 - Filter the list by controller, type, quality, influence, feeding block, locked or not, and negative qualities.
 - The **⋯** at the end of a row holds **Open**, **Edit…** (the form opens over the list), **Build a quest for it** (when quests are on) and **Remove…**.
 - Open a location to change it, forfeit it, remove a negative quality, add subsidiaries, and read its log.

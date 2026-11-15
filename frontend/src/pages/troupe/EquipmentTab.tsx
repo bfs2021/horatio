@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { EquipmentItemOut, EquipmentOut, EquipmentHolderOut } from "../../api/types";
 import { ActionMenu, MenuGroup, MenuItem } from "../../components/ActionMenu";
+import { DataTable, type Column } from "../../components/DataTable";
 import { DateInput } from "../../components/DateInput";
 import { Dialog } from "../../components/Dialog";
 import { EmptyState, showFilters } from "../../components/EmptyState";
@@ -275,7 +276,7 @@ function SearchForm({
   );
 }
 
-/** What is found: a table on a wide screen, cards on a phone or a narrow window. */
+/** What is found: a table on a wide screen, blocks on a phone or a narrow window. */
 function Results({
   troupeId,
   troupeName,
@@ -307,6 +308,29 @@ function Results({
     link.click();
     URL.revokeObjectURL(link.href);
   };
+  // On a phone or a narrow window each row folds into a block under the item's name (DataTable).
+  const columns: Column<EquipmentItemOut>[] = [
+    { key: "item", header: "Item", phone: "title", cell: (item) => <ItemName item={item} rules={rules} /> },
+    { key: "held-by", header: "Held by", phone: "shown", cell: (item) => <HeldBy item={item} /> },
+    { key: "kind", header: "Kind", phone: "shown", cell: (item) => item.kind_name },
+    {
+      key: "qualities",
+      header: "Qualities",
+      phone: "shown",
+      cell: (item) => (item.qualities.length ? item.qualities.map(qualityText).join(", ") : <span className="text-mist">No qualities</span>),
+      folded: (item) => (item.qualities.length ? item.qualities.map(qualityText).join(", ") : null),
+    },
+    { key: "grade", header: "Grade", phone: "shown", cell: (item) => item.grade.charAt(0).toUpperCase() + item.grade.slice(1) },
+    { key: "given", header: "Given", phone: "shown", className: "text-xs text-mist", cell: (item) => <Given item={item} troupeName={troupeName} /> },
+    {
+      key: "actions",
+      header: <span className="sr-only">Actions</span>,
+      label: "Actions",
+      phone: "always",
+      className: "text-right",
+      cell: (item) => <ItemActions item={item} troupeId={troupeId} troupeName={troupeName} holders={holders} />,
+    },
+  ];
   return (
     <section aria-label="Equipment found" className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
@@ -334,58 +358,65 @@ function Results({
         <Empty>{searching ? "No equipment matches." : "No equipment yet."}</Empty>
       ) : (
         <div className="rounded-md border border-ash bg-dusk px-3">
-          <table aria-label="Equipment" className="w-full text-sm">
-            {/* On a phone or a narrow window each row folds into a card, under the one heading. */}
-            <thead className="max-lg:sr-only">
-              <tr className="border-b border-ash text-left text-xs text-mist">
-                <th className="py-2 pr-3 font-normal">Item</th>
-                <th className={`${WIDE} py-2 pr-3 font-normal`}>Held by</th>
-                <th className={`${WIDE} py-2 pr-3 font-normal`}>Kind</th>
-                <th className={`${WIDE} py-2 pr-3 font-normal`}>Qualities</th>
-                <th className={`${WIDE} py-2 pr-3 font-normal`}>Grade</th>
-                <th className={`${WIDE} py-2 pr-3 font-normal`}>Given</th>
-                <th className="py-2 font-normal">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ash">
-              {items.map((item) => (
-                <ItemRow key={item.id} item={item} rules={rules} troupeId={troupeId} troupeName={troupeName} holders={holders} />
-              ))}
-            </tbody>
-          </table>
+          <DataTable label="Equipment" columns={columns} rows={items} rowKey={(item) => item.id} rowLabel={rowLabel} stackBelow="lg" />
         </div>
       )}
     </section>
   );
 }
 
-/** A column shown only on a wide screen; on a narrow one it folds in under the item's name. */
-const WIDE = "hidden lg:table-cell";
+/** A row's name, for screen readers and tests: the item and who holds it. */
+const rowLabel = (item: EquipmentItemOut) => `${item.name}, held by ${item.character_name}`;
 
-type Doing = "details" | "history" | "change" | "move" | "discard" | "take";
+/** An item's name, which opens what it does in a dialog, and what marks it out. */
+function ItemName({ item, rules }: { item: EquipmentItemOut; rules: EquipmentOut | undefined }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <button type="button" aria-haspopup="dialog" className="text-left font-medium text-gold hover:underline" onClick={() => setOpen(true)}>
+          {item.name}
+        </button>
+        {item.status !== "held" && <Badge tone="blood">{STATUS_NAMES[item.status]}</Badge>}
+        {item.special && <Badge tone="gold">Special, by {item.special_troupe_name}</Badge>}
+      </span>
+      <Dialog title={item.name} open={open} onClose={() => setOpen(false)}>
+        <ItemDetails item={item} rules={rules} />
+      </Dialog>
+    </>
+  );
+}
 
-/** One item: what it is, who holds it and where it came from. Its name opens what it
- * does; the ⋯ holds its history and what staff can do with it, each in a dialog, as
- * its status allows. */
-function ItemRow({
-  item,
-  rules,
-  troupeId,
-  troupeName,
-  holders,
-}: {
-  item: EquipmentItemOut;
-  rules: EquipmentOut | undefined;
-  troupeId: string;
-  troupeName: string;
-  holders: EquipmentHolderOut[];
-}) {
+/** Who holds an item, or last held it, and whose they are. */
+function HeldBy({ item }: { item: EquipmentItemOut }) {
+  return (
+    <>
+      <Link to={`/characters/${item.character_id}`} className="hover:text-gold">
+        {item.character_name}
+      </Link>
+      <span className="text-xs whitespace-nowrap text-mist">{item.character_kind === "npc" ? " (NPC)" : item.player_name ? ` (${item.player_name})` : ""}</span>
+    </>
+  );
+}
+
+/** When an item was given, and by whom: the sheet, or someone of this troupe or another. */
+function Given({ item, troupeName }: { item: EquipmentItemOut; troupeName: string }) {
   const dates = useDates();
+  return (
+    <>
+      {dates.date(item.given_at)}
+      {item.from_sheet ? ", from the sheet" : `, by ${item.given_by_name ?? "someone"}`}
+      {!item.from_sheet && item.troupe_name !== troupeName && ` of ${item.troupe_name}`}
+    </>
+  );
+}
+
+type Doing = "history" | "change" | "move" | "discard" | "take";
+
+/** An item's ⋯: its history and what staff can do with it, each in a dialog, as its status allows. */
+function ItemActions({ item, troupeId, troupeName, holders }: { item: EquipmentItemOut; troupeId: string; troupeName: string; holders: EquipmentHolderOut[] }) {
   const [open, setOpen] = useState<Doing | null>(null);
   const close = () => setOpen(null);
-  const label = `${item.name}, held by ${item.character_name}`;
   const path = { character_id: item.character_id, item_id: item.id };
   const give = useAction(({ to, note }: { to: string; note: string }) =>
     unwrap(api.POST("/api/characters/{character_id}/equipment/{item_id}/give", { params: { path }, body: { to_character_id: to, note } })),
@@ -394,96 +425,51 @@ function ItemRow({
   const restore = useAction(() =>
     unwrap(api.POST("/api/troupes/{troupe_id}/equipment/{item_id}/restore", { params: { path: { troupe_id: troupeId, item_id: item.id } } })),
   );
-  const heldBy = (
-    <>
-      <Link to={`/characters/${item.character_id}`} className="hover:text-gold">
-        {item.character_name}
-      </Link>
-      <span className="text-xs whitespace-nowrap text-mist">{item.character_kind === "npc" ? " (NPC)" : item.player_name ? ` (${item.player_name})` : ""}</span>
-    </>
-  );
-  const grade = item.grade.charAt(0).toUpperCase() + item.grade.slice(1);
-  const qualities = item.qualities.length ? item.qualities.map(qualityText).join(", ") : "No qualities";
-  const given = (
-    <>
-      {dates.date(item.given_at)}
-      {item.from_sheet ? ", from the sheet" : `, by ${item.given_by_name ?? "someone"}`}
-      {!item.from_sheet && item.troupe_name !== troupeName && ` of ${item.troupe_name}`}
-    </>
-  );
   return (
-    <tr aria-label={label}>
-      <td className="py-2.5 pr-3 align-top">
-        <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <button type="button" aria-haspopup="dialog" className="text-left font-medium text-gold hover:underline" onClick={() => setOpen("details")}>
-            {item.name}
-          </button>
-          {item.status !== "held" && <Badge tone="blood">{STATUS_NAMES[item.status]}</Badge>}
-          {item.special && <Badge tone="gold">Special, by {item.special_troupe_name}</Badge>}
-        </span>
-        {/* What the wide columns show, folded under the name. */}
-        <span className="mt-0.5 block wrap-anywhere lg:hidden">
-          <span className="text-mist">{item.status === "held" ? "held by " : "last held by "}</span>
-          {heldBy}
-        </span>
-        <span className="block text-xs text-mist lg:hidden">
-          {item.kind_name} · {grade} grade · <span className={item.qualities.length ? "text-parchment" : ""}>{qualities}</span>
-        </span>
-        <span className="block text-xs text-mist lg:hidden">Given {given}</span>
-      </td>
-      <td className={`${WIDE} py-2.5 pr-3 align-top`}>{heldBy}</td>
-      <td className={`${WIDE} py-2.5 pr-3 align-top`}>{item.kind_name}</td>
-      <td className={`${WIDE} py-2.5 pr-3 align-top ${item.qualities.length ? "" : "text-mist"}`}>{qualities}</td>
-      <td className={`${WIDE} py-2.5 pr-3 align-top`}>{grade}</td>
-      <td className={`${WIDE} py-2.5 pr-3 align-top text-xs text-mist`}>{given}</td>
-      <td className="w-px py-1.5 text-right align-top">
-        <ActionMenu label={`Actions for ${label}`} variant="ghost" menuClassName="w-56">
-          <MenuGroup label="Look back">
-            <MenuItem onSelect={() => setOpen("history")}>History</MenuItem>
-          </MenuGroup>
-          <MenuGroup label="Change it">
-            {item.can_change && (
-              <>
-                <MenuItem onSelect={() => setOpen("change")}>Change…</MenuItem>
-                <MenuItem onSelect={() => setOpen("move")}>Move…</MenuItem>
-                <MenuItem onSelect={() => setOpen("discard")}>Discard…</MenuItem>
-                <MenuItem onSelect={() => setOpen("take")}>Take back…</MenuItem>
-              </>
-            )}
-            {item.status === "discarded" && (
-              <MenuItem disabled={restore.isPending} onSelect={() => restore.mutate(undefined)}>
-                Restore to {item.character_name}
-              </MenuItem>
-            )}
-          </MenuGroup>
-        </ActionMenu>
-        <ErrorText error={restore.error} />
-        {/* The dialogs sit here, as nothing but cells may sit in a row (Dialog sets its own text-left). */}
-        <Dialog title={item.name} open={open === "details"} onClose={close}>
-          <ItemDetails item={item} rules={rules} />
-        </Dialog>
-        <Dialog title={`History of ${item.name}`} open={open === "history"} onClose={close}>
-          <History troupeId={troupeId} item={item} />
-        </Dialog>
-        <Dialog title={`Change ${item.name}`} open={open === "change"} onClose={close} wide phoneFull>
-          <EquipmentEditor troupeId={troupeId} troupeName={troupeName} holders={holders} item={item} onDone={close} />
-        </Dialog>
-        <Dialog title={`Move ${item.name}`} open={open === "move"} onClose={close}>
-          <GiveForm
-            item={item}
-            receivers={holders.filter((h) => h.id !== item.character_id).map((h) => ({ ...h, title: "" }))}
-            give={(to, note) => give.mutateAsync({ to: to.id, note })}
-            onDone={close}
-          />
-        </Dialog>
-        <Dialog title={`Discard ${item.name}`} open={open === "discard"} onClose={close}>
-          <DiscardForm item={item} discard={(note) => discard.mutateAsync(note)} onDone={close} />
-        </Dialog>
-        <Dialog title={`Take back ${item.name}`} open={open === "take"} onClose={close}>
-          <TakeBack troupeId={troupeId} item={item} onDone={close} />
-        </Dialog>
-      </td>
-    </tr>
+    <>
+      <ActionMenu label={`Actions for ${rowLabel(item)}`} variant="ghost" menuClassName="w-56">
+        <MenuGroup label="Look back">
+          <MenuItem onSelect={() => setOpen("history")}>History</MenuItem>
+        </MenuGroup>
+        <MenuGroup label="Change it">
+          {item.can_change && (
+            <>
+              <MenuItem onSelect={() => setOpen("change")}>Change…</MenuItem>
+              <MenuItem onSelect={() => setOpen("move")}>Move…</MenuItem>
+              <MenuItem onSelect={() => setOpen("discard")}>Discard…</MenuItem>
+              <MenuItem onSelect={() => setOpen("take")}>Take back…</MenuItem>
+            </>
+          )}
+          {item.status === "discarded" && (
+            <MenuItem disabled={restore.isPending} onSelect={() => restore.mutate(undefined)}>
+              Restore to {item.character_name}
+            </MenuItem>
+          )}
+        </MenuGroup>
+      </ActionMenu>
+      <ErrorText error={restore.error} />
+      {/* The dialogs sit here, as nothing but cells may sit in a row (Dialog sets its own text-left). */}
+      <Dialog title={`History of ${item.name}`} open={open === "history"} onClose={close}>
+        <History troupeId={troupeId} item={item} />
+      </Dialog>
+      <Dialog title={`Change ${item.name}`} open={open === "change"} onClose={close} wide phoneFull>
+        <EquipmentEditor troupeId={troupeId} troupeName={troupeName} holders={holders} item={item} onDone={close} />
+      </Dialog>
+      <Dialog title={`Move ${item.name}`} open={open === "move"} onClose={close}>
+        <GiveForm
+          item={item}
+          receivers={holders.filter((h) => h.id !== item.character_id).map((h) => ({ ...h, title: "" }))}
+          give={(to, note) => give.mutateAsync({ to: to.id, note })}
+          onDone={close}
+        />
+      </Dialog>
+      <Dialog title={`Discard ${item.name}`} open={open === "discard"} onClose={close}>
+        <DiscardForm item={item} discard={(note) => discard.mutateAsync(note)} onDone={close} />
+      </Dialog>
+      <Dialog title={`Take back ${item.name}`} open={open === "take"} onClose={close}>
+        <TakeBack troupeId={troupeId} item={item} onDone={close} />
+      </Dialog>
+    </>
   );
 }
 

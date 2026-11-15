@@ -146,7 +146,8 @@ function GiveEquipment({ troupeId, entry, onDone }: { troupeId: string; entry: R
 }
 
 /** A title a roster entry holds here, as a pill: the active one starred, one out
- * of its sect in red; `children` at its end, such as × to take it. */
+ * of its sect in red; `children` at its end, such as × to take it. A line beside
+ * the pills says what the star and red mean (the roster's TitleKey, the Titles dialog's). */
 export function TitlePill({ entry, title, children }: { entry: RosterEntry; title: string; children?: ReactNode }) {
   const outOfSect = entry.out_of_sect_titles.includes(title);
   const active = title === entry.active_title;
@@ -155,13 +156,6 @@ export function TitlePill({ entry, title, children }: { entry: RosterEntry; titl
       className={`inline-flex h-6 items-center gap-1 rounded-full border text-xs ${children ? "pr-1 pl-2.5" : "px-2.5"} ${
         outOfSect ? "border-blood bg-blood/15 text-blood-bright" : "border-gold/50 bg-gold/10 text-gold"
       }`}
-      title={
-        outOfSect
-          ? `Out of sect: ${entry.character_name} is ${entry.sect ?? "of no sect"}. Kept until taken.`
-          : active
-            ? "Active: the title that gives status"
-            : undefined
-      }
     >
       {active && <span aria-hidden="true">★</span>}
       {title}

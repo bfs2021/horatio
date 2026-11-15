@@ -349,6 +349,7 @@ export function RosterTab({ troupeId, canEmail = false }: { troupeId: string; ca
           })}
         />
       )}
+      <TitleKey entries={rows} />
       {show === "npcs" && npcsInShow.length > 0 && <p className="mt-3 text-xs text-mist">NPCs with a title here are on the Who’s Who. List one without from its ⋯.</p>}
     </Card>
   );
@@ -442,7 +443,7 @@ function rosterColumns({
   const held = (e: RosterEntry) => {
     const items = equipmentOf?.(e);
     return items?.length ? (
-      <span title="What it holds that the filter asks about" className="text-xs text-gold/90">
+      <span className="text-xs text-gold/90">
         {items.join(" · ")}
       </span>
     ) : null;
@@ -577,6 +578,21 @@ function PlayerLink({ entry }: { entry: RosterEntry }) {
       {entry.player_name} {entry.player_handle && <AtHandle handle={entry.player_handle} />}
       <Pronouns pronouns={entry.player_pronouns} className="" />
     </Link>
+  );
+}
+
+/** What the title pills' star and red mean, under the list while one shown has them:
+ * a hover title never shows on a phone. The Titles dialog on ⋯ says it for its one character. */
+function TitleKey({ entries }: { entries: RosterEntry[] }) {
+  const active = entries.some((e) => e.active_title && e.titles.includes(e.active_title));
+  const outOfSect = entries.some((e) => e.titles.some((t) => e.out_of_sect_titles.includes(t)));
+  if (!active && !outOfSect) return null;
+  return (
+    <p className="mt-3 text-xs text-mist">
+      {active && <>★ marks a character&apos;s active title, the one that gives status.</>}
+      {active && outOfSect && " "}
+      {outOfSect && <>A title in red is out of the character&apos;s sect, kept until taken.</>}
+    </p>
   );
 }
 

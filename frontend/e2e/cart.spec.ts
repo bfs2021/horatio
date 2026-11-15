@@ -524,11 +524,13 @@ test("changes on the sheet wait in a cart, and only Spend XP makes them, all or 
   };
   for (const [category, picks] of Object.entries(build))
     await put(`/api/characters/${id}/creation/categories/${category}`, { picks: picks.map(([name, rating]) => ({ name, rating })) });
-  await p.goto(`/characters/${id}`);
+  // Opening her goes to the wizard while she's in creation (#915); the sheet is a tab of its own.
+  await p.goto(`/characters/${id}/sheet`);
   const part = (title: string) => p.locator("section").filter({ has: p.getByRole("heading", { name: title, exact: true }) });
   const cart = p.getByRole("list", { name: "Changes in the cart" });
 
-  // Creation picks go through the cart too: placing one, and taking one back.
+  // Creation picks go through the cart too, from the folded quick picks: placing one, and taking one back.
+  await p.getByText("Quick picks (for those who know the rules)").click();
   await p.getByLabel("Pick Skills at 1").selectOption("Melee");
   await p.getByRole("button", { name: "Take back the pick on Medicine" }).click();
   await p.getByLabel("Pick Skills at 1").selectOption("Stealth");
@@ -542,6 +544,7 @@ test("changes on the sheet wait in a cart, and only Spend XP makes them, all or 
   await leaving.accept();
   await reloaded;
   await expect(cart.getByRole("listitem")).toHaveCount(3);
+  // The quick picks open by themselves while the cart holds picks from them.
   // Finishing with picks still in the cart asks what to do with them.
   await p.getByRole("button", { name: "Finish creation" }).click();
   await expect(p.getByText("3 changes in the cart are not applied yet.", { exact: false })).toBeVisible();

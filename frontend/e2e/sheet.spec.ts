@@ -186,7 +186,8 @@ test("the sheet says what a trait does, under its name, and what a heading is, i
   await put(`/api/characters/${id}/traits`, { category: "clan", name: "Brujah", rating: null });
   await put(`/api/characters/${id}/creation/categories/skills`, { picks: [{ name: "Brawl", rating: 2 }] });
   await put(`/api/characters/${id}/creation/categories/backgrounds`, { picks: [{ name: "Generation", rating: 1 }] });
-  await p.goto(`/characters/${id}`);
+  // In creation, her sheet is a tab of its own, as opening her goes to the wizard (#915).
+  await p.goto(`/characters/${id}/sheet`);
   const part = (title: string) => p.locator("section").filter({ has: p.getByRole("heading", { name: title, exact: true }) });
   const fits = async (name: string) => {
     const box = (await p.getByText(name).boundingBox())!;

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
-import { Link, Route, Routes, useMatch, useParams, useSearchParams } from "react-router";
+import { Link, Navigate, Route, Routes, useMatch, useParams, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { CharacterOut } from "../../api/types";
 import { NotOpenHere } from "../../components/NotOpenHere";
@@ -51,6 +51,8 @@ export function CharacterPage() {
   const { characterId = "" } = useParams();
   // The Downtime tab has its own main button, Submit, so Play steps back there.
   const onDowntime = !!useMatch("/characters/:characterId/downtime");
+  // In the wizard, Continue creating would only lead back to where the player is.
+  const onCreate = !!useMatch("/characters/:characterId/create/*");
   const me = useMe();
   const character = useQuery({
     queryKey: ["character", characterId],
@@ -186,7 +188,8 @@ export function CharacterPage() {
           <Route path="influence" element={<InfluenceTab character={c} mine={false} />} />
           <Route path="ic-chat" element={<InCharacterTab character={c} />} />
           <Route path="log" element={<CharacterLogTab characterId={c.id} />} />
-          {!c.creation_complete && <Route path="create/:step?" element={<CreationWizard character={c} />} />}
+          {/* Once it's made, the wizard's address leads to the NPC (as finishing it does). */}
+          <Route path="create/:step?" element={c.creation_complete ? <Navigate to={base} replace /> : <CreationWizard character={c} />} />
           {/* A tab not open to them, or no such tab (#907); not before Backstory is known. */}
           <Route path="*" element={backstory.isLoading ? <Loading /> : <NotOpenHere name={c.name} to={base} />} />
         </Routes>
@@ -197,13 +200,27 @@ export function CharacterPage() {
   const mine = c.player_id === me.data?.id;
   // Its home troupe's storytellers and assistants keep its projects (#507).
   const keepsProjects = !mine && !!home.data && abilities(home.data.my_role, custodian).running;
-  // While its player is still creating it, the page leads back to the wizard, and the
-  // tabs for a character in play (experience, downtimes, influence) wait until it's done.
+  // While its player is still creating it, the page opens on the wizard (#915), with the
+  // sheet on a tab of its own, and the tabs for a character in play (experience,
+  // downtimes, influence) wait until it's done.
   const creating = mine && !c.creation_complete;
   const influence = mine || custodian || (!!home.data && abilities(home.data.my_role, custodian).running);
   // The custodian renames at any time; the player once every 3 months in a troupe.
   const canRename = custodian || (mine && c.status === "active");
   const renameOn = !custodian && mine && c.status === "active" ? c.next_rename_on : null;
+  // Badges are the staff's to print; whoever else sees the page is staff.
+  const sheet = (
+    <>
+      {/* For its player, the Player Nominations about it (#470): nothing while there are none. */}
+      {mine && c.kind === "pc" && <NominationsAbout character={c} />}
+      <SheetTab
+        character={c}
+        mine={mine}
+        badge={!mine || custodian}
+        give={!mine && (custodian || (!!home.data && abilities(home.data.my_role, custodian).running))}
+      />
+    </>
+  );
 
   return (
     <>
@@ -214,7 +231,7 @@ export function CharacterPage() {
           actions={
             <div className="flex flex-wrap items-center gap-3">
               {c.status === "retired" && <Badge>Retired</Badge>}
-              {creating ? primaryLink(`${base}/create`, "Continue creating") : play}
+              {creating ? !onCreate && primaryLink(`${base}/create`, "Continue creating") : play}
               {c.status === "active" && <GiveEquipment character={c} />}
               <CharacterMenu
                 character={c}
@@ -256,22 +273,9 @@ export function CharacterPage() {
         })}
       />
       <Routes>
-        {/* Badges are the staff's to print; whoever else sees the page is staff. */}
-        <Route
-          index
-          element={
-            <>
-              {/* For its player, the Player Nominations about it (#470): nothing while there are none. */}
-              {mine && c.kind === "pc" && <NominationsAbout character={c} />}
-              <SheetTab
-                character={c}
-                mine={mine}
-                badge={!mine || custodian}
-                give={!mine && (custodian || (!!home.data && abilities(home.data.my_role, custodian).running))}
-              />
-            </>
-          }
-        />
+        <Route index element={creating ? <Navigate to={`${base}/create`} replace /> : sheet} />
+        {/* The sheet's own address while its player creates it; once it's made, the page itself. */}
+        <Route path="sheet" element={creating ? sheet : <Navigate to={base} replace />} />
         <Route path="status" element={<StatusTitlesTab character={c} />} />
         <Route path="equipment" element={<EquipmentTab character={c} />} />
         <Route path="xp" element={<XpTab characterId={c.id} selfEntering={mine && !c.home_troupe_id && c.status === "active"} />} />
@@ -282,7 +286,8 @@ export function CharacterPage() {
         {/* One Quests route, as one tab (#788): its player's view, else its staff's. */}
         {quests.data?.enabled && (mine || staffQuests) && <Route path="quests/*" element={<QuestsTab characterId={c.id} staffOf={mine ? undefined : home.data?.id} />} />}
         {backstory.data?.read && <Route path="backstory" element={<BackstoryTab character={c} />} />}
-        {creating && <Route path="create/:step?" element={<CreationWizard character={c} />} />}
+        {/* Once it's made, the wizard's address leads to the sheet (as finishing it does). */}
+        {mine && <Route path="create/:step?" element={creating ? <CreationWizard character={c} /> : <Navigate to={base} replace />} />}
         {mine && (
           <>
             <Route path="troupes" element={<TroupesTab character={c} />} />

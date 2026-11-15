@@ -6,7 +6,7 @@ import type { CharacterOut } from "../../api/types";
 import { useClanName } from "../../components/ClanNames";
 import { HouseMark } from "../../components/HouseMark";
 import { StepButton } from "../../components/StepButton";
-import { Badge, Button, Card, ErrorText, Notice } from "../../components/ui";
+import { Badge, Button, Card, ErrorText, Notice, type Variant } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { AskStaff } from "./AskStaff";
 import { askable as canAsk, askException, chooseTeacher, costText, describe, teacherOf, toChange, unaskable, type Cart, type CartLine } from "./cart";
@@ -295,11 +295,13 @@ export function CartBar({ characterId, cart }: { characterId: string; cart: Cart
 /**
  * Finish character creation. It can't be taken back, so it asks first, saying
  * what changes; with changes still in the cart, whether to apply them or drop them.
+ * `onFinished` waits for the character to be asked for again, so it is no longer in creation.
  */
 export function FinishCreation({
   character,
   cart,
   disabled,
+  variant,
   children,
   className,
   onFinished,
@@ -307,6 +309,8 @@ export function FinishCreation({
   character: CharacterOut;
   cart: Cart;
   disabled?: boolean;
+  /** The first button's look: the Sheet's quick picks keep it quiet (#915). */
+  variant?: Variant;
   children: ReactNode;
   className?: string;
   onFinished?: () => void;
@@ -322,8 +326,8 @@ export function FinishCreation({
     await unwrap(api.POST("/api/characters/{character_id}/creation/complete", { params: { path: { character_id: character.id } } }));
     if (withCart === "drop") cart.clear();
     setAsking(false);
-    onFinished?.();
   });
+  const done = (withCart: "apply" | "drop" | null) => finish.mutate(withCart, { onSuccess: () => onFinished?.() });
   const pending = cart.lines.length > 0;
   return (
     <div className={className}>
@@ -340,15 +344,15 @@ export function FinishCreation({
           <div className="flex flex-wrap gap-2">
             {pending ? (
               <>
-                <Button disabled={finish.isPending} onClick={() => finish.mutate("apply")}>
+                <Button disabled={finish.isPending} onClick={() => done("apply")}>
                   Apply them and finish
                 </Button>
-                <Button variant="secondary" disabled={finish.isPending} onClick={() => finish.mutate("drop")}>
+                <Button variant="secondary" disabled={finish.isPending} onClick={() => done("drop")}>
                   Drop them and finish
                 </Button>
               </>
             ) : (
-              <Button disabled={finish.isPending} onClick={() => finish.mutate(null)}>
+              <Button disabled={finish.isPending} onClick={() => done(null)}>
                 Yes, finish creation
               </Button>
             )}
@@ -358,7 +362,7 @@ export function FinishCreation({
           </div>
         </div>
       ) : (
-        <Button disabled={disabled || finish.isPending} onClick={() => setAsking(true)}>
+        <Button variant={variant} disabled={disabled || finish.isPending} onClick={() => setAsking(true)}>
           {children}
         </Button>
       )}

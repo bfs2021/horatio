@@ -26,7 +26,7 @@ type Tone = (typeof TONES)["page"];
 /**
  * The troupe's Setting Style Document as its players read it (MET: VTM pp. 331–336):
  * what its staff write (#770) and what its own settings give (#771), in the order of
- * the book's examples. The Setting tab, the profile and the printed page all show it.
+ * the book's examples. The setting tab, the profile and the printed page all show it.
  * `editBase`, the troupe page's address, adds "Edit" links to the parts built from
  * the troupe's settings, for its running staff.
  */
@@ -113,7 +113,7 @@ export function SettingDocument({ setting: s, editBase, print = false }: { setti
   );
 }
 
-/** The document, fetched: for the Setting tab and the profile. */
+/** The document, fetched: for The setting tab and the profile. */
 export function SettingDocumentFor({ troupeId, editBase }: { troupeId: string; editBase?: string }) {
   const setting = useSetting(troupeId);
   if (setting.isPending) return <Loading />;

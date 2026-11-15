@@ -47,7 +47,7 @@ export function SettingStyle({ troupeId }: { troupeId: string }) {
 }
 
 /**
- * Where players read the whole document (#771): the Setting tab, printed, and on the
+ * Where players read the whole document (#771): The setting tab, printed, and on the
  * profile when its storytellers choose, as written house rules can be.
  */
 function ShowCard({ troupeId, setting }: { troupeId: string; setting: SettingOut }) {

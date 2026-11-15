@@ -6,7 +6,7 @@ import { Checkbox } from "../../components/Checkbox";
 import { useToast } from "../../components/Toast";
 import { Toggle } from "../../components/Toggle";
 import { Button, Card, Empty, ErrorText, Field, Loading, Select } from "../../components/ui";
-import { useDates } from "../../dates";
+import { type Dates, useDates } from "../../dates";
 import { useAction } from "../../hooks";
 
 type Word = NonNullable<TroupeOut["boon_talon_word"]>;
@@ -20,6 +20,11 @@ export function oneOf(word: string) {
 /** On the setting that keeps what talons change from the Harpy (#992). */
 const HARPY_SEES_HINT =
   "Off, a talon's edits, trades and settlements don't show in the log the Harpy reads, so a talon can alter the ledger behind the Harpy's back. Staff always see everything.";
+
+/** "Given by Morwen Vale, 15 Nov 2026": who gave a talon access, and when (`given_at` is a moment, not an API day). */
+export function givenText(talon: Pick<TalonOut, "given_by" | "given_at">, dates: Dates) {
+  return `${talon.given_by ? `Given by ${talon.given_by}` : "Given"}, ${dates.date(talon.given_at)}`;
+}
 
 const NONE: Can = { can_add: false, can_edit: false, can_settle: false, can_audit: false };
 
@@ -193,7 +198,7 @@ function TalonRow({ troupeId, talon, word, manage }: { troupeId: string; talon: 
             <span className="text-mist"> {what(talon)}</span>
           </p>
           <p className="text-xs text-mist">
-            {talon.given_by ? `Given by ${talon.given_by}` : "Given"}, {dates.day(talon.given_at)}
+            {givenText(talon, dates)}
             {!talon.in_play && " · Not in play in the troupe now, so without access"}
           </p>
         </div>

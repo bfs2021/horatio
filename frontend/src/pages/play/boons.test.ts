@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PlayBoonOut } from "../../api/types";
+import { datesFor } from "../../dates";
 import { aBoon, playerSettles, reportedText, reportLine, settledText, standingFirst } from "./boons";
 
 const boon = (over: Partial<PlayBoonOut>): PlayBoonOut => ({
@@ -35,6 +36,11 @@ describe("the Play View's boons", () => {
       "Settled: called in, day 2026-10-16. For influence.",
     );
     expect(settledText(boon({ settled_how: "forgiven", settled_at: null }), day)).toBe("Settled: forgiven.");
+  });
+
+  it("writes the moment a boon was settled as a date, not NaN (#998)", () => {
+    const dates = datesFor({ time_zone: "UTC", date_format: "day_month", clock: "12" });
+    expect(settledText(boon({ settled_how: "called_in", settled_at: "2026-10-16T20:00:00.123456+00:00" }), dates.date)).toBe("Settled: called in, 16 Oct 2026.");
   });
 
   it("offers a creditor only calling in and forgiving, not formally ignoring", () => {

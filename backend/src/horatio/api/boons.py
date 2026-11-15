@@ -5,15 +5,16 @@ reopen them, each with its own log; and a character's boon summary, for staff.""
 import uuid
 from collections.abc import Collection, Iterable, Mapping
 from datetime import UTC, date, datetime, timedelta
-from typing import Literal
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, or_, select
 
 from horatio import (
     boon_gallant,
     boon_harpy,
+    boon_ledger,
     boon_reviews,
     boon_status,
     boon_talons,
@@ -45,6 +46,8 @@ State = Literal["pending", "registered", "settled", "void"]
 SettledHow = Literal["called_in", "forgiven", "ignored"]
 StatusLoss = Literal["due", "taken", "waived"]
 View = Literal["open", "departed", "settled", "void", "pending", "all"]
+Sort = Literal["date", "debtor", "creditor", "kind"]
+Order = Literal["asc", "desc"]
 Standing = Literal["active", "final_death", "off_field", "inactive", "retired"]
 EventKind = Literal[
     "registered",
@@ -243,12 +246,12 @@ class BoonOut(BaseModel):
 
 
 class TroupeBoonsOut(BaseModel):
-    # The boons in the view asked for, newest first.
+    # One page of the boons in the view asked for, in the order asked for (#978).
     boons: list[BoonOut]
-    # How many boons are in each view, for its tabs.
+    # How many boons are in that view with the filters, on every page.
+    total: int
+    # How many boons are in each view with the filters, for its tabs.
     counts: dict[str, int]
-    # Its characters, retired ones too, to name on either side.
-    characters: list[CharacterChoice]
 
 
 class BoonKindCount(BaseModel):
@@ -599,51 +602,63 @@ def troupe_boons(
     view: View = "open",
     character_id: uuid.UUID | None = None,
     name: str = "",
-    kind: Kind | None = None,
+    q: Annotated[str, Query(max_length=boons.LONGEST_NAME)] = "",
+    kind: Annotated[list[Kind] | None, Query()] = None,
     made_from: date | None = None,
     made_to: date | None = None,
+    flagged: bool = False,
+    game_id: uuid.UUID | None = None,
+    sort: Sort = "date",
+    direction: Order | None = None,
+    limit: Annotated[int, Query(ge=1, le=boon_ledger.LONGEST_PAGE)] = boon_ledger.PAGE,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ) -> TroupeBoonsOut:
-    """The troupe's boons in one view of its ledger, newest first: open (standing,
-    both parties in play), departed (standing, but someone on it is dead or
-    off-field), settled, void, pending, or all. Narrowed to those a character or a
-    name is on, of a kind, or made between two nights."""
+    """A page of the troupe's boons in one view of its ledger: open (standing, both
+    parties in play), departed (standing, but someone on it is dead or off-field),
+    settled, void, pending, or all. Narrowed to those a character (`character_id`) or
+    a name only (`name`, the whole name) is on; holding `q` in either side's name, the
+    reason or the conditions; of any `kind` given (several at once); made between two
+    nights; still `flagged` for review; or registered at a game (`game_id`). Sorted by
+    `sort` (date, debtor, creditor or kind, by weight) in `direction` (asc or desc;
+    newest first for the date, A to Z or trivial to life otherwise), ties newest
+    first, then by id. `limit` boons from `offset` (#978)."""
     troupe, keeper = ledger_troupe(db, user, troupe_id)
-    court = keeper.court
-    every = list(
-        db.scalars(
-            select(Boon)
-            .where(Boon.troupe_id == troupe.id)
-            .order_by(Boon.made_on.desc(), Boon.created_at.desc(), Boon.id.desc())
-        )
+    filters = boon_ledger.Filters(
+        character_id=character_id,
+        name=name,
+        q=q,
+        kinds=kind or (),
+        made_from=made_from,
+        made_to=made_to,
+        flagged=flagged,
+        game_id=game_id,
     )
-    characters = characters_of(db, every)
-    wanted = name.strip().casefold()
-
-    def matches(b: Boon) -> bool:
-        if character_id is not None and character_id not in (b.debtor_id, b.creditor_id):
-            return False
-        if wanted and wanted not in (b.debtor_name.casefold(), b.creditor_name.casefold()):
-            return False
-        if kind is not None and b.kind != kind:
-            return False
-        if made_from is not None and b.made_on < made_from:
-            return False
-        return made_to is None or b.made_on <= made_to
-
-    narrowed = [b for b in every if matches(b)]
-    shown = [b for b in narrowed if boons.in_view(b, characters, view, court)]
+    where = boon_ledger.narrowing(troupe.id, filters)
+    left = boon_ledger.gone(db, troupe.id, keeper.court)
+    counts = boon_ledger.counts(db, where, left)
+    order = direction or ("desc" if sort == "date" else "asc")
+    shown = boon_ledger.page(
+        db, [*where, boon_ledger.in_view(view, left)], sort, order, limit, offset
+    )
+    characters = characters_of(db, shown)
     users = users_of(db, (b.submitted_by for b in shown))
     disgraced = standing_disgraced(db, shown)
     marks = boonbreakers.marked(db, troupe.id)
-    flagged = {f.boon_id for f in boon_reviews.raised(db, (b.id for b in shown))}
+    flags = {f.boon_id for f in boon_reviews.raised(db, (b.id for b in shown))}
     out = [boon_out(b, characters, users, disgraced, keeper=keeper, marked=marks) for b in shown]
     for row in out:
-        row.flagged = row.id in flagged
-    return TroupeBoonsOut(
-        boons=out,
-        counts=boons.counts(narrowed, characters, court),
-        characters=choices_for(db, troupe, keeper),
-    )
+        row.flagged = row.id in flags
+    return TroupeBoonsOut(boons=out, total=counts[view], counts=counts)
+
+
+@router.get("/troupes/{troupe_id}/boon-characters")
+def boon_characters(
+    troupe_id: uuid.UUID, db: DbSession, user: CurrentUser
+) -> list[CharacterChoice]:
+    """The characters the caller may name on either side of a boon in the troupe's
+    ledger, retired ones too: read once, apart from the ledger's pages (#978)."""
+    troupe, keeper = ledger_troupe(db, user, troupe_id)
+    return choices_for(db, troupe, keeper)
 
 
 @router.get("/troupes/{troupe_id}/boons/{boon_id}")

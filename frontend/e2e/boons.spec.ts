@@ -146,6 +146,71 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   expect(refused.status()).toBe(403);
 });
 
+test("the ledger shows a hundred boons a page, with Previous and Next, and the page in the URL (#978)", async ({ browser }) => {
+  const custodian = await person(browser, "pager-custodian");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "pager-lead");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Ledger by the Page ${run}`, lead_handle: lead.handle });
+  const l = lead.page;
+  await send(l, "PUT", `/api/troupes/${troupe.id}/boon-ledger`, { on: true });
+  // 140 boons, twenty a month from January to July: July's are the newest.
+  const rows = [1, 2, 3, 4, 5, 6, 7].map((month) => ({
+    debtor: { name: `Debtor of month ${month}` },
+    creditor: { name: "Hesper Calloway" },
+    kind: "minor",
+    made_on: `2026-0${month}-01`,
+    reason: `Favour of month ${month}`,
+    count: 20,
+  }));
+  await send(l, "POST", `/api/troupes/${troupe.id}/boons`, { boons: rows, note: "" });
+
+  await l.goto(`/troupes/${troupe.id}/boons`);
+  const boons = ledgerOf(l);
+  const pages = l.getByRole("navigation", { name: "Pages of boons" });
+  await expect(pages).toContainText("1 to 100 of 140");
+  await expect(boons.rows).toHaveCount(100);
+  await expect(boons.row("Debtor of month 7 owes Hesper Calloway, minor")).toHaveCount(20);
+  await expect(pages.getByRole("button", { name: "Previous" })).toBeDisabled();
+
+  // The next page has the oldest 40, and the URL says which page it is.
+  await pages.getByRole("button", { name: "Next" }).click();
+  await expect(pages).toContainText("101 to 140 of 140");
+  await expect(l).toHaveURL(/[?&]page=2\b/);
+  await expect(boons.rows).toHaveCount(40);
+  await expect(boons.row("Debtor of month 1 owes Hesper Calloway, minor")).toHaveCount(20);
+  await expect(boons.row("Debtor of month 7 owes Hesper Calloway, minor")).toHaveCount(0);
+  await expect(pages.getByRole("button", { name: "Next" })).toBeDisabled();
+  // A reload keeps the page.
+  await l.reload();
+  await expect(pages).toContainText("101 to 140 of 140");
+  await expect(boons.rows).toHaveCount(40);
+  // Back to the first page.
+  await pages.getByRole("button", { name: "Previous" }).click();
+  await expect(pages).toContainText("1 to 100 of 140");
+  await expect(l).not.toHaveURL(/page=/);
+
+  // Another view starts from its first page; one that fits on a page needs no pager.
+  await pages.getByRole("button", { name: "Next" }).click();
+  await expect(l).toHaveURL(/[?&]page=2\b/);
+  await l.getByRole("tab", { name: /^All/ }).click();
+  await expect(l).not.toHaveURL(/page=/);
+  await expect(pages).toContainText("1 to 100 of 140");
+  await l.getByRole("tab", { name: /^Settled/ }).click();
+  await expect(l.getByText("None here.")).toBeVisible();
+  await expect(pages).toHaveCount(0);
+  // An old link past the last page shows the last there is.
+  await l.goto(`/troupes/${troupe.id}/boons?page=9`);
+  await expect(pages).toContainText("101 to 140 of 140");
+  await expect(l).toHaveURL(/[?&]page=2\b/);
+});
+
 test("staff see the boon standings: each character's net by the troupe's weights, which they can change", async ({ browser }) => {
   const custodian = await person(browser, "bstand-custodian");
   makeCustodian(custodian.email);

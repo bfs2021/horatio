@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { BoonOut, CharacterChoice } from "../../api/types";
@@ -30,6 +30,7 @@ import {
 import { DataTable, type Column } from "../../components/DataTable";
 import { DateInput } from "../../components/DateInput";
 import { SectionLabel } from "../../components/Headings";
+import { Pager } from "../../components/Pager";
 import { useToast } from "../../components/Toast";
 import { useWidePage } from "../../components/widePage";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
@@ -108,11 +109,32 @@ function ReviewOnly({ troupeId }: { troupeId: string }) {
   );
 }
 
+// A page of the ledger (#978): the boons the API sends at a time.
+const PAGE = 100;
+
 function Ledger({ troupeId }: { troupeId: string }) {
   const harpy = useContext(HarpyMode);
   // Room for the table at 1280 px and up (#975).
   useWidePage();
   const [params, setParams] = useSearchParams();
+  // The page, from 1, in the URL as ?page= so a reload or a link keeps it (#978).
+  const page = Math.max(1, Math.floor(Number(params.get("page"))) || 1);
+  const setPage = (to: number, replace = false) =>
+    setParams(
+      (now) => {
+        const next = new URLSearchParams(now);
+        if (to > 1) next.set("page", String(to));
+        else next.delete("page");
+        return next;
+      },
+      { replace },
+    );
+  // Another view or filter starts again from the first page.
+  const fresh = () => {
+    if (page > 1) setPage(1, true);
+  };
+  // The top of the list, brought back into sight when paging from its foot.
+  const top = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<BoonView>("open");
   // The review queue (#687) in place of the ledger's views.
   const [reviewing, setReviewing] = useState(false);
@@ -130,9 +152,11 @@ function Ledger({ troupeId }: { troupeId: string }) {
     view,
     ...(who.who.startsWith("c:") ? { character_id: who.who.slice(2) } : {}),
     ...(who.who === "name" && who.name.trim() ? { name: who.name.trim() } : {}),
-    ...(kind ? { kind } : {}),
+    ...(kind ? { kind: [kind] } : {}),
     ...(from ? { made_from: from } : {}),
     ...(to ? { made_to: to } : {}),
+    limit: PAGE,
+    offset: (page - 1) * PAGE,
   };
   const ledger = useQuery({
     queryKey: ["troupe-boons", troupeId, query],
@@ -144,6 +168,12 @@ function Ledger({ troupeId }: { troupeId: string }) {
       ),
     placeholderData: (previous) => previous,
   });
+  // Who may be named on a boon: read once, not with every page (#978).
+  const choices = useQuery({
+    queryKey: ["boon-characters", troupeId],
+    queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/boon-characters", { params: { path: { troupe_id: troupeId } } })),
+  });
+  const characters = choices.data ?? [];
   const reviews = !harpy || harpy.review;
   const review = useQuery({
     queryKey: ["boon-review", troupeId],
@@ -151,9 +181,15 @@ function Ledger({ troupeId }: { troupeId: string }) {
     enabled: reviews,
   });
   const toReview = review.data?.boons.length ?? 0;
+  // Past the last page (boons settled, or an old link): go to the last there is.
+  const total = ledger.data?.total ?? 0;
+  const past = ledger.isSuccess && !ledger.isPlaceholderData && page > 1 && (page - 1) * PAGE >= total;
+  useEffect(() => {
+    if (past) setPage(Math.max(1, Math.ceil(total / PAGE)), true);
+  });
   if (ledger.isPending) return <Loading />;
   if (ledger.error) return <ErrorText error={ledger.error} />;
-  const { boons, counts, characters } = ledger.data;
+  const { boons, counts } = ledger.data;
   const narrowed = Boolean(who.who || kind || from || to);
   const clear = () => {
     setWho({ who: "", name: "" });
@@ -161,7 +197,12 @@ function Ledger({ troupeId }: { troupeId: string }) {
     setFrom("");
     setTo("");
     setCleared(cleared + 1);
-    if (params.has("character")) setParams({}, { replace: true });
+    if (params.has("character") || params.has("page")) setParams({}, { replace: true });
+  };
+  const turn = (to: number) => {
+    setPage(to);
+    const list = top.current;
+    if (list && list.getBoundingClientRect().top < 0) list.scrollIntoView({ block: "start" });
   };
 
   return (
@@ -189,7 +230,7 @@ function Ledger({ troupeId }: { troupeId: string }) {
 
       {(!harpy || harpy.role === "harpy") && <Boonbreakers troupeId={troupeId} characters={characters} />}
 
-      <div className="flex flex-col gap-3">
+      <div ref={top} className="flex scroll-mt-4 flex-col gap-3">
         <div role="tablist" aria-label="Ledger views" className="flex flex-wrap gap-1">
           {VIEWS.filter((v) => v.value !== "pending" || (counts.pending ?? 0) > 0).map((v) => (
             <Button
@@ -198,6 +239,7 @@ function Ledger({ troupeId }: { troupeId: string }) {
               aria-selected={!reviewing && view === v.value}
               variant={!reviewing && view === v.value ? "secondary" : "ghost"}
               onClick={() => {
+                if (v.value !== view) fresh();
                 setView(v.value);
                 setReviewing(false);
               }}
@@ -218,10 +260,25 @@ function Ledger({ troupeId }: { troupeId: string }) {
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Character or name">
-            <WhoPicker key={cleared} characters={characters} who={who.who} name={who.name} onChange={(w, name) => setWho({ who: w, name })} />
+            <WhoPicker
+              key={cleared}
+              characters={characters}
+              who={who.who}
+              name={who.name}
+              onChange={(w, name) => {
+                fresh();
+                setWho({ who: w, name });
+              }}
+            />
           </Field>
           <Field label="Kind">
-            <Select value={kind} onChange={(e) => setKind(e.target.value as BoonKind | "")}>
+            <Select
+              value={kind}
+              onChange={(e) => {
+                fresh();
+                setKind(e.target.value as BoonKind | "");
+              }}
+            >
               <option value="">Any kind</option>
               {KINDS.map((k) => (
                 <option key={k.value} value={k.value}>
@@ -231,10 +288,22 @@ function Ledger({ troupeId }: { troupeId: string }) {
             </Select>
           </Field>
           <Field label="Made from">
-            <DateInput value={from} onChange={(e) => setFrom(e.target.value)} />
+            <DateInput
+              value={from}
+              onChange={(e) => {
+                fresh();
+                setFrom(e.target.value);
+              }}
+            />
           </Field>
           <Field label="Made to">
-            <DateInput value={to} onChange={(e) => setTo(e.target.value)} />
+            <DateInput
+              value={to}
+              onChange={(e) => {
+                fresh();
+                setTo(e.target.value);
+              }}
+            />
           </Field>
         </div>
         {narrowed && (
@@ -248,10 +317,13 @@ function Ledger({ troupeId }: { troupeId: string }) {
 
       {reviewing ? (
         <BoonReviewQueue troupeId={troupeId} detail={(boonId) => <BoonDetail troupeId={troupeId} boonId={boonId} characters={characters} />} />
-      ) : boons.length === 0 ? (
+      ) : total === 0 ? (
         <Empty>{narrowed ? "No boons match." : view === "open" ? "No open boons yet." : "None here."}</Empty>
       ) : (
-        <BoonTable key={view} troupeId={troupeId} boons={boons} characters={characters} busy={ledger.isPlaceholderData} />
+        <>
+          <BoonTable key={view} troupeId={troupeId} boons={boons} characters={characters} busy={ledger.isPlaceholderData} />
+          <Pager label="Pages of boons" page={page} size={PAGE} shown={boons.length} total={total} onPage={turn} />
+        </>
       )}
 
       {(!harpy || harpy.audit) && <AuditsCard troupeId={troupeId} inPlay={!!harpy} />}

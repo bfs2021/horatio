@@ -55487,25 +55487,22 @@
             "title": "Boons",
             "type": "array"
           },
-          "characters": {
-            "items": {
-              "$ref": "#/components/schemas/CharacterChoice-Output"
-            },
-            "title": "Characters",
-            "type": "array"
-          },
           "counts": {
             "additionalProperties": {
               "type": "integer"
             },
             "title": "Counts",
             "type": "object"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
           }
         },
         "required": [
           "boons",
-          "counts",
-          "characters"
+          "total",
+          "counts"
         ],
         "title": "TroupeBoonsOut",
         "type": "object"
@@ -85834,6 +85831,54 @@
         ]
       }
     },
+    "/api/troupes/{troupe_id}/boon-characters": {
+      "get": {
+        "description": "The characters the caller may name on either side of a boon in the troupe's\nledger, retired ones too: read once, apart from the ledger's pages (#978).",
+        "operationId": "boon_characters_api_troupes__troupe_id__boon_characters_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "troupe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Troupe Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CharacterChoice-Output"
+                  },
+                  "title": "Response Boon Characters Api Troupes  Troupe Id  Boon Characters Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Boon Characters",
+        "tags": [
+          "boons"
+        ]
+      }
+    },
     "/api/troupes/{troupe_id}/boon-flags/{flag_id}/clear": {
       "post": {
         "description": "Clear a flag, with an optional note: the name is right as it is, say.",
@@ -86804,7 +86849,7 @@
     },
     "/api/troupes/{troupe_id}/boons": {
       "get": {
-        "description": "The troupe's boons in one view of its ledger, newest first: open (standing,\nboth parties in play), departed (standing, but someone on it is dead or\noff-field), settled, void, pending, or all. Narrowed to those a character or a\nname is on, of a kind, or made between two nights.",
+        "description": "A page of the troupe's boons in one view of its ledger: open (standing, both\nparties in play), departed (standing, but someone on it is dead or off-field),\nsettled, void, pending, or all. Narrowed to those a character (`character_id`) or\na name only (`name`, the whole name) is on; holding `q` in either side's name, the\nreason or the conditions; of any `kind` given (several at once); made between two\nnights; still `flagged` for review; or registered at a game (`game_id`). Sorted by\n`sort` (date, debtor, creditor or kind, by weight) in `direction` (asc or desc;\nnewest first for the date, A to Z or trivial to life otherwise), ties newest\nfirst, then by id. `limit` boons from `offset` (#978).",
         "operationId": "troupe_boons_api_troupes__troupe_id__boons_get",
         "parameters": [
           {
@@ -86864,19 +86909,33 @@
           },
           {
             "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 200,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
             "name": "kind",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "enum": [
-                    "trivial",
-                    "minor",
-                    "major",
-                    "blood",
-                    "life"
-                  ],
-                  "type": "string"
+                  "items": {
+                    "enum": [
+                      "trivial",
+                      "minor",
+                      "major",
+                      "blood",
+                      "life"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
                 },
                 {
                   "type": "null"
@@ -86917,6 +86976,92 @@
                 }
               ],
               "title": "Made To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "flagged",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Flagged",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "game_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Game Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "date",
+              "enum": [
+                "date",
+                "debtor",
+                "creditor",
+                "kind"
+              ],
+              "title": "Sort",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Direction"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
             }
           }
         ],

@@ -8,6 +8,7 @@ import { Dialog } from "../../components/Dialog";
 import { EmptyState } from "../../components/EmptyState";
 import { useToast } from "../../components/Toast";
 import { Checkbox } from "../../components/Checkbox";
+import { DataTable, type Column } from "../../components/DataTable";
 import { CardHeading } from "../../components/Headings";
 import { Toggle } from "../../components/Toggle";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
@@ -41,7 +42,7 @@ export function TitlesTab({ troupeId }: { troupeId: string }) {
           <p className="mb-2 text-sm text-mist">
             Given before titles had sects, or since the character changed sect. Each is kept until you take it on the Roster tab.
           </p>
-          <ul className="flex flex-col gap-1 text-sm">
+          <ul className="flex flex-col gap-1 text-sm wrap-anywhere">
             {flagged.map(({ title, holder }) => (
               <li key={`${title.name}-${holder.character_id}`}>
                 <Link to={`/characters/${holder.character_id}`} className="text-parchment hover:text-gold">
@@ -140,7 +141,7 @@ function CourtOrder({ troupeId, order }: { troupeId: string; order: string[] }) 
         {order.map((name, i) => (
           <li key={name} className="flex items-center gap-2">
             <span className="w-5 text-right text-mist tabular-nums">{i + 1}.</span>
-            <span className="flex-1 text-parchment">{name}</span>
+            <span className="min-w-0 flex-1 text-parchment wrap-anywhere">{name}</span>
             <Button variant="ghost" className="min-h-8 px-2" aria-label={`Move ${name} up`} disabled={i === 0 || save.isPending} onClick={() => move(i, -1)}>
               ↑
             </Button>
@@ -161,47 +162,80 @@ function CourtOrder({ troupeId, order }: { troupeId: string; order: string[] }) 
   );
 }
 
-/** A column shown only on a wide screen; on a narrow one it folds in under the name. */
-const WIDE = "hidden lg:table-cell";
-
-/** Titles as a table: held ones with who holds each, vacant ones without. */
+/** Titles as a table: held ones with who holds each, vacant ones without. On a phone or a
+ * narrow window each row folds into a block under the title's name (DataTable). */
 function TitleTable({ label, troupeId, titles, data, held = false }: { label: string; troupeId: string; titles: TitleOut[]; data: TitlesOut; held?: boolean }) {
+  const columns: Column<TitleOut>[] = [
+    { key: "title", header: "Title", phone: "title", cell: (t) => <TitleName title={t} /> },
+    ...(held ? [{ key: "holder", header: "Holder", phone: "shown", cell: (t) => <Holders title={t} /> } satisfies Column<TitleOut>] : []),
+    { key: "sect", header: "Sect", phone: "shown", className: "whitespace-nowrap text-mist", cell: (t) => t.sect ?? "Any sect" },
+    // It says what it is ("Gives Authority"), so it needs no label on a phone.
+    { key: "gives", header: "Status it gives", phone: "shown", bare: true, className: "text-xs text-mist", cell: givesText },
+    { key: "house", header: "House rule", phone: "shown", bare: true, cell: (t) => t.house && <Badge tone="gold">House rule</Badge> },
+    {
+      key: "one-holder",
+      header: "One holder at a time",
+      phone: "shown",
+      bare: true,
+      cell: (t) => <OneHolderSwitch troupeId={troupeId} title={t} />,
+      // Worded beside the box on a phone, where there is no column heading.
+      folded: (t) => <OneHolderSwitch troupeId={troupeId} title={t} worded />,
+    },
+    {
+      key: "actions",
+      header: <span className="sr-only">Actions</span>,
+      label: "Actions",
+      phone: "always",
+      className: "text-right",
+      cell: (t) => <TitleActions troupeId={troupeId} title={t} data={data} held={held} />,
+    },
+  ];
+  return <DataTable label={label} columns={columns} rows={titles} rowKey={(t) => t.name} rowLabel={(t) => t.name} stackBelow="lg" />;
+}
+
+/** A title's name, with what marks it out, and the title it is another name for. */
+function TitleName({ title }: { title: TitleOut }) {
+  const alias = aliasText(title);
   return (
-    <table aria-label={label} className="w-full text-sm">
-      {/* On a phone or a narrow window each row folds into a card, under the one heading. */}
-      <thead className="max-lg:sr-only">
-        <tr className="border-b border-ash text-left text-xs text-mist">
-          <th className="py-2 pr-3 font-normal">Title</th>
-          {held && <th className={`${WIDE} py-2 pr-3 font-normal`}>Holder</th>}
-          <th className={`${WIDE} py-2 pr-3 font-normal`}>Sect</th>
-          <th className={`${WIDE} py-2 pr-3 font-normal`}>Status it gives</th>
-          <th className={`${WIDE} py-2 pr-3 font-normal`}>House rule</th>
-          <th className={`${WIDE} py-2 pr-3 font-normal`}>One holder at a time</th>
-          <th className="py-2 font-normal">
-            <span className="sr-only">Actions</span>
-          </th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-ash">
-        {titles.map((t) => (
-          <TitleRow key={t.name} troupeId={troupeId} title={t} data={data} held={held} />
-        ))}
-      </tbody>
-    </table>
+    <>
+      <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="font-medium text-parchment">{title.name}</span>
+        {title.no_rules_yet && <Badge>No rules yet</Badge>}
+        {!title.offered && <Badge tone="blood">Not a sect this troupe takes</Badge>}
+      </span>
+      {alias && <span className="block text-xs text-mist">{alias}</span>}
+    </>
   );
 }
 
+/** Who holds a title here, each a link to their sheet. */
+function Holders({ title }: { title: TitleOut }) {
+  return title.holders.map((h) => (
+    <Link
+      key={h.character_id}
+      to={`/characters/${h.character_id}`}
+      className={`block ${h.out_of_sect ? "text-blood-bright hover:text-parchment" : "text-parchment hover:text-gold"}`}
+    >
+      {h.character_name}
+      {h.out_of_sect && ` (out of sect: ${h.sect ?? "no sect"})`}
+      {h.active && <span className="text-xs text-mist"> · active</span>}
+    </Link>
+  ));
+}
+
+/** The status a title gives, its page and its note. */
+const givesText = (title: TitleOut) => [titleGives(titleStatusWords(title), title), pageLabel(title.page), title.note].filter(Boolean).join(" · ");
+
 type Opened = "give" | "move" | "change" | "remove";
 
-/** A title, what it gives, and who holds it, with what staff can do with it behind ⋯:
- * give it, move it or take it from a holder, and change or remove one the troupe added. */
-function TitleRow({ troupeId, title, data, held }: { troupeId: string; title: TitleOut; data: TitlesOut; held: boolean }) {
+/** What staff can do with a title behind ⋯: give it, move it or take it from a holder,
+ * and change or remove one the troupe added, each in a dialog. */
+function TitleActions({ troupeId, title, data, held }: { troupeId: string; title: TitleOut; data: TitlesOut; held: boolean }) {
   const [open, setOpen] = useState<Opened | null>(null);
   const close = () => setOpen(null);
   const toast = useToast();
   const client = useQueryClient();
   const target = { params: { path: { troupe_id: troupeId, name: title.name } } };
-  const oneHolder = useAction((on: boolean) => unwrap(api.PUT("/api/troupes/{troupe_id}/titles/{name}/one-holder", { ...target, body: { on } })));
   const change = useAction(async (t: TitleForm) => {
     await unwrap(api.PUT("/api/troupes/{troupe_id}/titles/{name}", { ...target, body: { sect: t.sect, status: t.status, unique: t.unique } }));
     close();
@@ -219,131 +253,92 @@ function TitleRow({ troupeId, title, data, held }: { troupeId: string; title: Ti
     await setTitles(troupeId, entry.character_id, entry.titles.filter((n) => n !== title.name));
     toast({ message: `${title.name} taken from ${holder.character_name}.` });
   });
-  const page = pageLabel(title.page);
-  const alias = aliasText(title);
-  const gives = [titleGives(titleStatusWords(title), title), page, title.note].filter(Boolean).join(" · ");
-  const sect = title.sect ?? "Any sect";
-  const holders = title.holders.map((h) => (
-    <Link
-      key={h.character_id}
-      to={`/characters/${h.character_id}`}
-      className={`block ${h.out_of_sect ? "text-blood-bright hover:text-parchment" : "text-parchment hover:text-gold"}`}
-    >
-      {h.character_name}
-      {h.out_of_sect && ` (out of sect: ${h.sect ?? "no sect"})`}
-      {h.active && <span className="text-xs text-mist"> · active</span>}
-    </Link>
-  ));
   const canGive = !held || !title.unique;
   return (
-    <tr aria-label={title.name}>
-      <td className="py-2.5 pr-3 align-top">
-        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="font-medium text-parchment">{title.name}</span>
-          {title.no_rules_yet && <Badge>No rules yet</Badge>}
-          {!title.offered && <Badge tone="blood">Not a sect this troupe takes</Badge>}
-          {title.house && (
-            <Badge tone="gold" className="lg:hidden">
-              House rule
-            </Badge>
-          )}
-        </span>
-        {alias && <span className="block text-xs text-mist">{alias}</span>}
-        {held && <span className="mt-0.5 block lg:hidden">{holders}</span>}
-        <span className="mt-0.5 block text-xs text-mist lg:hidden">
-          {sect} · {gives}
-        </span>
-        <span className="mt-1 block lg:hidden">
-          <OneHolderSwitch title={title} pending={oneHolder.isPending} onChange={(on) => oneHolder.mutate(on)} worded />
-        </span>
-        <ErrorText error={oneHolder.error} />
-      </td>
-      {held && <td className={`${WIDE} py-2.5 pr-3 align-top`}>{holders}</td>}
-      <td className={`${WIDE} py-2.5 pr-3 align-top whitespace-nowrap text-mist`}>{sect}</td>
-      <td className={`${WIDE} py-2.5 pr-3 align-top text-xs text-mist`}>{gives}</td>
-      <td className={`${WIDE} py-2.5 pr-3 align-top`}>{title.house && <Badge tone="gold">House rule</Badge>}</td>
-      <td className={`${WIDE} py-2.5 pr-3 align-top`}>
-        <OneHolderSwitch title={title} pending={oneHolder.isPending} onChange={(on) => oneHolder.mutate(on)} />
-      </td>
-      <td className="w-px py-1 text-right align-top">
-        <ActionMenu label={`Actions for ${title.name}`} variant="ghost">
-          <MenuGroup label="Who holds it">
-            {held && <MenuItem onSelect={() => setOpen("move")}>Move to another holder…</MenuItem>}
-            {canGive &&
-              (title.offered ? (
-                <MenuItem onSelect={() => setOpen("give")}>Give…</MenuItem>
-              ) : (
-                <MenuItem disabled>
-                  Give…
-                  <span className="block text-xs">The troupe doesn't take {title.sect ?? "its sect"}.</span>
-                </MenuItem>
-              ))}
-            {title.holders.map((h) => (
-              <MenuItem key={h.character_id} onSelect={() => take.mutate(h)}>
-                Take from {h.character_name}
+    <>
+      <ActionMenu label={`Actions for ${title.name}`} variant="ghost">
+        <MenuGroup label="Who holds it">
+          {held && <MenuItem onSelect={() => setOpen("move")}>Move to another holder…</MenuItem>}
+          {canGive &&
+            (title.offered ? (
+              <MenuItem onSelect={() => setOpen("give")}>Give…</MenuItem>
+            ) : (
+              <MenuItem disabled>
+                Give…
+                <span className="block text-xs">The troupe doesn't take {title.sect ?? "its sect"}.</span>
               </MenuItem>
             ))}
+          {title.holders.map((h) => (
+            <MenuItem key={h.character_id} onSelect={() => take.mutate(h)}>
+              Take from {h.character_name}
+            </MenuItem>
+          ))}
+        </MenuGroup>
+        {title.house && (
+          <MenuGroup label="The troupe's own title">
+            <MenuItem onSelect={() => setOpen("change")}>Change…</MenuItem>
+            <MenuItem danger onSelect={() => setOpen("remove")}>
+              Remove…
+            </MenuItem>
           </MenuGroup>
-          {title.house && (
-            <MenuGroup label="The troupe's own title">
-              <MenuItem onSelect={() => setOpen("change")}>Change…</MenuItem>
-              <MenuItem danger onSelect={() => setOpen("remove")}>
-                Remove…
-              </MenuItem>
-            </MenuGroup>
-          )}
-        </ActionMenu>
-        <ErrorText error={take.error} />
-        {/* The dialogs sit here, as nothing but cells may sit in a row (Dialog sets its own text-left). */}
-        <Dialog title={`Give ${title.name}`} open={open === "give"} onClose={close}>
-          <PassTitle troupeId={troupeId} title={title} onDone={close} />
-        </Dialog>
-        <Dialog title={`Move ${title.name} to another holder`} open={open === "move"} onClose={close}>
-          <PassTitle troupeId={troupeId} title={title} moving onDone={close} />
-        </Dialog>
-        <Dialog title={`Change ${title.name}`} open={open === "change"} onClose={close}>
-          <TitleFields
-            data={data}
-            initial={{ name: title.name, sect: title.sect, status: title.status, unique: title.unique }}
-            pending={change.isPending}
-            save="Save"
-            onSave={(t) => change.mutate(t)}
-          />
-          <ErrorText error={change.error} />
-          <p className="mt-3 text-xs text-mist">The change is for everyone who holds it, from their next game.</p>
-        </Dialog>
-        <Dialog title={`Remove ${title.name}`} open={open === "remove"} onClose={close}>
-          <p className="text-sm">
-            Remove {title.name} from the troupe's titles? {title.holders.length ? "Anyone holding it loses it." : "No one holds it."}
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button variant="danger" disabled={remove.isPending} onClick={() => remove.mutate(undefined)}>
-              Remove the title
-            </Button>
-            <Button variant="ghost" onClick={close}>
-              Cancel
-            </Button>
-          </div>
-          <ErrorText error={remove.error} />
-        </Dialog>
-      </td>
-    </tr>
+        )}
+      </ActionMenu>
+      <ErrorText error={take.error} />
+      {/* The dialogs sit here, as nothing but cells may sit in a row (Dialog sets its own text-left). */}
+      <Dialog title={`Give ${title.name}`} open={open === "give"} onClose={close}>
+        <PassTitle troupeId={troupeId} title={title} onDone={close} />
+      </Dialog>
+      <Dialog title={`Move ${title.name} to another holder`} open={open === "move"} onClose={close}>
+        <PassTitle troupeId={troupeId} title={title} moving onDone={close} />
+      </Dialog>
+      <Dialog title={`Change ${title.name}`} open={open === "change"} onClose={close}>
+        <TitleFields
+          data={data}
+          initial={{ name: title.name, sect: title.sect, status: title.status, unique: title.unique }}
+          pending={change.isPending}
+          save="Save"
+          onSave={(t) => change.mutate(t)}
+        />
+        <ErrorText error={change.error} />
+        <p className="mt-3 text-xs text-mist">The change is for everyone who holds it, from their next game.</p>
+      </Dialog>
+      <Dialog title={`Remove ${title.name}`} open={open === "remove"} onClose={close}>
+        <p className="text-sm">
+          Remove {title.name} from the troupe's titles? {title.holders.length ? "Anyone holding it loses it." : "No one holds it."}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button variant="danger" disabled={remove.isPending} onClick={() => remove.mutate(undefined)}>
+            Remove the title
+          </Button>
+          <Button variant="ghost" onClick={close}>
+            Cancel
+          </Button>
+        </div>
+        <ErrorText error={remove.error} />
+      </Dialog>
+    </>
   );
 }
 
 /** The house rule One holder at a time for a title, the rule set's or the troupe's own:
  * while someone holds it, players can't choose it. For a title with other names, it is
  * for them all. `worded` says so beside the box, where there is no column heading. */
-function OneHolderSwitch({ title, pending, onChange, worded = false }: { title: TitleOut; pending: boolean; onChange: (on: boolean) => void; worded?: boolean }) {
+function OneHolderSwitch({ troupeId, title, worded = false }: { troupeId: string; title: TitleOut; worded?: boolean }) {
+  const oneHolder = useAction((on: boolean) =>
+    unwrap(api.PUT("/api/troupes/{troupe_id}/titles/{name}/one-holder", { params: { path: { troupe_id: troupeId, name: title.name } }, body: { on } })),
+  );
   return (
-    <Toggle
-      label={worded ? "One holder at a time" : `One holder at a time: ${title.name}`}
-      hideLabel={!worded}
-      checked={title.unique}
-      disabled={pending}
-      onChange={onChange}
-      className="text-xs text-mist"
-    />
+    <>
+      <Toggle
+        label={worded ? "One holder at a time" : `One holder at a time: ${title.name}`}
+        hideLabel={!worded}
+        checked={title.unique}
+        disabled={oneHolder.isPending}
+        onChange={(on) => oneHolder.mutate(on)}
+        className="text-xs text-mist"
+      />
+      <ErrorText error={oneHolder.error} />
+    </>
   );
 }
 

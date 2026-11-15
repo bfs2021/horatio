@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from tests.api_helpers import Person, Troupe, sign_up
 from tests.test_api_boon_standings import at_home
-from tests.test_api_boons import Ledger, named, row
+from tests.test_api_boons import STORY, Ledger, named, row
 
 
 class Court(Ledger):
@@ -249,6 +249,22 @@ def test_the_harpy_names_only_characters_players_may_know(court: Court) -> None:
     assert "Vidal" in {c["name"] for c in court.ledger(by=harpy)["characters"]}
     made = court.register(row(court.agnes, court.vidal), by=harpy)
     assert made.status_code == 201, made.text
+
+
+def test_the_harpy_writes_a_name_of_200_characters_at_most(court: Court) -> None:
+    ok(court.access("full"))
+    harpy = court.harpy_player
+
+    refused = court.register(row(named(STORY), court.bram), by=harpy)
+    assert refused.status_code == 422
+    assert refused.json()["detail"] == "A name is at most 200 characters."
+    ok(court.register(row(named("x" * 200), court.bram), by=harpy), 201)
+    boon = court.one(court.agnes, court.bram)
+    assert court.edit(boon, by=harpy, debtor=named(STORY), note="Plot").status_code == 422
+    assert court.act(boon, "trade", by=harpy, creditor=named(STORY), note="").status_code == 422
+    # What staff wrote, the Harpy reads as written.
+    long = court.one(named(STORY), court.bram)
+    assert ok(court.get(long, by=harpy))["debtor"]["name"] == STORY.strip()
 
 
 def test_the_harpy_never_learns_of_a_departure_the_court_hasn_t_heard_of(court: Court) -> None:

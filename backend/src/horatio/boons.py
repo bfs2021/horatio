@@ -90,6 +90,9 @@ COSTS_STATUS = ("major", "blood", "life")
 # The most boons one entry may make, and rows a quick entry may hold.
 MOST_AT_ONCE = 20
 MOST_ROWS = 100
+# A name-only side of a boon: a name as a Harpy, a talon or a player writes it. The
+# troupe's running staff may write up to LONGEST_TEXT there, for a ledger used as a
+# prop: a passage of story, or "The Moon" (#990).
 LONGEST_NAME = 200
 LONGEST_TEXT = 2000
 
@@ -199,15 +202,21 @@ def in_troupe(db: Session, troupe: Troupe, character: Character) -> bool:
 
 
 def party(
-    db: Session, troupe: Troupe, character_id: uuid.UUID | None, name: str, side: str
+    db: Session,
+    troupe: Troupe,
+    character_id: uuid.UUID | None,
+    name: str,
+    side: str,
+    longest: int = LONGEST_NAME,
 ) -> Party:
-    """The debtor or the creditor as named: a character of the troupe's, or a name only."""
+    """The debtor or the creditor as named: a character of the troupe's, or a name only
+    of at most `longest` characters."""
     name = name.strip()
     if (character_id is None) == (not name):
         raise unprocessable(f"Name the {side}: a character, or a name only.")
     if character_id is None:
-        if len(name) > LONGEST_NAME:
-            raise unprocessable(f"A name is at most {LONGEST_NAME} characters.")
+        if len(name) > longest:
+            raise unprocessable(f"A name is at most {longest:,} characters.")
         return Party(None, name)
     character = db.get(Character, character_id)
     if character is None or not in_troupe(db, troupe, character):

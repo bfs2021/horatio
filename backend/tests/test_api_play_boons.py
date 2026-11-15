@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from tests.api_helpers import Person, Troupe
-from tests.test_api_boons import Ledger, named, row
+from tests.test_api_boons import STORY, Ledger, named, row
 
 
 @pytest.fixture
@@ -139,6 +139,16 @@ def test_each_level_sends_only_what_players_may_see(ledger: Ledger) -> None:
     assert shown["owed"][0]["can_settle"] is False
 
 
+def test_a_player_sees_the_text_staff_wrote_on_the_other_side_as_written(ledger: Ledger) -> None:
+    owes = ledger.one(ledger.agnes, named(STORY))
+    ok(players(ledger, "owes"))
+
+    shown = tab(ledger, ledger.agnes)["owes"]
+    assert [(b["id"], b["other"], b["other_id"]) for b in shown] == [
+        (owes["id"], STORY.strip(), None)
+    ]
+
+
 def test_staff_on_a_pc_see_what_its_player_does_and_on_an_npc_everything(ledger: Ledger) -> None:
     ledger.one(ledger.vidal, ledger.agnes)
     assert tab(ledger, ledger.agnes, by=ledger.troupe.storyteller)["owes"] is None
@@ -181,6 +191,9 @@ def test_a_report_is_checked(ledger: Ledger) -> None:
     # An NPC is named by name, not picked.
     refused = report(ledger, ledger.agnes, other={"character_id": ledger.vidal})
     assert refused.status_code == 422
+    # A name of 200 characters at most: only staff write more (#990).
+    assert report(ledger, ledger.agnes, other=named(STORY)).status_code == 422
+    assert report(ledger, ledger.agnes, other=named("x" * 200)).status_code == 201
     # A count within reason.
     assert report(ledger, ledger.agnes, count=0).status_code == 422
     # Retired, Agnes reports nothing more.

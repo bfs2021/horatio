@@ -19,7 +19,7 @@ For signing up, your account, your settings and notifications, see [Getting star
 - **New results**: downtime results have arrived that you haven't opened on this device.
 - **Retired**: see [Retiring a character](#retiring-a-character).
 
-Open a character to see its page. On a wide screen its tabs sit in one row; on a phone they're grouped as **Sheet** (Sheet, Status & Titles, Equipment, Experience), **Between games** (Downtime, Results, Quests, Influence) and **About** (Troupes, Backstory, Log). Some appear only once they apply: Experience, Downtime, Results and Influence once creation is finished, Quests only while a troupe it is in runs quests, and Shared backgrounds once it has dots in one.
+Open a character to see its page. On a wide screen its tabs sit in one row. On a phone, one button at the top says which tab is open; tap it for them all, grouped as **Sheet** (Sheet, Status & Titles, Equipment, Experience), **Between games** (Downtime, Results, Quests, Influence) and **About** (Troupes, Backstory, Log). Some appear only once they apply: Experience, Downtime, Results and Influence once creation is finished, Quests only while a troupe it is in runs quests, and Shared backgrounds once it has dots in one.
 
 ![The Characters page, with three characters: one at home in Court of Ashes with a downtime due, one waiting for the troupe to accept it, and one in creation](images/players/characters.png)
 

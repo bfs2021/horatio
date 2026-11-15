@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, closeContextsAfterEach, makeCustodian, person, run, shots } from "./support";
+import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, closeContextsAfterEach, makeCustodian, person, run, shots, troupeTab, expectTabCount } from "./support";
 
 /** Troupe news (#510): storytellers write as the troupe's news agencies, schedule a story, and its players read it when it goes out. */
 
@@ -17,9 +17,6 @@ async function send(page: Page, method: "POST" | "PUT", url: string, data: objec
   expect(response.status(), await response.text()).toBeLessThan(300);
   return response.json();
 }
-
-/** The troupe's tabs: on a phone, the open group's own row of tabs. */
-const troupeTab = (page: Page, name: RegExp) => page.locator("main").getByRole("link", { name });
 
 test("news: a storyteller makes an agency and schedules a story, it goes out, and a player reads it with its unread dot", async ({ browser }) => {
   // The story goes out on the delivery worker's first round after its minute.
@@ -48,7 +45,7 @@ test("news: a storyteller makes an agency and schedules a story, it goes out, an
 
   // It writes a story on the News tab and schedules it for the next minute.
   await l.goto(`/troupes/${troupe.id}`);
-  await troupeTab(l, /^News(?! agencies)/).click();
+  await troupeTab(l, "News");
   await l.getByRole("link", { name: "News desk" }).click();
   await l.getByRole("link", { name: "Write a story" }).click();
   // The only agency is chosen already.
@@ -86,7 +83,7 @@ test("news: a storyteller makes an agency and schedules a story, it goes out, an
     await p.reload();
     await expect(story).toBeVisible({ timeout: 5_000 });
   }).toPass({ timeout: 200_000, intervals: [5_000] });
-  await expect(troupeTab(p, /^News 1 unread$/)).toBeVisible();
+  await expectTabCount(p, "News", "1 unread");
   await expect(story).toContainText("Boston, the night of the 3rd");
   await p.screenshot(shots("news-list"));
 
@@ -98,10 +95,10 @@ test("news: a storyteller makes an agency and schedules a story, it goes out, an
   await p.screenshot(shots("news-story"));
   await p.getByRole("link", { name: "All news" }).click();
   await expect(p.getByRole("link", { name: /^Fire at the harbour warehouses, from The Evening Gazette/ })).toBeVisible();
-  await expect(troupeTab(p, /^News$/)).toBeVisible();
+  await expectTabCount(p, "News", null);
 
   // The troupe's front page has the latest headline.
-  await troupeTab(p, /^Overview$/).click();
+  await troupeTab(p, "Overview");
   await expect(p.getByRole("heading", { name: "Latest news" })).toBeVisible();
   await expect(p.getByRole("link", { name: /Fire at the harbour warehouses/ })).toBeVisible();
 });
@@ -147,7 +144,7 @@ test("announcements: a storyteller pins one, a player sees its banner, dismisses
   // The lead writes one on the Announcements tab, pinned for two days, and publishes it.
   const l = lead.page;
   await l.goto(`/troupes/${troupe.id}`);
-  await troupeTab(l, /^Announcements/).click();
+  await troupeTab(l, "Announcements");
   await l.getByRole("link", { name: "Announcements desk" }).click();
   await l.getByRole("link", { name: "Write an announcement" }).click();
   await expect(l.getByLabel("Agency")).toHaveCount(0);
@@ -176,9 +173,10 @@ test("announcements: a storyteller pins one, a player sees its banner, dismisses
   await expect(p.getByRole("list", { name: "Pinned announcements" })).toHaveCount(0);
 
   // Not under News; under Announcements, pinned first and unread, until opened.
-  await troupeTab(p, /^News(?! agencies)/).click();
+  await troupeTab(p, "News");
   await expect(p.getByText("No stories yet.")).toBeVisible();
-  await troupeTab(p, /^Announcements 1 unread$/).click();
+  await expectTabCount(p, "Announcements", "1 unread");
+  await troupeTab(p, "Announcements");
   const notice = p.getByRole("link", { name: /^Unread: Pinned: New venue parking, from noticeboard-lead, Lead storyteller/ });
   await expect(notice).toBeVisible();
   await notice.click();
@@ -187,9 +185,9 @@ test("announcements: a storyteller pins one, a player sees its banner, dismisses
   await p.screenshot(shots("announcement"));
   await p.getByRole("link", { name: "All announcements" }).click();
   await expect(p.getByRole("link", { name: /^Pinned: New venue parking/ })).toBeVisible();
-  await expect(troupeTab(p, /^Announcements$/)).toBeVisible();
+  await expectTabCount(p, "Announcements", null);
   // Dismissed for them only: the banner is gone from the front page for good.
-  await troupeTab(p, /^Overview$/).click();
+  await troupeTab(p, "Overview");
   await expect(p.getByRole("heading", { name: "Who may join" })).toBeVisible();
   await expect(p.getByRole("list", { name: "Pinned announcements" })).toHaveCount(0);
 });
@@ -228,7 +226,7 @@ test("an announcement's picture shows as a thumbnail on its pinned banner, in th
   await expect(banners.getByRole("listitem").filter({ hasText: "Bring a chair" }).locator("img")).toHaveCount(0);
 
   // In the list, beside its byline.
-  await troupeTab(p, /^Announcements/).click();
+  await troupeTab(p, "Announcements");
   await expect(p.getByRole("link", { name: /Masquerade ball/ }).locator("img")).toHaveCount(1);
   await expect(p.getByRole("link", { name: /Bring a chair/ }).locator("img")).toHaveCount(0);
 

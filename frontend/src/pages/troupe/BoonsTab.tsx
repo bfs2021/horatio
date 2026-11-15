@@ -36,6 +36,7 @@ import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select, T
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { AuditsCard } from "./BoonAudits";
+import { BoonExportMenu } from "./BoonExport";
 import { Boonbreakers } from "./Boonbreakers";
 import { BoonReviewQueue, ReviewPanel } from "./BoonReview";
 import { WhoPicker } from "./WhoPicker";
@@ -237,13 +238,15 @@ function Ledger({ troupeId }: { troupeId: string }) {
             <DateInput value={to} onChange={(e) => setTo(e.target.value)} />
           </Field>
         </div>
-        {narrowed && (
-          <div>
+        <div className="flex items-center gap-2">
+          {narrowed && (
             <Button variant="ghost" onClick={clear}>
               Show every boon
             </Button>
-          </div>
-        )}
+          )}
+          {/* Staff's exports (#986): this view, or the whole ledger. */}
+          {!harpy && <BoonExportMenu troupeId={troupeId} query={reviewing ? null : query} />}
+        </div>
       </div>
 
       {reviewing ? (

@@ -3,7 +3,7 @@
  * Discord shows in a channel's settings. Downtime results are plain text; news and
  * announcements are embeds with their pictures attached. News stories post as their
  * agency through the channel's webhook (#883), which needs Manage Webhooks; without
- * it they post as the bot.
+ * it they appear under the bot's name.
  */
 export const FOR_RESULTS = ["View Channels", "Send Messages"];
 export const FOR_POSTS = [...FOR_RESULTS, "Embed Links", "Attach Files"];
@@ -28,7 +28,7 @@ export function BotLacks({ channel, needs, what }: { channel: { name: string; mi
   const them = names.length === 1 ? "that permission" : "those permissions";
   const fails = names.some((name) => FOR_RESULTS.includes(name));
   const pictures = names.some((name) => FOR_POSTS.includes(name));
-  const happens = fails ? "sent there will fail" : pictures ? "there will fail or lose their pictures" : "there post as the Horatio bot, not as their agency";
+  const happens = fails ? "sent there will fail" : pictures ? "there will fail or lose their pictures" : "there appear under the bot's name, not their news agency's";
   return (
     <p className="text-xs text-blood-bright" role="status">
       The Horatio bot lacks {listed(names)} in #{channel.name}, so {what} {happens}. Give it {them} in the channel's settings on Discord.

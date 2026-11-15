@@ -391,7 +391,7 @@ export function PointsList({
                 <span className="min-w-0">
                   <span className="text-parchment">{named(t.name)}</span> <span className="text-gold">({points})</span>
                   {t.requirement && <span className="ml-2 text-xs text-mist">{named(t.requirement)}</span>}
-                  {t.house && <HouseMark label={t.house.label} summary={t.house.summary} />}
+                  {t.house && <HouseMark label={t.house.label} />}
                   {barred && <span className="mt-0.5 block text-xs text-blood-bright">{named(barred)}</span>}
                   {barred && why?.(t.name) && <span className="mt-0.5 block text-xs text-mist">{why(t.name)}</span>}
                   {chosen && t.choices && onDetail && (

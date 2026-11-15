@@ -53,19 +53,20 @@ Your request shows under **Your requests**, as Waiting, Approved or Declined, wi
 
 ### The troupe profile and public page
 
-The troupe's profile is what it tells players and people thinking of joining. It is on the troupe's **Overview**, the page a troupe opens on, under what is waiting on you and the games to come. Storytellers and the lead edit it there, one card at a time:
+The troupe's profile is what it tells players and people thinking of joining. It is on the troupe's **Overview**, the page a troupe opens on, in one **Profile** card under what is waiting on you and the games to come. Everyone sees the same card: storytellers see it as their players do. Storytellers and the lead edit it there:
 
 1. Open the troupe. It opens on **Overview**.
-2. On the card you want to change, choose **Edit**. The cards are **Portrait and banner** (these save as soon as you choose them), **Links**, **When it plays** (how often games run, and the upcoming games), **Where it plays** (city, venue, address, accessibility), **The setting** (chronicle, city, era; its themes and moods are under [Troupe settings](#the-setting)), **New players** (whether you are taking them, and a contact on the staff) and **Age and content** (a minimum age and content notes).
-3. Choose **Save** on that card, or **Cancel** to leave it as it was. Saving one card leaves the others as they are.
+2. Choose **Edit profile** in the header of the **Profile** card. The card opens its editing parts: the **Public** switch first, then for the lead **Name and description**, then **Portrait and banner** (these save as soon as you choose them), **Links**, **When it plays** (how often games run, and the upcoming games), **Where it plays** (city, venue, address, accessibility), **The setting** (chronicle, city, era; its themes and moods are under [Troupe settings](#the-setting)), **New players** (whether you are taking them, and a contact on the staff) and **Age and content** (a minimum age and content notes).
+3. On the part you want to change, choose **Edit**, then **Save**, or **Cancel** to leave it as it was. Saving one part leaves the others as they are.
+4. Choose **Done** to see the profile as players do again.
 
-While you edit them, every card shows, with "Nothing yet." on those still empty. Players see only the parts that have something in them.
+While you edit them, every part shows, with "Nothing yet." on those still empty. Players see only the parts that have something in them.
 
-To add a game to the schedule, choose **Edit** on **When it plays**, fill in **Game starts** and **Game ends** under Upcoming games and choose **Add game**. Each game is added or removed at once. Times are in your time zone; everyone sees them in their own.
+To add a game to the schedule, choose **Edit profile**, then **Edit** on **When it plays**, fill in **Game starts** and **Game ends** under Upcoming games and choose **Add game**. Each game is added or removed at once. Times are in your time zone; everyone sees them in their own.
 
 The old **Profile** address, `/troupes/…/profile`, now opens the Overview.
 
-The **Public** switch above the profile decides who can see it:
+The **Public** switch, at the top of **Edit profile**, decides who can see it:
 
 - **Signed-in only**, the default: only people signed in to Horatio.
 - **Public**: anyone with the link, even people not signed in. Use **Copy the link** to share it when recruiting. The venue's street address still shows only to people signed in.
@@ -86,10 +87,10 @@ To change someone's role, choose another in the list beside their name. **Remove
 
 ### Renaming or archiving the troupe
 
-Only the lead storyteller (and the custodian) can do these, at the foot of the troupe's **Overview**:
+Only the lead storyteller (and the custodian) can do these, on the troupe's **Overview**:
 
-- **Name and description**: change them and choose **Save**. The first lines of the description show on the troupe list.
-- **Archive the troupe**: choose **Archive troupe…**. Horatio first lists what archiving settles: the characters it is home to are left with no home troupe, visits end, an open downtime cycle ends without being answered, and games under way end. Give a **Reason**: everyone affected sees it. The troupe's history is kept, and the custodian can reopen it (see [Custodian](custodian.md#archived-troupes)).
+- **Name and description**: choose **Edit profile** on the **Profile** card, then **Edit** on **Name and description**; change them and choose **Save**. The description is the first thing on the profile, and its first lines show on the troupe list.
+- **Archive the troupe**, at the foot of the Overview: choose **Archive troupe…**. Horatio first lists what archiving settles: the characters it is home to are left with no home troupe, visits end, an open downtime cycle ends without being answered, and games under way end. Give a **Reason**: everyone affected sees it. The troupe's history is kept, and the custodian can reopen it (see [Custodian](custodian.md#archived-troupes)).
 
 ## Finding your way around a troupe
 
@@ -123,7 +124,7 @@ The troupe's **Overview** is the troupe at a glance, and where it opens. For sta
 - **Influence entries that need details** and **Influence effects ending this week**;
 - **Characters with old status to resolve**.
 
-Members see any pinned announcements first, as banners (see [Announcements](#announcements)). Below it are the **Latest news** headline, once there is news (see [News](#news)), the **Games** to come (see [Game nights](#game-nights)), the troupe's description and next game, **Who may join**, the **XP floor and ceiling**, and for storytellers and assistant storytellers the **Latest in the log**.
+Members see any pinned announcements first, as banners (see [Announcements](#announcements)). Below it are the **Latest news** headline, once there is news (see [News](#news)), the **Games** to come (see [Game nights](#game-nights)), the troupe's **Profile**, the same for staff as for players (see [The troupe profile and public page](#the-troupe-profile-and-public-page)), **Who may join**, the **XP floor and ceiling**, and for storytellers and assistant storytellers the **Latest in the log**.
 
 ### My work
 
@@ -1249,7 +1250,7 @@ Published memories show without names on the month's page, above its nominations
 
 ### The schedule
 
-Storytellers and the lead add games on the [troupe's profile](#the-troupe-profile-and-public-page), on its Overview. Games to come show on the Overview, in the troupe's calendar, and on the public profile if it is public.
+Storytellers and the lead add games on the [troupe's profile](#the-troupe-profile-and-public-page), under **Edit profile** on its Overview. Games to come show on the Overview, in the troupe's calendar, and on the public profile if it is public.
 
 ### RSVPs and the calendar
 

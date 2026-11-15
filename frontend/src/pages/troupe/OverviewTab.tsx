@@ -1,18 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { PostOut, TroupeOut } from "../../api/types";
 import { useToast } from "../../components/Toast";
 import { useAction } from "../../hooks";
 import { LogList } from "../../components/LogList";
-import { Card, ErrorText, Loading, Notice } from "../../components/ui";
+import { Card, ErrorText, Loading } from "../../components/ui";
 import { useAgencies, useGlance } from "../news/queries";
 import { Banners, Masthead } from "../news/Story";
 import { ArchiveTroupe } from "./ArchiveTroupe";
 import { GamesCard } from "./GamesCard";
-import { hasProfile } from "./profile";
-import { NameAndDescription, PublicSwitch } from "./ProfileControls";
+import { NameAndDescription } from "./ProfileControls";
 import type { abilities } from "./roles";
 import { sectsText, useSplatsText } from "./SettingsTab";
 import { TroupeProfileView } from "./TroupeProfile";
@@ -22,10 +21,10 @@ import { XpRangeCard } from "./XpRange";
 /**
  * The troupe's front page, its Overview (#781, About and Profile in one): for its
  * staff, what is waiting on them first; for its members, its pinned announcements,
- * the latest of its news and the games to come; then its profile, which its
- * storytellers edit here card by card, and who switch it public; who may join; its
+ * the latest of its news and the games to come; then its profile, as its players
+ * see it, which its storytellers edit here and switch public; who may join; its
  * XP floor and ceiling; for its running staff, the latest of its log; and its
- * lead's name, description and archiving. The troupe's settings are under Customise.
+ * lead's archiving. The troupe's settings are under Customise.
  */
 export function OverviewTab({ troupe, can }: { troupe: TroupeOut; can: ReturnType<typeof abilities> }) {
   const base = `/troupes/${troupe.id}`;
@@ -45,7 +44,7 @@ export function OverviewTab({ troupe, can }: { troupe: TroupeOut; can: ReturnTyp
         {troupe.whos_who && !troupe.archived && <LatestNews troupeId={troupe.id} />}
         {troupe.whos_who && !troupe.archived && <GamesCard troupe={troupe} canAddGames={can.storyteller} running={can.running} />}
       </div>
-      <Profile troupe={troupe} />
+      <Profile troupe={troupe} leading={leading} />
       <JoinCard troupe={troupe} link={change && settings} />
       <XpRangeCard
         troupeId={troupe.id}
@@ -62,30 +61,33 @@ export function OverviewTab({ troupe, can }: { troupe: TroupeOut; can: ReturnTyp
         }
       />
       {can.running && <RecentLog troupeId={troupe.id} />}
-      {/* The lead's own, at the foot: renaming and archiving are rare. */}
-      {leading && <NameAndDescription troupe={troupe} />}
+      {/* The lead's own, at the foot: archiving is rare. Renaming is under Edit profile. */}
       {leading && <ArchiveTroupe troupe={troupe} />}
     </div>
   );
 }
 
-/** The troupe's profile, for anyone who can see the troupe. Its storytellers switch it public and edit it card by card. */
-function Profile({ troupe }: { troupe: TroupeOut }) {
+/**
+ * The troupe's profile, for anyone who can see the troupe, as a player sees it.
+ * Its storytellers open its editing parts, and its Signed-in only switch, with
+ * Edit profile (#912); its lead finds the troupe's name and description there too.
+ */
+function Profile({ troupe, leading }: { troupe: TroupeOut; leading: boolean }) {
+  const [editing, setEditing] = useState(false);
   const profile = useQuery({
     queryKey: ["troupe-profile", troupe.id],
     queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/profile", { params: { path: { troupe_id: troupe.id } } })),
   });
   if (profile.isPending) return <Loading />;
   if (profile.error) return <ErrorText error={profile.error} />;
-  const p = profile.data;
   return (
-    <>
-      {p.can_edit && <PublicSwitch profile={p} />}
-      <section aria-label="Profile" className="flex flex-col gap-3">
-        {p.can_edit && !hasProfile(p) && <Notice>Nothing on the profile yet: add a portrait, links, when and where the troupe plays, and more, with each card's Edit.</Notice>}
-        <TroupeProfileView profile={p} signedIn edit={p.can_edit} />
-      </section>
-    </>
+    <TroupeProfileView
+      profile={profile.data}
+      signedIn
+      editing={editing}
+      onEditing={setEditing}
+      leadParts={leading && <NameAndDescription troupe={troupe} />}
+    />
   );
 }
 

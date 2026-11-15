@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
+import { useState, type ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { TroupeProfileOut } from "../../api/types";
 import { TroupeProfileView } from "./TroupeProfile";
@@ -32,29 +33,62 @@ const BARE: TroupeProfileOut = {
   setting_document: false,
 };
 
-function draw(edit: boolean, profile: TroupeProfileOut = BARE) {
+/** The profile as the Overview shows it: `editor`, with its Edit profile. */
+function Overview({ profile, leadParts }: { profile: TroupeProfileOut; leadParts?: ReactNode }) {
+  const [editing, setEditing] = useState(false);
+  return <TroupeProfileView profile={profile} signedIn editing={editing} onEditing={setEditing} leadParts={leadParts} />;
+}
+
+function draw(edit: boolean, profile: TroupeProfileOut = BARE, leadParts?: ReactNode) {
   render(
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
-        <TroupeProfileView profile={profile} signedIn edit={edit} />
+        <Overview profile={{ ...profile, can_edit: edit }} leadParts={leadParts} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
+/** Draws it for an editor, with its editing parts open. */
+function drawEditing() {
+  draw(true);
+  fireEvent.click(screen.getByRole("button", { name: "Edit profile" }));
+}
+
 const card = (title: string) => screen.getByRole("heading", { name: title }).closest("section")!;
 
-describe("the troupe's profile on its Overview (#781)", () => {
+describe("the troupe's profile on its Overview (#781, #912)", () => {
   it("shows a reader only the parts with something in them, and nothing to edit", () => {
     draw(false, { ...BARE, venue: { ...BARE.venue, name: "The Crypt" } });
     expect(screen.getByRole("heading", { name: "Where it plays" })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "When it plays" })).toBeNull();
     expect(screen.queryByRole("heading", { name: "Links" })).toBeNull();
-    expect(screen.queryAllByRole("button", { name: /^Edit / })).toHaveLength(0);
+    expect(screen.queryAllByRole("button", { name: /^Edit/ })).toHaveLength(0);
   });
 
-  it("gives its storytellers every part, empty or not, each with its own Edit", () => {
-    draw(true);
+  it("shows its storytellers the same card as a reader, with one Edit profile in its header", () => {
+    const profile = { ...BARE, venue: { ...BARE.venue, name: "The Crypt" } };
+    draw(false, profile);
+    const reader = screen.getByRole("region", { name: "Profile" }).textContent;
+    cleanup();
+    draw(true, profile);
+    const region = screen.getByRole("region", { name: "Profile" });
+    expect(within(region).getAllByRole("button").map((b) => b.textContent)).toEqual(["Edit profile"]);
+    expect(region.textContent).toBe(`${reader!.replace("Profile", "ProfileEdit profile")}`);
+    expect(screen.queryByRole("switch", { name: "Public" })).toBeNull();
+  });
+
+  it("shows the initials small beside the description when there is no portrait", () => {
+    draw(false);
+    const initials = screen.getByRole("region", { name: "Profile" }).querySelector('[aria-hidden="true"]') as HTMLElement;
+    expect(initials.textContent).toBe("LN");
+    expect(initials.style.width).toBe("36px");
+  });
+
+  it("opens its editing parts on Edit profile: the switch first, then every part, empty or not, each with its own Edit", () => {
+    drawEditing();
+    const toggle = screen.getByRole("switch", { name: "Public" });
+    expect(toggle.compareDocumentPosition(screen.getByRole("heading", { name: "Portrait and banner" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     for (const title of ["Links", "When it plays", "Where it plays", "The setting", "New players", "Age and content"]) {
       expect(within(card(title)).getByText("Nothing yet.")).toBeTruthy();
     }
@@ -67,14 +101,26 @@ describe("the troupe's profile on its Overview (#781)", () => {
       "Edit age and content",
     ]);
     expect(screen.getByRole("heading", { name: "Portrait and banner" })).toBeTruthy();
+    // Done folds them away again.
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(screen.queryByRole("switch", { name: "Public" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Edit profile" })).toBeTruthy();
   });
 
-  it("turns one card into its form, in place, until it is cancelled", () => {
-    draw(true);
+  it("puts the lead's own parts after the switch, only while editing", () => {
+    draw(true, BARE, <p>The lead's part</p>);
+    expect(screen.queryByText("The lead's part")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Edit profile" }));
+    const lead = screen.getByText("The lead's part");
+    expect(screen.getByRole("switch", { name: "Public" }).compareDocumentPosition(lead) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("turns one part into its form, in place, until it is cancelled", () => {
+    drawEditing();
     fireEvent.click(screen.getByRole("button", { name: "Edit where it plays" }));
     const where = card("Where it plays");
     expect(within(where).getByLabelText("Venue name")).toBeTruthy();
-    // Only that card: the others keep their Edit.
+    // Only that part: the others keep their Edit.
     expect(screen.queryByLabelText("Chronicle")).toBeNull();
     expect(screen.getByRole("button", { name: "Edit the setting" })).toBeTruthy();
     fireEvent.click(within(where).getByRole("button", { name: "Cancel" }));

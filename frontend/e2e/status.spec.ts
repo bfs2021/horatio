@@ -1032,7 +1032,7 @@ test("titles by sect: a Camarilla troupe gives Camarilla titles only to its own,
   // Who holds what; and changing what the house title gives changes it for its holders.
   await expect(master.getByRole("link", { name: "Elena Varga" })).toBeVisible();
   await master.getByRole("button", { name: "Actions for Master of Elysium" }).click();
-  await p.getByRole("menuitem", { name: "Change…" }).click();
+  await p.getByRole("menuitem", { name: "Edit…" }).click();
   await dialog.getByLabel("Prominent").check();
   await dialog.getByRole("button", { name: "Save" }).click();
   await expect(master.getByText("Gives Guardian · Prominent").filter({ visible: true })).toBeVisible();

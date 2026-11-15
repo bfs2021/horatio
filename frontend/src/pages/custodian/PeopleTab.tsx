@@ -147,7 +147,7 @@ function PersonActions({ person }: { person: PlayerSummary }) {
       <ActionMenu label={`Actions for ${name}`} variant="ghost">
         <MenuGroup label="Help with the account">
           {!person.is_custodian && <MenuItem onSelect={() => setOpen("view")}>View as…</MenuItem>}
-          <MenuItem onSelect={() => setOpen("email")}>Change email…</MenuItem>
+          <MenuItem onSelect={() => setOpen("email")}>Edit email…</MenuItem>
           <MenuItem onSelect={() => setOpen("reset")}>Reset password…</MenuItem>
         </MenuGroup>
         <MenuGroup label="Suspend or merge">
@@ -157,7 +157,7 @@ function PersonActions({ person }: { person: PlayerSummary }) {
       </ActionMenu>
       {/* The dialogs sit here, as nothing but cells may sit in a row (Dialog sets its own text-left). */}
       <ViewAs person={person} open={open === "view"} onClose={close} />
-      <Dialog title={`Change ${name}'s email`} open={open === "email"} onClose={close}>
+      <Dialog title={`Edit ${name}'s email`} open={open === "email"} onClose={close}>
         <ChangeEmail person={person} />
       </Dialog>
       <Dialog title={`Reset ${name}'s password`} open={open === "reset"} onClose={close}>

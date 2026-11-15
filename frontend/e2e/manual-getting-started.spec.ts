@@ -71,7 +71,7 @@ test("manual: getting started", async ({ browser }, info) => {
   await p.getByRole("button", { name: "Add a link" }).click();
   await p.getByLabel("Label").fill("Bluesky");
   await p.getByLabel("Address").fill("https://bsky.app/profile/elena.example.com");
-  await p.getByRole("button", { name: "Save profile" }).click();
+  await p.getByRole("button", { name: "Save", exact: true }).click();
   await expect(p.getByText("Profile saved.")).toBeVisible();
   await expect(p.getByText("Profile saved.")).toBeHidden({ timeout: 15_000 });
   await shot(p.locator("form").filter({ has: p.getByRole("heading", { name: "Profile" }) }), "profile");

@@ -87,7 +87,7 @@ export function AccountEmail({ player }: { player: PlayerOut }) {
           <>
             {cancel.isSuccess && <Notice>Cancelled. Your email stays as it is.</Notice>}
             <Button type="button" variant="secondary" className="self-start" onClick={() => setOpen(true)}>
-              Change email
+              Edit email
             </Button>
           </>
         )}

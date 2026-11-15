@@ -276,7 +276,7 @@ function TitleActions({ troupeId, title, data, held }: { troupeId: string; title
         </MenuGroup>
         {title.house && (
           <MenuGroup label="The troupe's own title">
-            <MenuItem onSelect={() => setOpen("change")}>Change…</MenuItem>
+            <MenuItem onSelect={() => setOpen("change")}>Edit…</MenuItem>
             <MenuItem danger onSelect={() => setOpen("remove")}>
               Remove…
             </MenuItem>
@@ -291,7 +291,7 @@ function TitleActions({ troupeId, title, data, held }: { troupeId: string; title
       <Dialog title={`Move ${title.name} to another holder`} open={open === "move"} onClose={close}>
         <PassTitle troupeId={troupeId} title={title} moving onDone={close} />
       </Dialog>
-      <Dialog title={`Change ${title.name}`} open={open === "change"} onClose={close}>
+      <Dialog title={`Edit ${title.name}`} open={open === "change"} onClose={close}>
         <TitleFields
           data={data}
           initial={{ name: title.name, sect: title.sect, status: title.status, unique: title.unique }}

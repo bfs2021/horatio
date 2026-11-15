@@ -194,7 +194,7 @@ function ProfileForm({ player }: { player: PlayerOut }) {
           <ErrorText error={save.error} />
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" disabled={save.isPending}>
-              Save profile
+              Save
             </Button>
             {unsaved && <span className="text-sm text-mist">Not saved yet</span>}
           </div>

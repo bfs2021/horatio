@@ -163,7 +163,7 @@ export function LocationForm({
 
   return (
     <form
-      aria-label={location ? `Change ${location.name}` : "Add a location"}
+      aria-label={location ? `Edit ${location.name}` : "Add a location"}
       className="flex flex-col gap-5"
       onSubmit={(e) => {
         e.preventDefault();

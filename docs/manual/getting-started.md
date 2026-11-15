@@ -48,7 +48,7 @@ Anyone signed in can see your profile, on your player page. On the **Profile** t
 - **Discord username**: so staff and your troupe's Discord can find you.
 - **Social media**: up to six links, each with a label such as Bluesky.
 
-Choose **Save profile** when you're done. If you try to leave with changes not saved, Horatio asks first.
+Choose **Save** when you're done. If you try to leave with changes not saved, Horatio asks first.
 
 ![The Profile tab, with display name, pronouns, bio, Discord username and social media links](images/getting-started/profile.png)
 
@@ -59,7 +59,7 @@ The **Lines and veils** tab is where you tell your storytellers what you don't w
 - a **line** is something that won't happen in play around you at all;
 - a **veil** can happen in the story, but off-screen.
 
-Write them in your own words, and choose **Save lines and veils**. The staff of the troupes you play in always see them. Other players see them, on the troupe's Who's Who, only if you tick **Share my lines and veils with other players in my troupes**. They are never public and never printed, and you never have to explain them.
+Write them in your own words, and choose **Save**. The staff of the troupes you play in always see them. Other players see them, on the troupe's Who's Who, only if you tick **Share my lines and veils with other players in my troupes**. They are never public and never printed, and you never have to explain them.
 
 ## Preferences
 
@@ -79,15 +79,15 @@ The **Sign-in and email** tab of your account holds how you sign in and what Hor
 
 ### Changing your email
 
-The **Email** card shows the address you sign in with. To change it, choose **Change email**, give the new address and your password, and choose **Send the link**. Your email changes only when you open the link sent to the new address, within 7 days, and your old address is told. Until then you can **Send the link again** or **Cancel the change**. If the server can't send email, ask the custodian to change it for you.
+The **Email** card shows the address you sign in with. To change it, choose **Edit email**, give the new address and your password, and choose **Send the link**. Your email changes only when you open the link sent to the new address, within 7 days, and your old address is told. Until then you can **Send the link again** or **Cancel the change**. If the server can't send email, ask the custodian to change it for you.
 
 ### Your handle
 
-The **Handle** card changes your [handle](glossary.md#handle). Others see and find you by it, never by your email, and you can sign in with either. You can change it once in 30 days, and nobody else can take your old one for 90 days.
+The **Handle** card changes your [handle](glossary.md#handle): write the new one and choose **Save handle**. Others see and find you by it, never by your email, and you can sign in with either. You can change it once in 30 days, and nobody else can take your old one for 90 days.
 
 ### Changing your password
 
-In the **Password** card, give your **Current password** and a **New password** of at least 10 characters, then choose **Change password**. You stay signed in on this device, and are signed out on every other.
+In the **Password** card, give your **Current password** and a **New password** of at least 10 characters, then choose **Save new password**. You stay signed in on this device, and are signed out on every other.
 
 ### Your Discord account
 

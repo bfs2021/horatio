@@ -395,7 +395,7 @@ test("lines and veils: a player adds them, staff see them, another player only o
   const share = a.getByRole("checkbox", { name: /Share my lines and veils with other players in my troupes/ });
   await expect(share).not.toBeChecked();
   await expect(a.getByText("Off: only the staff of the troupes you play in see them.")).toBeVisible();
-  await a.getByRole("button", { name: "Save lines and veils" }).click();
+  await a.getByRole("button", { name: "Save", exact: true }).click();
   await expect(a.getByText("Lines and veils saved.")).toBeVisible();
   await a.screenshot(shots("lines-veils-account"));
 
@@ -437,7 +437,7 @@ test("lines and veils: a player adds them, staff see them, another player only o
 
   await share.check();
   await expect(a.getByText("On: the other players in your troupes see them on the Who’s Who, as well as the staff.")).toBeVisible();
-  await a.getByRole("button", { name: "Save lines and veils" }).click();
+  await a.getByRole("button", { name: "Save", exact: true }).click();
   await expect(a.getByText("Lines and veils saved.")).toBeVisible();
   await b.reload();
   await expect(b.getByRole("article", { name: "Odile" }).getByLabel("Lines and veils of lv-ana")).toContainText("Spiders in the dark");
@@ -490,7 +490,7 @@ test("pronouns: a player gives their own and their character's, the Who's Who sh
   // The player's own, on their profile: free text, with the usual ones suggested.
   await p.goto("/account");
   await p.getByLabel("Pronouns").fill("they/them");
-  await p.getByRole("button", { name: "Save profile" }).click();
+  await p.getByRole("button", { name: "Save", exact: true }).click();
   await expect(p.getByText("Saved.")).toBeVisible();
   await p.getByRole("link", { name: "See your profile" }).click();
   await expect(p.getByRole("heading", { name: "pronouns-play (they/them)" })).toBeVisible();

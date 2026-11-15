@@ -153,9 +153,9 @@ test("staff see the boon standings: each character's net by the troupe's weights
   await expect(l.getByRole("definition").filter({ hasText: "Standing, with everyone on them in play." })).toBeVisible();
 
   // The troupe weighs a major boon at 4: the sums follow.
-  await l.getByRole("button", { name: "Change" }).click();
+  await l.getByRole("button", { name: "Edit the weights" }).click();
   await l.getByLabel("Major").fill("4");
-  await l.getByRole("button", { name: "Save weights" }).click();
+  await l.getByRole("button", { name: "Save", exact: true }).click();
   await expect(l.getByText("The boon weights are saved.")).toBeVisible();
   await expect(standing.getByRole("row", { name: /Casimir Wode/ })).toContainText("+3");
   await expect(l.getByText(/Major 4/)).toBeVisible();
@@ -843,7 +843,7 @@ test("where the troupe allows it, the Harpy reads the boon standings and statist
   await expect(standing).toContainText("Tamsin Rook");
   await expect(h.locator("main")).not.toContainText("Inactive");
   // The weights read only: changing them is the staff's.
-  await expect(h.getByRole("button", { name: "Change" })).toHaveCount(0);
+  await expect(h.getByRole("button", { name: "Edit the weights" })).toHaveCount(0);
   await h.screenshot(shots("harpy-standings"));
 
   await h.getByRole("group", { name: "Show" }).getByRole("button", { name: "Statistics" }).click();

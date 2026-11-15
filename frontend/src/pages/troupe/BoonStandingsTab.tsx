@@ -144,8 +144,8 @@ function Weights({ troupeId, weights, defaults }: { troupeId: string; weights: B
       <p>
         <span className="text-mist">Weights{defaults ? " (the defaults)" : ""}:</span> {weightsLine(weights)}{" "}
         {!editing && (
-          <button type="button" className="text-xs text-mist underline hover:text-parchment" onClick={() => start(weights)}>
-            Change
+          <button type="button" className="text-xs text-mist underline hover:text-parchment" aria-label="Edit the weights" onClick={() => start(weights)}>
+            Edit
           </button>
         )}
       </p>
@@ -179,7 +179,7 @@ function Weights({ troupeId, weights, defaults }: { troupeId: string; weights: B
             </div>
           ))}
           <Button type="submit" disabled={save.isPending}>
-            Save weights
+            Save
           </Button>
           <Button type="button" variant="ghost" onClick={() => start(DEFAULT_WEIGHTS)}>
             Defaults

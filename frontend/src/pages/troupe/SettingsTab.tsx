@@ -1,9 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
-import type { ReactNode } from "react";
-import { Link } from "react-router";
+import { useIsFetching, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, type ReactNode } from "react";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
 import { Checkbox } from "../../components/Checkbox";
+import { SectionLabel } from "../../components/Headings";
+import { PartPicker } from "../../components/PartPicker";
 import { SettingCard, useSaveOnChange } from "../../components/SettingCard";
 import { ErrorText, Loading } from "../../components/ui";
 import { ClanNamesSetting } from "./ClanNamesSetting";
@@ -15,78 +17,161 @@ import { NewCharacterIncentive } from "./NewCharacterIncentive";
 import { SettingStyle } from "./SettingStyle";
 import { ExperienceDefaults, StartingBlood } from "./StartingSection";
 import { FeaturesList } from "./FeaturesList";
-import { settingsAnchor, type FeatureKey } from "./features";
+import { features, settingsAnchor, troupeSettings, type FeatureKey, type TroupeSettingsPart } from "./features";
 import { StatusBanClans } from "./StatusBanClans";
 import { StatusSetting, TitlesSetting } from "./StatusSetting";
 import { XpRangeCard } from "./XpRange";
 import { useCatalogue } from "../../catalogue";
 
+/** The parts of Troupe settings after the Features list, in order (#908). */
+const PARTS: { part: TroupeSettingsPart; label: string }[] = [
+  { part: "setting", label: "The setting" },
+  { part: "joining", label: "Who may join" },
+  { part: "xp", label: "XP" },
+  { part: "status", label: "Status and titles" },
+  { part: "blood", label: "Blood, diablerie and feeding" },
+  { part: "names", label: "Names" },
+];
+
 /**
- * The settings for the whole troupe, set once a season or so, by what they are
- * for: the setting players read (#770), who may join, XP, status and titles, Blood and
- * diablerie, feeding, and what a clan is called, under the Features list: every optional
- * feature, on or off (#783). A feature with a tab of its own keeps the rest of its settings
- * behind that tab's Settings button (#784, #909). Its storytellers change them; the troupe's other
- * running staff read them (assistant storytellers write the setting too). The troupe's rules
- * for traits are on the House rules tab beside it (#782).
+ * The settings for the whole troupe, set once a season or so, a part for each purpose (#908):
+ * the Features list first, every optional feature on or off (#783), then the setting players
+ * read (#770), who may join, XP, status and titles, Blood, diablerie and feeding, and what a
+ * clan is called, each at `settings/<part>`. A feature with a tab of its own keeps the rest of its
+ * settings behind that tab's Settings button (#784, #909). Its storytellers change them; the
+ * troupe's other running staff read them (assistant storytellers write the setting too). The
+ * troupe's rules for traits are on the House rules tab beside it (#782).
  */
 export function SettingsTab({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean }) {
   const base = `/troupes/${troupe.id}`;
+  const settings = `${base}/${troupeSettings()}`;
+  useLandOnCard();
   return (
-    <div className="flex flex-col gap-8">
+    <PartPicker
+      label="Troupe settings"
+      parts={[{ to: settings, label: "Features", end: true }, ...PARTS.map((p) => ({ to: `${base}/${troupeSettings(p.part)}`, label: p.label }))]}
+    >
+      <Routes>
+        <Route index element={<FeaturesPart troupe={troupe} canEdit={canEdit} />} />
+        <Route
+          path="setting"
+          element={
+            <Part title="The setting">
+              <SettingStyle troupeId={troupe.id} />
+            </Part>
+          }
+        />
+        <Route
+          path="joining"
+          element={
+            <Part title="Who may join">
+              <SplatsCard troupe={troupe} canEdit={canEdit} />
+              <SectsCard troupe={troupe} canEdit={canEdit} />
+            </Part>
+          }
+        />
+        <Route
+          path="xp"
+          element={
+            <Part title="XP">
+              <ExperienceDefaults troupeId={troupe.id} canEdit={canEdit} />
+              <XpRangeCard
+                troupeId={troupe.id}
+                canEdit={canEdit}
+                link={
+                  <Link to={`${base}/xp`} className="text-sm text-mist underline hover:text-parchment">
+                    Award XP
+                  </Link>
+                }
+              />
+              <GameXpCard troupeId={troupe.id} canEdit={canEdit} sessionXp={troupe.session_xp} />
+              <NewCharacterIncentive troupeId={troupe.id} canEdit={canEdit} />
+            </Part>
+          }
+        />
+        <Route
+          path="status"
+          element={
+            <Part title="Status and titles">
+              <StatusSetting troupe={troupe} canEdit={canEdit} />
+              <TitlesSetting troupe={troupe} canEdit={canEdit} />
+              <StatusBanClans troupeId={troupe.id} canEdit={canEdit} />
+            </Part>
+          }
+        />
+        <Route
+          path="blood"
+          element={
+            <Part title="Blood, diablerie and feeding">
+              <StartingBlood troupeId={troupe.id} canEdit={canEdit} />
+              <DiablerieFlaws troupeId={troupe.id} canEdit={canEdit} />
+              <Anchored feature="feeding">
+                <FeedingSetting troupeId={troupe.id} canEdit={canEdit} />
+              </Anchored>
+              {/* Unlike the settings around it, assistant storytellers keep the territories too, as the
+                  API lets them: who holds which changes in play, as the Authority proclaims it. */}
+              {troupe.feeding !== "off" && troupe.feeding_territories && (
+                <FeedingTerritories troupeId={troupe.id} canManage={!troupe.archived && (canEdit || troupe.my_role === "assistant_storyteller")} />
+              )}
+            </Part>
+          }
+        />
+        <Route
+          path="names"
+          element={
+            <Part title="Names">
+              <ClanNamesSetting troupeId={troupe.id} canEdit={canEdit} />
+            </Part>
+          }
+        />
+        {/* A part that isn't one: back to the Features list. */}
+        <Route path="*" element={<Navigate to={settings} replace />} />
+      </Routes>
+    </PartPicker>
+  );
+}
+
+/**
+ * The Features list, the part Troupe settings opens on, under a word on the whole page. An
+ * old address of a feature's card, `settings#feature-feeding` from when every part was on one
+ * page, goes to wherever that card is now: its part of Troupe settings, or its tab's Settings (#908).
+ */
+function FeaturesPart({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean }) {
+  const { hash } = useLocation();
+  const moved = hash.startsWith("#feature-") ? features(troupe).find((f) => hash === `#${settingsAnchor(f.key)}`)?.settings : undefined;
+  if (moved) return <Navigate to={`/troupes/${troupe.id}/${moved}`} replace />;
+  return (
+    <div className="flex flex-col gap-6">
       <p className="text-sm text-mist">
         {canEdit
           ? "Settings for the whole troupe. Switches and choices save as you make them; a card with fields to type in has its own Save button."
           : `Settings for the whole troupe. Its storytellers change them${troupe.my_role === "assistant_storyteller" && !troupe.archived ? "; you write the setting with them." : "."}`}{" "}
-        A feature with a tab of its own has the rest of its settings at the top of that tab. What traits cost and what new characters start with are under House rules,
-        beside this.
+        A feature with a tab of its own has the rest of its settings behind that tab's Settings button. What traits cost and what new characters start with are
+        under House rules, beside this.
       </p>
       <FeaturesList troupe={troupe} canEdit={canEdit} />
-      <Group title="The setting">
-        <SettingStyle troupeId={troupe.id} />
-      </Group>
-      <Group title="Who may join">
-        <SplatsCard troupe={troupe} canEdit={canEdit} />
-        <SectsCard troupe={troupe} canEdit={canEdit} />
-      </Group>
-      <Group title="XP">
-        <ExperienceDefaults troupeId={troupe.id} canEdit={canEdit} />
-        <XpRangeCard
-          troupeId={troupe.id}
-          canEdit={canEdit}
-          link={
-            <Link to={`${base}/xp`} className="text-sm text-mist underline hover:text-parchment">
-              Award XP
-            </Link>
-          }
-        />
-        <GameXpCard troupeId={troupe.id} canEdit={canEdit} sessionXp={troupe.session_xp} />
-        <NewCharacterIncentive troupeId={troupe.id} canEdit={canEdit} />
-      </Group>
-      <Group title="Status and titles">
-        <StatusSetting troupe={troupe} canEdit={canEdit} />
-        <TitlesSetting troupe={troupe} canEdit={canEdit} />
-        <StatusBanClans troupeId={troupe.id} canEdit={canEdit} />
-      </Group>
-      <Group title="Blood and diablerie">
-        <StartingBlood troupeId={troupe.id} canEdit={canEdit} />
-        <DiablerieFlaws troupeId={troupe.id} canEdit={canEdit} />
-      </Group>
-      <Group title="Feeding">
-        <Anchored feature="feeding">
-          <FeedingSetting troupeId={troupe.id} canEdit={canEdit} />
-        </Anchored>
-        {/* Unlike the settings around it, assistant storytellers keep the territories too, as the
-            API lets them: who holds which changes in play, as the Authority proclaims it. */}
-        {troupe.feeding !== "off" && troupe.feeding_territories && (
-          <FeedingTerritories troupeId={troupe.id} canManage={!troupe.archived && (canEdit || troupe.my_role === "assistant_storyteller")} />
-        )}
-      </Group>
-      <Group title="Names">
-        <ClanNamesSetting troupeId={troupe.id} canEdit={canEdit} />
-      </Group>
     </div>
   );
+}
+
+/**
+ * Landing on a card's anchor (`settings/blood#feature-feeding`), scrolls to it once the cards
+ * above it have loaded and taken their height: again each time a load ends, until none is left.
+ */
+function useLandOnCard() {
+  const { pathname, hash } = useLocation();
+  const client = useQueryClient();
+  const fetching = useIsFetching();
+  const landed = useRef<string | null>(null);
+  useEffect(() => {
+    const here = pathname + hash;
+    if (!hash || landed.current === here) return;
+    // Not there yet, as on the Features list an old anchor is sent on from: tried again once it is.
+    const card = document.getElementById(hash.slice(1));
+    if (!card) return;
+    card.scrollIntoView({ block: "start" });
+    if (client.isFetching() === 0) landed.current = here;
+  }, [pathname, hash, fetching, client]);
 }
 
 /** A feature's settings card, where the Features list's Settings link lands. */
@@ -98,11 +183,16 @@ function Anchored({ feature, children }: { feature: FeatureKey; children: ReactN
   );
 }
 
-/** A few settings for one purpose, under its name. A div, not a section, so a card's own section is the one around its heading. */
-function Group({ title, children }: { title: string; children: ReactNode }) {
+/**
+ * One part of Troupe settings: a few settings for one purpose, under its name. A div, not a
+ * section, so a card's own section is the one around its heading.
+ */
+function Part({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div role="group" aria-label={title}>
-      <h2 className="mb-3 font-sans text-xs tracking-wide text-mist uppercase">{title}</h2>
+      <SectionLabel as="h2" className="mb-3">
+        {title}
+      </SectionLabel>
       <div className="grid items-start gap-6 md:grid-cols-2">{children}</div>
     </div>
   );

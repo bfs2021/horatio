@@ -262,7 +262,7 @@ export function TroupePage() {
         )}
         {can.running && !t.archived && <Route path="being-built" element={<BeingBuiltTab troupeId={t.id} />} />}
         {can.running && <Route path="customise" element={<SetupTab troupe={t} canEdit={can.storyteller && !t.archived} />} />}
-        {can.running && <Route path="settings" element={<SettingsTab troupe={t} canEdit={can.storyteller && !t.archived} />} />}
+        {can.running && <Route path="settings/*" element={<SettingsTab troupe={t} canEdit={can.storyteller && !t.archived} />} />}
         {/* The status reference was a part of Rules, then the Troupe group's Status tab, before the Rulebook. */}
         <Route path="rules/status" element={<Navigate to={statusLink(t.id)} replace />} />
         {/* Customise › Rules became the House rules tab (#782): an old address goes to the same part of it. */}

@@ -95,8 +95,8 @@ async function setFeature(troupe: TroupeOut, key: FeatureKey, on: boolean): Prom
 }
 
 /**
- * Every optional feature of the troupe, at the top of Troupe settings (#783): on or off,
- * what it adds, a switch for its storytellers, and links to its tab and its settings.
+ * Every optional feature of the troupe, the first part of Troupe settings (#783, #908): on or
+ * off, what it adds, a switch for its storytellers, and links to its tab and its settings.
  * Each feature is switched on and off here only; the rest of its settings are behind the Settings
  * button of its own tab (#784, #909), so a feature switched off, with no tab, can still be found.
  */
@@ -124,7 +124,9 @@ export function FeaturesList({ troupe, canEdit }: { troupe: TroupeOut; canEdit: 
         {features(troupe).map((f) => {
           return (
             <li key={f.key} aria-label={f.name} className="py-1">
-              {canEdit && f.switchable ? (
+              {canEdit ? (
+                // A feature that is always on (Who's Who, News) or goes tab by tab (the Play View)
+                // has its switch too, held as it is, so every row lines up (#908).
                 <Toggle
                   label={
                     <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -135,7 +137,7 @@ export function FeaturesList({ troupe, canEdit }: { troupe: TroupeOut; canEdit: 
                   aria-label={f.name}
                   hint={f.adds}
                   checked={f.on}
-                  disabled={save.isPending}
+                  disabled={!f.switchable || save.isPending}
                   onChange={(on) => save.mutate({ feature: f, on })}
                 >
                   <FeatureLinks feature={f} base={base} settings={f.settings} />
@@ -172,16 +174,11 @@ function FeatureLinks({ feature: f, base, settings }: { feature: Feature; base: 
           Open {f.tab.label}
         </Link>
       )}
-      {settings &&
-        (settings.startsWith("#") ? (
-          <a href={settings} className="inline-flex items-center text-mist underline hover:text-parchment pointer-coarse:min-h-10" aria-label={`Settings for ${f.name}`}>
-            Settings
-          </a>
-        ) : (
-          <Link to={`${base}/${settings}`} className="inline-flex items-center text-mist underline hover:text-parchment pointer-coarse:min-h-10" aria-label={`Settings for ${f.name}`}>
-            Settings
-          </Link>
-        ))}
+      {settings && (
+        <Link to={`${base}/${settings}`} className="inline-flex items-center text-mist underline hover:text-parchment pointer-coarse:min-h-10" aria-label={`Settings for ${f.name}`}>
+          Settings
+        </Link>
+      )}
     </p>
   );
 }

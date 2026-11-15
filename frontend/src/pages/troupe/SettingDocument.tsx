@@ -7,6 +7,7 @@ import { useClanName } from "../../components/ClanNames";
 import { CardHeading } from "../../components/Headings";
 import { Markdown } from "../../components/Markdown";
 import { ErrorText, Loading } from "../../components/ui";
+import { troupeSettings } from "./features";
 import { initialXpText, rarityTiers, settingText } from "./settingDocument";
 
 /** The troupe's Setting Style Document, asked for once by every reader. */
@@ -56,7 +57,7 @@ export function SettingDocument({ setting: s, editBase, print = false }: { setti
         </Item>
       </dl>
 
-      <Part tone={tone} title="Setting" edit={editBase && { to: `${editBase}/settings`, label: "Edit in Settings" }}>
+      <Part tone={tone} title="Setting" edit={editBase && { to: `${editBase}/${troupeSettings("joining")}`, label: "Edit in Settings" }}>
         <p className="text-sm">{settingText(g)}</p>
       </Part>
 

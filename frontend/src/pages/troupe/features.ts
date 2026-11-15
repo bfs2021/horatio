@@ -30,8 +30,8 @@ export type Feature = {
   tab?: { label: string; to: string };
   /**
    * Where the rest of its settings are, under the troupe: behind its own tab's Settings button
-   * ("boons#settings", #784, #909; "quests#settings-quests", #785) or a card on Troupe settings
-   * ("#feature-feeding"). None when the switch is all there is.
+   * ("boons#settings", #784, #909; "quests#settings-quests", #785) or a card in a part of Troupe
+   * settings ("settings/blood#feature-feeding", #908). None when the switch is all there is.
    */
   settings?: string;
   /** It is switched on and off from the list. Who's Who and News are always on; the Play View goes tab by tab. */
@@ -40,6 +40,15 @@ export type Feature = {
 
 /** The id of a feature's settings card on Troupe settings, for the list to link to. */
 export const settingsAnchor = (key: FeatureKey) => `feature-${key.replace(/_/g, "-")}`;
+
+/**
+ * The parts of Troupe settings after the Features list, each at `settings/<part>` (#908):
+ * the setting, who may join, XP, status and titles, Blood, diablerie and feeding, and names.
+ */
+export type TroupeSettingsPart = "setting" | "joining" | "xp" | "status" | "blood" | "names";
+
+/** The address of Troupe settings under the troupe, at a part of it; the Features list without one. */
+export const troupeSettings = (part?: TroupeSettingsPart) => (part ? `settings/${part}` : "settings");
 
 /** The address of the Settings dialog of a feature's own tab, which opens it (#784, #909). */
 export const SETTINGS_HASH = "settings";
@@ -184,7 +193,7 @@ export function features(troupe: TroupeOut): Feature[] {
       adds: "Feeding between games: a section on the downtime form and a Feeding tab on each cycle, with Blood Resonance, feeding territories and the Rack as options.",
       on: feeding,
       state: !feeding ? "Off" : feedingOptions.length ? `On, with ${feedingOptions.join(" and ")}` : "On, as the book has it",
-      settings: `#${settingsAnchor("feeding")}`,
+      settings: `${troupeSettings("blood")}#${settingsAnchor("feeding")}`,
       switchable: true,
     },
     {

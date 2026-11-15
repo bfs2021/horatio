@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { Card } from "../../components/ui";
+import { troupeSettings } from "./features";
 import { MotifsTouched } from "./MotifTags";
 import { SettingDocumentFor } from "./SettingDocument";
 
@@ -18,7 +19,7 @@ export function SettingTab({ troupeId, staff }: { troupeId: string; staff: boole
         {staff && (
           <>
             Write the title, teaser, scope, themes, moods and notes under{" "}
-            <Link to={`${base}/settings`} className="underline hover:text-parchment">
+            <Link to={`${base}/${troupeSettings("setting")}`} className="underline hover:text-parchment">
               Troupe settings
             </Link>
             ; the rest follows the troupe's settings. Keep what players mustn't read in the{" "}

@@ -26,7 +26,7 @@ export async function undoInHeader(page: Page, tap: string | RegExp) {
  * of Troupe settings (#783), the one place each is switched (#784). Waits for the toast.
  */
 export async function switchFeature(page: Page, troupeId: string, name: string, on: boolean) {
-  await page.goto(`/troupes/${troupeId}/settings`);
+  await settingsPart(page, troupeId);
   const toggle = page.getByRole("list", { name: "Features" }).getByRole("switch", { name, exact: true });
   await expect(toggle).toHaveAttribute("aria-checked", String(!on));
   await toggle.click();
@@ -246,6 +246,26 @@ export async function expectPartOpen(page: Page, name: string, nav = "House rule
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   // After its group's name, if it has one: "Backgrounds, Influence: Elite".
   await expect(picker.getByRole("button")).toHaveAccessibleName(new RegExp(`(^|\\W)${escaped}$`));
+}
+
+/** The parts of Troupe settings (#908), by their address under `settings/`; the Features list has none. */
+const SETTINGS_PARTS = {
+  features: "Features",
+  setting: "The setting",
+  joining: "Who may join",
+  xp: "XP",
+  status: "Status and titles",
+  blood: "Blood, diablerie and feeding",
+  names: "Names",
+} as const;
+
+/**
+ * Goes to a part of a troupe's Troupe settings (#908) at its own address, `settings/xp` say,
+ * or to the Features list it opens on, and waits until it is the open part.
+ */
+export async function settingsPart(page: Page, troupeId: string, part: keyof typeof SETTINGS_PARTS = "features") {
+  await page.goto(`/troupes/${troupeId}/settings${part === "features" ? "" : `/${part}`}`);
+  await expectPartOpen(page, SETTINGS_PARTS[part], "Troupe settings");
 }
 
 export async function person(browser: Browser, name: string, options: BrowserContextOptions = {}): Promise<{ page: Page; email: string; handle: string }> {

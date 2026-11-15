@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Locator, type Page } from "@playwright/test";
-import { ATTRIBUTES_AND_FOCUSES, PASSWORD, backstoryOptional, builtVampire, closeContextsAfterEach, makeCustodian } from "./support";
+import { ATTRIBUTES_AND_FOCUSES, PASSWORD, backstoryOptional, builtVampire, closeContextsAfterEach, makeCustodian, settingsPart } from "./support";
 
 /**
  * The screenshots for the manual's Running a troupe part (docs/manual/running-a-troupe.md,
@@ -275,7 +275,8 @@ test("screenshots for Running a troupe", async ({ browser }) => {
   await l.goto(`${base}/settings`);
   await shot(l, "troupe-features", card(l, "Features"), 1600);
 
-  // Troupe settings › Game XP chart, being changed to a taper.
+  // Troupe settings › XP › Game XP chart, being changed to a taper.
+  await settingsPart(l, troupeId, "xp");
   const chart = card(l, "Game XP chart");
   await chart.getByRole("group", { name: "Start from a preset" }).getByRole("button").nth(1).click();
   await shot(l, "game-xp-chart", chart, 1300);

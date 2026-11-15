@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, characterTab, closeContextsAfterEach, makeCustodian, openNewTroupe, person, run, shots } from "./support";
+import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, characterTab, closeContextsAfterEach, makeCustodian, openNewTroupe, person, run, shots, settingsPart } from "./support";
 
 /** A character's page and sheet, and what a player asks staff for from it. */
 
@@ -654,7 +654,7 @@ test("a player says they committed diablerie, staff approve it, and then record 
 
   // The troupe's setting for a Lesser Generation holder starts at leaving the flaw.
   const l = lead.page;
-  await l.goto(`/troupes/${troupeId}/settings`);
+  await settingsPart(l, troupeId, "blood");
   await expect(l.getByRole("radio", { name: "Leave the flaw" })).toBeChecked();
 
   // The sheet has no Diablerie card: the player asks from the ⋯ menu, with the date and a note.

@@ -155,7 +155,7 @@ function RequestCard({ request: r, troupeId, staff }: { request: QuestRequestOut
           ))}
         </div>
       )}
-      {r.kind === "whose" && open && r.whose.length === 0 && r.can_assign && <p className="mt-1 text-mist">No character of the troupe goes by that name.</p>}
+      {r.kind === "whose" && open && r.whose.length === 0 && r.can_assign && <Empty>No character of the troupe goes by that name.</Empty>}
       {r.reason && <p className="mt-1 whitespace-pre-line text-mist">Why: {r.reason}</p>}
       {r.companions && <p className="mt-1 text-mist">Would bring: {r.companions}</p>}
       {r.note && <p className="mt-1">Answer: {r.note}</p>}

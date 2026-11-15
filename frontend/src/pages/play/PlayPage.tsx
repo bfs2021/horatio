@@ -3,9 +3,10 @@ import { Fragment, useCallback, useRef, useState, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { ExpendableOut, GameOut, InfluenceDetailsIn, InfluenceStandingOut, PlayView } from "../../api/types";
+import { EmptyState } from "../../components/EmptyState";
 import { LinesVeilsNote } from "../../components/LinesVeils";
 import { useToast } from "../../components/Toast";
-import { Button, ErrorText, Input, Loader, Loading, Select } from "../../components/ui";
+import { Button, Empty, ErrorText, Input, Loader, Loading, Select } from "../../components/ui";
 import { BackLink } from "../../components/BackLink";
 import { useDates } from "../../dates";
 import { useAction, usePreferences } from "../../hooks";
@@ -843,7 +844,9 @@ function Expendables({
         </label>
       }
     >
-      {view.expendables.length === 0 && <p className="text-sm text-mist">Nothing on this sheet is limited to so many uses a game.</p>}
+      {view.expendables.length === 0 && (
+        <EmptyState title="Nothing on this sheet is limited to so many uses a game.">Count anything else with Add a counter, below.</EmptyState>
+      )}
       <ul className="divide-y divide-ash">
         {view.expendables.map((e) => (
           <ExpendableRow key={e.key} item={e} record={record} onRemove={e.counter_id && online ? () => remove.mutate(e.counter_id!) : undefined} />
@@ -1119,7 +1122,7 @@ export function Notes({ add }: { add: (note: string) => void }) {
 
 export function LogEntries({ log, onDetails }: { log: ShownEntry[]; onDetails?: (entry: ShownEntry) => void }) {
   const dates = useDates();
-  if (log.length === 0) return <p className="text-sm text-mist">Nothing yet. Every tap shows here, newest first.</p>;
+  if (log.length === 0) return <Empty>Nothing yet. Every tap shows here, newest first.</Empty>;
   return (
     <ol className="divide-y divide-ash text-sm">
       {log.map((e) => (

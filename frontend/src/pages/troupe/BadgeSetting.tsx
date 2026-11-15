@@ -1,5 +1,6 @@
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
+import { RadioList } from "../../components/RadioList";
 import { Toggle } from "../../components/Toggle";
 import { Card, ErrorText } from "../../components/ui";
 import { useAction } from "../../hooks";
@@ -42,25 +43,14 @@ export function BadgeSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit: 
             disabled={save.isPending}
             onChange={(on) => save.mutate({ badge_pronouns: on })}
           />
-          <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1">Print status</legend>
-            {STATUS.map((o) => (
-              <label key={o.value} className="flex items-start gap-2">
-                <input
-                  type="radio"
-                  name="badge-status"
-                  className="mt-1"
-                  checked={troupe.badge_status === o.value}
-                  disabled={save.isPending}
-                  onChange={() => save.mutate({ badge_status: o.value })}
-                />
-                <span>
-                  {o.label}
-                  <span className="block text-xs text-mist">{o.meaning}</span>
-                </span>
-              </label>
-            ))}
-          </fieldset>
+          <RadioList
+            label="Print status"
+            labelClassName="mb-1"
+            value={status.value}
+            options={STATUS.map((o) => ({ value: o.value, label: o.label, hint: o.meaning }))}
+            disabled={save.isPending}
+            onChange={(status) => save.mutate({ badge_status: status })}
+          />
           <ErrorText error={save.error} />
         </div>
       )}

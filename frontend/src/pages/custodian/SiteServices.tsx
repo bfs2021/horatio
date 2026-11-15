@@ -3,7 +3,7 @@ import { useEffect, useId, useState, type FormEvent, type ReactNode } from "reac
 import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { components } from "../../api/schema";
-import { Badge, Button, Card, ErrorText, Field, Input, Loaded } from "../../components/ui";
+import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loaded } from "../../components/ui";
 import { useToast } from "../../components/Toast";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
@@ -247,7 +247,7 @@ function ConnectedTroupes({ troupes }: { troupes: DiscordOut["troupes"] }) {
     <div className="flex flex-col gap-2 border-t border-ash pt-4">
       <h3 className="text-parchment">Troupes connected</h3>
       {troupes.length === 0 ? (
-        <p className="text-mist">No troupe has connected a Discord server yet.</p>
+        <Empty>No troupe has connected a Discord server yet.</Empty>
       ) : (
         <ul className="flex flex-col gap-2">
           {troupes.map((t) => (
@@ -284,7 +284,7 @@ function Failures({ title, failures, queryKey }: { title: string; failures: Fail
     <div className="flex flex-col gap-2 border-t border-ash pt-4">
       <h3 className="text-parchment">{title}</h3>
       {failures.length === 0 ? (
-        <p className="text-mist">Nothing has failed lately.</p>
+        <Empty>Nothing has failed lately.</Empty>
       ) : (
         <ul className="flex flex-col gap-3" aria-label={title}>
           {failures.map((f) => (

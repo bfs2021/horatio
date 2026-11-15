@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
+import { RadioList } from "../../components/RadioList";
 import { Button, Card, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { useCatalogue } from "../../catalogue";
@@ -130,18 +131,13 @@ function FreeChangesForm({
         onSave();
       }}
     >
-      <fieldset className="flex flex-col gap-2">
-        <legend className="sr-only">Free changes</legend>
-        {KINDS.map((k) => (
-          <label key={k.value} className="flex items-start gap-2 text-sm">
-            <input type="radio" name="free-changes" className="mt-1" checked={draft.kind === k.value} onChange={() => onChange({ ...draft, kind: k.value })} />
-            <span>
-              {k.label}
-              <span className="block text-xs text-mist">{k.meaning}</span>
-            </span>
-          </label>
-        ))}
-      </fieldset>
+      <RadioList
+        label="Free changes"
+        hideLabel
+        value={draft.kind}
+        options={KINDS.map((k) => ({ value: k.value, label: k.label, hint: k.meaning }))}
+        onChange={(kind) => onChange({ ...draft, kind })}
+      />
       {draft.kind === "date" && (
         <Field label="Days from acceptance">
           <Input type="number" min={1} max={365} required value={draft.days} onChange={(e) => onChange({ ...draft, days: Number(e.target.value) })} className="w-24" />

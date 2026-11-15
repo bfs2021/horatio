@@ -3,7 +3,8 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import { DateInput } from "../../components/DateInput";
-import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading } from "../../components/ui";
+import { EmptyState } from "../../components/EmptyState";
+import { Badge, Button, Card, ErrorText, Field, Input, Loading } from "../../components/ui";
 import { useDates, type Dates } from "../../dates";
 import { useAction } from "../../hooks";
 import { cycleLine, cyclePath, cycleStatus } from "./cycles";
@@ -69,7 +70,7 @@ export function CyclesTab({ troupeId }: { troupeId: string }) {
             ))}
           </ul>
         ) : (
-          <Empty>No cycles yet.</Empty>
+          <EmptyState title="No cycles yet.">Each downtime the troupe runs shows here, newest first. Start the first under New cycle.</EmptyState>
         )}
         <ErrorText error={cycles.error} />
       </Card>

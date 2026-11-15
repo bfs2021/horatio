@@ -7,7 +7,7 @@ import { useClanName } from "../../components/ClanNames";
 import { Explainer } from "../../components/Explainer";
 import { RowEditor, useRowEditor } from "../../components/RowEditor";
 import { Toggle } from "../../components/Toggle";
-import { Badge, Button, Card, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
+import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useWidePage } from "../../components/widePage";
 import { useRulesAction } from "../../hooks";
 import { pageText } from "./bookPage";
@@ -112,7 +112,7 @@ export function CostsSection({ troupeId, canEdit }: { troupeId: string; canEdit:
           />
           <Toggle label={`Only house rules (${ours})`} checked={onlyOurs} onChange={setOnlyOurs} />
         </div>
-        {shown.length === 0 && <p className="text-sm text-mist">No prices match.</p>}
+        {shown.length === 0 && <Empty>No prices match.</Empty>}
         <div className="flex flex-col gap-5">
           {[...groups].map(([key, rows]) => {
             const category = categories.get(key);

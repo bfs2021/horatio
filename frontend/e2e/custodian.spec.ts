@@ -125,7 +125,9 @@ test("the custodian changes a player's email, and the player confirms it from th
   const p = player.page;
   await (await topBar(p)).getByRole("link", { name: "chmail-player" }).click();
   await p.locator("main").getByRole("link", { name: "Settings", exact: true }).click();
-  await expect(p.getByText(`You sign in with ${player.email}`)).toBeVisible();
+  // The address on a line of its own (#922).
+  await expect(p.getByText("You sign in with this address, and Horatio's emails go there:")).toBeVisible();
+  await expect(p.getByText(player.email, { exact: true })).toBeVisible();
   await expect(p.getByText("Horatio can't send email here, so ask the custodian to change your email.")).toBeVisible();
 
   // The custodian changes it from the People list, with a reason. An address

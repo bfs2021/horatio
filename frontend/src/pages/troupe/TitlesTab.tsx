@@ -227,10 +227,9 @@ function TitleRow({ troupeId, title, data, held }: { troupeId: string; title: Ti
       key={h.character_id}
       to={`/characters/${h.character_id}`}
       className={`block ${h.out_of_sect ? "text-blood-bright hover:text-parchment" : "text-parchment hover:text-gold"}`}
-      title={h.out_of_sect ? `Out of sect: ${h.character_name} is ${h.sect ?? "of no sect"}` : undefined}
     >
       {h.character_name}
-      {h.out_of_sect && ` (${h.sect ?? "no sect"})`}
+      {h.out_of_sect && ` (out of sect: ${h.sect ?? "no sect"})`}
       {h.active && <span className="text-xs text-mist"> · active</span>}
     </Link>
   ));

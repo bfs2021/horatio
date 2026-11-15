@@ -65,8 +65,9 @@ export function ResponseEditor({
         </span>
         <span className="flex flex-wrap items-center gap-2">
           {/* Its keyword, and where it comes in the resolution order (#509). */}
-          <span className="text-xs text-mist" title={item.step_name}>
+          <span className="text-xs text-mist">
             {item.keyword} · step {item.step}
+            {item.step_name && `, ${item.step_name}`}
           </span>
           <Badge tone={item.status === "written" ? "gold" : "mist"}>{STATUS_NAMES[item.status as keyof typeof STATUS_NAMES] ?? item.status}</Badge>
         </span>

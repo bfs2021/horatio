@@ -156,7 +156,7 @@ function SiteLinks({ isCustodian, link, onPick }: { isCustodian: boolean; link: 
 /** The person's own name, which opens their account; "(custodian)" after it for the custodian. `short` cuts a long name short, to keep the bar to one line. */
 function AccountLink({ name, isCustodian, className, short = false, onPick }: { name: string; isCustodian: boolean; className: LinkClass; short?: boolean; onPick?: () => void }) {
   return (
-    <NavLink to="/account" className={className} title="Your account" onClick={onPick}>
+    <NavLink to="/account" className={className} onClick={onPick}>
       <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
         <circle cx="12" cy="8" r="4" />
         <path d="M4 21a8 8 0 0 1 16 0" strokeLinecap="round" />

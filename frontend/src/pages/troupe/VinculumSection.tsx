@@ -117,7 +117,9 @@ function Matrix({ data, circle, setCircle }: { data: TroupeVinculumOut; circle: 
       )}
       <div className="max-w-full overflow-x-auto">
         <table className="text-sm" aria-label="Vinculum ratings">
-          <caption className="mb-1 text-left text-xs text-mist">Each row&apos;s rating toward each column.</caption>
+          <caption className="mb-1 text-left text-xs text-mist">
+            Each row&apos;s rating toward each column: {[1, 2, 3, 4, 5].map((r) => `${r} ${ratingName(r).toLowerCase()}`).join(", ")}.
+          </caption>
           <thead>
             <tr>
               <th scope="col" className="p-1 text-left text-xs text-mist">
@@ -142,7 +144,7 @@ function Matrix({ data, circle, setCircle }: { data: TroupeVinculumOut; circle: 
                     <td
                       key={col.key}
                       className="p-1 text-center"
-                      title={r ? `${row.who.name} toward ${col.who.name}: ${r}, ${ratingName(r).toLowerCase()}` : undefined}
+                      aria-label={r ? `${row.who.name} toward ${col.who.name}: ${r}, ${ratingName(r).toLowerCase()}` : undefined}
                     >
                       {r === null ? <span className="text-ash">·</span> : r === 0 ? <span className="text-mist">–</span> : r}
                     </td>

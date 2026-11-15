@@ -171,7 +171,7 @@ function HouseTraitRow({ trait: h, troupeId, canEdit, onChange }: { trait: House
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className={h.archived ? "text-mist" : "text-parchment"}>
             {h.name}
-            <HouseMark label={h.label} short summary={h.summary} />
+            <HouseMark label={h.label} short />
           </span>
           {h.archived && (
             <Badge className="lg:hidden">Archived</Badge>

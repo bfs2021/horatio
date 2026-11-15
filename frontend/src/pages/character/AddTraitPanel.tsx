@@ -384,7 +384,7 @@ function TraitChoice({
           {named(trait.name)}
           {trait.fixed_rating ? <span className="text-gold"> ({trait.fixed_rating})</span> : null}
           {trait.requirement && <span className="ml-2 text-xs text-mist">{named(trait.requirement)}</span>}
-          {trait.house && <HouseMark label={trait.house.label} summary={trait.house.summary} />}
+          {trait.house && <HouseMark label={trait.house.label} />}
         </span>
         <HouseSummary summary={trait.house?.summary} />
         {refused && <span className="text-xs text-blood-bright">{named(refused)}</span>}

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { OfferOut, SheetOut, SheetTraitOut } from "../../api/types";
-import { HouseMark } from "../../components/HouseMark";
+import { HouseMark, HouseSummary } from "../../components/HouseMark";
 import { Button, Card, ErrorText, Field, Input } from "../../components/ui";
 import { useAction } from "../../hooks";
 
@@ -34,8 +34,9 @@ export function HouseTraitsCard({ characterId, sheet }: { characterId: string; s
               <span className="flex flex-wrap items-center justify-between gap-2">
                 <span>
                   {o.name} <span className="text-gold">({o.points})</span>
-                  <HouseMark label={o.label} summary={o.summary} short />
+                  <HouseMark label={o.label} short />
                   {o.availability === "staff" && <span className="ml-1 text-xs text-mist">staff only</span>}
+                  <HouseSummary summary={o.summary} />
                 </span>
                 {applying !== o.id && (
                   <Button variant="ghost" className="min-h-7 px-2" aria-label={`Apply ${o.name}`} onClick={() => setApplying(o.id)}>
@@ -55,10 +56,11 @@ export function HouseTraitsCard({ characterId, sheet }: { characterId: string; s
               <span className="flex flex-wrap items-center justify-between gap-2">
                 <span>
                   {t.name}
-                  <HouseMark label={t.house!.label} summary={t.house!.summary} short />
+                  <HouseMark label={t.house!.label} short />
                   <span className="ml-1 text-xs text-mist">
                     {t.house!.applied ? `applied${t.house!.applied.free ? ", free" : ""}` : "taken by the player"}
                   </span>
+                  <HouseSummary summary={t.house!.summary} />
                 </span>
                 {removing !== t.id && (
                   <Button variant="ghost" className="min-h-7 px-2" aria-label={`Remove ${t.name}`} onClick={() => setRemoving(t.id)}>

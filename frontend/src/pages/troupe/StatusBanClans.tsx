@@ -96,13 +96,20 @@ function BanClans({
                     variant="ghost"
                     className="min-h-8 px-2 text-xs"
                     disabled={sameClans(p.clans, ban.clans)}
-                    title={p.page ?? undefined}
                     onClick={() => onSave([...p.clans])}
                   >
                     {p.name}
                   </Button>
                 ))}
               </div>
+            )}
+            {presets.some((p) => p.page) && (
+              <p className="text-xs text-mist">
+                {presets
+                  .filter((p) => p.page)
+                  .map((p) => `${p.name}: ${p.page}`)
+                  .join(" · ")}
+              </p>
             )}
             <div className="grid grid-cols-2 gap-x-3 gap-y-1">
               {allClans.map((clan) => (

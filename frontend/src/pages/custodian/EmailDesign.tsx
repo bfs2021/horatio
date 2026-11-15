@@ -5,6 +5,7 @@ import type { components } from "../../api/schema";
 import { Button, Card, ErrorText, Field, Input, Loaded, Textarea } from "../../components/ui";
 import { useToast } from "../../components/Toast";
 import { useAction } from "../../hooks";
+import { SiteFold } from "./SiteFold";
 
 type DesignOut = components["schemas"]["EmailDesignOut"];
 type Defaults = components["schemas"]["EmailDesignDefaults"];
@@ -48,18 +49,38 @@ export function EmailDesignCard() {
   return <Loaded query={design}>{(found) => <DesignShown design={found} />}</Loaded>;
 }
 
+/** The design as it is now, in a line: what is in the header, whose colours, and whether there is a footer. */
+export function designNow(design: DesignOut): string {
+  const header = design.header_image ? "a header picture" : `“${design.site_name}” in the header`;
+  const colours = ["header_colour", "header_text_colour", "accent"].some((part) => design.chosen.includes(part)) ? "your own colours" : "Horatio's own colours";
+  const footer = design.footer.trim() ? "your footer" : "no footer of your own";
+  return `Now: ${header}, ${colours} and ${footer}.`;
+}
+
 function DesignShown({ design }: { design: DesignOut }) {
   return (
     <Card title="Email design">
+      {/* What it is now and the test stay in sight; changing it and the preview fold away (#944). */}
       <div className="flex flex-col gap-4 text-sm">
-        <p className="text-mist">
-          Every email Horatio sends, from password resets to downtime results, comes in this design: as a formatted email, and as plain text for mail apps that
-          want it. Under your footer, each email still says why it came and how to stop it, and that Horatio sent it.
-        </p>
-        <DesignFields design={design} />
-        <HeaderPicture design={design} />
-        <Preview />
+        <p className="text-mist">Every email Horatio sends, from password resets to downtime results, comes in this design.</p>
+        <p className="text-parchment">{designNow(design)}</p>
+        {design.warnings.map((warning) => (
+          <p key={warning} className="text-xs text-blood-bright">
+            {warning}
+          </p>
+        ))}
         <TestDesign />
+        <SiteFold summary="Change the design">
+          <p className="text-mist">
+            Each email goes as a formatted email, and as plain text for mail apps that want it. Under your footer, each email still says why it came and how to stop
+            it, and that Horatio sent it.
+          </p>
+          <DesignFields design={design} />
+          <HeaderPicture design={design} />
+        </SiteFold>
+        <SiteFold summary="Preview a sample email">
+          <Preview />
+        </SiteFold>
       </div>
     </Card>
   );
@@ -113,11 +134,6 @@ function DesignFields({ design }: { design: DesignOut }) {
           onChange={set("accent")}
         />
       </div>
-      {design.warnings.map((warning) => (
-        <p key={warning} className="text-xs text-blood-bright">
-          {warning}
-        </p>
-      ))}
       <Field
         label="Footer"
         hint={`Up to ${design.footer_max} characters: who runs this Horatio, how to reach them. **Bold**, *italic*, [words](https://…) and links work. ${form.footer.length}/${design.footer_max}`}
@@ -236,8 +252,7 @@ function Preview() {
       ),
   });
   return (
-    <div className="flex flex-col gap-2 border-t border-ash pt-4">
-      <h3 className="text-parchment">Preview</h3>
+    <div className="flex flex-col gap-2">
       <div className="flex flex-wrap gap-4 text-xs">
         <Choice
           label="Colours"
@@ -325,7 +340,7 @@ function TestDesign() {
         <Button variant="secondary" disabled={test.isPending} onClick={() => test.mutate(undefined)}>
           Send me this email
         </Button>
-        <span className="text-xs text-mist">The sample above, to your own address, to see it in your mail app.</span>
+        <span className="text-xs text-mist">A sample email in this design, to your own address, to see it in your mail app.</span>
       </div>
       <div role="status" className="flex flex-col gap-1">
         {result?.ok && <p className="text-parchment">Sent to {result.to}. If it doesn't arrive, look in its spam folder.</p>}

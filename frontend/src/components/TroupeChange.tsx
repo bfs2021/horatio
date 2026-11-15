@@ -5,26 +5,30 @@ import { Badge } from "./ui";
 
 /**
  * Beside a book trait the character's troupe bans (horatio.book_traits): marked
- * "Banned in this troupe", the reason on hover. Those who hold it keep it.
+ * "Banned in this troupe", and the reason after it. Those who hold it keep it.
  */
 export function BannedMark({ change }: { change?: TraitChangeOut | null }) {
   if (!change?.banned) return null;
   return (
-    <span className="ml-2" title={change.ban_reason || undefined}>
+    <span className="ml-2">
       <Badge tone="blood">Banned in this troupe</Badge>
+      {change.ban_reason && <span className="ml-1 text-xs text-mist">{change.ban_reason}</span>}
     </span>
   );
 }
 
 /**
  * Beside a merit or flaw the character's troupe moved to another category
- * (horatio.book_traits): "Category changed in this troupe", the book's on hover.
+ * (horatio.book_traits): "Category changed in this troupe", then both categories.
  */
 export function CategoryMark({ change }: { change?: Pick<TraitChangeOut, "kind" | "book_kind"> | null }) {
   if (!change?.kind) return null;
   return (
-    <span className="ml-2" title={`${change.kind} in this troupe; ${change.book_kind ?? "another"} in the book`}>
+    <span className="ml-2">
       <Badge tone="gold">Category changed in this troupe</Badge>
+      <span className="ml-1 text-xs text-mist">
+        {change.kind} here, {change.book_kind ?? "another"} in the book
+      </span>
     </span>
   );
 }

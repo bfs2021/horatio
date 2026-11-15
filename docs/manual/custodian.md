@@ -273,6 +273,8 @@ Everything since that backup is lost, so make a fresh backup with **Back up now*
 
 **Custodian › Site** holds what's the same for everyone on the server: the loading animation, mail, how emails look, and Discord. It also shows what's running. It used to be two tabs, Settings and System; their old links still land here.
 
+Each card shows its status, and its test where it has one, in sight. What you look at less often, such as the settings behind the status, who emails come from, changing the email design and its preview, is folded under a line at the foot of the card: choose it to open it.
+
 ![The loading animation on the Site tab](images/custodian/site-loading-animation.png)
 
 ### The loading animation
@@ -290,18 +292,18 @@ The very first screen shows before the app has asked the server anything, so it 
 
 ### Mail
 
-The **Mail** card says whether Horatio can send email, and if not, which settings are missing (see [Email: an SMTP service](#email-an-smtp-service)).
+The **Mail** card says whether Horatio can send email, who emails come from and through which server, or if not, which settings are missing (see [Email: an SMTP service](#email-an-smtp-service)). What it uses and who emails come from are under **Details, and who emails come from**.
 
 - **What it uses:** the mail server and port, the security (STARTTLS, SSL or none), and the username with most of it hidden. The password only shows as **Set** or **Not set**: Horatio never shows it, never keeps it in its database, and never sends it to anyone's browser. A security setting that looks wrong, such as none at all, gets a note in red.
 - **Who emails come from:** a **From name**, **From address** and **Reply-To** of your own, over the server's `HORATIO_MAIL_FROM`. Every email Horatio sends uses them from then on. Leave a box blank to use the server's. The From address must be one your mail provider lets Horatio send from, or it refuses the email. A troupe's own Reply-To, for its downtime results, still wins over yours. Saving goes in the audit log.
 - **Send a test email:** sends one to your own address straight away. If the mail server refuses, the card says why in plain words, naming the setting to check, with what the server said under it.
-- **Mail that failed lately:** downtime results and quests' news sent by email that failed or are being tried again, and notification emails Horatio gave up on. Each says when and why. Open one to see it where it lives, or choose **Retry** for one Horatio gave up on.
+- **Mail that failed lately:** listed only when something has failed. Downtime results and quests' news sent by email that failed or are being tried again, and notification emails Horatio gave up on. Each says when and why. Open one to see it where it lives, or choose **Retry** for one Horatio gave up on.
 
 The server, username and password stay in `deploy/production.env`: change them there, then redeploy with `deploy/deploy.sh --no-build`.
 
 ### Email design
 
-The **Email design** card sets how every email Horatio sends looks: password resets, email changes, suspensions, notifications and the daily digest, account merges, and downtime results and quests' news. Each email goes as a formatted email with a plain-text version beside it, for mail apps that want only text.
+The **Email design** card sets how every email Horatio sends looks: password resets, email changes, suspensions, notifications and the daily digest, account merges, and downtime results and quests' news. Each email goes as a formatted email with a plain-text version beside it, for mail apps that want only text. The card says in a line what is in the header now, whose colours, and whether there is a footer of your own; the boxes are under **Change the design**, and the preview under **Preview a sample email**.
 
 - **Header:** the site's name, on a header colour with a text colour, or a **header picture** in its place, such as a logo. The picture is made at most 1200 × 400 px and kept small, as a PNG (if it has transparency) or a JPEG, never WebP, which some mail apps can't show. It travels inside every email, so it shows without signing in, and Horatio never learns who opened one. Where a mail app blocks pictures, the site's name shows instead. A picture too detailed to make small enough is refused, with the reason.
 - **Accent:** for buttons and the line under the header. Links use it too, darkened where they must be to read on white.
@@ -313,13 +315,13 @@ Leave a box as it was to keep Horatio's own: its name, night and gold. **Put bac
 
 ### Discord
 
-The **Discord** card says whether the Horatio bot can work, and if not, which of the three settings are missing (see [Discord: the Horatio app and its bot](#discord-the-horatio-app-and-its-bot)).
+The **Discord** card says whether the Horatio bot can work, and if not, which of the three settings are missing (see [Discord: the Horatio app and its bot](#discord-the-horatio-app-and-its-bot)), and how many troupes have connected a server. What it uses, the links for Discord's developer portal and the troupes connected are under **Details, and the troupes connected**.
 
 - **What it uses:** the client ID. The client secret and bot token only show as **Set** or **Not set**, never their values.
 - **For Discord's developer portal:** the **OAuth2 redirect** to register, made from `HORATIO_PUBLIC_URL`, and an **Invite link for the bot**, each with **Copy**. The invite adds the bot to a server by hand, asking for [every permission the bot uses](#discord-the-horatio-app-and-its-bot) (opened again for a server the bot is in already, it updates the bot's permissions there); troupes connect their own servers from **Customise › Connectors**, which tells Horatio which server is theirs.
 - **Check the bot:** asks Discord who the bot is, with the server's token, and shows its name and how many servers it's in. A refused token says so, naming the setting.
 - **Troupes connected:** each troupe that has connected a Discord server, its server's name, how many characters have a channel for their results, whether it has a test channel, and which posts have a channel.
-- **Discord posts that failed lately:** results, quests' news and posts to Discord that failed or are being tried again, each with when and why, and **Retry** for one Horatio gave up on.
+- **Discord posts that failed lately:** listed only when something has failed. Results, quests' news and posts to Discord that failed or are being tried again, each with when and why, and **Retry** for one Horatio gave up on.
 
 The credentials stay in `deploy/production.env`: change them there, then redeploy with `deploy/deploy.sh --no-build`.
 

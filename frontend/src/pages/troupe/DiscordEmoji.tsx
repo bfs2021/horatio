@@ -284,11 +284,12 @@ export function EmojiChoice({
                         </span>
                       </label>
                       {s.status && STATUS[s.status] && (
-                        <span title={s.note ?? undefined}>
-                          <Badge tone={STATUS[s.status]!.tone}>
-                            {STATUS[s.status]!.label}
-                          </Badge>
-                        </span>
+                        <Badge tone={STATUS[s.status]!.tone}>
+                          {STATUS[s.status]!.label}
+                        </Badge>
+                      )}
+                      {s.note && (
+                        <span className="text-xs text-mist">{s.note}</span>
                       )}
                       {s.other_style && <Badge>Other style</Badge>}
                     </li>

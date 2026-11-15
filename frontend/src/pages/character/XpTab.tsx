@@ -60,7 +60,7 @@ export function XpTab({ characterId, selfEntering = false }: { characterId: stri
                   <td className={`py-2 pr-3 text-right align-top font-mono ${e.amount < 0 ? "text-blood-bright" : "text-gold"}`}>
                     {e.amount > 0 ? `+${e.amount}` : e.amount}
                   </td>
-                  <td className={`py-2 text-right align-top font-mono ${e.balance < 0 ? "text-blood-bright" : ""}`} title={e.balance < 0 ? `${-e.balance} XP owed` : undefined}>
+                  <td className={`py-2 text-right align-top font-mono ${e.balance < 0 ? "text-blood-bright" : ""}`}>
                     {e.balance}
                   </td>
                 </tr>

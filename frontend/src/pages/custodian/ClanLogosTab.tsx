@@ -72,7 +72,7 @@ function ClanRow({ clan }: { clan: ClanLogoOut }) {
         </span>
       ) : (
         // The Dark Pack's symbols are black, for paper: shown on parchment.
-        <span className="relative grid h-14 w-14 shrink-0 place-items-center rounded bg-parchment" title="From the Dark Pack">
+        <span className="relative grid h-14 w-14 shrink-0 place-items-center rounded bg-parchment">
           <img src={`${clan.dark_pack}/128.webp`} alt={`${clan.clan} Dark Pack symbol`} className="h-11 w-11 object-contain" />
           <span className="absolute -bottom-1.5 rounded bg-night px-1 text-[9px] leading-tight text-mist">Dark Pack</span>
         </span>

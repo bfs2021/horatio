@@ -289,7 +289,7 @@ test("a page whose file is gone after a deploy reloads once, then says Horatio w
     return route.fulfill({ status: 404, contentType: "text/plain", body: "not found" });
   });
   await page.goto("/characters");
-  await (await topBar(page)).getByTitle("Your account").click();
+  await (await topBar(page)).getByRole("link", { name: /^Your account/ }).click();
   await expect(page.getByText("Horatio has been updated. Reload to continue.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
   // One reload was tried, and no more: two asks for the file, not a loop.

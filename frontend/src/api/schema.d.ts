@@ -8627,6 +8627,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/troupes/{troupe_id}/boon-characters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Boon Characters
+         * @description The characters the caller may name on either side of a boon in the troupe's
+         *     ledger, retired ones too: read once, apart from the ledger's pages (#978).
+         */
+        get: operations["boon_characters_api_troupes__troupe_id__boon_characters_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/troupes/{troupe_id}/boon-export": {
         parameters: {
             query?: never;
@@ -8639,8 +8660,10 @@ export interface paths {
          * @description For the troupe's storytellers and assistant storytellers: its boon ledger as a
          *     CSV file or a spreadsheet, newest first. With no view or filters, every boon;
          *     otherwise those in the view (open, departed, settled, void, pending or all),
-         *     narrowed as the ledger narrows them: to a character or a name, to some kinds, or
-         *     to the nights between two dates. The export goes in the troupe's log.
+         *     narrowed and sorted as the ledger's list has them (horatio.api.boons.troupe_boons,
+         *     #978): to a character or a name, a search (`q`), some kinds, the nights between
+         *     two dates, the flagged, or a game; by date, debtor, creditor or kind. Every page
+         *     at once. The export goes in the troupe's log.
          */
         get: operations["export_boons_api_troupes__troupe_id__boon_export_get"];
         put?: never;
@@ -8991,10 +9014,15 @@ export interface paths {
         };
         /**
          * Troupe Boons
-         * @description The troupe's boons in one view of its ledger, newest first: open (standing,
-         *     both parties in play), departed (standing, but someone on it is dead or
-         *     off-field), settled, void, pending, or all. Narrowed to those a character or a
-         *     name is on, of a kind, or made between two nights.
+         * @description A page of the troupe's boons in one view of its ledger: open (standing, both
+         *     parties in play), departed (standing, but someone on it is dead or off-field),
+         *     settled, void, pending, or all. Narrowed to those a character (`character_id`) or
+         *     a name only (`name`, the whole name) is on; holding `q` in either side's name, the
+         *     reason or the conditions; of any `kind` given (several at once); made between two
+         *     nights; still `flagged` for review; or registered at a game (`game_id`). Sorted by
+         *     `sort` (date, debtor, creditor or kind, by weight) in `direction` (asc or desc;
+         *     newest first for the date, A to Z or trivial to life otherwise), ties newest
+         *     first, then by id. `limit` boons from `offset` (#978).
          */
         get: operations["troupe_boons_api_troupes__troupe_id__boons_get"];
         put?: never;
@@ -16621,7 +16649,8 @@ export interface components {
         };
         /**
          * BoonPartyIn
-         * @description One side of a boon: a character in the troupe, or a name only.
+         * @description One side of a boon: a character in the troupe, or a name only. Only the troupe's
+         *     running staff write a name longer than boons.LONGEST_NAME (`side`).
          */
         BoonPartyIn: {
             /** Character Id */
@@ -35272,12 +35301,12 @@ export interface components {
         TroupeBoonsOut: {
             /** Boons */
             boons: components["schemas"]["BoonOut"][];
-            /** Characters */
-            characters: components["schemas"]["CharacterChoice-Output"][];
             /** Counts */
             counts: {
                 [key: string]: number;
             };
+            /** Total */
+            total: number;
         };
         /** TroupeChanges */
         TroupeChanges: {
@@ -53765,6 +53794,37 @@ export interface operations {
             };
         };
     };
+    boon_characters_api_troupes__troupe_id__boon_characters_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                troupe_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CharacterChoice-Output"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     export_boons_api_troupes__troupe_id__boon_export_get: {
         parameters: {
             query?: {
@@ -53772,9 +53832,14 @@ export interface operations {
                 view?: "open" | "departed" | "settled" | "void" | "pending" | "all";
                 character_id?: string | null;
                 name?: string;
+                q?: string;
                 kind?: ("trivial" | "minor" | "major" | "blood" | "life")[] | null;
                 made_from?: string | null;
                 made_to?: string | null;
+                flagged?: boolean;
+                game_id?: string | null;
+                sort?: "date" | "debtor" | "creditor" | "kind";
+                direction?: ("asc" | "desc") | null;
             };
             header?: never;
             path: {
@@ -54419,9 +54484,16 @@ export interface operations {
                 view?: "open" | "departed" | "settled" | "void" | "pending" | "all";
                 character_id?: string | null;
                 name?: string;
-                kind?: ("trivial" | "minor" | "major" | "blood" | "life") | null;
+                q?: string;
+                kind?: ("trivial" | "minor" | "major" | "blood" | "life")[] | null;
                 made_from?: string | null;
                 made_to?: string | null;
+                flagged?: boolean;
+                game_id?: string | null;
+                sort?: "date" | "debtor" | "creditor" | "kind";
+                direction?: ("asc" | "desc") | null;
+                limit?: number;
+                offset?: number;
             };
             header?: never;
             path: {

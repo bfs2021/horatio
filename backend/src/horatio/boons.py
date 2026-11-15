@@ -38,7 +38,7 @@ registered it.
 """
 
 import uuid
-from collections.abc import Collection, Mapping, Sequence
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
 from typing import Any
@@ -91,6 +91,9 @@ COSTS_STATUS = ("major", "blood", "life")
 # The most boons one entry may make, and rows a quick entry may hold.
 MOST_AT_ONCE = 20
 MOST_ROWS = 100
+# A name-only side of a boon: a name as a Harpy, a talon or a player writes it. The
+# troupe's running staff may write up to LONGEST_TEXT there, for a ledger used as a
+# prop: a passage of story, or "The Moon" (#990).
 LONGEST_NAME = 200
 LONGEST_TEXT = 2000
 
@@ -200,15 +203,21 @@ def in_troupe(db: Session, troupe: Troupe, character: Character) -> bool:
 
 
 def party(
-    db: Session, troupe: Troupe, character_id: uuid.UUID | None, name: str, side: str
+    db: Session,
+    troupe: Troupe,
+    character_id: uuid.UUID | None,
+    name: str,
+    side: str,
+    longest: int = LONGEST_NAME,
 ) -> Party:
-    """The debtor or the creditor as named: a character of the troupe's, or a name only."""
+    """The debtor or the creditor as named: a character of the troupe's, or a name only
+    of at most `longest` characters."""
     name = name.strip()
     if (character_id is None) == (not name):
         raise unprocessable(f"Name the {side}: a character, or a name only.")
     if character_id is None:
-        if len(name) > LONGEST_NAME:
-            raise unprocessable(f"A name is at most {LONGEST_NAME} characters.")
+        if len(name) > longest:
+            raise unprocessable(f"A name is at most {longest:,} characters.")
         return Party(None, name)
     character = db.get(Character, character_id)
     if character is None or not in_troupe(db, troupe, character):
@@ -608,38 +617,8 @@ def reopen(
 # --- reading the ledger -------------------------------------------------------------------
 
 
+# The ledger's views (horatio.boon_ledger, which reads them a page at a time, #978).
 VIEWS = ("open", "departed", "settled", "void", "pending", "all")
-
-
-def in_view(
-    boon: Boon,
-    characters: Mapping[uuid.UUID, Character],
-    view: str,
-    court: Collection[uuid.UUID] | None = None,
-) -> bool:
-    """Whether the boon belongs in one of the ledger's views: open, standing with both
-    parties still in play; departed, standing but involving someone dead or
-    off-field; settled; void; pending; or all."""
-    if view == "all":
-        return True
-    if boon.state != "registered":
-        return boon.state == view
-    gone = any(
-        departed(characters.get(c), court)
-        for c in (boon.debtor_id, boon.creditor_id)
-        if c is not None
-    )
-    return view == ("departed" if gone else "open")
-
-
-def counts(
-    boons: Sequence[Boon],
-    characters: Mapping[uuid.UUID, Character],
-    court: Collection[uuid.UUID] | None = None,
-) -> dict[str, int]:
-    """How many boons are in each view."""
-    return {v: sum(1 for b in boons if in_view(b, characters, v, court)) for v in VIEWS}
-
 
 # --- players (#686) -----------------------------------------------------------------------
 

@@ -1,5 +1,5 @@
 import type { PlayBoonIn, PlayBoonOut, PlayReportOut } from "../../api/types";
-import { kindName, SETTLED } from "../../boons";
+import { kindName, SETTLED, shortName } from "../../boons";
 
 /** How a creditor's player may settle a boon in the Play View (#686): formally ignoring one is its debtor's doing (p. 397). */
 export type PlayerSettles = "called_in" | "forgiven";
@@ -46,6 +46,8 @@ export function reportedText(
 
 /** A report of the player's that waits for review or wasn't accepted (#687): "Agnes owes Bram a minor boon, 3 Oct 2026." */
 export function reportLine(report: Pick<PlayReportOut, "direction" | "other" | "kind">, name: string): string {
-  const [debtor, creditor] = report.direction === "owes" ? [name, report.other] : [report.other, name];
+  // Staff may have written a passage of story for the other side (#990): a line of it here.
+  const other = shortName(report.other);
+  const [debtor, creditor] = report.direction === "owes" ? [name, other] : [other, name];
   return `${debtor} owes ${creditor} ${aBoon(report.kind, 1)}`;
 }

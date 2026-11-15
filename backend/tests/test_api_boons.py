@@ -59,6 +59,14 @@ class Ledger:
         assert listed.status_code == 200, listed.text
         return listed.json()
 
+    def choices(self, by: Person | None = None) -> set[str]:
+        """The names of the characters the ledger may name (#978)."""
+        found = (by or self.troupe.storyteller).client.get(
+            f"/troupes/{self.troupe.id}/boon-characters"
+        )
+        assert found.status_code == 200, found.text
+        return {c["name"] for c in found.json()}
+
     def act(self, boon: dict[str, Any], action: str, by: Person | None = None, **body: Any):
         return (by or self.troupe.storyteller).client.post(
             f"{self.path}/{boon['id']}/{action}", json=body
@@ -213,6 +221,29 @@ def test_a_row_that_cant_be_registered_stops_them_all(ledger: Ledger) -> None:
     nobody = ledger.register(row({"name": " "}, ledger.bram))
     assert nobody.status_code == 422
     assert ledger.register(row(ledger.agnes, ledger.bram, count=21)).status_code == 422
+
+
+# A passage of story where a name would be, as a troupe whose ledger is a prop writes (#990).
+STORY = ("The debt was written in silver on the night the river froze, and sealed. " * 9)[:600]
+
+
+def test_staff_write_any_text_on_either_side_up_to_2000_characters(ledger: Ledger) -> None:
+    made = ledger.one(named(STORY), named("The Moon"))
+
+    assert (made["debtor"]["name"], made["creditor"]["name"]) == (STORY.strip(), "The Moon")
+    assert made["debtor"]["character_id"] is None
+    listed = ledger.ledger()["boons"]
+    assert [b["debtor"]["name"] for b in listed] == [STORY.strip()]
+    longest = "x" * 2000
+    edited = ledger.edit(made, creditor=named(longest), note="As the plot has it")
+    assert edited.status_code == 200, edited.text
+    assert edited.json()["creditor"]["name"] == longest
+    refused = ledger.edit(made, creditor=named(longest + "x"), note="Too long")
+    assert refused.status_code == 422
+    traded = ledger.act(made, "trade", creditor=named(STORY[::-1]), note="")
+    assert traded.status_code == 200, traded.text
+    passed = ledger.act(made, "pass-on", side="debtor", to=named("Whoever holds the Moon"), note="")
+    assert passed.status_code == 200, passed.text
 
 
 def test_only_running_staff_keep_the_ledger(ledger: Ledger) -> None:
@@ -426,8 +457,7 @@ def test_the_ledger_shows_open_departed_settled_and_void_boons(ledger: Ledger) -
         "2026-01-01",
     ]
     # The retired character can still be named.
-    names = {c["name"] for c in opened["characters"]}
-    assert {"Agnes", "Bram", "Vidal"} <= names
+    assert {"Agnes", "Bram", "Vidal"} <= ledger.choices()
 
 
 def test_the_ledger_narrows_to_a_character_a_name_a_kind_or_nights(ledger: Ledger) -> None:

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { BoonOut, CharacterChoice } from "../../api/types";
@@ -7,6 +7,7 @@ import { partyIn } from "../../bonds";
 import { disgracedText } from "../../boonStatus";
 import {
   actionsFor,
+  ANY_TEXT_HINT,
   BOON_PAGE,
   changeText,
   emptyRow,
@@ -14,12 +15,15 @@ import {
   gallantText,
   KINDS,
   kindName,
+  LONGEST_NAME,
+  LONGEST_TEXT,
   LOSS_TEXT,
   owes,
   partyName,
   rowStarted,
   rowsTotal,
   SETTLED,
+  shortName,
   stateText,
   VIEWS,
   type BoonKind,
@@ -30,6 +34,7 @@ import {
 import { DataTable, type Column } from "../../components/DataTable";
 import { DateInput } from "../../components/DateInput";
 import { SectionLabel } from "../../components/Headings";
+import { Pager } from "../../components/Pager";
 import { useToast } from "../../components/Toast";
 import { useWidePage } from "../../components/widePage";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
@@ -66,6 +71,15 @@ const HarpyMode = createContext<LedgerKeeper | null>(null);
 
 function today(dates: ReturnType<typeof useDates>) {
   return dates.toInput(new Date()).slice(0, 10);
+}
+
+/**
+ * A side written as text in the boon forms (#990): staff write up to LONGEST_TEXT, a
+ * Harpy or a talon LONGEST_NAME, as the API allows them.
+ */
+function useAnyText() {
+  const harpy = useContext(HarpyMode);
+  return { longest: harpy ? LONGEST_NAME : LONGEST_TEXT, hint: ANY_TEXT_HINT };
 }
 
 /** A picked side ("c:<id>" or "name"), from a party the API sent. */
@@ -109,11 +123,32 @@ function ReviewOnly({ troupeId }: { troupeId: string }) {
   );
 }
 
+// A page of the ledger (#978): the boons the API sends at a time.
+const PAGE = 100;
+
 function Ledger({ troupeId }: { troupeId: string }) {
   const harpy = useContext(HarpyMode);
   // Room for the table at 1280 px and up (#975).
   useWidePage();
   const [params, setParams] = useSearchParams();
+  // The page, from 1, in the URL as ?page= so a reload or a link keeps it (#978).
+  const page = Math.max(1, Math.floor(Number(params.get("page"))) || 1);
+  const setPage = (to: number, replace = false) =>
+    setParams(
+      (now) => {
+        const next = new URLSearchParams(now);
+        if (to > 1) next.set("page", String(to));
+        else next.delete("page");
+        return next;
+      },
+      { replace },
+    );
+  // Another view or filter starts again from the first page.
+  const fresh = () => {
+    if (page > 1) setPage(1, true);
+  };
+  // The top of the list, brought back into sight when paging from its foot.
+  const top = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<BoonView>("open");
   // The review queue (#687) in place of the ledger's views.
   const [reviewing, setReviewing] = useState(false);
@@ -131,9 +166,11 @@ function Ledger({ troupeId }: { troupeId: string }) {
     view,
     ...(who.who.startsWith("c:") ? { character_id: who.who.slice(2) } : {}),
     ...(who.who === "name" && who.name.trim() ? { name: who.name.trim() } : {}),
-    ...(kind ? { kind } : {}),
+    ...(kind ? { kind: [kind] } : {}),
     ...(from ? { made_from: from } : {}),
     ...(to ? { made_to: to } : {}),
+    limit: PAGE,
+    offset: (page - 1) * PAGE,
   };
   const ledger = useQuery({
     queryKey: ["troupe-boons", troupeId, query],
@@ -145,6 +182,11 @@ function Ledger({ troupeId }: { troupeId: string }) {
       ),
     placeholderData: (previous) => previous,
   });
+  // Who may be named on a boon: read once, not with every page (#978).
+  const choices = useQuery({
+    queryKey: ["boon-characters", troupeId],
+    queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/boon-characters", { params: { path: { troupe_id: troupeId } } })),
+  });
   const reviews = !harpy || harpy.review;
   const review = useQuery({
     queryKey: ["boon-review", troupeId],
@@ -152,9 +194,17 @@ function Ledger({ troupeId }: { troupeId: string }) {
     enabled: reviews,
   });
   const toReview = review.data?.boons.length ?? 0;
-  if (ledger.isPending) return <Loading />;
+  // Past the last page (boons settled, or an old link): go to the last there is.
+  const total = ledger.data?.total ?? 0;
+  const past = ledger.isSuccess && !ledger.isPlaceholderData && page > 1 && (page - 1) * PAGE >= total;
+  useEffect(() => {
+    if (past) setPage(Math.max(1, Math.ceil(total / PAGE)), true);
+  });
+  if (ledger.isPending || choices.isPending) return <Loading />;
   if (ledger.error) return <ErrorText error={ledger.error} />;
-  const { boons, counts, characters } = ledger.data;
+  if (choices.error) return <ErrorText error={choices.error} />;
+  const { boons, counts } = ledger.data;
+  const characters = choices.data;
   const narrowed = Boolean(who.who || kind || from || to);
   const clear = () => {
     setWho({ who: "", name: "" });
@@ -162,7 +212,12 @@ function Ledger({ troupeId }: { troupeId: string }) {
     setFrom("");
     setTo("");
     setCleared(cleared + 1);
-    if (params.has("character")) setParams({}, { replace: true });
+    if (params.has("character") || params.has("page")) setParams({}, { replace: true });
+  };
+  const turn = (to: number) => {
+    setPage(to);
+    const list = top.current;
+    if (list && list.getBoundingClientRect().top < 0) list.scrollIntoView({ block: "start" });
   };
 
   return (
@@ -190,7 +245,7 @@ function Ledger({ troupeId }: { troupeId: string }) {
 
       {(!harpy || harpy.role === "harpy") && <Boonbreakers troupeId={troupeId} characters={characters} />}
 
-      <div className="flex flex-col gap-3">
+      <div ref={top} className="flex scroll-mt-4 flex-col gap-3">
         <div role="tablist" aria-label="Ledger views" className="flex flex-wrap gap-1">
           {VIEWS.filter((v) => v.value !== "pending" || (counts.pending ?? 0) > 0).map((v) => (
             <Button
@@ -199,6 +254,7 @@ function Ledger({ troupeId }: { troupeId: string }) {
               aria-selected={!reviewing && view === v.value}
               variant={!reviewing && view === v.value ? "secondary" : "ghost"}
               onClick={() => {
+                if (v.value !== view) fresh();
                 setView(v.value);
                 setReviewing(false);
               }}
@@ -219,10 +275,25 @@ function Ledger({ troupeId }: { troupeId: string }) {
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Character or name">
-            <WhoPicker key={cleared} characters={characters} who={who.who} name={who.name} onChange={(w, name) => setWho({ who: w, name })} />
+            <WhoPicker
+              key={cleared}
+              characters={characters}
+              who={who.who}
+              name={who.name}
+              onChange={(w, name) => {
+                fresh();
+                setWho({ who: w, name });
+              }}
+            />
           </Field>
           <Field label="Kind">
-            <Select value={kind} onChange={(e) => setKind(e.target.value as BoonKind | "")}>
+            <Select
+              value={kind}
+              onChange={(e) => {
+                fresh();
+                setKind(e.target.value as BoonKind | "");
+              }}
+            >
               <option value="">Any kind</option>
               {KINDS.map((k) => (
                 <option key={k.value} value={k.value}>
@@ -232,10 +303,22 @@ function Ledger({ troupeId }: { troupeId: string }) {
             </Select>
           </Field>
           <Field label="Made from">
-            <DateInput value={from} onChange={(e) => setFrom(e.target.value)} />
+            <DateInput
+              value={from}
+              onChange={(e) => {
+                fresh();
+                setFrom(e.target.value);
+              }}
+            />
           </Field>
           <Field label="Made to">
-            <DateInput value={to} onChange={(e) => setTo(e.target.value)} />
+            <DateInput
+              value={to}
+              onChange={(e) => {
+                fresh();
+                setTo(e.target.value);
+              }}
+            />
           </Field>
         </div>
         <div className="flex items-center gap-2">
@@ -251,10 +334,13 @@ function Ledger({ troupeId }: { troupeId: string }) {
 
       {reviewing ? (
         <BoonReviewQueue troupeId={troupeId} detail={(boonId) => <BoonDetail troupeId={troupeId} boonId={boonId} characters={characters} />} />
-      ) : boons.length === 0 ? (
+      ) : total === 0 ? (
         <Empty>{narrowed ? "No boons match." : view === "open" ? "No open boons yet." : "None here."}</Empty>
       ) : (
-        <BoonTable key={view} troupeId={troupeId} boons={boons} characters={characters} busy={ledger.isPlaceholderData} />
+        <>
+          <BoonTable key={view} troupeId={troupeId} boons={boons} characters={characters} busy={ledger.isPlaceholderData} />
+          <Pager label="Pages of boons" page={page} size={PAGE} shown={boons.length} total={total} onPage={turn} />
+        </>
       )}
 
       {(!harpy || harpy.audit) && <AuditsCard troupeId={troupeId} inPlay={!!harpy} />}
@@ -427,6 +513,17 @@ function BoonDetail({ troupeId, boonId, characters }: { troupeId: string; boonId
     <div className="mt-3 flex flex-col gap-3 border-t border-ash pt-3">
       {b.creditor_disgraced && <p className="text-sm text-blood-bright">{disgracedText(partyName(b.creditor))}</p>}
       <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
+        {(["debtor", "creditor"] as const).map((side) => {
+          const party = b[side];
+          // A side written as text, in full where elsewhere it is cut to a line (#990).
+          if (party.character_id || shortName(party.name) === party.name) return null;
+          return (
+            <div key={side} className="contents">
+              <dt className="text-mist">{side === "debtor" ? "Debtor" : "Creditor"}</dt>
+              <dd className="whitespace-pre-line italic wrap-anywhere">{party.name}</dd>
+            </div>
+          );
+        })}
         {b.reason && (
           <>
             <dt className="text-mist">Reason</dt>
@@ -496,7 +593,7 @@ function BoonDetail({ troupeId, boonId, characters }: { troupeId: string; boonId
       )}
       <div>
         <SectionLabel as="h4">Its log</SectionLabel>
-        <ol aria-label={`Log of ${owes(b)}`} className="mt-1 flex flex-col gap-1 text-xs">
+        <ol aria-label={`Log of ${owes(b)}`} className="mt-1 flex flex-col gap-1 text-xs wrap-anywhere">
           {(b.events ?? []).map((e) => (
             <li key={e.id}>
               <span className="text-parchment">{eventName(e.kind)}</span>
@@ -576,6 +673,7 @@ function boonPath(troupeId: string, boon: BoonOut) {
 
 function EditForm({ troupeId, boon, characters, onDone }: { troupeId: string; boon: BoonOut; characters: CharacterChoice[]; onDone: () => void }) {
   const harpy = useContext(HarpyMode);
+  const anyText = useAnyText();
   const [debtor, setDebtor] = useState(picked(boon.debtor));
   const [creditor, setCreditor] = useState(picked(boon.creditor));
   const [kind, setKind] = useState<BoonKind>(boon.kind);
@@ -618,10 +716,10 @@ function EditForm({ troupeId, boon, characters, onDone }: { troupeId: string; bo
     >
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Debtor">
-          <WhoPicker characters={characters} who={debtor.who} name={debtor.name} onChange={(who, name) => setDebtor({ who, name })} />
+          <WhoPicker characters={characters} who={debtor.who} name={debtor.name} anyText={anyText} onChange={(who, name) => setDebtor({ who, name })} />
         </Field>
         <Field label="Creditor">
-          <WhoPicker characters={characters} who={creditor.who} name={creditor.name} onChange={(who, name) => setCreditor({ who, name })} />
+          <WhoPicker characters={characters} who={creditor.who} name={creditor.name} anyText={anyText} onChange={(who, name) => setCreditor({ who, name })} />
         </Field>
         <Field label="Kind">
           <Select value={kind} onChange={(e) => setKind(e.target.value as BoonKind)}>
@@ -674,6 +772,7 @@ function MoveForm({
   pass: boolean;
   onDone: () => void;
 }) {
+  const anyText = useAnyText();
   const [side, setSide] = useState<"debtor" | "creditor">("debtor");
   const [to, setTo] = useState({ who: "", name: "" });
   const [note, setNote] = useState("");
@@ -712,18 +811,18 @@ function MoveForm({
           {(["debtor", "creditor"] as const).map((s) => (
             <label key={s} className="flex items-center gap-2">
               <input type="radio" name={`side-${boon.id}`} checked={side === s} onChange={() => setSide(s)} />
-              {s === "debtor" ? `${boon.debtor.name}'s, the debtor's` : `${boon.creditor.name}'s, the creditor's`}
+              {s === "debtor" ? `${shortName(boon.debtor.name)}'s, the debtor's` : `${shortName(boon.creditor.name)}'s, the creditor's`}
             </label>
           ))}
         </fieldset>
       ) : (
         <p className="text-sm text-mist">
-          {boon.creditor.name} trades it: the new creditor holds it, and its log keeps the trade.
+          {shortName(boon.creditor.name)} trades it: the new creditor holds it, and its log keeps the trade.
           {boon.notify_on_trade && " Its debtor's player is told."}
         </p>
       )}
       <Field label={pass ? "Passes on to" : "Traded to"}>
-        <WhoPicker characters={characters} who={to.who} name={to.name} onChange={(who, name) => setTo({ who, name })} />
+        <WhoPicker characters={characters} who={to.who} name={to.name} anyText={anyText} onChange={(who, name) => setTo({ who, name })} />
       </Field>
       <Field label="Note (optional)">
         <Input maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} />
@@ -857,6 +956,7 @@ function NoteForm({ troupeId, boon, action, onDone }: { troupeId: string; boon: 
  */
 function QuickEntry({ troupeId, characters, onDone }: { troupeId: string; characters: CharacterChoice[]; onDone: () => void }) {
   const harpy = useContext(HarpyMode);
+  const anyText = useAnyText();
   const dates = useDates();
   const toast = useToast();
   const [madeOn, setMadeOn] = useState(today(dates));
@@ -944,13 +1044,20 @@ function QuickEntry({ troupeId, characters, onDone }: { troupeId: string; charac
           <li key={i} aria-label={`Boon ${i + 1}`} className="flex flex-col gap-2 rounded-md border border-ash p-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Debtor" hint="Who owes it.">
-                <WhoPicker characters={characters} who={row.debtor.who} name={row.debtor.name} onChange={(who, name) => set(i, { debtor: { who, name } })} />
+                <WhoPicker
+                  characters={characters}
+                  who={row.debtor.who}
+                  name={row.debtor.name}
+                  anyText={anyText}
+                  onChange={(who, name) => set(i, { debtor: { who, name } })}
+                />
               </Field>
               <Field label="Creditor" hint="Who it's owed to.">
                 <WhoPicker
                   characters={characters}
                   who={row.creditor.who}
                   name={row.creditor.name}
+                  anyText={anyText}
                   onChange={(who, name) => set(i, { creditor: { who, name } })}
                 />
               </Field>

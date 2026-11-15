@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { actionsFor, appealText, changeText, countsText, emptyRow, eventName, flagBody, flagText, gallantText, LOSS_TEXT, owes, partyName, rowsTotal, stateText, voidsText, type BoonFlag } from "./boons";
+import { actionsFor, appealText, changeText, countsText, emptyRow, eventName, flagBody, flagText, gallantText, LOSS_TEXT, owes, partyName, rowsTotal, shortName, stateText, voidsText, type BoonFlag } from "./boons";
 
 const party = (name: string, standing: "active" | "final_death" | "off_field" | null = "active") => ({
   character_id: standing ? "c1" : null,
@@ -14,6 +14,16 @@ describe("boons", () => {
     expect(owes({ debtor: party("Agnes"), creditor: party("Bram") })).toBe("Agnes owes Bram");
     expect(partyName(party("Mercer", "final_death"))).toBe("Mercer (Final Death)");
     expect(partyName(party("Grove", null))).toBe("Grove");
+  });
+
+  it("cuts a side written as a passage of story to a line, at a word (#990)", () => {
+    const story = "The debt was written in silver on the night the river froze, and sealed with a kiss.";
+    expect(shortName("The Moon")).toBe("The Moon");
+    expect(shortName(story)).toBe("The debt was written in silver on the night the river…");
+    expect(shortName(story).length).toBeLessThanOrEqual(60);
+    expect(shortName("x".repeat(600))).toBe(`${"x".repeat(59)}…`);
+    expect(shortName("Under the\n\nbridge", 12)).toBe("Under the…");
+    expect(owes({ debtor: party(story, null), creditor: party("Bram") })).toBe("The debt was written in silver on the night the river… owes Bram");
   });
 
   it("says where a boon stands", () => {

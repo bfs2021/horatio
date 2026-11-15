@@ -168,10 +168,21 @@ def test_the_ledgers_view_and_filters_narrow_the_export(ledger: Ledger) -> None:
     assert debtors(name="lucien") == ["Lucien"]
     assert debtors(made_from="2026-08-15", made_to="2026-10-01") == ["Lucien", "Bram"]
     assert debtors(view="settled") == []
+    # As the ledger's list has them since #978: a search, the flagged, and a sort.
+    assert debtors(q="calloway") == []
+    assert debtors(q="LUC") == ["Lucien"]
+    assert debtors(flagged=True) == ["Lucien"]
+    assert debtors(sort="debtor") == ["Agnes", "Bram", "Lucien", "Vidal"]
+    assert debtors(sort="kind", direction="desc") == ["Vidal", "Bram", "Lucien", "Agnes"]
+    assert debtors(view="open", sort="date", direction="asc") == ["Agnes", "Bram", "Lucien"]
 
     messages = ledger.messages()
     assert "storyteller exported the whole boon ledger as a CSV file (4 boons)." in messages
     assert "storyteller exported part of the boon ledger as a CSV file (1 boon)." in messages
+    # Sorting alone narrows nothing.
+    assert (
+        messages.count("storyteller exported the whole boon ledger as a CSV file (4 boons).") == 3
+    )
 
 
 def test_the_spreadsheet_export_is_logged_too(ledger: Ledger) -> None:

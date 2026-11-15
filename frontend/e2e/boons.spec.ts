@@ -715,7 +715,7 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
     .check();
   await expect(h.getByRole("list", { name: "Lesser Harpies" })).toContainText("Wren Ashby sees the ledger, adds boons and settles them");
   await t.reload();
-  await debt.getByRole("button", { name: "Open" }).click();
+  await ledgerOf(t).row("Wren Ashby owes Lady Morrow, minor").click();
   await expect(debt.getByRole("button", { name: "Settle" })).toBeVisible();
   await expect(debt.getByRole("button", { name: "Trade" })).toBeVisible();
   await expect(debt.getByRole("button", { name: "Edit" })).toHaveCount(0);

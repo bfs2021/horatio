@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, characterTab, chooseDots, choosePick, closeContextsAfterEach, makeCustodian, openNewTroupe, PASSWORD, person, run, shots, tapMid, topBar, troupeTab, expectTabOpen, expectTabCount, isPhone, shutSections, groupTabs, pagePart, tabSettings, closeTabSettings } from "./support";
+import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, characterTab, chooseDots, choosePick, closeContextsAfterEach, makeCustodian, openNewTroupe, PASSWORD, person, run, shots, tapMid, topBar, troupeTab, expectTabOpen, expectTabCount, isPhone, shutSections, groupTabs, pagePart, tabSettings, closeTabSettings, settingsPart, expectPartOpen } from "./support";
 
 /** A troupe's setup: its rules, XP range, staff, profile and archiving, and asking for one. */
 
@@ -179,7 +179,9 @@ test("Troupe settings open on a Features list: each optional feature on or off, 
   await expect(boons.getByText("Off", { exact: true })).toBeVisible();
   await expect(boons.getByRole("link", { name: "Open Boons" })).toHaveCount(0);
   await expect(list.getByRole("listitem", { name: "Feeding" }).getByRole("switch", { name: "Feeding" })).toHaveAttribute("aria-checked", "true");
-  await expect(list.getByRole("listitem", { name: "Who's Who" }).getByRole("switch")).toHaveCount(0);
+  // Who's Who is always on: its switch is held on, so its row lines up with the rest (#908).
+  await expect(list.getByRole("listitem", { name: "Who's Who" }).getByRole("switch", { name: "Who's Who" })).toBeDisabled();
+  await expect(list.getByRole("listitem", { name: "Who's Who" }).getByRole("switch", { name: "Who's Who" })).toHaveAttribute("aria-checked", "true");
 
   // The lead switches Boons on from the list, the one place it is switched (#784): no card below has a switch of its own.
   await boons.getByRole("switch", { name: "Boons" }).click();
@@ -207,6 +209,19 @@ test("Troupe settings open on a Features list: each optional feature on or off, 
   settings = await tabSettings(l, "Boons");
   await expect(settings.getByRole("radio", { name: /^Also what they're owed/ })).toBeVisible();
   await closeTabSettings(settings);
+
+  // Each group of settings is a part of its own (#908): an old anchor from the one long page lands on its card, wherever it is now.
+  await l.goto(`/troupes/${troupeId}/settings#feature-feeding`);
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/settings/blood#feature-feeding$`));
+  await expectPartOpen(l, "Blood, diablerie and feeding", "Troupe settings");
+  await expect(l.locator("#feature-feeding").getByRole("heading", { name: "Feeding", exact: true })).toBeInViewport();
+  await l.goto(`/troupes/${troupeId}/settings#feature-boons`);
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/boons#settings$`));
+  await closeTabSettings(await tabSettings(l, "Boons"));
+  // A part that isn't one goes back to the Features list.
+  await l.goto(`/troupes/${troupeId}/settings/nonsense`);
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/settings$`));
+  await expectPartOpen(l, "Features", "Troupe settings");
 
   // Quests: switched on, a Quests tab under Downtimes; switched off again, it goes.
   await l.goto(`/troupes/${troupeId}/settings`);
@@ -781,7 +796,7 @@ test("staff write the setting: a theme from the book, a mood of their own, put i
 
   // The lead starts a theme from the book's Betrayal, and changes its questions.
   const l = lead.page;
-  await l.goto(`/troupes/${troupeId}/settings`);
+  await settingsPart(l, troupeId, "setting");
   const setting = l.getByRole("group", { name: "The setting" });
   const card = (title: string) => setting.locator("section").filter({ has: l.getByRole("heading", { name: title, exact: true }) });
   await card("Themes").getByRole("button", { name: "Add a theme" }).click();
@@ -824,7 +839,7 @@ test("staff write the setting: a theme from the book, a mood of their own, put i
 
   // An assistant storyteller writes a storyteller note and the scope.
   const a = assistant.page;
-  await a.goto(`/troupes/${troupeId}/settings`);
+  await settingsPart(a, troupeId, "setting");
   const theirs = a.getByRole("group", { name: "The setting" }).locator("section");
   const notes = theirs.filter({ has: a.getByRole("heading", { name: "Storyteller notes", exact: true }) });
   await notes.getByRole("button", { name: "Add a note" }).click();
@@ -886,13 +901,13 @@ test("players read the whole setting on its tab, in print, on the profile when s
   await expect(doc.getByRole("link", { name: "Edit in Settings" })).toHaveCount(0);
 
   // The lead switches on the New Character Incentive; the document gives its working.
-  await l.goto(`/troupes/${troupeId}/settings`);
+  await settingsPart(l, troupeId, "xp");
   await l.getByRole("switch", { name: /Use the New Character Incentive/ }).click();
   await expect(l.getByRole("switch", { name: /Use the New Character Incentive/ })).toBeChecked();
   await expect(l.getByText("Saved.", { exact: true })).toBeVisible();
   await l.goto(`/troupes/${troupeId}/setting`);
   await expect(l.getByRole("region", { name: "Setting-specific mechanics" })).toContainText("+ the New Character Incentive");
-  await expect(l.getByRole("link", { name: "Edit in Settings" })).toHaveAttribute("href", `/troupes/${troupeId}/settings`);
+  await expect(l.getByRole("link", { name: "Edit in Settings" })).toHaveAttribute("href", `/troupes/${troupeId}/settings/joining`);
 
   // Printed, black on white, for the Storyteller table.
   await p.goto(`/print/setting/${troupeId}`);
@@ -905,7 +920,7 @@ test("players read the whole setting on its tab, in print, on the profile when s
   await visitor.goto(`/t/${troupeId}`);
   await expect(visitor.getByRole("heading", { name: troupeName })).toBeVisible();
   await expect(visitor.getByRole("article", { name: "Setting Style Document" })).toHaveCount(0);
-  await l.goto(`/troupes/${troupeId}/settings`);
+  await settingsPart(l, troupeId, "setting");
   await l.getByRole("switch", { name: /Show it on the troupe's profile/ }).click();
   await expect(l.getByRole("switch", { name: /Show it on the troupe's profile/ })).toBeChecked();
   await visitor.reload();
@@ -945,7 +960,7 @@ test("a burst of changes to the setting rings one bell for the troupe's players,
 
   // The lead adds a theme under Troupe settings, then rewrites the teaser: one notice, naming both.
   const l = lead.page;
-  await l.goto(`/troupes/${troupeId}/settings`);
+  await settingsPart(l, troupeId, "setting");
   const setting = l.getByRole("group", { name: "The setting" });
   const themes = setting.locator("section").filter({ has: l.getByRole("heading", { name: "Themes", exact: true }) });
   await themes.getByRole("button", { name: "Add a theme" }).click();
@@ -1191,7 +1206,7 @@ test("staff call the clan Banu Haqim or Assamite, and the sheet and the rules fo
   await expect(entry("Banu Haqim: Vizier")).toBeVisible();
 
   // The lead calls it Assamite instead, in Customise's Troupe settings.
-  await l.goto(`/troupes/${troupeId}/settings`);
+  await settingsPart(l, troupeId, "names");
   const names = l.locator("section").filter({ has: l.getByRole("heading", { name: "Banu Haqim or Assamite" }) });
   await expect(names.getByRole("radio", { name: /^Banu Haqim/ })).toBeChecked();
   await names.getByRole("radio", { name: /^Assamite/ }).click();
@@ -1398,6 +1413,7 @@ test("a troupe's XP floor and ceiling: new characters start at the floor, and st
   await (await topBar(l)).getByRole("link", { name: "Troupes" }).click();
   await l.getByRole("link", { name: troupeName }).click();
   await troupeTab(l, "Troupe settings");
+  await pagePart(l, "XP", "Troupe settings");
   const range = l.getByRole("region", { name: "XP floor and ceiling" });
   await range.getByLabel("Floor", { exact: true }).fill("100");
   await range.getByLabel("Ceiling", { exact: true }).fill("120");
@@ -2831,7 +2847,7 @@ test("staff set a tapering game XP chart and award a game by it, with an absente
 
   // The lead starts from the Tapering chart, records absentee games, adds an adjustment, and switches the monthly cap off.
   const l = lead.page;
-  await l.goto(`/troupes/${troupeId}/settings`);
+  await settingsPart(l, troupeId, "xp");
   const card = l.locator("section").filter({ has: l.getByRole("heading", { name: "Game XP chart", exact: true }) });
   await expect(card.getByText(/^Flat: everyone there gets the same XP/)).toBeVisible();
   await card.getByRole("button", { name: "Tapering" }).click();
@@ -3002,10 +3018,14 @@ test("a troupe's Overview switches it public at once, shows its XP range, and Wa
   await expect(l.getByText("Player characters from any sect may join.")).toBeVisible();
   await expect(l.getByRole("checkbox")).toHaveCount(0);
   await expect(l.getByLabel("Floor", { exact: true })).toHaveCount(0);
-  // The lead sets them by hand in Customise's Troupe settings, with the rest of the troupe's settings.
+  // The lead sets them by hand in Customise's Troupe settings, each in its part (#908): who may join, and XP.
   await l.getByRole("link", { name: "Change in Customise" }).first().click();
-  await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/settings$`));
-  for (const group of ["Who may join", "XP", "Status and titles", "Blood and diablerie"]) await expect(l.getByRole("group", { name: group, exact: true })).toBeVisible();
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/settings/joining$`));
+  await expect(l.getByRole("group", { name: "Who may join", exact: true })).toBeVisible();
+  await l.goBack();
+  await l.getByRole("link", { name: "Change in Customise" }).last().click();
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/settings/xp$`));
+  await expect(l.getByRole("group", { name: "XP", exact: true })).toBeVisible();
   const range = l.getByRole("region", { name: "XP floor and ceiling" });
   await range.getByLabel("Floor", { exact: true }).fill("60");
   await range.getByLabel("Ceiling", { exact: true }).fill("75");
@@ -3016,7 +3036,7 @@ test("a troupe's Overview switches it public at once, shows its XP range, and Wa
   // Starting points leads there for them, and the log on About has the change.
   await l.goto(`/troupes/${troupeId}/house-rules/starting`);
   await expect(l.getByRole("heading", { name: "XP floor and ceiling" })).toHaveCount(0);
-  await expect(l.getByRole("link", { name: "Troupe settings", exact: true }).last()).toHaveAttribute("href", `/troupes/${troupeId}/settings`);
+  await expect(l.locator("main").getByRole("link", { name: "XP", exact: true }).last()).toHaveAttribute("href", `/troupes/${troupeId}/settings/xp`);
   await l.goto(`/troupes/${troupeId}`);
   await expect(waiting).toBeVisible();
   await expect(l.getByRole("heading", { name: "Latest in the log" })).toBeVisible();

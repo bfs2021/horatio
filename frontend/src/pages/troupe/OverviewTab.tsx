@@ -13,6 +13,7 @@ import { ArchiveTroupe } from "./ArchiveTroupe";
 import { GamesCard } from "./GamesCard";
 import { NameAndDescription } from "./ProfileControls";
 import type { abilities } from "./roles";
+import { troupeSettings, type TroupeSettingsPart } from "./features";
 import { sectsText, useSplatsText } from "./SettingsTab";
 import { TroupeProfileView } from "./TroupeProfile";
 import { useWaiting, WaitingList } from "./WaitingList";
@@ -30,8 +31,9 @@ export function OverviewTab({ troupe, can }: { troupe: TroupeOut; can: ReturnTyp
   const base = `/troupes/${troupe.id}`;
   const change = can.storyteller && !troupe.archived;
   const leading = can.lead && !troupe.archived;
-  const settings = (
-    <Link to={`${base}/settings`} className="text-sm text-mist underline hover:text-parchment">
+  // Who may join and the XP range each have a part of Troupe settings (#908).
+  const settings = (part: TroupeSettingsPart) => (
+    <Link to={`${base}/${troupeSettings(part)}`} className="text-sm text-mist underline hover:text-parchment">
       Change in Customise
     </Link>
   );
@@ -45,7 +47,7 @@ export function OverviewTab({ troupe, can }: { troupe: TroupeOut; can: ReturnTyp
         {troupe.whos_who && !troupe.archived && <GamesCard troupe={troupe} canAddGames={can.storyteller} running={can.running} />}
       </div>
       <Profile troupe={troupe} leading={leading} />
-      <JoinCard troupe={troupe} link={change && settings} />
+      <JoinCard troupe={troupe} link={change && settings("joining")} />
       <XpRangeCard
         troupeId={troupe.id}
         canEdit={false}
@@ -56,7 +58,7 @@ export function OverviewTab({ troupe, can }: { troupe: TroupeOut; can: ReturnTyp
                 Award XP
               </Link>
             )}
-            {change && settings}
+            {change && settings("xp")}
           </>
         }
       />

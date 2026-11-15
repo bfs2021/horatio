@@ -304,7 +304,7 @@ The NPC's **IC chat** tab lists its recent messages, newest first, with when eac
 - **Court order of our titles** sets where the troupe's own titles come in the Who's Who's court, after the rule set's.
 - **Seats at court** chooses which clans have a seat. Until you choose, the clans whose Primogen is held here have one. Characters of other clans are listed under Other on the Who's Who, each with who represents them.
 
-You can also give a title from **Titles…** on a character's ⋯ on the [Roster](#each-characters-actions), or from the character's Status & Titles tab. Whether players choose their own titles, and keep their own status, is set under [Troupe settings](#customise-troupe-settings).
+You can also give a title from **Titles…** on a character's ⋯ on the [Roster](#each-characters-actions), or from the character's Status & Titles tab. Whether players choose their own titles, and keep their own status, is set under [Troupe settings › Status and titles](#status-and-titles-settings).
 
 What each status does is in the **Rulebook**, under **Status**, with the troupe chosen under **As played in**: every status of the sects the troupe takes, what it does and where it comes from here. Anyone can read it, and there is nothing to set there. **Rulebook's Status** under Court › Titles and **How status works here** on a character's Status & Titles tab open it with the troupe chosen; old links to the troupe's Status tab lead there too.
 
@@ -518,15 +518,15 @@ Below it, nothing is changed: Setup points to where things are.
 
 ## Customise: troupe settings
 
-**Customise › Troupe settings** holds the settings for the whole troupe, in groups, under a list of its features. A feature with a tab of its own keeps the rest of its settings behind the **Settings** button of that tab (see [A feature's own settings](#a-features-own-settings)).
+**Customise › Troupe settings** holds the settings for the whole troupe, in parts, one page each: **Features** (the list of its features, which the tab opens on), **The setting**, **Who may join**, **XP**, **Status and titles**, **Blood, diablerie and feeding** and **Names**. On a wide screen the parts are listed down the left of the page, with the open one beside them. On a phone or a tablet, one button above the page names the open part, such as **XP**; tap it for them all. Each part has its own address (`settings/xp`, say), so a link can go straight to it; a link to a card's old place on the one long page, such as `settings#feature-feeding`, still lands on that card. A feature with a tab of its own keeps the rest of its settings behind the **Settings** button of that tab (see [A feature's own settings](#a-features-own-settings)).
 
 Every settings card saves the same way, here and in a feature's own settings. Switches, ticks and choices save as you make them, and Horatio says **Saved.** each time. A card with fields to type in, such as **Experience**, is always open: change what you like, then choose its **Save**, at the bottom of the card. Until you do, it says **Not saved yet**, and leaving the page asks first. A card you can only read says who changes it.
 
 ### Features
 
-The **Features** list at the top has a row for each optional feature: Who's Who, News and announcements, the Play View, Boons, Blood bonds, Player Nominations, Remembrances, the court over time and the chronicle for players, Quests, Feeding, Golconda and Enlightened, and Items that expire. Each row says whether it's on, what it adds and which tabs appear with it, with **Open** to go to its tab once it's on, and **Settings** for the rest of its settings where it has more.
+The **Features** list, the first part, has a row for each optional feature: Who's Who, News and announcements, the Play View, Boons, Blood bonds, Player Nominations, Remembrances, the court over time and the chronicle for players, Quests, Feeding, Golconda and Enlightened, and Items that expire. Each row says whether it's on, what it adds and which tabs appear with it, with **Open** to go to its tab once it's on, and **Settings** for the rest of its settings where it has more.
 
-Storytellers switch a feature on or off with the switch at the start of its row. This is the one place each is switched. A feature switched off has no tab, and what was recorded with it is kept for when it's on again. Blood bonds switched on here are kept by staff; choose another way under its **Settings**. Feeding switched on here is feeding as the book has it, with its Vol. 2 options as they were. Who's Who and News are always on, and the Play View is switched tab by tab. Assistant storytellers see the list without the switches.
+Storytellers switch a feature on or off with the switch at the start of its row. This is the one place each is switched. A feature switched off has no tab, and what was recorded with it is kept for when it's on again. Blood bonds switched on here are kept by staff; choose another way under its **Settings**. Feeding switched on here is feeding as the book has it, with its Vol. 2 options as they were. Who's Who and News are always on, and the Play View is switched tab by tab, so their switches are greyed out, held as they are. Assistant storytellers see the list without the switches.
 
 - **Player Nominations**: players praise each other's roleplaying in their downtimes, for you to review and publish each month (see [Player Nominations](#player-nominations)). Switched off, none of it shows anywhere; what was written and published is kept for when it's on again.
 - **Remembrances**: ask the troupe for memories of a character who leaves play (see [Remembrances](#remembrances)). Independent of Player Nominations. Switched off, none can be opened or written and nothing of them shows, except those already published: they stay on the characters' pages and the Who's Who, because they belong to the people remembered.
@@ -648,16 +648,16 @@ NPCs are never limited by either.
 
 - **Status on sheets**: **Players keep their own** (a player adds and removes fleeting and negative status on their own character, naming who gave it) or **Staff only**. Storytellers and assistant storytellers can always change status, with a reason for the character's log.
 - **Titles on sheets**: **Players choose their own** (from the troupe's titles of the character's sect; staff are told) or **Staff only**. A title the troupe holds to [one holder at a time](#titles-and-status) is staff's to give while someone holds it.
-- **Status bans on clans**: which clans each sect's status bans name here: the Camarilla's pillar clans (a character of none of them is under a lesser ban) and its known Caitiff (a greater ban), and the Sabbat's antitribu under a lesser or a greater ban. The pillar clans start as Volume II has them (Assamite, Malkavian, Nosferatu, Toreador, Tremere and Ventrue); **As the core book (2013)** adds the Brujah back, or tick the clans by hand (the Gangrel, say). A bloodline goes with its clan, and a character staff have marked keeps the mark.
+- **Status bans on clans**: which clans each sect's status bans name here, each ban a line naming its clans; **Change the clans** opens its tick boxes: the Camarilla's pillar clans (a character of none of them is under a lesser ban) and its known Caitiff (a greater ban), and the Sabbat's antitribu under a lesser or a greater ban. The pillar clans start as Volume II has them (Assamite, Malkavian, Nosferatu, Toreador, Tremere and Ventrue); **As the core book (2013)** adds the Brujah back, or tick the clans by hand (the Gangrel, say). A bloodline goes with its clan, and a character staff have marked keeps the mark.
 
-### Blood and diablerie
+### Blood, diablerie and feeding
 
 - **Blood at the start of a game**: what resetting a character's Play View puts their Blood back to: full, or a number you choose.
 - **Diablerie and Lesser Generation**: what recording a diablerie does to a Lesser Generation or Thin Blooded flaw: leave it, remove it and the XP it gave, or remove it and keep the XP.
 
-### Feeding
+#### Feeding
 
-**Feeding**, switched on in the Features list, is feeding as the book has it: each clan needs a number of feeding actions a cycle, Herd and some traits change it, and staff answer full or half Blood for the next game. Switched off, there's no Feeding section on the downtime form, no Feeding tab on a cycle, nothing in the results, and no half Blood at the next game.
+**Feeding**, switched on in the Features list (its **Settings** link opens this part at its card), is feeding as the book has it: each clan needs a number of feeding actions a cycle, Herd and some traits change it, and staff answer full or half Blood for the next game. Switched off, there's no Feeding section on the downtime form, no Feeding tab on a cycle, nothing in the results, and no half Blood at the next game.
 
 > **If your troupe uses this:** with feeding on, you can switch on the optional Vol. 2 rules, each on its own:
 >
@@ -735,7 +735,7 @@ The same page has:
 - **Clan rarity**: how rare each clan is in the troupe's setting. A character built here takes the rarity merit its clan's rarity names. By default each clan goes by the book for the setting's sect.
 - **Default bloodlines**: the bloodline each clan plays as by default, or the plain clan. By default, the book's for the setting.
 
-Starting XP, the XP floor and ceiling, and blood at the start of a game are under [Troupe settings](#customise-troupe-settings).
+Starting XP and the XP floor and ceiling are under **Troupe settings › XP** (see [XP settings](#xp-settings)), and blood at the start of a game under **Troupe settings › Blood, diablerie and feeding**.
 
 ### Downtime actions
 
@@ -1347,12 +1347,12 @@ Completing a downtime gives the cycle's completion XP by itself, as the characte
 
 ### The XP floor and ceiling
 
-The **XP floor and ceiling** card (on the Overview and in Troupe settings) shows:
+The **XP floor and ceiling** card (on the Overview and in Troupe settings › XP) shows:
 
 - **Ceiling**: the most XP a character here could have by now: the starting XP, every game's XP and every downtime's XP.
 - **Floor**: the same without the downtimes. New characters built for the troupe start at the floor, unless the troupe uses the [New Character Incentive](#xp-settings).
 
-Awarding a game's XP and closing a cycle can add to them (the tick boxes above). **What changed them** lists each change. For a chronicle that began before Horatio, storytellers can set either figure by hand on the card in Troupe settings: change it, say **Why**, and choose **Save**. Games and downtimes still add to them afterwards.
+Awarding a game's XP and closing a cycle can add to them (the tick boxes above). **What changed them** lists each change. For a chronicle that began before Horatio, storytellers can set either figure by hand on the card in Troupe settings › XP: change it, say **Why**, and choose **Save**. Games and downtimes still add to them afterwards.
 
 When a character asks to join, Horatio sets its XP against these figures: below the floor it is offered a top-up, and above the ceiling staff choose to keep or take away the excess (see [Characters asking to join](#characters-asking-to-join)).
 
@@ -1366,9 +1366,9 @@ A character's **XP debt** card, on its Experience tab, shows what it owes, from 
 
 ### The game XP chart
 
-![Troupe settings › Game XP chart, being changed to taper by earned XP.](images/running-a-troupe/game-xp-chart.png)
+![Troupe settings › XP › Game XP chart, being changed to taper by earned XP.](images/running-a-troupe/game-xp-chart.png)
 
-With nothing set, a game gives everyone there the same XP, and staff are warned past 10 a month, as the book has it. Storytellers can change that under **Customise › Troupe settings › Game XP chart**:
+With nothing set, a game gives everyone there the same XP, and staff are warned past 10 a month, as the book has it. Storytellers can change that under **Customise › Troupe settings › XP › Game XP chart**:
 
 - **By earned XP**: bands of earned XP, each with XP for a game attended (and an absentee game). **Start from** *Flat* or *Tapering* (less XP a game as earned XP grows), **Add a band**, or remove one. Earned XP doesn't count starting XP or what joining gave.
 - **Adjustments**: extras staff tick for a character when awarding, such as "Helped +1, once a month", each with an optional limit a month.

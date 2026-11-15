@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, characterTab, closeContextsAfterEach, makeCustodian, openNewTroupe, openScene, person, run, shots, topBar, undoInHeader, tabSettings } from "./support";
+import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, characterTab, closeContextsAfterEach, makeCustodian, openNewTroupe, openScene, person, run, shots, topBar, undoInHeader, tabSettings, settingsPart } from "./support";
 
 /** The Play View at a game: blood, feeding, the Beast and derangements. */
 
@@ -233,7 +233,7 @@ test("at a game, the Play View tracks blood and uses, offline too, and the story
   }
 
   // A house rule: characters start a game with 8 blood.
-  await p.goto(`/troupes/${troupeId}/settings`);
+  await settingsPart(p, troupeId, "blood");
   const startingBlood = p.getByRole("region", { name: "Blood at the start of a game" });
   await startingBlood.getByRole("radio", { name: "This much" }).check();
   await startingBlood.getByLabel("Starting blood").fill("8");

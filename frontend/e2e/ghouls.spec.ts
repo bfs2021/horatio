@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, characterTab, closeContextsAfterEach, makeCustodian, openNewTroupe, openSlot, person, pickedAt, run, shots, slotsAt, topBar, troupeTab, goToStep } from "./support";
+import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, characterTab, closeContextsAfterEach, makeCustodian, openNewTroupe, openSlot, person, pickedAt, run, shots, slotsAt, topBar, troupeTab, goToStep, pagePart } from "./support";
 
 /** Ghouls: building, playing and Embracing them. */
 
@@ -37,6 +37,8 @@ test("a troupe takes ghouls once its storytellers tick Ghoul on About, and a gho
   // The lead ticks Ghoul, in Customise's Troupe settings. Vampire, the only splat ticked until then, could not be unticked.
   await troupeTab(l, "Troupe settings");
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/settings$`));
+  await pagePart(l, "Who may join", "Troupe settings");
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/settings/joining$`));
   const splats = l.locator("section").filter({ has: l.getByRole("heading", { name: "Splats", exact: true }) });
   await expect(splats.getByRole("checkbox", { name: "Vampire" })).toBeChecked();
   await expect(splats.getByRole("checkbox", { name: "Vampire" })).toBeDisabled();

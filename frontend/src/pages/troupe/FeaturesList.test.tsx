@@ -73,9 +73,21 @@ describe("the Features list (#783)", () => {
     expect(list.getAllByRole("listitem")).toHaveLength(keys.length);
     for (const f of features(TROUPE)) {
       const row = within(list.getByRole("listitem", { name: f.name }));
-      expect(row.queryAllByRole("switch")).toHaveLength(f.switchable ? 1 : 0);
+      expect(row.getAllByRole("switch")).toHaveLength(1);
     }
-    expect(list.getAllByRole("switch")).toHaveLength(SWITCHED.length);
+    expect(list.getAllByRole("switch").filter((s) => !(s as HTMLInputElement).disabled)).toHaveLength(SWITCHED.length);
+  });
+
+  it("holds the switch of a feature that is always on, so every row lines up (#908)", () => {
+    const list = show(TROUPE, true);
+    for (const name of ["Who's Who", "News and announcements"]) {
+      const row = within(list.getByRole("listitem", { name }));
+      const held = row.getByRole("switch", { name }) as HTMLInputElement;
+      expect(held.disabled).toBe(true);
+      expect(held.getAttribute("aria-checked")).toBe("true");
+      expect(row.getByText("Always on")).toBeTruthy();
+    }
+    expect((list.getByRole("switch", { name: "Play View" }) as HTMLInputElement).disabled).toBe(true);
   });
 
   it("shows each switch as it is, and its tab only once it's on", () => {
@@ -100,7 +112,8 @@ describe("the Features list (#783)", () => {
     expect(within(list.getByRole("listitem", { name: "Blood bonds" })).getByText("Players manage")).toBeTruthy();
     // A feature with a tab of its own keeps its settings behind that tab's Settings button (#784, #909).
     expect(list.getByRole("link", { name: "Settings for Boons" }).getAttribute("href")).toBe("/troupes/t1/boons#settings");
-    expect(list.getByRole("link", { name: "Settings for Feeding" }).getAttribute("href")).toBe("#feature-feeding");
+    // Feeding's card is in its part of Troupe settings (#908).
+    expect(list.getByRole("link", { name: "Settings for Feeding" }).getAttribute("href")).toBe("/troupes/t1/settings/blood#feature-feeding");
     expect(list.getAllByRole("link", { name: "Open Nominations" })).toHaveLength(1);
   });
 

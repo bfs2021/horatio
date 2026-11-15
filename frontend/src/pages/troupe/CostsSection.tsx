@@ -8,6 +8,7 @@ import { Explainer } from "../../components/Explainer";
 import { RowEditor, useRowEditor } from "../../components/RowEditor";
 import { Toggle } from "../../components/Toggle";
 import { Badge, Button, Card, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
+import { useWidePage } from "../../components/widePage";
 import { useRulesAction } from "../../hooks";
 import { pageText } from "./bookPage";
 import { useHouseSplat } from "./HouseSplat";
@@ -34,6 +35,7 @@ const sameEditing = (a: Editing, b: Editing) => JSON.stringify(a) === JSON.strin
  * their next purchase; what they have already bought keeps what it cost.
  */
 export function CostsSection({ troupeId, canEdit }: { troupeId: string; canEdit: boolean }) {
+  useWidePage();
   const editor = useRowEditor<Editing>(sameEditing);
   const editing = editor.open;
   const [onlyOurs, setOnlyOurs] = useState(false);

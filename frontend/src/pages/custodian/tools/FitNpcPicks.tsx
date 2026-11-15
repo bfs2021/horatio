@@ -40,8 +40,10 @@ export function FitNpcPicks() {
         </Link>
       </p>
       <div className="flex flex-wrap items-end gap-3">
+        {/* `w-full` lets the field narrow to a phone: without it the select is as wide as the
+            longest troupe name, which can't wrap, and widens the page (#969). */}
         <Field label="Troupe">
-          <Select value={troupeId} onChange={(e) => choose(e.target.value)} className="max-w-md">
+          <Select value={troupeId} onChange={(e) => choose(e.target.value)} className="w-full max-w-md">
             <option value="">Choose a troupe…</option>
             {troupes.data?.map((t) => (
               <option key={t.id} value={t.id}>

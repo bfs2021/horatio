@@ -24,6 +24,7 @@ import { ageRank, clanText, nextSort, showOf, shows, sortRows, type Show, type S
 import { StaffActions, TitlePill, useStaffing } from "./StaffActions";
 import type { Staffing } from "./staffActions";
 import { useCatalogue } from "../../catalogue";
+import { CardHeading } from "../../components/Headings";
 
 /** What the list is called, in its count, for each choice of Show. */
 const SHOW_NAMES: Record<Show, [string, string]> = {
@@ -189,9 +190,9 @@ export function RosterTab({ troupeId, canEmail = false }: { troupeId: string; ca
     >
       {withNpcs && making && (
         <section aria-labelledby="new-npc" className="mb-3 rounded-md border border-ash p-3">
-          <h3 id="new-npc" className="mb-2 font-medium">
+          <CardHeading id="new-npc" className="mb-2">
             New NPC
-          </h3>
+          </CardHeading>
           <div className="max-w-md">
             <NewNpc troupeId={troupeId} />
           </div>

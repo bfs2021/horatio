@@ -19,6 +19,7 @@ import { DiscordPostChannels } from "./DiscordPostChannels";
 import { InCharacterChannel } from "./InCharacterChannel";
 import { ManagedCharacterRow, ManagedChannels } from "./ManagedChannels";
 import { UpdateBotPermissions } from "./UpdateBotPermissions";
+import { SectionLabel } from "../../components/Headings";
 
 type Settings = Record<string, unknown>;
 
@@ -223,9 +224,7 @@ export function DiscordSettings({
       <DiscordEmoji troupeId={troupeId} canEdit={canEdit} />
       <InCharacterChannel troupeId={troupeId} canEdit={canEdit} />
       <div>
-        <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">
-          Each character's channel
-        </h3>
+        <SectionLabel className="mb-1">Each character's channel</SectionLabel>
         {missing.length > 0 && (
           <p className="mb-2 text-xs text-blood-bright">
             {missing.length}{" "}

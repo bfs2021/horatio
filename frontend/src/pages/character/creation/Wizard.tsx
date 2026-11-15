@@ -37,6 +37,7 @@ import { DomitorPanel, DomitorSummary, useDomitor } from "../Domitor";
 import { generationText } from "../../../generation";
 import { domitorNeeded, dotBudget, ghoulDisciplinesIntro, savedDots } from "./ghoul";
 import { useCatalogue } from "../../../catalogue";
+import { CardHeading } from "../../../components/Headings";
 
 /** A step: the categories it places picks in, and those it decides without picks. */
 type Step = StepRef & { intro?: string };
@@ -840,7 +841,7 @@ function ConceptStep({
             Who is {character.name}? The domitor matters most: a ghoul takes its domitor's clan and bloodline, and its in-clan disciplines.
           </p>
           <section aria-label="Domitor" className="flex flex-col gap-2">
-            <h3 className="text-base text-gold">Domitor</h3>
+            <CardHeading>Domitor</CardHeading>
             <DomitorPanel character={character} sheet={sheet} catalogue={catalogue} canChange openWhenNone />
           </section>
           {clan && <InClanNow creation={creation} />}
@@ -993,14 +994,14 @@ function ReviewStep({
     <div className="flex flex-col gap-4">
       {domitor.data && (
         <section aria-label="Domitor" className="flex flex-col gap-1">
-          <h3 className="text-sm text-gold">Domitor</h3>
+          <CardHeading>Domitor</CardHeading>
           <DomitorSummary domitor={domitor.data} />
         </section>
       )}
       <CharacterSummary character={character} creation={creation} sheet={sheet} catalogue={catalogue} ghoul={ghoul} />
       {open.length > 0 && (
         <section aria-label="Picks left" className="flex flex-col gap-1">
-          <h3 className="text-sm text-gold">Picks left</h3>
+          <CardHeading>Picks left</CardHeading>
           <ul className="flex flex-col gap-1 text-sm">
             {open.map((p) => {
               const step = stepFor(p.category);
@@ -1028,7 +1029,7 @@ function ReviewStep({
       )}
       {notices.length > 0 && (
         <section aria-label="Still to settle" className="flex flex-col gap-1">
-          <h3 className="text-sm text-gold">Still to settle</h3>
+          <CardHeading>Still to settle</CardHeading>
           <ul className="flex flex-col gap-1 text-sm">
             {notices.map((n) => {
               const at = steps.find((s) => s.key === n.fix);
@@ -1071,7 +1072,7 @@ function ReviewStep({
       {!ghoul && <MoveStartingDots character={character} creation={creation} picks={saved(creation).picks.disciplines ?? {}} />}
       {creation.path_starts.length > 0 && (
         <section aria-label="Morality" className="flex flex-col gap-1">
-          <h3 className="text-sm text-gold">Morality</h3>
+          <CardHeading>Morality</CardHeading>
           <ul className="flex flex-col gap-1 text-sm">
             {creation.path_starts.map((s) => (
               <li key={`${s.category}/${s.name}`}>
@@ -1185,7 +1186,7 @@ function CharacterSummary({
 
   return (
     <section aria-label="Summary" className="flex flex-col gap-2">
-      <h3 className="text-sm text-gold">{character.name} so far</h3>
+      <CardHeading>{character.name} so far</CardHeading>
       <dl className="grid gap-x-4 gap-y-1.5 text-sm sm:grid-cols-[9rem_minmax(0,1fr)]">
         {rows.map(([label, value]) => (
           <Fragment key={label}>
@@ -1285,7 +1286,7 @@ function FreeTraitsToChoose({ character, sheet }: { character: CharacterOut; she
   if (!merits.length) return null;
   return (
     <section aria-label="Free traits to choose" className="mb-6 flex flex-col gap-3 rounded-md border border-ash p-3">
-      <h3 className="text-sm text-parchment">Free traits to choose</h3>
+      <CardHeading>Free traits to choose</CardHeading>
       {merits.map((t) => (
         <div key={`${t.category}/${t.name}/${t.detail}`} className="flex flex-col gap-1.5">
           <p className="text-sm text-parchment">{named(t.name)}</p>

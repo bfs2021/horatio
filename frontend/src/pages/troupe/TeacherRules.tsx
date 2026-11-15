@@ -13,6 +13,7 @@ import { Blocks } from "./OwnChecks";
 import { namesIn } from "./ownChecks";
 import { EMPTY, EXAMPLES, draftOf, teachable, toBody, topOf, type Draft, type WhichHow } from "./teacherRules";
 import { useCatalogue } from "../../catalogue";
+import { CardHeading } from "../../components/Headings";
 
 function numbers(from: number, to: number): number[] {
   return Array.from({ length: to - from + 1 }, (_, i) => from + i);
@@ -167,7 +168,7 @@ function TeacherRuleEditor({ troupeId, editing, onClose }: { troupeId: string; e
 
   return (
     <section aria-label={title} className="flex flex-col gap-4 rounded-md border border-gold/40 p-3 sm:p-4">
-      <h3 className="text-gold">{title}</h3>
+      <CardHeading>{title}</CardHeading>
       {unreadable && <p className="text-sm text-blood-bright">The form cannot show this rule's condition. Build it again, or keep it as it is.</p>}
       {!cat && <Loading />}
       <ErrorText error={catalogue.error} />
@@ -317,7 +318,7 @@ function TeacherRuleEditor({ troupeId, editing, onClose }: { troupeId: string; e
           </fieldset>
 
           <section aria-label="Preview" className="flex flex-col gap-2 rounded-md border border-gold/40 bg-gold/5 p-3 text-sm">
-            <h4 className="text-gold">In plain words</h4>
+            <CardHeading as="h4">In plain words</CardHeading>
             {problem && <p className="text-blood-bright">{problem}</p>}
             {!problem && text && <p className="text-parchment">{text}</p>}
             <ErrorText error={preview.error} />

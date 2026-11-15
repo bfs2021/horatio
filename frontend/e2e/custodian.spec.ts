@@ -1018,7 +1018,8 @@ test("the custodian previews fitting a troupe's NPC creation picks, then fits th
   const custodian = await person(browser, "fitpicks-cust");
   makeCustodian(custodian.email);
   const lead = await person(browser, "fitpicks-lead");
-  const troupeName = `Court of Fitted Picks ${run}`;
+  // A long name, as the Troupe select is as wide as its longest option (#969).
+  const troupeName = `Court of Fitted Picks under the Drowned Lanterns ${run}`;
   const lucien = `Lucien Fitted ${run}`;
   const stan = `Stan Stock ${run}`;
   const c = custodian.page;
@@ -1041,10 +1042,15 @@ test("the custodian previews fitting a troupe's NPC creation picks, then fits th
   asBuiltBeforeFitting(npc.id);
   await send(lead.page, "POST", `/api/troupes/${troupe.id}/npcs`, { name: stan, npc_kind: "mortal", npc_form: "stock" });
 
+  const phone = test.info().project.name === "phone";
+  if (phone) await c.setViewportSize({ width: 375, height: 800 });
   await (await topBar(c)).getByRole("link", { name: "Custodian", exact: true }).click();
   await c.getByRole("link", { name: "Tools", exact: true }).click();
   const tool = c.locator("section").filter({ has: c.getByRole("heading", { name: "Fit NPC creation picks" }) });
   await tool.getByLabel("Troupe").selectOption({ label: troupeName });
+  // On a phone the long name is cut short inside the select, and Tools doesn't scroll sideways (#969).
+  // Against the screen's own width: an emulated phone's `innerWidth` widens with the page (#914).
+  if (phone) expect(await c.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(c.viewportSize()!.width);
   await tool.getByRole("button", { name: "Preview" }).click();
 
   // The preview: Lucien's every dot is priced as bought until his picks are fitted.

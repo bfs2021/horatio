@@ -120,7 +120,9 @@ def finish_link(
     """Discord's callback for linking (horatio.api.discord.discord_callback)."""
 
     def back(outcome: str) -> RedirectResponse:
-        answer = RedirectResponse(f"/account?{urlencode({'discord': outcome})}", status_code=303)
+        answer = RedirectResponse(
+            f"/account/sign-in?{urlencode({'discord': outcome})}", status_code=303
+        )
         answer.delete_cookie(COOKIE, path="/")
         return answer
 

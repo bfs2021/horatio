@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link, Route, Routes, useMatch } from "react-router";
+import { Link, Navigate, Route, Routes, useLocation, useMatch } from "react-router";
 import { api, unwrap } from "../api/client";
 import type { PlayerOut, ProfileLink } from "../api/types";
 import { SectionLabel } from "../components/Headings";
@@ -10,22 +10,29 @@ import { Button, Card, ErrorText, Field, Input, Loading, PageTitle, Tabs, Textar
 import { useAction, useLeaveWarning, useMe } from "../hooks";
 import { DevicePanel } from "../offline/DevicePanel";
 import { LinesVeilsForm } from "./LinesVeilsForm";
-import { DiscordLinkCard } from "./settings/DiscordLinkCard";
-import { HandleCard } from "./settings/HandleCard";
-import { SettingsPage } from "./settings/SettingsPage";
+import { PreferencesPage } from "./settings/PreferencesPage";
+import { SignInPage } from "./settings/SignInPage";
 
 const MAX_LINKS = 6;
+
+/** Where the Discord username's hint sends the player to link or unlink their Discord. */
+const SIGN_IN = (
+  <Link to="/account/sign-in" className="underline hover:text-parchment">
+    the Sign-in and email tab
+  </Link>
+);
 
 const TABS = [
   { to: "/account", label: "Profile", end: true },
   { to: "/account/lines-veils", label: "Lines and veils" },
-  { to: "/account/settings", label: "Settings" },
+  { to: "/account/preferences", label: "Preferences" },
+  { to: "/account/sign-in", label: "Sign-in and email" },
   { to: "/account/device", label: "This device" },
 ];
 
 /** The signed-in player's own profile, as others see it on their player page;
- * their lines and veils, which are never public; their settings, with their
- * email and password; and what this device keeps for games with no signal. */
+ * their lines and veils, which are never public; their preferences; how they sign
+ * in and what they are sent; and what this device keeps for games with no signal. */
 export function AccountPage() {
   const me = useMe();
   const id = me.data?.id ?? "";
@@ -64,24 +71,23 @@ export function AccountPage() {
     <>
       {title}
       <Routes>
-        <Route
-          index
-          element={
-            <div className="flex flex-col gap-6">
-              <ProfileForm key={player.data.id} player={player.data} />
-              <DiscordLinkCard />
-              <HandleCard />
-            </div>
-          }
-        />
-        <Route
-          path="lines-veils"
-          element={player.data.lines_veils && <LinesVeilsForm key={`${player.data.id}-lines-veils`} value={player.data.lines_veils} />}
-        />
-        <Route path="settings" element={<SettingsPage player={player.data} />} />
+        <Route index element={<ProfileForm key={player.data.id} player={player.data} />} />
+        <Route path="lines-veils" element={player.data.lines_veils && <LinesVeilsForm key={`${player.data.id}-lines-veils`} value={player.data.lines_veils} />} />
+        <Route path="preferences" element={<PreferencesPage />} />
+        <Route path="sign-in" element={<SignInPage player={player.data} />} />
+        <Route path="settings" element={<SettingsMoved />} />
       </Routes>
     </>
   );
+}
+
+/**
+ * Account › Settings became Preferences and Sign-in and email (#910). Its old address,
+ * in emails already sent, lands on Preferences, or on the email notifications it named.
+ */
+function SettingsMoved() {
+  const { hash } = useLocation();
+  return <Navigate replace to={hash === "#notifications" ? "/account/sign-in#notifications" : "/account/preferences"} />;
 }
 
 type Profile = Pick<PlayerOut, "display_name" | "links"> & { pronouns: string; bio: string; discord_handle: string };
@@ -139,9 +145,11 @@ function ProfileForm({ player }: { player: PlayerOut }) {
             <Field
               label="Discord username"
               hint={
-                player.discord_linked
-                  ? "From your linked Discord account. Unlink it below to type one instead."
-                  : "Your username, such as mrcarbuncle, so staff and the troupe's Discord can find you. Or link your Discord account below."
+                player.discord_linked ? (
+                  <>From your linked Discord account. Unlink it on {SIGN_IN} to type one instead.</>
+                ) : (
+                  <>Your username, such as mrcarbuncle, so staff and the troupe's Discord can find you. Or link your Discord account on {SIGN_IN}.</>
+                )
               }
             >
               <Input

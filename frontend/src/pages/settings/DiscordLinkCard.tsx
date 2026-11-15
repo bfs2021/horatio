@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { DiscordAccount } from "../../api/types";
 import { Button, Card, ErrorText } from "../../components/ui";
 import { useAction } from "../../hooks";
 
-/** What Discord's callback said (`?discord=` on /account), in plain words. */
+/** What Discord's callback said (`?discord=` on /account/sign-in), in plain words. */
 export function outcome(said: string | null): { ok: boolean; text: string } | null {
   if (!said) return null;
   if (said === "linked") return { ok: true, text: "Your Discord account is linked." };
@@ -31,6 +32,13 @@ export function DiscordLinkCard() {
   });
   const unlink = useAction(() => unwrap(api.DELETE("/api/account/discord")), [["account-discord"], ["player"]]);
   const said = outcome(params.get("discord"));
+  // Back from Discord, the card is lower down the page than a phone shows at first.
+  const told = useRef<HTMLParagraphElement>(null);
+  const loaded = !!account.data;
+  const text = said?.text;
+  useEffect(() => {
+    if (text && loaded) told.current?.scrollIntoView?.({ block: "center" });
+  }, [text, loaded]);
   const dismiss = () => {
     const next = new URLSearchParams(params);
     next.delete("discord");
@@ -45,7 +53,7 @@ export function DiscordLinkCard() {
     <Card title="Discord account">
       <div className="flex flex-col gap-3">
         {said && (
-          <p role="status" className={`flex flex-wrap items-center gap-2 text-sm ${said.ok ? "text-parchment" : "text-blood-bright"}`}>
+          <p ref={told} role="status" className={`flex flex-wrap items-center gap-2 text-sm ${said.ok ? "text-parchment" : "text-blood-bright"}`}>
             {said.text}
             <Button type="button" variant="ghost" className="min-h-8 px-2" onClick={dismiss}>
               Dismiss

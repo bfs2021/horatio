@@ -1,6 +1,6 @@
 """Notifications that also come by email (issue #106).
 
-Each person chooses in Account → Settings which kinds of notification reach them
+Each person chooses in Account → Sign-in and email which kinds of notification reach them
 by email as well as in the bell (`TOPICS`, a setting each, all off until they
 turn one on but announcements, which are on), and whether each email goes at
 once or everything waiting is gathered into one a day, at `DIGEST_HOUR` in their
@@ -223,8 +223,8 @@ def footer(user: User, topic: str) -> list[Line]:
         ),
         Line(
             "Choose which notifications come by email.",
-            absolute("/account/settings"),
-            "Settings",
+            absolute("/account/sign-in#notifications"),
+            "Notification settings",
         ),
     ]
 

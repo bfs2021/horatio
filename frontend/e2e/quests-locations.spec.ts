@@ -648,6 +648,55 @@ test("the troupe's locations: a storyteller adds the Grove Arcade, is refused an
   await expect(owner.page.getByText(/Controls 1 of 5 locations/)).toHaveCount(0);
 });
 
+test("on a phone the Locations tab folds into blocks, nothing sideways with 20 long names; from lg up it is a table (#914)", async ({ browser }) => {
+  const custodian = await person(browser, "lfold914-cust");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "lfold914-lead");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Map of Long Names ${run}`, lead_handle: lead.handle });
+  const l = lead.page;
+  // Twenty long names, one a single word longer than a phone is wide.
+  const names = Array.from({ length: 20 }, (_, i) =>
+    i === 0 ? "Wolfeschlegelsteinhausenbergerdorffvoralternwarengewissenhaft" : `Bartholomew Featherstonehaugh-Cholmondeley of Wolverhampton ${i + 1}`,
+  );
+  // Twenty locations, each with a long controller, influence area and address: the first is the long word.
+  for (const name of names)
+    await send(l, "POST", `/api/troupes/${troupe.id}/locations`, {
+      name,
+      rating: 3,
+      control: "named",
+      controller_name: `The Most Honourable Marchioness of ${name}`,
+      influence_type: "elite",
+      influence_area: "High Society and the Featherstonehaugh-Cholmondeley Charitable Foundations",
+      address: `${name}, Upper Wolverhampton Embankment, behind the disused Victorian waterworks`,
+      locked: true,
+    });
+  const phone = test.info().project.name === "phone";
+  // The narrowest phone the review measured.
+  if (phone) await l.setViewportSize({ width: 375, height: 800 });
+  // Against the viewport, not innerWidth: a phone widens its layout to fit what is too wide.
+  const sideways = async () => (await l.evaluate(() => document.documentElement.scrollWidth)) - l.viewportSize()!.width;
+
+  await l.goto(`/troupes/${troupe.id}/locations`);
+  const list = l.getByRole("table", { name: "Locations" });
+  await expect(list.locator("tbody tr")).toHaveCount(20);
+  const first = list.getByRole("row", { name: names[0], exact: true });
+  await expect(first.getByRole("link", { name: names[0] })).toBeVisible();
+  expect(await sideways()).toBe(0);
+  // From lg up a table, its headings showing; on a phone what the columns show folds under the name, each with what it is.
+  if (phone) await expect(first.getByText("Controller:", { exact: true })).toBeVisible();
+  else await expect(list.getByRole("columnheader", { name: "Controller" })).toBeVisible();
+  await expect(first.getByText("Locked", { exact: true }).filter({ visible: true })).toBeVisible();
+  await expect(first.getByRole("button", { name: `Actions for ${names[0]}` })).toBeVisible();
+  await l.screenshot(shots("locations-long-names"));
+});
+
 test("a player's own Haven: Nell names it from her sheet, Security comes free with the skill, and the lead sees it on the troupe's list", async ({ browser }) => {
   const custodian = await person(browser, "hav-custodian");
   makeCustodian(custodian.email);

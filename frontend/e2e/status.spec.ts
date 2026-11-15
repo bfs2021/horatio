@@ -1065,6 +1065,58 @@ test("titles by sect: a Camarilla troupe gives Camarilla titles only to its own,
   expect(wide).toBeLessThanOrEqual(0);
 });
 
+test("on a phone the Titles tab folds into blocks, nothing sideways with 20 long names; from lg up its titles are tables (#914)", async ({ browser }) => {
+  const custodian = await person(browser, "tfold914-cust");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "tfold914-lead");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Court of Long Titles ${run}`, lead_handle: lead.handle });
+  const l = lead.page;
+  // Twenty long names, one a single word longer than a phone is wide.
+  const names = Array.from({ length: 20 }, (_, i) =>
+    i === 0 ? "Wolfeschlegelsteinhausenbergerdorffvoralternwarengewissenhaft" : `Bartholomew Featherstonehaugh-Cholmondeley of Wolverhampton ${i + 1}`,
+  );
+  // Twenty titles of the troupe's own, each held by an NPC: the first title is the long word.
+  const titles = names.map((name, i) => (i === 0 ? name : `Hereditary Keeper of the Featherstonehaugh-Cholmondeley Archives ${i + 1}`));
+  for (const [i, title] of titles.entries()) {
+    await send(l, "POST", `/api/troupes/${troupe.id}/titles`, { name: title, sect: null, status: [], unique: false });
+    const npc = await send(l, "POST", `/api/troupes/${troupe.id}/npcs`, { name: names[i]!, wizard: false });
+    await send(l, "PUT", `/api/troupes/${troupe.id}/characters/${npc.id}/titles`, { titles: [title] });
+  }
+  const phone = test.info().project.name === "phone";
+  // The narrowest phone the review measured.
+  if (phone) await l.setViewportSize({ width: 375, height: 800 });
+  // Against the viewport, not innerWidth: a phone widens its layout to fit what is too wide.
+  const sideways = async () => (await l.evaluate(() => document.documentElement.scrollWidth)) - l.viewportSize()!.width;
+
+  await l.goto(`/troupes/${troupe.id}/titles`);
+  const held = l.getByRole("table", { name: "Held titles" });
+  await expect(held.locator("tbody tr")).toHaveCount(20);
+  const first = held.getByRole("row", { name: titles[0], exact: true });
+  await expect(first.getByText(titles[0]!, { exact: true })).toBeVisible();
+  await expect(first.getByRole("link", { name: names[0] })).toBeVisible();
+  expect(await sideways()).toBe(0);
+  // From lg up a table, its headings showing; on a phone what the columns show folds under the title, each with what it is.
+  if (phone) {
+    await expect(first.getByText("Sect:", { exact: true })).toBeVisible();
+    await expect(first.getByRole("switch", { name: "One holder at a time", exact: true })).toBeVisible();
+  } else {
+    await expect(held.getByRole("columnheader", { name: "Holder", exact: true })).toBeVisible();
+    await expect(first.getByRole("switch", { name: `One holder at a time: ${titles[0]}` })).toBeVisible();
+  }
+  await l.screenshot(shots("titles-long-names"));
+  // The vacant ones, without a holder, fold the same way.
+  await l.getByRole("button", { name: /^Show vacant \(\d+\)$/ }).click();
+  await expect(l.getByRole("table", { name: "Camarilla titles" })).toBeVisible();
+  expect(await sideways()).toBe(0);
+});
+
 test("the court over time: staff give a Prince and take it away, and see one finished bar with its dates, and let players see it (#712)", async ({ browser }) => {
   const custodian = await person(browser, "court-custodian");
   makeCustodian(custodian.email);

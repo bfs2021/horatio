@@ -1,11 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Link } from "react-router";
+import { SettingRow } from "../components/SettingRow";
 import { Button, Card, ErrorText } from "../components/ui";
 import { useDates, type Dates } from "../dates";
 import { useMe } from "../hooks";
 import { manualLink } from "../manualLink";
-import { Setting } from "../pages/settings/SettingsPage";
 import { isNoAnswer, useOnline } from "./connection";
 import { useKeepChoice, useKept, useSetKeeping } from "./Offline";
 import { keptText } from "./KeepScenes";
@@ -90,7 +90,7 @@ export function DevicePanel() {
         </Link>
       }
     >
-      <Setting
+      <SettingRow
         label="Keep my characters on this device"
         hint={
           on
@@ -113,7 +113,7 @@ export function DevicePanel() {
             </button>
           ))}
         </span>
-      </Setting>
+      </SettingRow>
       {on && (
         <div className="flex flex-col gap-3 pt-3">
           {kept && kept.characters.length > 0 ? (

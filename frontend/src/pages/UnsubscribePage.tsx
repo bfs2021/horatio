@@ -44,7 +44,7 @@ export function UnsubscribePage() {
                 {shown.display_name} ({shown.email}) gets no emails about {shown.about}. The bell in Horatio still shows them.
               </p>
             )}
-            <Link to="/account/settings" className="text-center text-gold underline">
+            <Link to="/account/sign-in#notifications" className="text-center text-gold underline">
               Choose which notifications come by email
             </Link>
           </div>

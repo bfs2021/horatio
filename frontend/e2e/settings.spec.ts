@@ -8,7 +8,8 @@ closeContextsAfterEach();
 test("settings are kept on the account, and each change says it is saved", async ({ browser }) => {
   const { page } = await person(browser, "settings-player");
   await (await topBar(page)).getByRole("link", { name: "settings-player" }).click();
-  await page.locator("main").getByRole("link", { name: "Settings", exact: true }).click();
+  await page.locator("main").getByRole("link", { name: "Preferences", exact: true }).click();
+  await expect(page).toHaveURL(/\/account\/preferences$/);
   await page.getByRole("radiogroup", { name: "Show ratings as" }).getByRole("radio", { name: "Pips" }).click();
   await expect(page.getByRole("radiogroup", { name: "Show ratings as" }).getByRole("radio", { name: "Pips" })).toHaveAttribute("aria-checked", "true");
   await expect(page.getByText("Show ratings as: Pips. Saved.")).toBeVisible();
@@ -37,6 +38,50 @@ test("settings are kept on the account, and each change says it is saved", async
   await page.screenshot(shots("settings"));
 });
 
+test("account settings are in two tabs, Preferences and Sign-in and email, each one column (#910)", async ({ browser }) => {
+  const { page } = await person(browser, "account-tabs", { viewport: { width: 375, height: 800 } });
+  const cards = () => page.locator("main section > header h2").allTextContents();
+  const tall = () => page.evaluate(() => document.documentElement.scrollHeight);
+  // The old address lands on Preferences, and its #notifications on the email notifications.
+  await page.goto("/account/settings");
+  await expect(page).toHaveURL(/\/account\/preferences$/);
+  await expect(page.getByRole("radiogroup", { name: "Theme" })).toBeVisible();
+  expect(await cards()).toEqual(["Appearance", "Sheets", "Dates and times", "At game", "Troupes"]);
+  // On a phone, a choice sits under its label, unless it is short enough to sit beside it.
+  const under = async (name: string) => {
+    const label = await page.getByText(name, { exact: true }).boundingBox();
+    const choice = await page.getByRole("radiogroup", { name }).boundingBox();
+    return choice!.y >= label!.y + label!.height;
+  };
+  expect(await under("Badge size")).toBe(true);
+  expect(await under("Paper")).toBe(false);
+  await page.screenshot(shots("account-preferences-phone"));
+
+  await page.goto("/account/settings#notifications");
+  await expect(page).toHaveURL(/\/account\/sign-in#notifications$/);
+  await expect(page.getByRole("heading", { name: "Notifications by email" })).toBeInViewport();
+  await expect(page.getByLabel("Your handle")).toBeVisible();
+  expect(await cards()).toEqual(["Email", "Handle", "Password", "Notifications by email"]);
+  // Under 2000 px on a phone, on a server that can't send email, as this suite's can't.
+  expect(await tall()).toBeLessThan(2000);
+  await page.screenshot(shots("account-sign-in-phone"));
+
+  // The profile is what others see, and nothing about signing in.
+  await page.locator("main").getByRole("link", { name: "Profile", exact: true }).click();
+  await expect(page.getByLabel("Bio")).toBeVisible();
+  await expect(page.getByLabel("Your handle")).toHaveCount(0);
+
+  // On a desktop, a choice sits beside its label, in one column no wider than max-w-2xl.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/account/preferences");
+  const wide = await page.getByText("Badge size", { exact: true }).boundingBox();
+  const beside = await page.getByRole("radiogroup", { name: "Badge size" }).boundingBox();
+  expect(beside!.x).toBeGreaterThan(wide!.x + wide!.width);
+  const sheets = await page.locator("section", { has: page.getByRole("heading", { name: "Sheets", exact: true }) }).boundingBox();
+  expect(sheets!.width).toBeLessThanOrEqual(672);
+  await page.screenshot(shots("account-preferences-desktop"));
+});
+
 test("Show ratings as is kept through signing out and in, a reload and another device, and the NPC builder follows it", async ({ browser }) => {
   test.slow();
   const custodian = await person(browser, "ratingset-cust");
@@ -55,7 +100,7 @@ test("Show ratings as is kept through signing out and in, a reload and another d
   expect(rated.status(), await rated.text()).toBe(200);
 
   const choose = async (page: Page, ratings: "Numbers" | "Pips") => {
-    await page.goto("/account/settings");
+    await page.goto("/account/preferences");
     const radio = page.getByRole("radiogroup", { name: "Show ratings as" }).getByRole("radio", { name: ratings });
     await expect(radio).toBeVisible();
     if ((await radio.getAttribute("aria-checked")) === "true") return;
@@ -108,26 +153,27 @@ test("Show ratings as is kept through signing out and in, a reload and another d
   await p.screenshot(shots("npc-builder-pips"));
 });
 
-test("notifications by email: a choice per kind, once the server can send email", async ({ browser }) => {
+test("notifications by email: a switch per kind, once the server can send email", async ({ browser }) => {
   const { page } = await person(browser, "email-player");
-  await page.goto("/account/settings");
+  await page.goto("/account/sign-in");
   // This suite's server has no email set up, and the setting says so.
   await expect(page.getByText("Email isn't set up on this server, so notifications come only to the bell.")).toBeVisible();
-  await expect(page.getByRole("radiogroup", { name: "Downtime results" })).toHaveCount(0);
+  await expect(page.getByRole("switch", { name: "Downtime results" })).toHaveCount(0);
 
-  // Where it is set up, each kind is bell only until chosen, and the choice is kept.
+  // Where it is set up, each kind is bell only until switched on, and the choice is kept.
   await page.route("**/api/preferences/email", (route) => route.fulfill({ json: { available: true } }));
   await page.reload();
-  const downtime = page.getByRole("radiogroup", { name: "Downtime results" });
-  await expect(downtime.getByRole("radio", { name: "Bell only" })).toHaveAttribute("aria-checked", "true");
-  await downtime.getByRole("radio", { name: "Bell and email" }).click();
+  const downtime = page.getByRole("switch", { name: "Downtime results" });
+  await expect(downtime).not.toBeChecked();
+  await downtime.click();
+  await expect(page.getByText("Downtime results by email: on. Saved.")).toBeVisible();
   await Promise.all([
     page.waitForResponse((r) => r.url().endsWith("/api/preferences") && r.ok()),
     page.getByRole("radiogroup", { name: "Send emails" }).getByRole("radio", { name: "Once a day" }).click(),
   ]);
   await expect(page.getByText(/gathers them into one email at 8 am/)).toBeVisible();
   await page.reload();
-  await expect(downtime.getByRole("radio", { name: "Bell and email" })).toHaveAttribute("aria-checked", "true");
+  await expect(downtime).toBeChecked();
   await expect(page.getByRole("radiogroup", { name: "Send emails" }).getByRole("radio", { name: "Once a day" })).toHaveAttribute("aria-checked", "true");
   await page.screenshot(shots("settings-email"));
 
@@ -138,8 +184,9 @@ test("notifications by email: a choice per kind, once the server can send email"
 
 test("a handle to be found by, and to sign in with", async ({ browser }) => {
   const { page } = await person(browser, "handle-player");
-  // On the profile, with the rest of how others see you.
+  // On Sign-in and email, with the email it signs in beside.
   await (await topBar(page)).getByRole("link", { name: "handle-player" }).click();
+  await page.locator("main").getByRole("link", { name: "Sign-in and email", exact: true }).click();
   await expect(page.getByLabel("Your handle")).toHaveValue(`handle-player_${run.slice(-10)}`);
   const handle = `Owl_${run.slice(-10)}`;
   await page.getByLabel("Your handle").fill(handle);
@@ -195,7 +242,7 @@ test("a signed-in person changes their password, and signs in with the new one",
   await expect(other.getByRole("heading", { name: "Your characters" })).toBeVisible();
 
   await (await topBar(page)).getByRole("link", { name: "Your account" }).click();
-  await page.locator("main").getByRole("link", { name: "Settings", exact: true }).click();
+  await page.locator("main").getByRole("link", { name: "Sign-in and email", exact: true }).click();
   const card = page.locator("section", { has: page.getByRole("heading", { name: "Password", exact: true }) });
   const newPassword = "a much longer passphrase";
   // The wrong current password is refused.
@@ -229,7 +276,7 @@ test("the bell links to the notification settings", async ({ browser }) => {
   const { page } = await person(browser, "bellsettings-pl");
   await page.getByRole("button", { name: /^Notifications/ }).click();
   await page.getByRole("dialog", { name: "Notifications" }).getByRole("link", { name: "Notification settings" }).click();
-  await expect(page).toHaveURL(/\/account\/settings#notifications$/);
+  await expect(page).toHaveURL(/\/account\/sign-in#notifications$/);
   await expect(page.getByRole("heading", { name: "Notifications by email" })).toBeInViewport();
   await expect(page.getByRole("dialog", { name: "Notifications" })).toHaveCount(0);
 });
@@ -254,7 +301,7 @@ test("dates and times show in each person's zone and format", async ({ browser }
   // In Tokyo, as ISO dates on a 24-hour clock: the page says at once how a deadline will show.
   // Each change is waited for, to be sure it is saved before the next page.
   const saved = () => page.waitForResponse((r) => r.url().endsWith("/api/preferences") && r.request().method() === "PATCH" && r.ok());
-  await page.goto("/account/settings");
+  await page.goto("/account/preferences");
   await Promise.all([saved(), page.getByLabel("Time zone").fill("Asia/Tokyo")]);
   await Promise.all([saved(), page.getByRole("radiogroup", { name: "Dates" }).getByRole("radio", { name: "2026-10-20" }).click()]);
   await Promise.all([saved(), page.getByRole("radiogroup", { name: "Clock" }).getByRole("radio", { name: "21:30" }).click()]);
@@ -276,7 +323,7 @@ test("dates and times show in each person's zone and format", async ({ browser }
   await page.screenshot(shots("log-dates"));
 
   // Back to this device's zone: the zone is cleared, and kept that way after a reload.
-  await page.goto("/account/settings");
+  await page.goto("/account/preferences");
   await Promise.all([saved(), page.getByRole("button", { name: "Use this device's" }).click()]);
   await expect(page.getByLabel("Time zone")).toHaveValue("");
   await page.reload();
@@ -294,7 +341,7 @@ test("large text makes the app bigger, but not printed sheets and badges", async
   const normal = await fontSize();
 
   await (await topBar(page)).getByRole("link", { name: "large-text" }).click();
-  await page.locator("main").getByRole("link", { name: "Settings", exact: true }).click();
+  await page.locator("main").getByRole("link", { name: "Preferences", exact: true }).click();
   const saved = page.waitForResponse((r) => r.url().endsWith("/api/preferences") && r.ok());
   await page.getByRole("radiogroup", { name: "Text size" }).getByRole("radio", { name: "Large" }).click();
   // At once, with no reload, and still after one (once it has saved).
@@ -320,7 +367,7 @@ test("large text makes the app bigger, but not printed sheets and badges", async
   expect(await fontSize()).toBe(normal);
 
   // And back to normal.
-  await page.goto("/account/settings");
+  await page.goto("/account/preferences");
   await expect.poll(fontSize).toBe(large);
   await page.getByRole("radiogroup", { name: "Text size" }).getByRole("radio", { name: "Normal" }).click();
   await expect.poll(fontSize).toBe(normal);
@@ -329,7 +376,7 @@ test("large text makes the app bigger, but not printed sheets and badges", async
 test("light mode lets the sun rise, and the person at the screen goes to ash, signed out", async ({ browser }) => {
   test.slow();
   const { page } = await person(browser, "sun-at-dawn");
-  await page.goto("/account/settings");
+  await page.goto("/account/preferences");
   const theme = page.getByRole("radiogroup", { name: "Theme" });
   await expect(theme.getByRole("radio", { name: "Dark" })).toHaveAttribute("aria-checked", "true");
   await theme.getByRole("radio", { name: "Light" }).click();
@@ -346,7 +393,7 @@ test("light mode lets the sun rise, and the person at the screen goes to ash, si
   await expect(page.getByRole("status").filter({ hasText: "The sun rises" })).not.toBeAttached({ timeout: 15_000 });
   await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
   // Truly signed out: the account is behind sign-in again.
-  await page.goto("/account/settings");
+  await page.goto("/account/preferences");
   await expect(page).toHaveURL(/\/sign-in/);
 });
 
@@ -358,7 +405,7 @@ test("Ultra goth: velvet curtains close, it is saved behind them, and they open 
       if (document.readyState === "interactive") (window as unknown as { themeAtLoad: string | null }).themeAtLoad = document.documentElement.getAttribute("data-theme");
     });
   });
-  await page.goto("/account/settings");
+  await page.goto("/account/preferences");
   const theme = page.getByRole("radiogroup", { name: "Theme" });
   const html = page.locator("html");
   const bar = page.locator('meta[name="theme-color"]');
@@ -414,7 +461,7 @@ test("Ultra goth fades in with reduced motion, and reads on the sheet, the Play 
   });
 
   // A short fade to velvet and back, not the curtains.
-  await page.goto("/account/settings");
+  await page.goto("/account/preferences");
   await page.getByRole("radiogroup", { name: "Theme" }).getByRole("radio", { name: "Ultra goth" }).click();
   const curtains = page.getByTestId("curtains");
   await expect(curtains.locator(".curtain-fade")).toBeAttached();
@@ -466,7 +513,7 @@ test("the Play View opens as the settings say", async ({ browser }) => {
   await expect(awake).toHaveText("☀ Awake");
 
   // Quick notes off, the screen left to dim, opening on Pools.
-  await page.goto("/account/settings");
+  await page.goto("/account/preferences");
   const saved = () => page.waitForResponse((r) => r.url().endsWith("/api/preferences") && r.ok());
   for (const label of ["Quick notes", "Keep the screen awake"]) {
     const done = saved();

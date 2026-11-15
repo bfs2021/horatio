@@ -12,7 +12,7 @@ router = APIRouter(prefix="/unsubscribe", tags=["unsubscribe"])
 
 NOT_A_LINK = (
     "This unsubscribe link doesn't work. Sign in and choose which notifications "
-    "come by email in Account → Settings."
+    "come by email in Account → Sign-in and email."
 )
 
 

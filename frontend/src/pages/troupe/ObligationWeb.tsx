@@ -5,9 +5,10 @@ import { useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { api, ApiError, unwrap } from "../../api/client";
 import { levelName } from "../../bonds";
-import { kindName } from "../../boons";
+import { kindName, shortName } from "../../boons";
 import { readableMinimum } from "../../boonStatistics";
 import { ChartFrame, clanKey, clanSlots, diverging, formatValue, Legend, sequential, series, slotOf, useMarks, useZoom, ZoomControls, type ChartTable, type LegendItem } from "../../charts";
+import { OneLine } from "../../components/OneLine";
 import { ErrorText, Select } from "../../components/ui";
 import { linkStatusText, standingText } from "./bondWeb";
 import { DEFAULT_FILTERS, LAYERS, net, obligationWeb, summary, webClans, type Filters, type Layer, type ObligationWeb as Web, type Person, type Sources, type Tie } from "./obligation";
@@ -278,8 +279,9 @@ function Drawing({ web, slots, colourBy, loading }: { web: Web; slots: ReturnTyp
       { key: "what", label: "What" },
     ],
     rows: web.ties.map((t) => ({
-      from: placed.get(t.from)?.name ?? "",
-      to: placed.get(t.to)?.name ?? "",
+      // A boon's name-only side can be a passage of story (#990): a line of it.
+      from: shortName(placed.get(t.from)?.name ?? ""),
+      to: shortName(placed.get(t.to)?.name ?? ""),
       layer: LAYERS.find((l) => l.value === t.layer)!.label,
       what: tieText(t),
     })),
@@ -341,7 +343,7 @@ function Drawing({ web, slots, colourBy, loading }: { web: Web; slots: ReturnTyp
                 const style = STYLE[t.layer];
                 const dim = lit !== null && !touches(t, lit);
                 const tip = {
-                  title: `${s.name} → ${e.name}`,
+                  title: `${shortName(s.name, 30)} → ${shortName(e.name, 30)}`,
                   rows: [
                     { label: "tie", value: LAYERS.find((l) => l.value === t.layer)!.label },
                     ...(t.layer === "boons"
@@ -380,7 +382,7 @@ function Drawing({ web, slots, colourBy, loading }: { web: Web; slots: ReturnTyp
                 const r = size(ties(n.key));
                 const dim = lit !== null && n.key !== lit && !near.has(n.key);
                 const tip = {
-                  title: n.name,
+                  title: shortName(n.name),
                   rows: [
                     { label: "clan", value: clanKey(n.clan) },
                     ...(n.titles.length ? [{ label: "holds", value: n.titles.join(", ") }] : []),
@@ -454,7 +456,7 @@ function Drawing({ web, slots, colourBy, loading }: { web: Web; slots: ReturnTyp
       {chosen && (
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-mist" aria-live="polite">
           <span>
-            <span className="text-parchment">{chosen.name}</span>:{" "}
+            <OneLine text={chosen.name} className="text-parchment" />:{" "}
             {summary(web, chosen)
               .map((r) => `${r.label} ${r.value}`)
               .join("; ")}

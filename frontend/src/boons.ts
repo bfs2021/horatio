@@ -77,15 +77,40 @@ export function kindName(kind: BoonKind): string {
   return KINDS.find((k) => k.value === kind)?.label ?? kind;
 }
 
+/**
+ * The longest name-only side of a boon a Harpy, a talon or a player writes. The troupe's
+ * running staff write up to LONGEST_TEXT there (#990): a passage of story where a name
+ * would be, for a ledger used as a prop, or "The Moon".
+ */
+export const LONGEST_NAME = 200;
+export const LONGEST_TEXT = 2000;
+
+/** The hint for a side of a boon written as text, not picked (#990). */
+export const ANY_TEXT_HINT = "A name, or anything else the ledger should say: an NPC with no sheet, a mortal, the Moon. Its other side's player sees this as written.";
+
+/**
+ * A name cut to `most` characters, at a word where it can be, with "…": a side of a boon
+ * can be a passage of story (#990), and where only a line fits (a label, a chart, a
+ * sentence) the whole of it would swamp the rest. Shorter names are as they are.
+ */
+export function shortName(name: string, most = 60): string {
+  if (name.length <= most) return name;
+  const flat = name.replace(/\s+/g, " ").trim();
+  if (flat.length <= most) return flat;
+  const cut = flat.slice(0, most - 1);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > most / 2 ? cut.slice(0, space) : cut).trimEnd()}…`;
+}
+
 /** A party's name, with how it left play when it has: "Mercer (Final Death)". A name only is just the name. */
 export function partyName(party: Party): string {
   if (!party.standing || party.standing === "active") return party.name;
   return `${party.name} (${STANDINGS[party.standing]})`;
 }
 
-/** "Agnes owes Bram". */
+/** "Agnes owes Bram", a long side cut short. */
 export function owes(boon: Pick<BoonOut, "debtor" | "creditor">): string {
-  return `${boon.debtor.name} owes ${boon.creditor.name}`;
+  return `${shortName(boon.debtor.name)} owes ${shortName(boon.creditor.name)}`;
 }
 
 /** Where a boon stands now, for its row: "Settled: called in", "Void", or "" while it stands. */
@@ -212,7 +237,7 @@ export const FLAG_NAMES: Record<BoonFlag["kind"], string> = {
 export function flagBody(flag: BoonFlag, boon: Pick<BoonOut, "debtor" | "creditor">): string {
   if (flag.kind === "unmatched" && flag.side) {
     const name = flag.side === "debtor" ? boon.debtor.name : boon.creditor.name;
-    return `${flag.side}, ${name}: ${flag.detail}`;
+    return `${flag.side}, ${shortName(name)}: ${flag.detail}`;
   }
   if (flag.kind === "duplicate") return flag.detail;
   return `${flag.raised_by ? `by ${flag.raised_by}: ` : ""}${flag.note}`;

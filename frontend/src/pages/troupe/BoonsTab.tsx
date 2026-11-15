@@ -27,9 +27,11 @@ import {
   type EntryRow,
   type SettledHow,
 } from "../../boons";
+import { DataTable, type Column } from "../../components/DataTable";
 import { DateInput } from "../../components/DateInput";
 import { SectionLabel } from "../../components/Headings";
 import { useToast } from "../../components/Toast";
+import { useWidePage } from "../../components/widePage";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
@@ -108,6 +110,8 @@ function ReviewOnly({ troupeId }: { troupeId: string }) {
 
 function Ledger({ troupeId }: { troupeId: string }) {
   const harpy = useContext(HarpyMode);
+  // Room for the table at 1280 px and up (#975).
+  useWidePage();
   const [params, setParams] = useSearchParams();
   const [view, setView] = useState<BoonView>("open");
   // The review queue (#687) in place of the ledger's views.
@@ -120,7 +124,6 @@ function Ledger({ troupeId }: { troupeId: string }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [adding, setAdding] = useState(false);
-  const [open, setOpen] = useState<string | null>(null);
   // Bumped to empty the character box when the filters are cleared.
   const [cleared, setCleared] = useState(0);
   const query = {
@@ -197,7 +200,6 @@ function Ledger({ troupeId }: { troupeId: string }) {
               onClick={() => {
                 setView(v.value);
                 setReviewing(false);
-                setOpen(null);
               }}
             >
               {v.label} <span className="text-mist">({counts[v.value] ?? 0})</span>
@@ -208,10 +210,7 @@ function Ledger({ troupeId }: { troupeId: string }) {
               role="tab"
               aria-selected={reviewing}
               variant={reviewing ? "secondary" : "ghost"}
-              onClick={() => {
-                setReviewing(true);
-                setOpen(null);
-              }}
+              onClick={() => setReviewing(true)}
             >
               To review <span className="text-mist">({toReview})</span>
             </Button>
@@ -252,18 +251,7 @@ function Ledger({ troupeId }: { troupeId: string }) {
       ) : boons.length === 0 ? (
         <Empty>{narrowed ? "No boons match." : view === "open" ? "No open boons yet." : "None here."}</Empty>
       ) : (
-        <ul aria-label="Boons" aria-busy={ledger.isPlaceholderData} className={`flex flex-col gap-2 ${ledger.isPlaceholderData ? "opacity-60" : ""}`}>
-          {boons.map((boon) => (
-            <BoonRow
-              key={boon.id}
-              troupeId={troupeId}
-              boon={boon}
-              characters={characters}
-              open={open === boon.id}
-              onToggle={() => setOpen(open === boon.id ? null : boon.id)}
-            />
-          ))}
-        </ul>
+        <BoonTable key={view} troupeId={troupeId} boons={boons} characters={characters} busy={ledger.isPlaceholderData} />
       )}
 
       {(!harpy || harpy.audit) && <AuditsCard troupeId={troupeId} inPlay={!!harpy} />}
@@ -271,60 +259,134 @@ function Ledger({ troupeId }: { troupeId: string }) {
   );
 }
 
-function BoonRow({
-  troupeId,
-  boon,
-  characters,
-  open,
-  onToggle,
-}: {
-  troupeId: string;
-  boon: BoonOut;
-  characters: CharacterChoice[];
-  open: boolean;
-  onToggle: () => void;
-}) {
+/** A boon's name, for its row and its detail: "Agnes owes Bram, minor". */
+function boonLabel(boon: BoonOut): string {
+  return `${owes(boon)}, ${kindName(boon.kind).toLowerCase()}`;
+}
+
+/**
+ * The ledger's boons, one line each (#975), as the troupe's old sheet has them: who
+ * owes whom, the kind, the night, the reason, and where it stands. A click on a row
+ * opens its detail under it. On a phone each row folds to "Debtor owes Creditor",
+ * then its kind, night and reason.
+ */
+function BoonTable({ troupeId, boons, characters, busy }: { troupeId: string; boons: BoonOut[]; characters: CharacterChoice[]; busy: boolean }) {
   const dates = useDates();
-  const state = stateText(boon);
+  const columns: Column<BoonOut>[] = [
+    {
+      key: "debtor",
+      header: "Debtor",
+      phone: "title",
+      cell: (b) => (
+        <span className="flex flex-wrap items-center gap-x-1.5">
+          <PartyName party={b.debtor} />
+          {/* A phone's first line has the creditor too: "Agnes owes Bram". */}
+          <span className="text-mist lg:hidden">owes</span>
+          <span className="flex max-w-full min-w-0 lg:hidden">
+            <PartyName party={b.creditor} disgraced={b.creditor_disgraced} />
+          </span>
+        </span>
+      ),
+    },
+    { key: "creditor", header: "Creditor", phone: "detail", cell: (b) => <PartyName party={b.creditor} disgraced={b.creditor_disgraced} /> },
+    { key: "kind", header: "Kind", phone: "shown", bare: true, cell: (b) => <span className="whitespace-nowrap text-gold">{kindName(b.kind)}</span> },
+    { key: "date", header: "Date", phone: "shown", bare: true, cell: (b) => <span className="whitespace-nowrap">{dates.day(b.made_on)}</span> },
+    {
+      key: "reason",
+      header: "Reason",
+      phone: "shown",
+      bare: true,
+      // The rest of the width, each line cut to fit; the detail has them in full.
+      className: "w-full max-w-0",
+      cell: (b) => (
+        <>
+          <span className="block truncate text-mist" title={b.reason || undefined}>
+            {b.reason}
+          </span>
+          {b.conditions && (
+            <span className="block truncate text-xs text-mist" title={b.conditions}>
+              Conditions: {b.conditions}
+            </span>
+          )}
+        </>
+      ),
+      folded: (b) =>
+        b.reason ? (
+          <span className="block truncate text-mist" title={b.reason}>
+            {b.reason}
+          </span>
+        ) : null,
+    },
+    {
+      key: "state",
+      header: "State",
+      phone: "shown",
+      bare: true,
+      cell: (b) => <BoonMarks boon={b} />,
+      folded: (b) => (stateText(b) || b.flagged ? <BoonMarks boon={b} /> : null),
+    },
+  ];
   return (
-    <li aria-label={`${owes(boon)}, ${kindName(boon.kind).toLowerCase()}`} className="rounded-lg border border-ash bg-dusk p-3 text-sm">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p>
-            <PartyName party={boon.debtor} />
-            <span className="text-mist"> owes </span>
-            <PartyName party={boon.creditor} />
-            <span className="text-mist"> · </span>
-            <span className="text-gold">{kindName(boon.kind)}</span>
-            <span className="text-mist"> · {dates.day(boon.made_on)}</span>
-          </p>
-          {boon.reason && <p className="text-mist">{boon.reason}</p>}
-          {boon.conditions && <p className="text-xs text-mist">Conditions: {boon.conditions}</p>}
-          {boon.creditor_disgraced && <p className="text-xs text-blood-bright">{disgracedText(partyName(boon.creditor))}</p>}
-        </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          {state && <Badge tone={boon.state === "void" ? "blood" : "mist"}>{state}</Badge>}
-          <Button variant="ghost" aria-expanded={open} onClick={onToggle}>
-            {open ? "Close" : "Open"}
-          </Button>
-        </div>
-      </div>
-      {open && <BoonDetail troupeId={troupeId} boonId={boon.id} characters={characters} />}
-    </li>
+    <DataTable
+      label="Boons"
+      columns={columns}
+      rows={boons}
+      rowKey={(b) => b.id}
+      rowLabel={boonLabel}
+      stackBelow="lg"
+      dense
+      busy={busy}
+      className={busy ? "opacity-60" : ""}
+      expand={{
+        label: (b) => `Details: ${boonLabel(b)}`,
+        wholeRow: true,
+        render: (b) => (
+          <section aria-label={`Boon: ${boonLabel(b)}`}>
+            <BoonDetail troupeId={troupeId} boonId={b.id} characters={characters} />
+          </section>
+        ),
+      }}
+    />
   );
 }
 
-/** A side of a boon, marked when they're a Boonbreaker (#717). */
-function PartyName({ party }: { party: BoonOut["debtor"] }) {
+/** Where a boon stands, and whether a flag on it waits for a ruling (#687). */
+function BoonMarks({ boon }: { boon: BoonOut }) {
+  const state = stateText(boon);
   return (
-    <>
-      <span className="text-parchment">{partyName(party)}</span>
+    <span className="flex flex-wrap gap-1">
+      {state && <Badge tone={boon.state === "void" ? "blood" : "mist"}>{state}</Badge>}
+      {boon.flagged && <Badge tone="gold">Flagged</Badge>}
+    </span>
+  );
+}
+
+const LEFT: Record<NonNullable<BoonOut["debtor"]["left"]>, string> = { dead: "Dead", off_field: "Off-field" };
+
+/**
+ * A side of a boon on one line, its name cut to fit: in italics for a name only,
+ * someone not in Horatio; with a quiet mark for one who is dead or off-field (as the
+ * court knows it, for a Harpy); marked when they're a Boonbreaker (#717), or, as
+ * the creditor, Disgraced (the sentence is in the detail).
+ */
+function PartyName({ party, disgraced = false }: { party: BoonOut["debtor"]; disgraced?: boolean }) {
+  return (
+    <span className="flex max-w-full min-w-0 items-center gap-1">
+      <span className={`max-w-full min-w-0 truncate text-parchment lg:max-w-48 ${party.character_id ? "" : "italic"}`} title={party.name}>
+        {party.name}
+      </span>
+      {party.left && <Badge className="shrink-0">{LEFT[party.left]}</Badge>}
       {party.boonbreaker && (
-        <Badge tone="blood" className="ml-1">
+        <Badge tone="blood" className="shrink-0">
           Boonbreaker
         </Badge>
       )}
-    </>
+      {disgraced && (
+        <Badge tone="blood" className="shrink-0">
+          Disgraced
+        </Badge>
+      )}
+    </span>
   );
 }
 
@@ -360,7 +422,20 @@ function BoonDetail({ troupeId, boonId, characters }: { troupeId: string; boonId
   const actions = actionsFor(b.state).filter((a) => !harpy || (a === "edit" ? harpy.edit : harpy.settle));
   return (
     <div className="mt-3 flex flex-col gap-3 border-t border-ash pt-3">
+      {b.creditor_disgraced && <p className="text-sm text-blood-bright">{disgracedText(partyName(b.creditor))}</p>}
       <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
+        {b.reason && (
+          <>
+            <dt className="text-mist">Reason</dt>
+            <dd className="wrap-anywhere whitespace-pre-line">{b.reason}</dd>
+          </>
+        )}
+        {b.conditions && (
+          <>
+            <dt className="text-mist">Conditions</dt>
+            <dd className="wrap-anywhere whitespace-pre-line">{b.conditions}</dd>
+          </>
+        )}
         <dt className="text-mist">Registered</dt>
         <dd>
           {dates.dateTime(b.submitted_at)}

@@ -7457,6 +7457,11 @@
             ],
             "title": "Events"
           },
+          "flagged": {
+            "default": false,
+            "title": "Flagged",
+            "type": "boolean"
+          },
           "flags": {
             "anyOf": [
               {
@@ -7671,6 +7676,21 @@
               }
             ],
             "title": "Kind"
+          },
+          "left": {
+            "anyOf": [
+              {
+                "enum": [
+                  "dead",
+                  "off_field"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Left"
           },
           "name": {
             "title": "Name",

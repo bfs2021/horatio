@@ -4,6 +4,7 @@ import { BackLink } from "../../components/BackLink";
 import { useMe } from "../../hooks";
 import { AuditTab } from "./AuditTab";
 import { BackupsTab } from "./BackupsTab";
+import { BoonImportTab } from "./BoonImportTab";
 import { ClanLogosTab } from "./ClanLogosTab";
 import { PeopleTab } from "./PeopleTab";
 import { SiteTab } from "./SiteTab";
@@ -56,6 +57,15 @@ export function CustodianPage() {
             <>
               <BackLink label="Tools" to="/custodian/tools" className="mb-3" />
               <YorickImportTab />
+            </>
+          }
+        />
+        <Route
+          path="tools/boon-import"
+          element={
+            <>
+              <BackLink label="Tools" to="/custodian/tools" className="mb-3" />
+              <BoonImportTab />
             </>
           }
         />

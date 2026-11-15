@@ -521,7 +521,8 @@ test("in the Play View's Boons tab a player reports a boon, sees what the troupe
   await settle.getByRole("button", { name: "Mark it settled" }).click();
   await expect(owed.getByText("No boons in the ledger are owed to Isolde Marrow.")).toBeVisible();
   await owed.getByText("Settled (1)").click();
-  await expect(owed.getByRole("listitem", { name: "Major boon from Tobiah Venn" })).toContainText("Settled: forgiven");
+  // With the day it was settled, a date and not NaN (#998).
+  await expect(owed.getByRole("listitem", { name: "Major boon from Tobiah Venn" })).toContainText(/Settled: forgiven, \d{1,2} [A-Z][a-z]{2} \d{4}\. For old times\./);
 
   // In the ledger, staff see it was done as Isolde.
   await l.goto(`/troupes/${troupe.id}/boons`);
@@ -816,6 +817,8 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
   await h.getByRole("button", { name: "Give access" }).click();
   await expect(h.getByText("Wren Ashby has access to the ledger.")).toBeVisible();
   await expect(h.getByRole("list", { name: "Lesser Harpies" })).toContainText("Wren Ashby sees the ledger and adds boons");
+  // With who gave it and the day, a date and not "NaN Nov 2026" (#998).
+  await expect(h.getByRole("list", { name: "Lesser Harpies" })).toContainText(/Given by Morwen Vale, \d{1,2} [A-Z][a-z]{2} \d{4}/);
 
   // Wren's player opens the ledger from her Play View, and registers a boon as Wren.
   const t = talon.page;

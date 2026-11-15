@@ -87232,6 +87232,51 @@
         ]
       }
     },
+    "/api/troupes/{troupe_id}/boon-workbook": {
+      "get": {
+        "description": "The whole boon ledger as a workbook shaped like the troupe's old sheet (#988),\nfor those who may export it (`export_boons`), with the same columns: every boon\n(Master, newest first); those in the Active, Departed and Settled views; those with\na flag still raised, with what each flag says (Flagged); and, for those who may\nread them, the Standings. Settled boons are tinted green, others naming someone\ngone pale red. A Harpy's holds only what their ledger and standings show them.\nThe export goes in the troupe's log.",
+        "operationId": "export_workbook_api_troupes__troupe_id__boon_workbook_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "troupe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Troupe Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Workbook",
+        "tags": [
+          "boons"
+        ]
+      }
+    },
     "/api/troupes/{troupe_id}/boonbreakers": {
       "get": {
         "description": "Everyone marked a Boonbreaker in the troupe's ledger, standing marks first.",

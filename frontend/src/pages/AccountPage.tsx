@@ -17,7 +17,7 @@ const MAX_LINKS = 6;
 /** Where the Discord username's hint sends the player to link or unlink their Discord. */
 const SIGN_IN = (
   <Link to="/account/sign-in" className="underline hover:text-parchment">
-    Sign-in and email
+    the Sign-in and email tab
   </Link>
 );
 

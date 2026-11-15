@@ -8963,6 +8963,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/troupes/{troupe_id}/boon-workbook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Workbook
+         * @description The whole boon ledger as a workbook shaped like the troupe's old sheet (#988),
+         *     for those who may export it (`export_boons`), with the same columns: every boon
+         *     (Master, newest first); those in the Active, Departed and Settled views; those with
+         *     a flag still raised, with what each flag says (Flagged); and, for those who may
+         *     read them, the Standings. Settled boons are tinted green, others naming someone
+         *     gone pale red. A Harpy's holds only what their ledger and standings show them.
+         *     The export goes in the troupe's log.
+         */
+        get: operations["export_workbook_api_troupes__troupe_id__boon_workbook_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/troupes/{troupe_id}/boonbreakers": {
         parameters: {
             query?: never;
@@ -54529,6 +54555,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoonWeightsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_workbook_api_troupes__troupe_id__boon_workbook_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                troupe_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
                 };
             };
             /** @description Validation Error */

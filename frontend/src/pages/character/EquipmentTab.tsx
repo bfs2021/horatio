@@ -192,12 +192,7 @@ export function EquipmentCard({
         >
           {item.effects.map((e) => (
             <li key={e.name}>
-              <span
-                className="text-gold"
-                title={`${item.special_troupe_name}'s own`}
-              >
-                ★ {e.name}
-              </span>
+              <span className="text-gold">★ {e.name}</span>
               <span className="text-mist">: {e.effect}</span>
             </li>
           ))}

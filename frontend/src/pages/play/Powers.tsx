@@ -56,7 +56,7 @@ function Picks({ power, tap }: { power: PowerSwitch; tap: Tap }) {
         {choicesOf(power).map((c) =>
           c.amounts.length === 1 && c.amounts[0]!.amount === null ? (
             <li key={c.name}>
-              <button type="button" aria-pressed={power.picked.includes(c.amounts[0]!.option.name)} title={c.amounts[0]!.option.play} onClick={() => pick(c.amounts[0]!.option)} className={pill(power.picked.includes(c.amounts[0]!.option.name))}>
+              <button type="button" aria-pressed={power.picked.includes(c.amounts[0]!.option.name)} onClick={() => pick(c.amounts[0]!.option)} className={pill(power.picked.includes(c.amounts[0]!.option.name))}>
                 {c.name}
               </button>
             </li>
@@ -64,7 +64,7 @@ function Picks({ power, tap }: { power: PowerSwitch; tap: Tap }) {
             <li key={c.name} className="flex items-center gap-1" role="group" aria-label={c.label ? `${c.name}: ${c.label}` : c.name}>
               <span className="text-xs text-mist">{c.label ? `${c.name} (${c.label})` : c.name}:</span>
               {c.amounts.map(({ option, amount }) => (
-                <button key={option.name} type="button" aria-pressed={power.picked.includes(option.name)} aria-label={option.name} title={option.play} onClick={() => pick(option)} className={pill(power.picked.includes(option.name))}>
+                <button key={option.name} type="button" aria-pressed={power.picked.includes(option.name)} aria-label={option.name} onClick={() => pick(option)} className={pill(power.picked.includes(option.name))}>
                   {amount}
                 </button>
               ))}
@@ -106,7 +106,7 @@ function OptionPicks({ option, tap }: { option: OptionPicked; tap: Tap }) {
           const picked = option.picked.includes(q.name);
           return (
             <li key={q.name}>
-              <button type="button" aria-pressed={picked} title={q.play} onClick={() => tap({ kind: "change", tracker: pickKey(option.key, q.name), amount: picked ? -1 : 1 })} className={pill(picked)}>
+              <button type="button" aria-pressed={picked} onClick={() => tap({ kind: "change", tracker: pickKey(option.key, q.name), amount: picked ? -1 : 1 })} className={pill(picked)}>
                 {q.name}
               </button>
             </li>

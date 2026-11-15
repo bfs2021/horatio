@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { PlayReference, RosterEntry, SceneOut, TestPool } from "../../api/types";
@@ -111,7 +111,7 @@ export function ScenePage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-1">
           <Breadcrumb crumbs={[...atGameCrumbs(troupeId, troupe.data?.name), { label: "Scenes", to: list }]} />
           {awake && (
-            <span className="rounded-full border border-ash px-2.5 py-0.5 text-xs whitespace-nowrap text-mist" title="Kept on while the Scene view is open, as your settings ask.">
+            <span className="rounded-full border border-ash px-2.5 py-0.5 text-xs whitespace-nowrap text-mist">
               ☀ Screen awake
             </span>
           )}
@@ -459,9 +459,10 @@ function StockCard({ pin, back, onRemove }: { pin: SceneOut["stock"][number]; ba
         ) : (
           <ErrorText error={view.error} />
         )}
-        <Button variant="secondary" className="self-start" onClick={onRemove} disabled={!onRemove} title={onRemove ? undefined : "Needs a connection"}>
+        <Button variant="secondary" className="self-start" onClick={onRemove} disabled={!onRemove}>
           Remove from the scene
         </Button>
+        <RemoveNeedsSignal onRemove={onRemove} />
       </article>
     );
   }
@@ -519,13 +520,18 @@ function StockCard({ pin, back, onRemove }: { pin: SceneOut["stock"][number]; ba
         className="self-start text-xs text-mist underline hover:text-parchment disabled:no-underline disabled:opacity-50"
         onClick={onRemove}
         disabled={!onRemove}
-        title={onRemove ? undefined : "Needs a connection"}
         aria-label={`Remove ${name} from the scene`}
       >
         Remove from the scene
       </button>
+      <RemoveNeedsSignal onRemove={onRemove} />
     </article>
   );
+}
+
+/** Why Remove from the scene is off: it waits on a connection. */
+function RemoveNeedsSignal({ onRemove }: { onRemove?: () => void }) {
+  return onRemove ? null : <p className="text-xs text-mist">Removing needs a connection.</p>;
 }
 
 /** A card's initiative now, with what the Pools tab counts, and the attributes that break a tie. */
@@ -571,9 +577,10 @@ function SceneCard({ characterId, back, onRemove, onRank }: { characterId: strin
         ) : (
           <ErrorText error={view.error} />
         )}
-        <Button variant="secondary" className="self-start" onClick={onRemove} disabled={!onRemove} title={onRemove ? undefined : "Needs a connection"}>
+        <Button variant="secondary" className="self-start" onClick={onRemove} disabled={!onRemove}>
           Remove from the scene
         </Button>
+        <RemoveNeedsSignal onRemove={onRemove} />
       </article>
     );
   }
@@ -583,9 +590,10 @@ function SceneCard({ characterId, back, onRemove, onRank }: { characterId: strin
       <article className="flex flex-col gap-2 rounded-lg border border-ash bg-dusk p-3" aria-label={shown.character_name}>
         <h2 className="truncate text-lg leading-tight text-gold">{shown.character_name}</h2>
         <NotUsed name={shown.character_name} className="text-sm" />
-        <Button variant="secondary" className="self-start" onClick={onRemove} disabled={!onRemove} title={onRemove ? undefined : "Needs a connection"}>
+        <Button variant="secondary" className="self-start" onClick={onRemove} disabled={!onRemove}>
           Remove from the scene
         </Button>
+        <RemoveNeedsSignal onRemove={onRemove} />
       </article>
     );
   }
@@ -608,9 +616,10 @@ function SceneCard({ characterId, back, onRemove, onRank }: { characterId: strin
           <LinesVeilsNote value={reference?.lines_veils} who={shown.player_name} />
           {/* The form they are in (issue #200), switched on the full Play View. */}
           {formsOn(shown).map((f) => (
-            <span key={f.key} className="mt-1 inline-block rounded-full border border-gold/60 bg-gold/10 px-2 py-0.5 text-xs text-gold" title={f.notes.join(" ")}>
-              {f.name}
-            </span>
+            <Fragment key={f.key}>
+              <span className="mt-1 inline-block rounded-full border border-gold/60 bg-gold/10 px-2 py-0.5 text-xs text-gold">{f.name}</span>
+              {f.notes.length > 0 && <span className="block text-xs text-mist">{f.notes.join(" ")}</span>}
+            </Fragment>
           ))}
         </div>
         <SyncStatus sync={sync} />
@@ -679,11 +688,11 @@ function SceneCard({ characterId, back, onRemove, onRank }: { characterId: strin
         className="self-start text-xs text-mist underline hover:text-parchment disabled:no-underline disabled:opacity-50"
         onClick={onRemove}
         disabled={!onRemove}
-        title={onRemove ? undefined : "Needs a connection"}
         aria-label={`Remove ${name} from the scene`}
       >
         Remove from the scene
       </button>
+      <RemoveNeedsSignal onRemove={onRemove} />
     </article>
   );
 }

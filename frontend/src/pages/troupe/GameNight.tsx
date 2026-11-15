@@ -264,12 +264,12 @@ function AttendanceCard({ night }: { night: GameNight }) {
                   type="button"
                   variant="secondary"
                   disabled={!chosenOther?.home || markAbsentee.isPending}
-                  title={chosenOther && !chosenOther.home ? "A visitor's home troupe awards its XP." : undefined}
                   onClick={() => markAbsentee.mutate({ id: chosen, on: true })}
                 >
                   Mark absentee
                 </Button>
               )}
+              {absentee && started && chosenOther && !chosenOther.home && <span className="self-center text-xs text-mist">A visitor's home troupe awards its XP.</span>}
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={rested} onChange={(e) => setRested(e.target.checked)} />

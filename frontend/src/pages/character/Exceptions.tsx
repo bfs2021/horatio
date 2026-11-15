@@ -11,7 +11,7 @@ export function exceptionText(exception: ExceptionOut, date: (at: string) => str
   return `Given by exception: ${who}${exception.at ? `, ${date(exception.at)}` : ""}${free}`;
 }
 
-/** Beside a trait held by exception: the mark, with why on hover, or on a tap. */
+/** Beside a trait held by exception: the mark, with why on a tap. */
 export function ExceptionMark({ exception }: { exception: ExceptionOut }) {
   const dates = useDates();
   const [open, setOpen] = useState(false);
@@ -21,7 +21,6 @@ export function ExceptionMark({ exception }: { exception: ExceptionOut }) {
       <button
         type="button"
         aria-expanded={open}
-        title={`${text}. ${exception.reason}`}
         className="ml-2 rounded border border-gold/50 px-1 text-xs text-gold"
         onClick={() => setOpen(!open)}
       >

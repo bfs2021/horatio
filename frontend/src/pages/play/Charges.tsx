@@ -55,7 +55,6 @@ export function Charges({ charges, view, use }: { charges: Charge[]; view: Pick<
                     variant="ghost"
                     className="min-h-10 px-3 pointer-coarse:min-h-11"
                     disabled={taps.length === 0}
-                    title={taps.length === 0 ? "Nothing to let go" : undefined}
                     aria-label={`${c.name}: ${f.label}`}
                     onClick={() => use(taps)}
                   >

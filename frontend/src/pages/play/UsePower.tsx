@@ -120,6 +120,10 @@ export function UseButtons({
   // Waived, it costs nothing: one button for each switch, spending none (#849).
   const amounts = free ? [0] : amountsOf(cost);
   const spending = (amount: number): Cost => ({ ...cost, amount });
+  // Why a button is off, or free, beside them: a hover title never shows on a phone.
+  const why = [amounts.some((amount) => left < amount) || (others.length > 0 && left < cost.amount) ? `Not enough ${what}` : null, free ? `Free while ${free} is on` : null]
+    .filter(Boolean)
+    .join(". ");
   return (
     <span className="flex flex-wrap justify-end gap-2">
       {keys.flatMap((key) =>
@@ -136,7 +140,6 @@ export function UseButtons({
               variant="danger"
               className="min-h-10 shrink-0 px-3 pointer-coarse:min-h-11"
               disabled={left < amount || nothing}
-              title={left < amount ? `Not enough ${what}` : free ? `Free while ${free} is on` : undefined}
               aria-label={free ? `Use ${name}, free while ${free} is on` : `Use ${name}, ${amount} ${what}`}
               onClick={() => {
                 const power = key ? view.powers.find((p) => p.key === key) : undefined;
@@ -156,13 +159,13 @@ export function UseButtons({
           variant="secondary"
           className="min-h-10 shrink-0 px-3 pointer-coarse:min-h-11"
           disabled={left < cost.amount}
-          title={left < cost.amount ? `Not enough ${what}` : undefined}
           aria-label={`Use ${p.name} on someone else, ${cost.amount} ${what}`}
           onClick={() => setOnOther(p.key)}
         >
           {others.length > 1 ? shortName(p.name, costed.name) : "On someone else"} · {cost.amount} {what}
         </Button>
       ))}
+      {why && <span className="self-center text-xs text-mist">{why}</span>}
       {picking && view.character_id && (
         <OnOtherPicker
           characterId={view.character_id}
@@ -233,6 +236,7 @@ function UseOnOther({ power, u, view, use, online }: { power: string; u: PowerUs
   const paid = canPay(view, u) && canSpend(view, u);
   const said = [u.once ? `${u.once}.` : null, u.note].filter(Boolean).join(" ");
   const label = `${u.label} on someone else`;
+  const why = !canPay(view, u) ? `Not enough ${u.cost!.tracker === "blood" ? view.blood_name : "Willpower"}` : !paid && counter ? `Not enough ${counter.units}` : null;
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Button
@@ -240,7 +244,6 @@ function UseOnOther({ power, u, view, use, online }: { power: string; u: PowerUs
         variant="secondary"
         className="min-h-10 shrink-0 px-3 pointer-coarse:min-h-11"
         disabled={!paid}
-        title={!canPay(view, u) ? `Not enough ${u.cost!.tracker === "blood" ? view.blood_name : "Willpower"}` : !paid && counter ? `Not enough ${counter.units}` : undefined}
         aria-label={`${power}: ${label}${suffix}`}
         onClick={() => setPicking(true)}
       >
@@ -253,6 +256,7 @@ function UseOnOther({ power, u, view, use, online }: { power: string; u: PowerUs
           {u.page && <span className="whitespace-nowrap">{said ? " " : ""}({u.page})</span>}
         </span>
       )}
+      {why && <span className="text-xs text-mist">{why}</span>}
       {picking && view.character_id && (
         <OnOtherPicker
           characterId={view.character_id}
@@ -287,21 +291,25 @@ function UseEffect({ power, u, view, use }: { power: string; u: PowerUse; view: 
       : !canSpend(view, u) && counter
         ? `Not enough ${counter.units}`
         : "Nothing to change now";
-  const button = (label: string, taps: ReturnType<typeof effectTaps>, key?: string, end: string = suffix) => (
-    <Button
-      key={key ?? label}
-      type="button"
-      variant="secondary"
-      className="min-h-10 shrink-0 px-3 pointer-coarse:min-h-11"
-      disabled={taps.length === 0}
-      title={taps.length === 0 ? short : undefined}
-      aria-label={`${power}: ${label}${end}`}
-      onClick={() => use(taps)}
-    >
-      {label}
-      {end}
-    </Button>
-  );
+  // Why a use is off, said beside it: a hover title never shows on a phone.
+  const why: string[] = [];
+  const button = (label: string, taps: ReturnType<typeof effectTaps>, key?: string, end: string = suffix) => {
+    if (taps.length === 0 && !why.includes(short)) why.push(short);
+    return (
+      <Button
+        key={key ?? label}
+        type="button"
+        variant="secondary"
+        className="min-h-10 shrink-0 px-3 pointer-coarse:min-h-11"
+        disabled={taps.length === 0}
+        aria-label={`${power}: ${label}${end}`}
+        onClick={() => use(taps)}
+      >
+        {label}
+        {end}
+      </Button>
+    );
+  };
   let body;
   if (u.retainer) {
     const kept = ghouls(view, u);
@@ -312,6 +320,8 @@ function UseEffect({ power, u, view, use }: { power: string; u: PowerUse; view: 
         kept.map((r) => button(`${u.label} to ${r.name || "Retainer"}`, effectTaps(view, u, power, { retainer: r.key }), r.key))
       );
   } else if (u.heal?.damage === "asked") {
+    if (!asking && !canPay(view, u)) why.push(short);
+    else if (!asking && view.health.marks.length === 0) why.push("No damage to undo");
     body = asking ? (
       <Asked power={power} u={u} view={view} suffix={suffix} done={() => setAsking(false)} use={use} />
     ) : (
@@ -320,7 +330,6 @@ function UseEffect({ power, u, view, use }: { power: string; u: PowerUse; view: 
         variant="secondary"
         className="min-h-10 shrink-0 px-3 pointer-coarse:min-h-11"
         disabled={!canPay(view, u) || view.health.marks.length === 0}
-        title={!canPay(view, u) ? short : view.health.marks.length === 0 ? "No damage to undo" : undefined}
         aria-label={`${power}: ${u.label}${suffix}`}
         onClick={() => setAsking(true)}
       >
@@ -344,6 +353,7 @@ function UseEffect({ power, u, view, use }: { power: string; u: PowerUse; view: 
           {u.page && <span className="whitespace-nowrap">{said ? " " : ""}({u.page})</span>}
         </span>
       )}
+      {why.length > 0 && <span className="text-xs text-mist">{why[0]}</span>}
     </div>
   );
 }

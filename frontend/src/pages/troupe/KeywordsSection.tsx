@@ -110,7 +110,7 @@ export function KeywordsSection({ troupeId, canEdit }: { troupeId: string; canEd
                   {kinds}
                   {k.science && <span className="block text-xs">Fits a Science</span>}
                 </td>
-                <td className={`${WIDE} py-2.5 pr-3 align-top text-mist`} title={data.steps.find((s) => s.step === k.step)?.name}>
+                <td className={`${WIDE} py-2.5 pr-3 align-top text-mist`}>
                   {k.step}
                 </td>
                 <td className="w-px py-1 text-right align-top">

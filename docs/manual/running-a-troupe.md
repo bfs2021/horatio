@@ -108,6 +108,8 @@ A troupe's page has its tabs in groups, one for each job. Which tabs you see dep
 
 A number on a tab is how much waits on you there, such as approvals to decide.
 
+On a narrow screen a row of tabs can run past the edge. A small round arrow at that edge says there are more: choose it, or scroll the row sideways, to see them.
+
 On a phone, the groups and their tabs give way to one button at the top that says where you are, such as **Customise › Troupe settings**, with how much waits on you in all at its right. Tap it for a list of every group with its tabs under it, and tap a tab to go there.
 
 ## The Overview and what's waiting on you

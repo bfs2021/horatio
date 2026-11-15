@@ -391,6 +391,61 @@ test("staff write a passage of story on a side of a boon, cut to a line, and its
   await expect(p.locator(`[id="${await more.getAttribute("aria-controls")}"]`)).toHaveText(story);
 });
 
+test("staff export the ledger from its ⋯ menu: this view or the whole ledger, as a CSV file or a spreadsheet (#986)", async ({ browser }) => {
+  const custodian = await person(browser, "bexport-custodian");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "bexport-lead");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Debts Exported ${run}`, lead_handle: lead.handle });
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/boon-ledger`, { on: true });
+  // Names only on either side, and a reason a spreadsheet would run as a formula.
+  const boon = (debtor: string, creditor: string, kind: string, reason: string) => ({ debtor: { name: debtor }, creditor: { name: creditor }, kind, made_on: "2026-10-03", reason });
+  await send(lead.page, "POST", `/api/troupes/${troupe.id}/boons`, {
+    boons: [boon("Odile Marchand", "Rufus Kett", "major", "=2+2"), boon("Rufus Kett", "Odile Marchand", "minor", "Directions")],
+  });
+
+  const l = lead.page;
+  await l.goto(`/troupes/${troupe.id}`);
+  await troupeTab(l, "Boons");
+  const ledger = ledgerOf(l);
+  await expect(ledger.rows).toHaveCount(2);
+  await l.getByRole("group", { name: "Kinds" }).getByRole("button", { name: "Major" }).click();
+  await expect(ledger.rows).toHaveCount(1);
+
+  const { readFile } = await import("node:fs/promises");
+  const exported = async (item: string) => {
+    await l.getByRole("button", { name: "More for the ledger" }).click();
+    const downloading = l.waitForEvent("download");
+    await l.getByRole("menuitem", { name: item }).click();
+    return downloading;
+  };
+  // This view: the major boon only, its formula kept as text, in a file Excel reads as UTF-8.
+  const view = await exported("This view (CSV)");
+  expect(view.suggestedFilename()).toMatch(/^debts-exported-.*-boons-\d{4}-\d{2}-\d{2}\.csv$/);
+  const csv = (await readFile(await view.path(), "utf8")).trimEnd().split("\r\n");
+  expect(csv[0]).toMatch(/^\uFEFFOwed By,Owed To,Type,Date,Reason,Stipulation,State,/);
+  expect(csv).toHaveLength(2);
+  expect(csv[1]).toMatch(/^Odile Marchand,Rufus Kett,Major,2026-10-03,'=2\+2,,Standing,No,/);
+
+  // The whole ledger, as a spreadsheet.
+  const whole = await exported("Whole ledger (spreadsheet)");
+  expect(whole.suggestedFilename()).toMatch(/-boons-\d{4}-\d{2}-\d{2}\.xlsx$/);
+  const book = await readFile(await whole.path());
+  expect(book.subarray(0, 2).toString()).toBe("PK");
+
+  // Each export is in the troupe's log.
+  const log = await (await l.request.get(`/api/troupes/${troupe.id}/log`)).json();
+  const messages = log.map((e: { message: string }) => e.message);
+  expect(messages).toContain("bexport-lead exported part of the boon ledger as a CSV file (1 boon).");
+  expect(messages).toContain("bexport-lead exported the whole boon ledger as a spreadsheet (2 boons).");
+});
+
 test("staff see the boon standings: each character's net by the troupe's weights, which they can change", async ({ browser }) => {
   const custodian = await person(browser, "bstand-custodian");
   makeCustodian(custodian.email);
@@ -637,7 +692,8 @@ test("in the Play View's Boons tab a player reports a boon, sees what the troupe
   await settle.getByRole("button", { name: "Mark it settled" }).click();
   await expect(owed.getByText("No boons in the ledger are owed to Isolde Marrow.")).toBeVisible();
   await owed.getByText("Settled (1)").click();
-  await expect(owed.getByRole("listitem", { name: "Major boon from Tobiah Venn" })).toContainText("Settled: forgiven");
+  // With the day it was settled, a date and not NaN (#998).
+  await expect(owed.getByRole("listitem", { name: "Major boon from Tobiah Venn" })).toContainText(/Settled: forgiven, \d{1,2} [A-Z][a-z]{2} \d{4}\. For old times\./);
 
   // In the ledger, staff see it was done as Isolde.
   await l.goto(`/troupes/${troupe.id}/boons`);
@@ -932,6 +988,8 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
   await h.getByRole("button", { name: "Give access" }).click();
   await expect(h.getByText("Wren Ashby has access to the ledger.")).toBeVisible();
   await expect(h.getByRole("list", { name: "Lesser Harpies" })).toContainText("Wren Ashby sees the ledger and adds boons");
+  // With who gave it and the day, a date and not "NaN Nov 2026" (#998).
+  await expect(h.getByRole("list", { name: "Lesser Harpies" })).toContainText(/Given by Morwen Vale, \d{1,2} [A-Z][a-z]{2} \d{4}/);
 
   // Wren's player opens the ledger from her Play View, and registers a boon as Wren.
   const t = talon.page;

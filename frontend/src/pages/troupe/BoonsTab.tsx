@@ -40,6 +40,7 @@ import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select, T
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { AuditsCard } from "./BoonAudits";
+import { BoonExportMenu } from "./BoonExport";
 import { Boonbreakers } from "./Boonbreakers";
 import { BoonReviewQueue, ReviewPanel } from "./BoonReview";
 import { ledgerQuery, narrowed, readLedger, sortBy, writeLedger, type LedgerSearch, type LedgerSort } from "./boonSearch";
@@ -234,7 +235,8 @@ function Ledger({ troupeId }: { troupeId: string }) {
           toReview={reviews ? toReview : null}
           characters={characters}
           games={games.data ?? []}
-          // #986's ⋯ "More for the ledger" menu goes here, at the end of the search's row.
+          // Staff's exports (#986): this view, or the whole ledger.
+          end={!harpy && <BoonExportMenu troupeId={troupeId} query={reviewing ? null : query} />}
         />
       </div>
 

@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { SeenOut } from "../../api/types";
 import { Pronouns } from "../../components/PronounsInput";
-import { Badge, Button, ErrorText, Input, Loader } from "../../components/ui";
+import { Badge, Button, Empty, ErrorText, Input, Loader } from "../../components/ui";
 import { BackLink } from "../../components/BackLink";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
@@ -60,7 +60,7 @@ export function Others({ view, undo, online }: { view: Shown; undo: (tapId: stri
             </p>
           )}
           <ErrorText error={others.error} />
-          {others.data && found.length === 0 && <p className="mt-2 text-sm text-mist">{query ? "No one by that name." : "No one else in the troupe."}</p>}
+          {others.data && found.length === 0 && <Empty>{query ? "No one by that name." : "No one else in the troupe."}</Empty>}
           <ul className="mt-2 grid gap-2 sm:grid-cols-2">
             {found.map((o) => (
               <li key={o.character_id}>
@@ -148,7 +148,7 @@ function OtherStatus({ view, otherId, undo, online, onBack }: { view: Shown; oth
                   ? `Leadership: ${leadership.left} of ${leadership.uses} left this game, to learn where a fleeting status came from.`
                   : "Without Leadership, you know their status but not where it came from (MET: VTM p. 310)."}
               </p>
-              {data.status.length === 0 && <p className="text-sm text-mist">No status at this game.</p>}
+              {data.status.length === 0 && <Empty>No status at this game.</Empty>}
               {GROUPS.map((g) => {
                 const items = data.status!.filter((s) => s.type === g.type).map((s) => shownSeen(s, view.log));
                 if (items.length === 0) return null;

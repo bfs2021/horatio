@@ -6,7 +6,7 @@ import type { CatalogueOut, CharacterOut, EmbraceOut, EmbracePlanOut, EmbraceSte
 import { useClanName } from "../../components/ClanNames";
 import { DateInput } from "../../components/DateInput";
 import { Dialog } from "../../components/Dialog";
-import { Button, Card, ErrorText, Field, Input, Select, Textarea } from "../../components/ui";
+import { Button, Card, Empty, ErrorText, Field, Input, Select, Textarea } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { listed } from "./creation/notices";
@@ -324,7 +324,7 @@ function EmbraceForm({ character, catalogue, onClose }: { character: CharacterOu
             <legend className="mb-1 text-mist">
               Merits and flaws the Storyteller lets change. Merits: {p.merit_points} of {p.merit_limit} points.
             </legend>
-            {p.removable.length === 0 && <p className="text-mist">None to take off.</p>}
+            {p.removable.length === 0 && <Empty>None to take off.</Empty>}
             {[...p.removable, ...removedNow(draft, p)].map((r) => {
               const key = removeKey(r);
               const chosen = draft.remove.includes(key);
@@ -459,7 +459,7 @@ function SirePage({
           <Field label="Find a vampire" hint="PCs and NPCs whose sheets you see, with a clan.">
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name…" />
           </Field>
-          {found.data && found.data.length === 0 && <p className="text-sm text-mist">No vampire found.</p>}
+          {found.data && found.data.length === 0 && <Empty>No vampire found.</Empty>}
           {found.data && found.data.length > 0 && (
             <ul aria-label="Vampires found" className="flex flex-col gap-1">
               {found.data.map((c) => (

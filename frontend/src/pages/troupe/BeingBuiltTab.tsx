@@ -4,7 +4,8 @@ import { api, unwrap } from "../../api/client";
 import type { BuildEntry } from "../../api/types";
 import { Avatar } from "../../components/Avatar";
 import { useClanName } from "../../components/ClanNames";
-import { Badge, Card, Empty, ErrorText, Loading } from "../../components/ui";
+import { EmptyState } from "../../components/EmptyState";
+import { Badge, Card, ErrorText, Loading } from "../../components/ui";
 import { useDates } from "../../dates";
 
 /** The characters built to this troupe's rules whose players haven't yet asked to make
@@ -15,21 +16,26 @@ export function BeingBuiltTab({ troupeId }: { troupeId: string }) {
     queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/builds", { params: { path: { troupe_id: troupeId } } })),
   });
 
+  const about = "Characters built to this troupe's rules whose players haven't asked to make it home yet. Once they ask, they move to Approvals.";
   return (
     <>
-      <p className="mb-4 text-sm text-mist">
-        Characters built to this troupe&apos;s rules whose players haven&apos;t asked to make it home yet. Once they ask, they move to Approvals.
-      </p>
       {builds.isPending ? (
         <Loading />
       ) : builds.data?.length ? (
-        <div className="flex flex-col gap-4">
-          {builds.data.map((b) => (
-            <BuildCard key={b.character_id} troupeId={troupeId} build={b} />
-          ))}
-        </div>
+        <>
+          <p className="mb-4 text-sm text-mist">{about}</p>
+          <div className="flex flex-col gap-4">
+            {builds.data.map((b) => (
+              <BuildCard key={b.character_id} troupeId={troupeId} build={b} />
+            ))}
+          </div>
+        </>
       ) : (
-        <Empty>No one is building a character to this troupe&apos;s rules.</Empty>
+        !builds.error && (
+          <Card>
+            <EmptyState title="No one is building a character to this troupe's rules.">{about}</EmptyState>
+          </Card>
+        )
       )}
       <ErrorText error={builds.error} />
     </>

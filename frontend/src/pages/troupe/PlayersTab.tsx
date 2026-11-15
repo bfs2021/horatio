@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
+import { EmptyState } from "../../components/EmptyState";
 import { AtHandle } from "../../components/PersonPicker";
 import { Badge, Card, Empty, ErrorText, Input, Loading } from "../../components/ui";
 import { roleLabel } from "./roles";
@@ -22,7 +23,14 @@ export function PlayersTab({ troupeId }: { troupeId: string }) {
   if (roster.error) return <ErrorText error={roster.error} />;
 
   const everyone = troupePlayers(roster.data);
-  if (!everyone.length) return <Empty>No players have a character in this troupe yet.</Empty>;
+  if (!everyone.length)
+    return (
+      <Card title="Players">
+        <EmptyState title="No players have a character in this troupe yet.">
+          A player shows here, with their characters, once one of them plays in this troupe: made home here, or visiting.
+        </EmptyState>
+      </Card>
+    );
   const shown = searchPlayers(everyone, query);
   const roles = new Map((staff.data ?? []).map((m) => [m.user_id, m.role]));
 
@@ -40,7 +48,7 @@ export function PlayersTab({ troupeId }: { troupeId: string }) {
         {shown.length} of {everyone.length} players
       </p>
       {shown.length === 0 ? (
-        <p className="py-3 text-sm text-mist">No players match.</p>
+        <Empty>No players match.</Empty>
       ) : (
         <ul className="divide-y divide-ash">
           {shown.map((player) => {

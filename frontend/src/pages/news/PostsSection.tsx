@@ -6,6 +6,7 @@ import type { PostOut } from "../../api/types";
 import { useAction } from "../../hooks";
 import { manualLink } from "../../manualLink";
 import { Button, Card, Empty, ErrorText, Field, Loading, Select } from "../../components/ui";
+import { EmptyState } from "../../components/EmptyState";
 import { LinkButton } from "../../components/LinkButton";
 import { Desk } from "./Desk";
 import { KINDS, type Kind } from "./posts";
@@ -116,13 +117,20 @@ function PostList({ troupeId, kind, writes, proposes }: { troupeId: string; kind
         <ErrorText error={list.error} />
       ) : posts.length === 0 ? (
         <Card>
-          <Empty>
-            {agencyId ? `Nothing from this agency yet.` : `No ${words.nouns} yet.`} {writes && (
-              <Link to="write" className="text-gold underline">
-                Write the first.
-              </Link>
-            )}
-          </Empty>
+          <EmptyState
+            title={agencyId ? "Nothing from this agency yet." : `No ${words.nouns} yet.`}
+            action={
+              (writes || proposes) && (
+                <LinkButton variant="secondary" to="write">
+                  {writes ? `Write ${words.one}` : `Propose ${words.one}`}
+                </LinkButton>
+              )
+            }
+          >
+            {kind === "news"
+              ? "Stories from the troupe's news agencies show here once the storytellers publish them."
+              : "Word from the storytellers to the troupe's players shows here once they publish it."}
+          </EmptyState>
         </Card>
       ) : (
         <ul className="flex flex-col gap-3" aria-label={words.title}>

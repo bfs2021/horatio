@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type KeyboardEvent } from "react";
 import type { CharacterChoice } from "../../api/types";
-import { Input } from "../../components/ui";
+import { Empty, Input } from "../../components/ui";
 import { findCharacters } from "./logInfluence";
 
 type Option = { kind: "character"; character: CharacterChoice } | { kind: "name"; name: string };
@@ -132,7 +132,11 @@ export function WhoPicker({
               </li>
             ))}
           </ul>
-          {options.length === 0 && <p className="px-3 py-2 text-sm text-mist">No characters yet. Type a name to log it under.</p>}
+          {options.length === 0 && (
+            <div className="px-3">
+              <Empty>No characters yet. Type a name to log it under.</Empty>
+            </div>
+          )}
         </div>
       )}
     </div>

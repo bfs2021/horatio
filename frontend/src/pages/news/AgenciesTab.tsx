@@ -7,7 +7,8 @@ import { ActionMenu, MenuGroup, MenuItem } from "../../components/ActionMenu";
 import { Avatar } from "../../components/Avatar";
 import { Dialog } from "../../components/Dialog";
 import { useToast } from "../../components/Toast";
-import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading } from "../../components/ui";
+import { EmptyState } from "../../components/EmptyState";
+import { Badge, Button, Card, ErrorText, Field, Input, Loading } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { manualLink } from "../../manualLink";
 import { AgencyPortrait } from "./AgencyPortrait";
@@ -58,7 +59,9 @@ export function AgenciesTab({ troupeId, archived }: { troupeId: string; archived
         ) : agencies.error ? (
           <ErrorText error={agencies.error} />
         ) : agencies.data.length === 0 ? (
-          <Empty>No agencies yet. Add one to start writing news.</Empty>
+          <EmptyState title="No agencies yet.">
+            {archived ? "The storytellers added none." : "Every story is written as one of them. Add the first with Add an agency, above."}
+          </EmptyState>
         ) : (
           <table aria-label="News agencies" className="w-full text-sm">
             <thead className="max-lg:sr-only">

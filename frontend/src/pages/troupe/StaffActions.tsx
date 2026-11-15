@@ -14,7 +14,7 @@ import { ClaimLink, GiveToPlayer } from "./GiveNpc";
 import { MakeNpc } from "./MakeNpc";
 import { abilities } from "./roles";
 import { staffActions, type StaffAction, type Staffing } from "./staffActions";
-import { titleGives, titleGroups, titleStatusWords } from "./titleGroups";
+import { titleGroups } from "./titleGroups";
 
 function useTroupe(troupeId: string) {
   return useQuery({
@@ -267,6 +267,15 @@ function Titles({ troupeId, entry }: { troupeId: string; entry: RosterEntry }) {
         ) : (
           <p className="text-sm text-mist">No titles here yet.</p>
         )}
+        {/* What the pills' star and red mean, which a hover title can't tell a phone. */}
+        {entry.active_title && entry.titles.includes(entry.active_title) && (
+          <p className="mt-1 text-xs text-mist">★ {entry.active_title} is the active title: the one that gives status.</p>
+        )}
+        {entry.titles.some((t) => entry.out_of_sect_titles.includes(t)) && (
+          <p className="mt-1 text-xs text-mist">
+            In red: out of sect, as {entry.character_name} is {entry.sect ?? "of no sect"}. Kept until taken.
+          </p>
+        )}
         <ErrorText error={save.error} />
       </section>
       <section>
@@ -319,7 +328,6 @@ function GiveTitle({ troupeId, entry, onGive }: { troupeId: string; entry: Roste
                   <button
                     type="button"
                     className="rounded-full border border-ash px-2.5 py-1 text-xs hover:border-gold hover:text-gold"
-                    title={titleGives(titleStatusWords(t), t)}
                     onClick={() => give(t.name)}
                   >
                     {t.name}

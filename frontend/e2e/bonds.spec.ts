@@ -372,10 +372,10 @@ test("staff record a Vaulderie: ratings come from it, a false Sabbat's are one-w
 
   // Both of a pair feel the same rating; nobody gains one toward the false Sabbat.
   const ratings = section.getByRole("table", { name: "Vinculum ratings" });
-  await expect(ratings.locator('td[title="Ilse Varga toward Dmitri Sava: 1, kinship"]')).toBeVisible();
-  await expect(ratings.locator('td[title="Dmitri Sava toward Ilse Varga: 1, kinship"]')).toBeVisible();
-  await expect(ratings.locator('td[title="Old Petra toward Ilse Varga: 1, kinship"]')).toBeVisible();
-  await expect(ratings.locator('td[title^="Ilse Varga toward Old Petra"]')).toHaveCount(0);
+  await expect(ratings.locator('td[aria-label="Ilse Varga toward Dmitri Sava: 1, kinship"]')).toBeVisible();
+  await expect(ratings.locator('td[aria-label="Dmitri Sava toward Ilse Varga: 1, kinship"]')).toBeVisible();
+  await expect(ratings.locator('td[aria-label="Old Petra toward Ilse Varga: 1, kinship"]')).toBeVisible();
+  await expect(ratings.locator('td[aria-label^="Ilse Varga toward Old Petra"]')).toHaveCount(0);
   await expect(section.getByRole("list", { name: "Vaulderie log" })).toContainText("Ilse Varga, Dmitri Sava and Old Petra (false Sabbat)");
 
   // Taking part lowered Ilse's bond to the Bishop a step (Errata p. 434).

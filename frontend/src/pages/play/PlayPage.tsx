@@ -396,20 +396,19 @@ export type KeepAwake = ReturnType<typeof useKeepAwake>;
 /** Keeping the screen awake, on or off, in the Play View's header; remembered on the device. */
 export function AwakeSwitch({ awake }: { awake: KeepAwake }) {
   const can = typeof navigator !== "undefined" && "wakeLock" in navigator;
-  const title = !awake.on ? "The screen may dim and lock as usual." : can ? (awake.held ? "The screen stays on while the Play View is open." : "Asking to keep the screen on…") : "This browser can't keep the screen on.";
   return (
     <button
       type="button"
       aria-pressed={awake.on}
       aria-label="Keep the screen awake"
-      title={title}
       onClick={() => awake.set(!awake.on)}
       className={cx(
         "inline-flex min-h-10 items-center rounded-full border px-2.5 text-xs whitespace-nowrap",
         awake.on ? "border-gold/60 bg-gold/10 text-gold" : "border-ash text-mist line-through",
       )}
     >
-      ☀ Awake
+      {/* Switched on in a browser that can't keep the screen on, it says so. */}
+      {awake.on && !can ? "☀ Can't keep awake" : "☀ Awake"}
     </button>
   );
 }
@@ -421,7 +420,7 @@ export function AwakeSwitch({ awake }: { awake: KeepAwake }) {
  */
 export function UndoLast({ last, undo }: { last: ShownEntry | undefined; undo: (entry: ShownEntry) => void }) {
   return (
-    <Button variant="secondary" className="px-3" disabled={!last} onClick={() => last && undo(last)} title={last ? `Undo ${last.text}` : undefined}>
+    <Button variant="secondary" className="px-3" disabled={!last} onClick={() => last && undo(last)} aria-description={last ? `Undo ${last.text}` : undefined}>
       Undo
     </Button>
   );
@@ -556,7 +555,7 @@ function Identity({ view }: { view: PlayView }) {
       : [named(view.clan), view.sect]),
     // A ghoul's domitor, beside the clan it takes from it.
     reference?.domitor ? (
-      <span key="domitor" className="whitespace-nowrap" title={named(reference.domitor.weakness) ?? undefined}>
+      <span key="domitor" className="whitespace-nowrap">
         Domitor: <span className="text-parchment/90">{reference.domitor.name}</span>
       </span>
     ) : null,
@@ -750,7 +749,6 @@ export function HealthTracker({ view, record }: { view: PlayView; record: Record
                 .map((b, i) => (
                   <span
                     key={i}
-                    title={b.from ? `From ${b.from.name}${b.option ? `: ${b.option}` : ""}` : undefined}
                     aria-label={`${b.mark ? `${b.mark} damage` : "unmarked"}${b.from ? ", from the form" : ""}`}
                     className={cx(
                       "grid h-9 w-9 place-items-center rounded-md border text-lg leading-none",

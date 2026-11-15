@@ -165,7 +165,6 @@ function Toolbar({ editor }: { editor: Editor | null }) {
               buttons.current[i] = el;
             }}
             type="button"
-            title={t.label}
             aria-label={t.label}
             aria-pressed={t.active === undefined ? undefined : t.active}
             disabled={t.disabled}

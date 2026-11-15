@@ -93,10 +93,13 @@ export function InfluenceTab({ character, mine }: { character: CharacterOut; min
           <Field label="To">
             <DateInput value={filters.to} onChange={(e) => set({ to: e.target.value })} />
           </Field>
-          <label className="flex items-center gap-2 self-end pb-2 text-sm" title="What a Gossip or Word on the Street could still turn up">
-            <input type="checkbox" checked={filters.findable} onChange={(e) => set({ findable: e.target.checked })} />
-            Findable now (last {h.lookback_days} days)
-          </label>
+          <span className="flex items-center gap-1 self-end pb-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={filters.findable} onChange={(e) => set({ findable: e.target.checked })} />
+              Findable now (last {h.lookback_days} days)
+            </label>
+            <InfoButton label="About Findable now">What a Gossip or Word on the Street could still turn up.</InfoButton>
+          </span>
         </div>
       </FilterBar>
       {h.entries.length === 0 ? null : shown.length === 0 ? (

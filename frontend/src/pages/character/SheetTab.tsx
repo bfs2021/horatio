@@ -669,10 +669,9 @@ export function SheetTab({
             </div>
             <div>
               <dt className="text-xs text-mist">Spent</dt>
-              {/* Net of refunds and flaws taken, so it can be below 0. */}
-              <dd className="text-lg" title={s.xp.spent < 0 ? "Flaws and refunds have given back more XP than has been spent" : undefined}>
-                {xpTotal(s.xp.spent)}
-              </dd>
+              {/* Net of refunds and flaws taken, so it can be below 0: said under it, as a hover title never shows on a phone. */}
+              <dd className="text-lg">{xpTotal(s.xp.spent)}</dd>
+              {s.xp.spent < 0 && <dd className="text-xs leading-tight text-mist">flaws and refunds gave back more</dd>}
             </div>
           </dl>
           {s.xp.lost > 0 && (
@@ -884,7 +883,7 @@ function TraitRow({
               {exception && <ExceptionMark exception={exception} />}
               <BannedMark change={about?.changed} />
               <CategoryMark change={about?.changed} />
-              {houseLabel && <HouseMark label={houseLabel} summary={houseSummary} />}
+              {houseLabel && <HouseMark label={houseLabel} />}
               {trait.house?.applied && (
                 <span className="ml-2 text-xs text-mist">given by staff{trait.house.applied.free ? ", free" : ""}</span>
               )}
@@ -943,7 +942,6 @@ function TraitRow({
             <Button
               variant="secondary"
               disabled={!to}
-              title={`Changing it costs ${swap.cost} XP.`}
               onClick={() => {
                 onSwap(to);
                 setSwapping(false);

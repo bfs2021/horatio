@@ -639,7 +639,7 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   // The whole page shows, scaled down on a phone to fit it; the paper size links to its setting.
   const paper = await p.locator("article").first().boundingBox();
   expect(paper!.width).toBeLessThanOrEqual(p.viewportSize()!.width);
-  await expect(p.getByRole("link", { name: "For US Letter" })).toHaveAttribute("href", "/account/settings");
+  await expect(p.getByRole("link", { name: "For US Letter · change" })).toHaveAttribute("href", "/account/settings");
   await p.screenshot(shots("print"));
   if (test.info().project.name === "desktop") {
     await p.emulateMedia({ media: "print" });

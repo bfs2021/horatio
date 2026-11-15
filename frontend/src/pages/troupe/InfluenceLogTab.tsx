@@ -518,7 +518,7 @@ export function EntryForm({
           {entry ? "Save changes" : "Log it"}
         </Button>
         {!entry && (
-          <Button type="button" variant="secondary" title="Log this one, and start the next with the same date, cycle and who" disabled={save.isPending || !ready} onClick={() => save.mutate(true)}>
+          <Button type="button" variant="secondary" disabled={save.isPending || !ready} onClick={() => save.mutate(true)}>
             Add another
           </Button>
         )}
@@ -526,6 +526,7 @@ export function EntryForm({
           {logged ? "Done" : "Cancel"}
         </Button>
       </div>
+      {!entry && <p className="text-xs text-mist">Add another logs this one and starts the next with the same date, cycle and who.</p>}
     </form>
   );
 }

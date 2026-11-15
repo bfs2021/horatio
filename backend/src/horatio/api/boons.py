@@ -342,18 +342,20 @@ def event_out(
     names: Mapping[uuid.UUID, str],
     diffs: bool,
     harpy: bool = False,
+    named: bool = True,
 ) -> BoonEventOut:
     """A line of the boon's log. Only those who see what edits changed get an edit's
     changes; a Harpy (#688) sees the character a line was done as, never who did it
-    out of game."""
+    out of game. Not `named`, a line outside a Harpy's sight shown all the same (#992,
+    horatio.boon_harpy.log_for) says neither who did it nor its note."""
     shown = diffs or line.kind != "edited"
     return BoonEventOut(
         id=line.id,
         kind=line.kind,  # type: ignore[arg-type]  # checked by the database
-        note=line.note,
+        note=line.note if named else "",
         at=line.created_at,
         by=users.get(line.actor_id) if line.actor_id and not harpy else None,
-        as_character=names.get(line.as_character_id) if line.as_character_id else None,
+        as_character=names.get(line.as_character_id) if line.as_character_id and named else None,
         changes=[BoonChangeOut(field=f, before=b, after=a) for f, (b, a) in line.changes.items()]
         if shown
         else None,
@@ -377,9 +379,11 @@ def full_out(
     db: DbSession, user: User, troupe: Troupe, boon: Boon, keeper: Keeper | None = None
 ) -> BoonOut:
     """The boon with its log and its flags, its changes shown as far as `user` may see
-    them, as `keeper` sees it (staff by default)."""
+    them, as `keeper` sees it (staff by default): a Harpy or a Lesser Harpy reads only
+    the lines in their sight (#992), and never who raised a flag."""
     harpy = keeper is not None and not keeper.staff
     lines = boons.events_of(db, boon)
+    shown = boon_harpy.log_for(keeper, lines) if keeper is not None else [(e, True) for e in lines]
     flags = boon_reviews.raised(db, [boon.id])
     users = users_of(
         db, [boon.submitted_by, *(e.actor_id for e in lines), *(f.raised_by for f in flags)]
@@ -399,8 +403,8 @@ def full_out(
         marked=boonbreakers.marked(db, troupe.id),
     )
     diffs = boons.sees_changes(db, user, troupe)
-    out.events = [event_out(e, users, names, diffs, harpy) for e in lines]
-    out.flags = [flag_out(f, users) for f in flags]
+    out.events = [event_out(e, users, names, diffs, harpy, named) for e, named in shown]
+    out.flags = [flag_out(f, {} if harpy else users) for f in flags]
     found = boon_gallant.offer(db, boon)
     if found is not None and boon_gallant.keeper_answers(keeper):
         out.gallant = gallant_out(found)

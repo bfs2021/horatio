@@ -17,10 +17,11 @@ the ledger as "departed", out of the open boons.
 Each boon keeps its own log (BoonEvent): its registering, every edit, trade,
 passing on, settling, voiding and reopening, with who did it, when and a note.
 An edit keeps what it changed, field by field, which only the troupe's
-storytellers and assistant storytellers see (`sees_changes`); anyone else who may
-see the boon (the Harpy, #688) sees that it was edited, when, and the note. A
-trade, a passing on, a settling or a reopening says what it did to anyone who sees
-the boon.
+storytellers and assistant storytellers see (`sees_changes`). A Harpy (#688) or a
+Lesser Harpy (#689) reads only the lines within their own sight (#992,
+horatio.boon_harpy.in_sight): theirs, not an earlier Harpy's, and never staff's
+edits. A trade, a passing on, a settling or a reopening says what it did to anyone
+who sees the line.
 Each change also goes in the troupe's log, which is for its running staff; never
 in a character's own, which its player reads.
 
@@ -291,9 +292,13 @@ def event(
     note: str = "",
     changes: Mapping[str, tuple[str, str]] | None = None,
     as_character: Character | None = None,
+    role: str | None = None,
 ) -> BoonEvent:
     """A line in the boon's own log: done as `as_character` for a player in the Play
-    View (#686), or a Harpy (#688)."""
+    View (#686), or a Harpy (#688). Who that is (`BoonEvent.role`, #992) is `role`, if
+    the caller knows it already, else found (horatio.boon_harpy.acting_as)."""
+    if role is None:
+        role = acting_as(db, boon.troupe_id, as_character)
     line = BoonEvent(
         boon_id=boon.id,
         kind=kind,
@@ -301,9 +306,21 @@ def event(
         changes={k: list(v) for k, v in (changes or {}).items()},
         actor_id=user.id,
         as_character_id=as_character.id if as_character is not None else None,
+        role=role,
     )
     db.add(line)
     return line
+
+
+def acting_as(db: Session, troupe_id: uuid.UUID, as_character: Character | None) -> str:
+    """Who a line is done as: "staff", "harpy", "talon" or "player" (#992)."""
+    if as_character is None:
+        return "staff"
+    from horatio import boon_harpy  # imports this module
+
+    troupe = db.get(Troupe, troupe_id)
+    assert troupe is not None  # a boon's troupe
+    return boon_harpy.acting_as(db, troupe, as_character)
 
 
 def log(db: Session, user: User, action: str, boon: Boon, **data: Any) -> None:
@@ -363,6 +380,7 @@ def register(
     submitted to wait for review (horatio.boon_reviews, #687); registered at the
     troupe's game `game_id`, if staff say so (checked by the caller)."""
     terms = check_new(debtor, creditor, terms, count)
+    role = acting_as(db, troupe.id, as_character)
     made: list[Boon] = []
     for _ in range(count):
         boon = Boon(
@@ -382,7 +400,7 @@ def register(
         db.add(boon)
         db.flush()
         kind = "submitted" if pending else "registered"
-        event(db, user, boon, kind, note.strip(), as_character=as_character)
+        event(db, user, boon, kind, note.strip(), as_character=as_character, role=role)
         made.append(boon)
     log(
         db,

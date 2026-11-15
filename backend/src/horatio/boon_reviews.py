@@ -349,6 +349,7 @@ def link(
     else:
         targets = [(boon, side)]
     note = note.strip()
+    role = boons.acting_as(db, troupe.id, as_character)
     linked: set[uuid.UUID] = set()
     skipped: set[uuid.UUID] = set()
     for b, s in targets:
@@ -359,7 +360,7 @@ def link(
         was = getattr(b, f"{s}_name")
         boons.place(b, s, boons.Party(to, ""))
         db.flush()
-        boons.event(db, user, b, "linked", note, {s: (was, to.name)}, as_character)
+        boons.event(db, user, b, "linked", note, {s: (was, to.name)}, as_character, role)
         linked.add(b.id)
         clear_flags(
             db,

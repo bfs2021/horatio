@@ -953,6 +953,7 @@ MESSAGES: dict[str, str] = {
     "house.boon_harpy": "{actor} gave the Harpy {setting}.",
     "house.boon_harpy_standings": "{actor} {setting} the boon standings and statistics.",
     "house.boon_talons": "{actor} set the Harpy {setting}.",
+    "house.boon_harpy_sees_talons": "{actor} set the Harpy {setting} what their {word} change.",
     "boon.talon_given": "{actor}{acting} made {character_name} a {word}, to {can}.",
     "boon.talon_changed": "{actor}{acting} let {character_name}, a {word}, {can}.",
     "boon.talon_removed": "{actor}{acting} took away {character_name}'s access as a {word}.",

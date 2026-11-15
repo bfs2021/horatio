@@ -50,6 +50,11 @@ export function BoonLedgerSetting({ troupe, canEdit }: { troupe: TroupeOut; canE
       {!canEdit && on && troupe.boon_talons && troupe.boon_harpy === "full" && (
         <p className="mt-1 text-sm">The Harpy may give others access to the ledger, as {troupe.boon_talon_word ?? "Lesser Harpies"}.</p>
       )}
+      {!canEdit && on && troupe.boon_talons && troupe.boon_harpy === "full" && (
+        <p className="mt-1 text-sm">
+          {troupe.boon_harpy_sees_talons === false ? "What talons change is kept from the Harpy." : "The Harpy sees what their talons change."}
+        </p>
+      )}
     </SettingCard>
   );
 }

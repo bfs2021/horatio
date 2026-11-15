@@ -4,6 +4,7 @@ import { api, unwrap } from "../../api/client";
 import type { BoonTalonsOut, TalonOut, TroupeOut } from "../../api/types";
 import { Checkbox } from "../../components/Checkbox";
 import { useToast } from "../../components/Toast";
+import { Toggle } from "../../components/Toggle";
 import { Button, Card, Empty, ErrorText, Field, Loading, Select } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
@@ -15,6 +16,10 @@ type Can = { can_add: boolean; can_edit: boolean; can_settle: boolean; can_audit
 export function oneOf(word: string) {
   return word === "Talons" ? "Talon" : "Lesser Harpy";
 }
+
+/** On the setting that keeps what talons change from the Harpy (#992). */
+const HARPY_SEES_HINT =
+  "Off, a talon's edits, trades and settlements don't show in the log the Harpy reads, so a talon can alter the ledger behind the Harpy's back. Staff always see everything.";
 
 const NONE: Can = { can_add: false, can_edit: false, can_settle: false, can_audit: false };
 
@@ -60,17 +65,23 @@ function useTalons(troupeId: string) {
 /**
  * Whether the Harpy may give others access to the ledger (#689), and what the troupe
  * calls them: Lesser Harpies or Talons. Only while the Harpy has the full ledger. With
- * it on, staff see who has what, and may take it away.
+ * it on, staff see who has what, and may take it away, and say whether the Harpy sees,
+ * in a boon's log, what they change (#992).
  */
 export function TalonsSetting({ troupe }: { troupe: TroupeOut }) {
   const toast = useToast();
   // Shown as chosen at once, while it saves.
   const [on, setOn] = useState(troupe.boon_talons ?? false);
   const [word, setWord] = useState<Word>(troupe.boon_talon_word ?? "Lesser Harpies");
+  const [harpySees, setHarpySees] = useState(troupe.boon_harpy_sees_talons ?? true);
   const full = troupe.boon_harpy === "full";
   const save = useAction(async (next: { on: boolean; word: Word }) => {
     await unwrap(api.PUT("/api/troupes/{troupe_id}/boon-talons-setting", { params: { path: { troupe_id: troupe.id } }, body: next }));
     toast({ message: next.on ? `Saved: the Harpy may give others access to the ledger, as ${next.word}.` : "Saved: the Harpy gives no one access." });
+  });
+  const saveSees = useAction(async (next: boolean) => {
+    await unwrap(api.PUT("/api/troupes/{troupe_id}/boon-talons-setting", { params: { path: { troupe_id: troupe.id } }, body: { on, word, harpy_sees: next } }));
+    toast({ message: next ? "Saved: the Harpy sees what their talons change." : "Saved: what talons change is kept from the Harpy." });
   });
   const choose = (next: { on: boolean; word: Word }) => {
     setOn(next.on);
@@ -104,7 +115,20 @@ export function TalonsSetting({ troupe }: { troupe: TroupeOut }) {
           </Select>
         </Field>
       )}
+      {on && full && (
+        <Toggle
+          label="The Harpy sees what their talons change"
+          hint={HARPY_SEES_HINT}
+          checked={harpySees}
+          disabled={saveSees.isPending || save.isPending}
+          onChange={(next) => {
+            setHarpySees(next);
+            saveSees.mutate(next, { onError: () => setHarpySees(!next) });
+          }}
+        />
+      )}
       <ErrorText error={save.error} />
+      <ErrorText error={saveSees.error} />
       {on && full && <StaffTalons troupeId={troupe.id} />}
     </fieldset>
   );

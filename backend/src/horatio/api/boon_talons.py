@@ -10,7 +10,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
-from horatio import boon_talons, boons
+from horatio import boon_harpy, boon_talons, boons
 from horatio.api.downtimes import staff_troupe
 from horatio.api.troupes import TroupeOut, troupe_out
 from horatio.auth.deps import CurrentUser, DbSession
@@ -27,6 +27,8 @@ class BoonTalonsSettingIn(BaseModel):
     on: bool
     # What the troupe calls them.
     word: TalonWord = "Lesser Harpies"
+    # The Harpy sees, in a boon's log, what they change (#992); left out, unchanged.
+    harpy_sees: bool | None = None
 
 
 class TalonIn(BaseModel):
@@ -125,9 +127,12 @@ def set_boon_talons(
     troupe_id: uuid.UUID, body: BoonTalonsSettingIn, db: DbSession, user: CurrentUser
 ) -> TroupeOut:
     """Whether the troupe's Harpy may give others access to its boon ledger (#689),
-    and what it calls them. Only used while the Harpy has the full ledger."""
+    and what it calls them; and whether the Harpy sees, in a boon's log, what they
+    change (#992). Only used while the Harpy has the full ledger."""
     troupe = staff_troupe(db, user, troupe_id, TroupeAction.MANAGE_HOUSE_RULES)
     boon_talons.set_setting(db, user, troupe, body.on, body.word)
+    if body.harpy_sees is not None:
+        boon_harpy.set_sees_talons(db, user, troupe, body.harpy_sees)
     db.commit()
     return troupe_out(db, user, troupe)
 

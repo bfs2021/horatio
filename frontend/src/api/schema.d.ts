@@ -8835,7 +8835,8 @@ export interface paths {
         /**
          * Set Boon Talons
          * @description Whether the troupe's Harpy may give others access to its boon ledger (#689),
-         *     and what it calls them. Only used while the Harpy has the full ledger.
+         *     and what it calls them; and whether the Harpy sees, in a boon's log, what they
+         *     change (#992). Only used while the Harpy has the full ledger.
          */
         put: operations["set_boon_talons_api_troupes__troupe_id__boon_talons_setting_put"];
         post?: never;
@@ -16841,6 +16842,8 @@ export interface components {
         };
         /** BoonTalonsSettingIn */
         BoonTalonsSettingIn: {
+            /** Harpy Sees */
+            harpy_sees?: boolean | null;
             /** On */
             on: boolean;
             /**
@@ -35461,6 +35464,11 @@ export interface components {
              * @enum {string}
              */
             boon_harpy: "none" | "submissions" | "full";
+            /**
+             * Boon Harpy Sees Talons
+             * @default true
+             */
+            boon_harpy_sees_talons: boolean;
             /**
              * Boon Harpy Standings
              * @default false

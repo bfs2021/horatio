@@ -3,6 +3,7 @@ import { api, unwrap } from "../../api/client";
 import type { ClanBansOut } from "../../api/types";
 import { useClanName } from "../../components/ClanNames";
 import { Checkbox } from "../../components/Checkbox";
+import { CardHeading } from "../../components/Headings";
 import { SettingCard, useSaveOnChange } from "../../components/SettingCard";
 import { Badge, Button, ErrorText } from "../../components/ui";
 
@@ -76,9 +77,10 @@ function BanClans({
   const title = `${ban.sect}: ${ban.label}`;
   return (
     <section aria-label={title} className="text-sm">
-      <h3 className="flex flex-wrap items-center gap-2 text-parchment">
-        {title} <Badge tone={own ? "gold" : "mist"}>{ban.level === "greater" ? "Greater" : "Lesser"}</Badge>
-      </h3>
+      <div className="flex flex-wrap items-center gap-2">
+        <CardHeading>{title}</CardHeading>
+        <Badge tone={own ? "gold" : "mist"}>{ban.level === "greater" ? "Greater" : "Lesser"}</Badge>
+      </div>
       <p className="mt-1">{ban.applies_to ? named(ban.applies_to) : "No such ban here: it names no clans."}</p>
       {own && <p className="text-xs text-mist">The book&apos;s: {named(ban.book_applies_to)}</p>}
       {canEdit && (

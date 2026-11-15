@@ -36,13 +36,15 @@ export function ClanLogosTab() {
           : "Fetch Paradox's Dark Pack resources in Tools to use the clans' symbols under the Dark Pack Agreement, or upload images your troupes have the right to use."}{" "}
         A bloodline without its own logo uses its clan's; a clan without one shows its name only. A PNG with a transparent background prints best.
       </p>
-      <div className="mb-3 flex flex-wrap items-center gap-3">
-        <Input type="search" aria-label="Search clans" placeholder="Clan or bloodline…" value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-40 flex-1" />
+      {/* On a phone the count goes under the search, so neither is squeezed. */}
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <Input type="search" aria-label="Search clans" placeholder="Clan or bloodline…" value={query} onChange={(e) => setQuery(e.target.value)} className="sm:min-w-40 sm:flex-1" />
         <span className="text-sm text-mist">
           {count} of {logos.data.clans.length} have a logo
         </span>
       </div>
-      <ul className="grid gap-2 sm:grid-cols-2">
+      {/* grid-cols-1, not the implicit column: that one grows to the longest name, as a name never wraps. */}
+      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {shown.map((c) => (
           <ClanRow key={`${c.splat}/${c.clan}`} clan={c} />
         ))}
@@ -63,7 +65,7 @@ function ClanRow({ clan }: { clan: ClanLogoOut }) {
   const remove = useAction(() => unwrap(api.DELETE("/api/clan-logos/{logo_id}", { params: { path: { logo_id: clan.logo_id! } } })));
   const bloodline = clan.clan.includes(":");
   return (
-    <li className="flex items-center gap-3 rounded-md border border-ash p-2">
+    <li className="flex min-w-0 items-center gap-3 rounded-md border border-ash p-2">
       {clan.logo || !clan.dark_pack ? (
         <span className="grid h-14 w-14 shrink-0 place-items-center rounded bg-night">
           {clan.logo ? <img src={`${clan.logo}/128.webp`} alt={`${clan.clan} logo`} className="h-12 w-12 object-contain" /> : <span className="text-xs text-mist">none</span>}

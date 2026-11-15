@@ -167,8 +167,15 @@ export function DataTable<T>({
                 )}
                 {columns.map((c) => (
                   <td key={c.key} {...c.cellProps?.(row)} className={`${place(c)} ${c.className ?? ""}`}>
-                    {c.cell(row)}
-                    {c.phone === "title" && fold(row)}
+                    {/* The title's own content in a box of its own, apart from the fold, so its text reads as it did. */}
+                    {c.phone === "title" ? (
+                      <>
+                        <div>{c.cell(row)}</div>
+                        {fold(row)}
+                      </>
+                    ) : (
+                      c.cell(row)
+                    )}
                   </td>
                 ))}
               </tr>

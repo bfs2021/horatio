@@ -3,7 +3,10 @@ import { useState, type ReactNode } from "react";
 import { Link, Route, Routes, useMatch, useParams, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { CharacterOut } from "../../api/types";
+import { NotOpenHere } from "../../components/NotOpenHere";
 import { Badge, ErrorText, Loading, PageTitle, Tabs } from "../../components/ui";
+import { LinkButton } from "../../components/LinkButton";
+import { BackLink } from "../../components/BackLink";
 import { useMe } from "../../hooks";
 import { BackstoryTab, useBackstoryStanding } from "./BackstoryTab";
 import { characterTabGroups, type TabGroup } from "./characterTabs";
@@ -109,12 +112,9 @@ export function CharacterPage() {
   const base = `/characters/${c.id}`;
   const custodian = !!me.data?.is_custodian;
   const primaryLink = (to: string, label: string, secondary = false) => (
-    <Link
-      to={to}
-      className={`inline-flex min-h-10 items-center justify-center rounded-md px-5 text-sm font-medium text-parchment ${secondary ? "border border-ash bg-dusk hover:border-mist" : "bg-blood hover:bg-blood-bright"}`}
-    >
+    <LinkButton variant={secondary ? "secondary" : "primary"} to={to}>
       {label}
-    </Link>
+    </LinkButton>
   );
   // None where its troupe doesn't use the Play View (#673).
   const play = c.play_view && primaryLink(`/play/characters/${c.id}`, "Play", onDowntime);
@@ -188,6 +188,8 @@ export function CharacterPage() {
           <Route path="ic-chat" element={<InCharacterTab character={c} />} />
           <Route path="log" element={<CharacterLogTab characterId={c.id} />} />
           {!c.creation_complete && <Route path="create/:step?" element={<CreationWizard character={c} />} />}
+          {/* A tab not open to them, or no such tab (#907); not before Backstory is known. */}
+          <Route path="*" element={backstory.isLoading ? <Loading /> : <NotOpenHere name={c.name} to={base} />} />
         </Routes>
       </>
     );
@@ -289,6 +291,8 @@ export function CharacterPage() {
             <Route path="results" element={<ResultsTab characterId={c.id} />} />
           </>
         )}
+        {/* A tab not open to them, or no such tab (#907); not before the tabs that wait on an answer are known. */}
+        <Route path="*" element={backstory.isLoading || quests.isLoading || home.isLoading ? <Loading /> : <NotOpenHere name={c.name} to={base} />} />
       </Routes>
     </>
   );
@@ -336,9 +340,7 @@ function StaffView({ character: c }: { character: CharacterOut }) {
           </>
         )}
       </span>
-      <Link to={`/troupes/${t.id}/${back}`} className="text-gold underline hover:text-parchment">
-        ← back to {t.name}
-      </Link>
+      <BackLink label={t.name} to={`/troupes/${t.id}/${back}`} />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import type { ClanName } from "../../clanNames";
 import { ClanNames } from "../../components/ClanNames";
 import type { CycleOut, QuestionIn } from "../../api/types";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Notice, PageTabs, Select, Textarea } from "../../components/ui";
+import { LinkButton } from "../../components/LinkButton";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { useTitle } from "../../title";
@@ -232,9 +233,7 @@ function Overview({ cycle }: { cycle: CycleOut }) {
             )}
             {cycle.status === "closed" && (
               <>
-                <Link to="delivery" className="inline-flex min-h-10 items-center justify-center rounded-md bg-blood px-4 text-sm font-medium text-parchment hover:bg-blood-bright">
-                  Deliver results
-                </Link>
+                <LinkButton to="delivery">Deliver results</LinkButton>
                 <Button variant="secondary" disabled={!p || !deliveries.data} onClick={() => setConfirming("complete")}>
                   Mark complete
                 </Button>

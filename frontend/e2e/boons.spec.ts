@@ -297,8 +297,8 @@ test("in the Play View's Boons tab a player reports a boon, sees what the troupe
   await l.goto(`/troupes/${troupe.id}/boons#settings`);
   await l.getByRole("radio", { name: /^Also what they're owed/ }).check();
   await expect(l.getByText("Saved what players see of the boon ledger.")).toBeVisible();
-  await l.getByRole("checkbox", { name: /^Players mark boons owed to them settled/ }).check();
-  await expect(l.getByRole("checkbox", { name: /^Players mark boons owed to them settled/ })).toBeChecked();
+  await l.getByRole("switch", { name: /^Players mark boons owed to them settled/ }).check();
+  await expect(l.getByRole("switch", { name: /^Players mark boons owed to them settled/ })).toBeChecked();
 
   // Tobiah's player sees what he owes, with no way to settle it.
   const d = debtor.page;
@@ -427,7 +427,7 @@ test("held for review, a player's report waits, flagged for its unlinked name, u
   // The lead holds reports for review.
   const l = lead.page;
   await l.goto(`/troupes/${troupe.id}/boons#settings`);
-  const hold = l.getByRole("checkbox", { name: /^Boons players report wait for review/ });
+  const hold = l.getByRole("switch", { name: /^Boons players report wait for review/ });
   await hold.check();
   await expect(l.getByText("Boons players report now wait for review.")).toBeVisible();
   await expect(hold).toBeChecked();
@@ -779,7 +779,7 @@ test("where the troupe allows it, the Harpy reads the boon standings and statist
   await l.goto(`/troupes/${troupe.id}/boons#settings`);
   await l.getByRole("radio", { name: /^The full ledger/ }).check();
   await expect(l.getByText("Saved: The Harpy keeps the full ledger, and reviews the boons players report.")).toBeVisible();
-  const reads = l.getByRole("checkbox", { name: /^The Harpy also reads the boon standings and statistics/ });
+  const reads = l.getByRole("switch", { name: /^The Harpy also reads the boon standings and statistics/ });
   await reads.check();
   await expect(l.getByText("Saved: the Harpy reads the boon standings and statistics.")).toBeVisible();
   await expect(reads).toBeChecked();

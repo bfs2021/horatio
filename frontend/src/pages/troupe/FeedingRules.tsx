@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { CharacterFeedingOut, CycleFeedingOut, CycleOut, FeedingCardOut, HumorOut, TerritoryUseOut } from "../../api/types";
 import { api, unwrap } from "../../api/client";
+import { Checkbox } from "../../components/Checkbox";
 import { Button, Card, ErrorText, Field, Input, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { MASQUERADE, MOOD, suggestedCards, throwChallenges, type Masquerade, type Mood } from "./feedingRules";
@@ -213,14 +214,12 @@ export function PoachingControls({ character: c, caught, onChange }: { character
         <span className="text-mist">{patrols.length ? "A simple challenge for each action spent patrolling it (Vol. 2, p. 305):" : "No one patrolled it, so no one caught them."}</span>
       </p>
       {patrols.map((p) => (
-        <label key={p.character_id} className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={caught.includes(p.character_id)}
-            onChange={(e) => onChange(e.target.checked ? [...caught, p.character_id] : caught.filter((i) => i !== p.character_id))}
-          />
-          Caught by {p.character_name} ({p.actions} {p.actions === 1 ? "action" : "actions"} patrolling)
-        </label>
+        <Checkbox
+          key={p.character_id}
+          label={`Caught by ${p.character_name} (${p.actions} ${p.actions === 1 ? "action" : "actions"} patrolling)`}
+          checked={caught.includes(p.character_id)}
+          onChange={(on) => onChange(on ? [...caught, p.character_id] : caught.filter((i) => i !== p.character_id))}
+        />
       ))}
       {patrols.length > 0 && (
         <Button type="button" variant="secondary" className="self-start" onClick={() => onChange(throwChallenges(patrols))}>
@@ -254,10 +253,7 @@ export function RestrictionEditor({ cycleId, character: c }: { cycleId: string; 
         </Select>
         <div className="flex flex-wrap gap-3" role="group" aria-label="Last digits">
           {Array.from({ length: 10 }, (_, d) => (
-            <label key={d} className="flex items-center gap-1">
-              <input type="checkbox" checked={endings.includes(d)} onChange={(e) => setEndings(e.target.checked ? [...endings, d] : endings.filter((x) => x !== d))} />
-              {d}
-            </label>
+            <Checkbox key={d} label={String(d)} checked={endings.includes(d)} onChange={(on) => setEndings(on ? [...endings, d] : endings.filter((x) => x !== d))} />
           ))}
         </div>
         <span className="flex gap-2">

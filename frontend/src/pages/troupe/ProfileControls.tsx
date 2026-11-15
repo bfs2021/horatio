@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut, TroupeProfileOut } from "../../api/types";
+import { Toggle } from "../../components/Toggle";
 import { Button, Card, ErrorText, Field, Input, Textarea } from "../../components/ui";
 import { useAction, useRulesAction } from "../../hooks";
 import { publicPath } from "./profile";
@@ -25,37 +26,28 @@ export function PublicSwitch({ profile }: { profile: TroupeProfileOut }) {
 
   return (
     <Card>
-      <div className="flex items-start gap-3">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={on}
-          aria-label="Public"
-          disabled={change.isPending}
-          onClick={() => change.mutate(!on)}
-          className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors disabled:opacity-60 ${
-            on ? "border-gold bg-gold/30" : "border-ash bg-night"
-          }`}
-        >
-          <span className={`inline-block h-4 w-4 rounded-full transition-transform ${on ? "translate-x-6 bg-gold" : "translate-x-1 bg-mist"}`} />
-        </button>
-        <div className="flex min-w-0 flex-col gap-1 text-sm">
-          <p className="text-parchment">{on ? "Public: anyone can see this profile, even people not signed in" : "Signed-in only"}</p>
-          <p className="text-xs text-mist">
-            {on
-              ? "Share the link when recruiting. The venue's street address still shows only to people signed in."
-              : "Only people signed in can see this profile. Switch it on to share it when recruiting."}
-          </p>
-          {on && (
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <span className="font-mono text-xs break-all">{address}</span>
-              <Button type="button" variant="ghost" className="min-h-8 px-2" onClick={() => void copy()}>
-                {copied ? "Copied" : "Copy the link"}
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
+      <Toggle
+        label={on ? "Public: anyone can see this profile, even people not signed in" : "Signed-in only"}
+        aria-label="Public"
+        hint={
+          on
+            ? "Share the link when recruiting. The venue's street address still shows only to people signed in."
+            : "Only people signed in can see this profile. Switch it on to share it when recruiting."
+        }
+        checked={on}
+        disabled={change.isPending}
+        onChange={(next) => change.mutate(next)}
+        className="text-parchment"
+      >
+        {on && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-mono text-xs break-all">{address}</span>
+            <Button type="button" variant="ghost" className="min-h-8 px-2" onClick={() => void copy()}>
+              {copied ? "Copied" : "Copy the link"}
+            </Button>
+          </div>
+        )}
+      </Toggle>
       <ErrorText error={change.error} />
     </Card>
   );

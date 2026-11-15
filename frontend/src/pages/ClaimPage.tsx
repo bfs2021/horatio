@@ -4,6 +4,7 @@ import { api, unwrap } from "../api/client";
 import { Avatar } from "../components/Avatar";
 import { useToast } from "../components/Toast";
 import { Button, Card, ErrorText, Loading, SessionCheckFailed } from "../components/ui";
+import { LinkButton } from "../components/LinkButton";
 import { useDates } from "../dates";
 import { useAction, useMe } from "../hooks";
 import { withNext } from "../next";
@@ -67,12 +68,7 @@ export function ClaimPage() {
                 <SessionCheckFailed />
               ) : (
                 <>
-                  <Link
-                    to={withNext("/sign-up", here)}
-                    className="inline-flex min-h-10 items-center justify-center rounded-md bg-blood px-5 text-sm font-medium text-parchment hover:bg-blood-bright"
-                  >
-                    Sign up to claim it
-                  </Link>
+                  <LinkButton to={withNext("/sign-up", here)}>Sign up to claim it</LinkButton>
                   <p className="text-center">
                     Already have an account?{" "}
                     <Link to={withNext("/sign-in", here)} className="text-gold underline">

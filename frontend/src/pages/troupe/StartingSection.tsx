@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { StartingCategoryOut, StartingRule } from "../../api/types";
 import { Explainer } from "../../components/Explainer";
+import { Checkbox } from "../../components/Checkbox";
 import { Badge, Button, Card, ErrorText, Input, Loading } from "../../components/ui";
 import { useAction, useRulesAction } from "../../hooks";
 import { ClanRarity } from "./ClanRarity";
@@ -311,10 +312,12 @@ function StartingEditor({ troupeId, splat, category, onClose }: { troupeId: stri
                 className="w-16"
               />
               dots
-              <label className="flex items-center gap-1.5 text-mist">
-                <input type="checkbox" checked={r.restriction === "in_clan"} onChange={(e) => update(i, { restriction: e.target.checked ? "in_clan" : null })} />
-                in-clan only
-              </label>
+              <Checkbox
+                label="in-clan only"
+                checked={r.restriction === "in_clan"}
+                onChange={(on) => update(i, { restriction: on ? "in_clan" : null })}
+                className="text-mist"
+              />
               {r.when_text && <Badge>{r.when_text}</Badge>}
               <Button type="button" variant="ghost" className="min-h-8 px-2" aria-label={`Remove row ${i + 1}`} onClick={() => setRows(rows.filter((_, j) => j !== i))}>
                 Remove

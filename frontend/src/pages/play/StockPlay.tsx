@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
 import { ErrorText, Loading } from "../../components/ui";
+import { BackLink } from "../../components/BackLink";
 import { usePreferences } from "../../hooks";
 import { kindPages, resourceText } from "../troupe/npcKinds";
 import { RulesCard, StatBlock } from "../troupe/StockNpcBuilder";
@@ -81,9 +82,7 @@ function StockShell({ back, builder, name, sync, awake, children }: { back: stri
               ← Back to the scene
             </Link>
           ) : (
-            <Link to={builder} className="inline-flex min-h-10 items-center text-sm text-mist hover:text-parchment">
-              ← {name ?? "Back"}
-            </Link>
+            <BackLink label={name ?? "The NPC"} to={builder} />
           )}
           <span className="flex items-center gap-2">
             <AwakeSwitch awake={awake} />

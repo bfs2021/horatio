@@ -303,7 +303,7 @@ test("with a boon ledger, the ban on no boons registered with the Harpy is judge
 
   // The lead has the ledger judge it, in the Boons tab's settings (#784).
   await l.goto(`/troupes/${troupeId}/boons#settings`);
-  const judge = l.getByRole("checkbox", { name: /Judge “No boons registered” from the boon ledger/ });
+  const judge = l.getByRole("switch", { name: /Judge “No boons registered” from the boon ledger/ });
   await judge.check();
   await expect(l.getByText("The boon ledger now judges the ban on no boons registered with the Harpy.")).toBeVisible();
   await expect(judge).toBeChecked();
@@ -980,7 +980,7 @@ test("titles by sect: a Camarilla troupe gives Camarilla titles only to its own,
   await expect(p.getByRole("row", { name: "Prince", exact: true }).getByText("Gives Authority · Commander · Sovereign").filter({ visible: true })).toBeVisible();
   // Several characters may hold any title until the troupe switches One holder at a time
   // on for it, a book title or its own (#551).
-  const oneHolder = p.getByRole("row", { name: "Prince", exact: true }).getByRole("checkbox", { name: /^One holder at a time/ });
+  const oneHolder = p.getByRole("row", { name: "Prince", exact: true }).getByRole("switch", { name: /^One holder at a time/ });
   await expect(oneHolder).not.toBeChecked();
   await oneHolder.click();
   await expect(oneHolder).toBeChecked();
@@ -994,7 +994,7 @@ test("titles by sect: a Camarilla troupe gives Camarilla titles only to its own,
   const master = p.getByRole("row", { name: "Master of Elysium" });
   await expect(master.getByText("Gives Guardian").filter({ visible: true })).toBeVisible();
   await expect(master.getByText("House rule").filter({ visible: true })).toBeVisible();
-  await expect(master.getByRole("checkbox", { name: /^One holder at a time/ })).not.toBeChecked();
+  await expect(master.getByRole("switch", { name: /^One holder at a time/ })).not.toBeChecked();
   // No one holds it yet, so it is among the vacant Camarilla titles.
   await expect(p.getByRole("table", { name: "Camarilla titles" }).getByRole("row", { name: "Master of Elysium" })).toBeVisible();
 

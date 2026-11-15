@@ -4,6 +4,7 @@ import { Link, Route, Routes, useNavigate, useParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { SharedChoicesOut } from "../../api/types";
 import { Button, Card, Empty, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
+import { BackLink } from "../../components/BackLink";
 import { useAction } from "../../hooks";
 import { RECORD_ONLY, SharedBackgroundView } from "./SharedBackground";
 import { sharersText, totalText } from "./sharedBackgrounds";
@@ -84,9 +85,7 @@ function One({ troupeId }: { troupeId: string }) {
   const back = `/troupes/${troupeId}/shared`;
   return (
     <div className="flex flex-col gap-4">
-      <Link to={back} className="text-sm text-mist hover:text-gold">
-        ← All shared backgrounds
-      </Link>
+      <BackLink label="All shared backgrounds" to={back} className="self-start" />
       {shared.isPending ? <Loading /> : shared.error ? <ErrorText error={shared.error} /> : <SharedBackgroundView shared={shared.data} onDeleted={() => navigate(back)} />}
     </div>
   );

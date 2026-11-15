@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { closeContextsAfterEach, run, shots, person, makeCustodian, creatingVampire, tapMid, CAITIFF_THREE, ATTRIBUTES_AND_FOCUSES, choiceIn, choosePick, choosePicks, openSlot, pickedAt, slotsAt } from "./support";
+import { closeContextsAfterEach, run, shots, person, makeCustodian, creatingVampire, tapMid, CAITIFF_THREE, ATTRIBUTES_AND_FOCUSES, choiceIn, choosePick, choosePicks, openSlot, pickedAt, slotsAt, goToStep, inSteps } from "./support";
 
 /** The creation wizard's in-clan disciplines: Caitiff, Vestiges of Greatness and the merits that change them. */
 
@@ -55,7 +55,7 @@ test("a Caitiff takes Vestiges of Greatness on Merits, swaps Celerity for Dement
 
   // The starting dots on Celerity are kept, not dropped: Concept and the stepper say they need moving.
   await expect(p.getByText("Your starting dots in Celerity need moving: it is no longer in-clan.")).toBeVisible();
-  await expect(p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Disciplines \(needs a look\)/ })).toBeVisible();
+  await inSteps(p, (steps) => expect(steps.getByRole("link", { name: /Disciplines \(needs a look\)/ })).toBeVisible());
   await p.getByRole("link", { name: "Go to Disciplines" }).click();
   await expect(p.getByRole("heading", { name: "Disciplines", exact: true })).toBeVisible();
   await expect(p.getByText("Your starting dots in Celerity need moving: it is no longer in-clan. Clear it and place it on another.")).toBeVisible();
@@ -64,8 +64,8 @@ test("a Caitiff takes Vestiges of Greatness on Merits, swaps Celerity for Dement
   await choosePick(p, "Disciplines", 2, "Dementation");
   await p.getByRole("button", { name: "Save and continue" }).click();
   await expect(p.getByRole("heading", { name: "Merits & flaws", exact: true })).toBeVisible({ timeout: 15_000 });
-  await expect(p.getByRole("navigation", { name: "Creation steps" }).getByText("(needs a look)")).toHaveCount(0);
-  await p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Review/ }).click();
+  await inSteps(p, (steps) => expect(steps.getByText("(needs a look)")).toHaveCount(0));
+  await goToStep(p, /Review/);
   await expect(p.getByRole("heading", { name: "Review", exact: true })).toBeVisible();
   await expect(p.getByRole("region", { name: "Still to settle" })).toHaveCount(0);
   await p.getByRole("button", { name: "Finish creation" }).click();
@@ -119,7 +119,7 @@ test("a Caitiff chooses three common disciplines on Concept, takes Vestiges of G
     await p.getByRole("checkbox", { name }).click();
     await expect(p.getByRole("checkbox", { name })).toBeChecked();
   }
-  await p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Disciplines/ }).click();
+  await goToStep(p, /Disciplines/);
   await choosePicks(p, "Disciplines", [["Celerity", 2], ["Fortitude", 1], ["Obfuscate", 1]]);
   await p.getByRole("button", { name: "Save and continue" }).click();
   await expect(p.getByRole("heading", { name: "Merits & flaws", exact: true })).toBeVisible({ timeout: 15_000 });
@@ -151,7 +151,7 @@ test("a Caitiff chooses three common disciplines on Concept, takes Vestiges of G
   await choosePick(p, "Disciplines", 1, "Protean");
   await p.getByRole("button", { name: "Save and continue" }).click();
   await expect(p.getByRole("heading", { name: "Merits & flaws", exact: true })).toBeVisible({ timeout: 15_000 });
-  await p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Review/ }).click();
+  await goToStep(p, /Review/);
   await expect(p.getByRole("region", { name: "Still to settle" })).toHaveCount(0);
   await p.getByRole("button", { name: "Finish creation" }).click();
   await p.getByRole("button", { name: "Yes, finish creation" }).click();
@@ -244,7 +244,7 @@ test("a Caitiff with Vestiges of Greatness is shown its choice on Disciplines, m
   await expect(p.getByRole("checkbox", { name: "Protean" })).toBeVisible();
 
   // Review's notice opens it in place.
-  await p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Review/ }).click();
+  await goToStep(p, /Review/);
   const settle = p.getByRole("region", { name: "Still to settle" });
   await expect(settle).toContainText("Vestiges of Greatness: choose one of your in-clan disciplines from Dementation");
   await settle.getByRole("button", { name: "Choose here" }).click();
@@ -286,7 +286,7 @@ test("a Brujah takes Additional Uncommon Discipline on Merits, is held back unti
   await expect(p.getByRole("checkbox", { name: "Quietus" })).toBeChecked();
   await expect(p.getByText("In-clan now: Celerity, Potence, Presence and Quietus.")).toBeVisible();
 
-  await p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Review/ }).click();
+  await goToStep(p, /Review/);
   await expect(p.getByRole("region", { name: "Still to settle" })).toHaveCount(0);
   await p.getByRole("button", { name: "Finish creation" }).click();
   await p.getByRole("button", { name: "Yes, finish creation" }).click();
@@ -364,8 +364,8 @@ test("Thin Blooded taken after the Disciplines step shows the new budget there, 
   await choosePick(p, "Disciplines", 1, "Celerity");
   await p.getByRole("button", { name: "Save and continue" }).click();
   await expect(p.getByRole("heading", { name: "Merits & flaws", exact: true })).toBeVisible({ timeout: 15_000 });
-  await expect(p.getByRole("navigation", { name: "Creation steps" }).getByText("(needs a look)")).toHaveCount(0);
-  await p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Review/ }).click();
+  await inSteps(p, (steps) => expect(steps.getByText("(needs a look)")).toHaveCount(0));
+  await goToStep(p, /Review/);
   await expect(p.getByRole("region", { name: "Still to settle" })).toHaveCount(0);
   await p.getByRole("button", { name: "Finish creation" }).click();
   await p.getByRole("button", { name: "Yes, finish creation" }).click();
@@ -394,10 +394,10 @@ test("an Angelis Ater chooses its third in-clan discipline on Disciplines, place
   await expect(p.getByRole("heading", { name: "Merits & flaws", exact: true })).toBeVisible({ timeout: 15_000 });
 
   // Concept shows the choice made.
-  await p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Concept/ }).click();
+  await goToStep(p, /Concept/);
   await expect(p.getByRole("group", { name: /In-clan choice/ }).getByRole("radio", { name: "Presence" })).toBeChecked();
 
-  await p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Review/ }).click();
+  await goToStep(p, /Review/);
   await expect(p.getByRole("heading", { name: "Review", exact: true })).toBeVisible();
   await expect(p.getByRole("region", { name: "Still to settle" })).toHaveCount(0);
   await p.getByRole("button", { name: "Finish creation" }).click();
@@ -441,7 +441,7 @@ test("Inept lets the player choose the discipline that loses its free dot, from 
   // Merits shows it as taken, from the flaws budget.
   await expect(p.getByRole("checkbox", { name: /^Inept/ })).toBeChecked();
   await expect(p.getByText("3 of 7 points")).toBeVisible();
-  await p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Review/ }).click();
+  await goToStep(p, /Review/);
   await expect(p.getByRole("region", { name: "Still to settle" })).toHaveCount(0);
   await p.getByRole("button", { name: "Finish creation" }).click();
   await p.getByRole("button", { name: "Yes, finish creation" }).click();

@@ -6,6 +6,7 @@ import type { CharacterOut, DifferenceOut, XpStandingOut } from "../../api/types
 import { EmptyState } from "../../components/EmptyState";
 import { InfoButton } from "../../components/InfoButton";
 import { Button, Card, ErrorText, Field, Loading, Notice, Select, Textarea } from "../../components/ui";
+import { useConfirm } from "../../components/ConfirmDialog";
 import { useAction, useRulesAction } from "../../hooks";
 import { describeDifference, settlementLabel } from "../../settlements";
 import { useBackstoryStanding } from "./BackstoryTab";
@@ -45,6 +46,7 @@ export function TroupesTab({ character }: { character: CharacterOut }) {
     unwrap(api.DELETE("/api/characters/{character_id}/troupes/{troupe_id}", { params: { path: { character_id: character.id, troupe_id } } })),
   );
   const withdraw = useRulesAction(() => unwrap(api.DELETE("/api/characters/{character_id}/home-troupe", path)));
+  const [confirmed, confirming] = useConfirm();
 
   if (memberships.isPending || troupes.isPending || sheet.isPending) return <Loading />;
   const memberIds = new Set(memberships.data?.map((m) => m.troupe_id));
@@ -117,9 +119,9 @@ export function TroupesTab({ character }: { character: CharacterOut }) {
                   <HouseRulesLink troupeId={m.troupe_id} name={m.troupe_name} />
                   <Button
                     variant="ghost"
-                    onClick={() => {
-                      if (window.confirm(`Take ${character.name} out of ${m.troupe_name}? Its storytellers will see that it left.`))
-                        leave.mutate(m.troupe_id);
+                    onClick={async () => {
+                      const ask = { title: `Take ${character.name} out of ${m.troupe_name}?`, body: "Its storytellers will see that it left.", action: "Leave" };
+                      if (await confirmed(ask)) leave.mutate(m.troupe_id);
                     }}
                   >
                     Leave
@@ -131,6 +133,7 @@ export function TroupesTab({ character }: { character: CharacterOut }) {
         ) : (
           <EmptyState title="Not visiting any troupe.">To play at another troupe's games without making it home, choose it below.</EmptyState>
         )}
+        {confirming}
         <form
           className="mt-3 flex gap-2"
           onSubmit={(e) => {

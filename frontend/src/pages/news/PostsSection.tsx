@@ -6,6 +6,7 @@ import type { PostOut } from "../../api/types";
 import { useAction } from "../../hooks";
 import { manualLink } from "../../manualLink";
 import { Button, Card, Empty, ErrorText, Field, Loading, Select } from "../../components/ui";
+import { LinkButton } from "../../components/LinkButton";
 import { Desk } from "./Desk";
 import { KINDS, type Kind } from "./posts";
 import { PostForm, type Action, type Fields } from "./PostForm";
@@ -103,9 +104,9 @@ function PostList({ troupeId, kind, writes, proposes }: { troupeId: string; kind
             </Button>
           )}
           {(writes || proposes) && (
-            <Link to="desk" className="inline-flex min-h-10 items-center rounded-md border border-ash bg-dusk px-4 text-sm text-parchment hover:border-mist">
+            <LinkButton variant="secondary" to="desk">
               {writes ? `${words.title} desk` : "Your proposals"}
-            </Link>
+            </LinkButton>
           )}
         </span>
       </div>

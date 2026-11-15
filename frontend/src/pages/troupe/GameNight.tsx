@@ -7,6 +7,7 @@ import { ActionMenu, MenuItem, MenuLink } from "../../components/ActionMenu";
 import { atGameCrumbs, Breadcrumb } from "../../components/Breadcrumb";
 import { Dialog } from "../../components/Dialog";
 import { EmptyState } from "../../components/EmptyState";
+import { SectionLabel } from "../../components/Headings";
 import { QrCode } from "../../components/QrCode";
 import { useToast } from "../../components/Toast";
 import { Badge, Button, Card, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
@@ -216,9 +217,9 @@ function AttendanceCard({ night }: { night: GameNight }) {
         )}
         {night.absentees.length > 0 && (
           <section aria-labelledby="absentees" className="flex flex-col gap-1">
-            <h3 id="absentees" className="text-sm text-mist">
+            <SectionLabel id="absentees">
               Absentee ({night.absentees.length})
-            </h3>
+            </SectionLabel>
             <AttendeeTable
               label="Absentee"
               people={night.absentees}

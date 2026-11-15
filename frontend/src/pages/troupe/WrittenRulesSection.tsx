@@ -14,6 +14,7 @@ import { SECTIONS } from "../rules/rulesBrowser";
 import { RuleAbout } from "./WrittenRulesList";
 import { bySection, sectionLabel, sectionsInUse } from "./writtenRules";
 import { useCatalogue } from "../../catalogue";
+import { SectionLabel } from "../../components/Headings";
 
 type Draft = { section: string; title: string; body: string; category: string; trait: string; page: string };
 
@@ -106,7 +107,7 @@ export function WrittenRulesSection({ troupeId, canEdit }: { troupeId: string; c
         ) : (
           sections.map((s) => (
             <section key={s.section} className="not-first:mt-4">
-              <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">{sectionLabel(s.section)}</h3>
+              <SectionLabel className="mb-1">{sectionLabel(s.section)}</SectionLabel>
               <ul className="divide-y divide-ash">
                 {s.rules.map((r, n) => (
                   <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">

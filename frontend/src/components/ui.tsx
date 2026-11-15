@@ -1,3 +1,4 @@
+// The heading scale (page title, card title, CardHeading, SectionLabel) is written at the top of Headings.tsx (#901).
 import { cloneElement, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { ButtonHTMLAttributes, CSSProperties, InputHTMLAttributes, ReactElement, ReactNode, Ref, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { Link, NavLink, useLocation } from "react-router";

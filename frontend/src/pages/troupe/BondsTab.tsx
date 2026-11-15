@@ -24,6 +24,7 @@ import {
   type BondSource,
 } from "../../bonds";
 import { DateInput } from "../../components/DateInput";
+import { CardHeading } from "../../components/Headings";
 import { useToast } from "../../components/Toast";
 import {
   Button,
@@ -175,12 +176,12 @@ export function BondsTab({ troupeId }: { troupeId: string }) {
             aria-label={g.name}
             className="rounded-lg border border-ash bg-dusk p-3 sm:p-4"
           >
-            <h3 className="mb-2 text-base text-gold">
+            <CardHeading className="mb-2">
               {g.name}
               <span className="text-sm text-mist">
                 {by === "thrall" ? ", bound to" : ", whose blood binds"}
               </span>
-            </h3>
+            </CardHeading>
             <ul className="flex flex-col gap-3">
               {g.bonds.map((bond) => (
                 <BondRow

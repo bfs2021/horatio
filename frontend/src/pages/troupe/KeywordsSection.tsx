@@ -7,6 +7,7 @@ import { ActionMenu, MenuGroup, MenuItem } from "../../components/ActionMenu";
 import { Dialog } from "../../components/Dialog";
 import { useToast } from "../../components/Toast";
 import { Checkbox } from "../../components/Checkbox";
+import { SectionLabel } from "../../components/Headings";
 import { Badge, Button, Card, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { manualLink } from "../../manualLink";
@@ -138,7 +139,7 @@ export function KeywordsSection({ troupeId, canEdit }: { troupeId: string; canEd
       </table>
       <ErrorText error={reorder.error ?? retire.error} />
       <section className="mt-4 text-sm" aria-label="The resolution order">
-        <h3 className="mb-1 text-xs tracking-wide text-mist uppercase">The resolution order</h3>
+        <SectionLabel className="mb-1">The resolution order</SectionLabel>
         <ol className="list-decimal pl-5 text-mist">
           {data.steps.map((s) => (
             <li key={s.step}>{s.name}</li>

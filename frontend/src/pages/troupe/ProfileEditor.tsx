@@ -5,6 +5,7 @@ import type { TroupeProfileIn, TroupeProfileOut } from "../../api/types";
 import { Avatar } from "../../components/Avatar";
 import { DateInput } from "../../components/DateInput";
 import { Dialog } from "../../components/Dialog";
+import { SectionLabel } from "../../components/Headings";
 import { Button, ErrorText, Field, Input, Notice, Select, Textarea } from "../../components/ui";
 import type { Crop } from "../../components/crop";
 import { useDates } from "../../dates";
@@ -205,7 +206,7 @@ export function Games({ profile }: { profile: TroupeProfileOut }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <h3 className="text-sm text-mist">Upcoming games</h3>
+      <SectionLabel>Upcoming games</SectionLabel>
       {profile.games.length > 0 ? (
         <ul className="divide-y divide-ash text-sm" aria-label="Upcoming games to edit">
           {profile.games.map((g) => (

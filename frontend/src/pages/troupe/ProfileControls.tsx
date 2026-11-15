@@ -2,6 +2,7 @@
 import { useState, type ReactNode } from "react";
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut, TroupeProfileOut } from "../../api/types";
+import { CardHeading } from "../../components/Headings";
 import { Toggle } from "../../components/Toggle";
 import { Button, ErrorText, Field, Input, Textarea } from "../../components/ui";
 import { useAction, useRulesAction } from "../../hooks";
@@ -58,9 +59,9 @@ export function ProfileSection({ title, actions, wide = false, children }: { tit
   return (
     <section className={`flex min-w-0 flex-col gap-2 ${wide ? "md:col-span-2" : ""}`}>
       <div className="flex min-h-8 flex-wrap items-center justify-between gap-2">
-        <h3 className="text-base text-gold">
+        <CardHeading>
           {title}
-        </h3>
+        </CardHeading>
         {actions}
       </div>
       {children}

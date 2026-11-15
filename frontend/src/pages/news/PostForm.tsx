@@ -1,6 +1,7 @@
 import { lazy, Suspense, useId, useRef, useState } from "react";
 import type { AgencyOut, PostOut } from "../../api/types";
 import { DateInput } from "../../components/DateInput";
+import { SectionLabel } from "../../components/Headings";
 import { Button, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { useDates } from "../../dates";
 import { KINDS, scheduleProblem, suggestedTime, type Kind } from "./posts";
@@ -102,9 +103,9 @@ export function PostForm({
 
       {view === "preview" ? (
         <div className="flex flex-col gap-4">
-          <h3 className="text-sm text-mist">As players will read it</h3>
+          <SectionLabel>As players will read it</SectionLabel>
           <StoryView post={{ ...fields, kind, byline: post?.byline || "Your name and role", picture: post?.picture ?? null, published_at: null }} agency={agency} />
-          <h3 className="text-sm text-mist">Roughly as it will look on Discord</h3>
+          <SectionLabel>Roughly as it will look on Discord</SectionLabel>
           <DiscordPreview post={{ ...fields, kind, byline: post?.byline || "Your name and role", picture: post?.picture ?? null }} agency={agency} />
         </div>
       ) : (

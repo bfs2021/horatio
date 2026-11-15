@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, unwrap } from "../../api/client";
 import type { components } from "../../api/schema";
+import { CardHeading } from "../../components/Headings";
 import { Button, Card, ErrorText, Field, Input, Loaded, Textarea } from "../../components/ui";
 import { useToast } from "../../components/Toast";
 import { useAction } from "../../hooks";
@@ -120,7 +121,7 @@ function DesignFields({ design }: { design: DesignOut }) {
     );
   return (
     <form onSubmit={submit} className="flex flex-col gap-3 border-t border-ash pt-4">
-      <h3 className="text-parchment">Header, colours and footer</h3>
+      <CardHeading>Header, colours and footer</CardHeading>
       <Field label="Site's name" hint={`In the header, unless a picture is there. Blank: ${design.defaults.site_name}.`}>
         <Input value={form.site_name} maxLength={design.site_name_max} onChange={(e) => set("site_name")(e.target.value)} />
       </Field>
@@ -183,7 +184,7 @@ function HeaderPicture({ design }: { design: DesignOut }) {
   const image = design.header_image;
   return (
     <div className="flex flex-col gap-2 border-t border-ash pt-4">
-      <h3 className="text-parchment">Header picture</h3>
+      <CardHeading>Header picture</CardHeading>
       {image && (
         <div className="flex flex-col gap-1">
           <img

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { EmailChangeOut, PendingEmailFor } from "../../api/types";
+import { SectionLabel } from "../../components/Headings";
 import { LogList } from "../../components/LogList";
 import { Button, Card, Empty, ErrorText, Field, Input, Loading, Notice, Textarea } from "../../components/ui";
 import { useDates } from "../../dates";
@@ -130,7 +131,7 @@ export function EmailChanges() {
       ) : changes.data ? (
         <div className="flex flex-col gap-4">
           <section>
-            <h3 className="mb-1 text-sm text-mist">Waiting to be confirmed</h3>
+            <SectionLabel className="mb-1">Waiting to be confirmed</SectionLabel>
             {changes.data.pending.length ? (
               <ul className="divide-y divide-ash/50 text-sm">
                 {changes.data.pending.map((c) => (
@@ -142,7 +143,7 @@ export function EmailChanges() {
             )}
           </section>
           <section>
-            <h3 className="mb-1 text-sm text-mist">Recently</h3>
+            <SectionLabel className="mb-1">Recently</SectionLabel>
             {changes.data.log.length ? (
               <LogList entries={changes.data.log} linkTo={(e) => (typeof e.data.user_id === "string" ? `/players/${e.data.user_id}` : null)} />
             ) : (

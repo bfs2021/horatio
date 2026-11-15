@@ -16,7 +16,7 @@ const headers = { "X-Horatio": "1" };
 
 // Screens known to be too wide, each waiting on its own ticket: the address, with "ID" for each id.
 const KNOWN: string[] = [
-  // Its Troupe selects (Yorick import, Fit NPC creation picks) are as wide as the longest troupe name: needs a ticket.
+  // Its Troupe selects (Yorick import, Fit NPC creation picks) are as wide as the longest troupe name: #969.
   "/custodian/tools",
 ];
 

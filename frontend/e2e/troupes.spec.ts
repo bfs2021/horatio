@@ -2565,8 +2565,8 @@ test("with Retainer upkeep on, checking in starts the night with the upkeep as i
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/rules/retainers`);
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/characters#settings-retainers$`));
-  await expect(l.getByText("None.").first()).toBeVisible();
   const retainers = l.getByRole("region", { name: "Retainers", exact: true });
+  await expect(retainers.getByLabel("Retainers cost upkeep")).not.toBeChecked();
   await retainers.getByLabel("Retainers cost upkeep").check();
   await expect(retainers.getByText("Not saved yet")).toBeVisible();
   await retainers.getByRole("button", { name: "Save", exact: true }).click();
@@ -2654,7 +2654,7 @@ test("staff set a tapering game XP chart and award a game by it, with an absente
   await expect(chart.getByRole("row")).toHaveCount(6);
   await expect(chart.getByRole("row", { name: "201–300 4 XP 3 XP" })).toBeVisible();
   await expect(chart.getByRole("row", { name: "501+ 1 XP 0 XP" })).toBeVisible();
-  await expect(player.page.getByText("Helped +1, once a month")).toBeVisible();
+  await expect(player.page.getByText("Adjustments: Helped +1, once a month.")).toBeVisible();
 
   // At the game: Tamsin is checked in by hand, Ulric marked absentee.
   await l.goto(`/troupes/${troupeId}`);

@@ -93,14 +93,17 @@ type SaveOptions = {
  * `message`'s words) each time. Disable the control while `isPending`, and show `error`
  * in the card; a control bound to what the server holds goes back by itself on a failure.
  */
-export function useSaveOnChange<TArgs, TResult>(fn: (args: TArgs) => Promise<TResult>, {
+export function useSaveOnChange<TArgs, TResult>(
+  fn: (args: TArgs) => Promise<TResult>,
+  {
     rules = false,
     first = [],
     message,
   }: SaveOptions & {
     /** What the toast says, where "Saved." alone would say less than it should. */
     message?: (args: TArgs) => string;
-  } = {},) {
+  } = {},
+) {
   const toast = useToast();
   return useAction(
     async (args: TArgs) => {

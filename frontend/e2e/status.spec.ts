@@ -85,7 +85,7 @@ test("a player keeps their own sect status, naming its patron from the home trou
   await l.goto(`/troupes/${troupeId}/settings`);
   const setting = l.locator("section").filter({ has: l.getByRole("heading", { name: "Status on sheets" }) });
   await expect(setting.getByRole("radio", { name: "Players keep their own" })).toBeChecked();
-  await setting.getByLabel(/Staff only/).check();
+  await setting.getByLabel(/Staff only/).click();
   await expect(l.getByText("Saved.", { exact: true })).toBeVisible();
   await expect(setting.getByRole("radio", { name: "Staff only" })).toBeChecked();
 

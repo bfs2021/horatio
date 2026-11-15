@@ -159,7 +159,7 @@ When someone can't find something, or something looks wrong to them, you can see
 
 Horatio opens as them. A banner across the top says **Viewing as @handle, read-only**, and until when. Nothing can be changed while you view: every save is refused. Choose **Stop** in the banner to be yourself again. Viewing also ends after 30 minutes, or when you sign out.
 
-They can see each time you viewed as them, and why, on their account's Settings page. View as isn't offered for another custodian.
+They can see each time you viewed as them, and why, on their account's Sign-in and email tab. View as isn't offered for another custodian.
 
 ### Moving a character to another player
 

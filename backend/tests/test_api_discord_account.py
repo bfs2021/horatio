@@ -97,7 +97,7 @@ def test_linking_records_the_discord_account_and_its_username(
     answer = come_back(player, start(player), code="good-code")
 
     assert answer.status_code == 303
-    assert answer.headers["location"] == "/account?discord=linked"
+    assert answer.headers["location"] == "/account/sign-in?discord=linked"
     assert user(session, player).discord_user_id == DISCORD_ID
     assert player.client.get("/account/discord").json() == {
         "available": True,
@@ -144,7 +144,7 @@ def test_cancelling_on_discord_links_nothing(
 ) -> None:
     answer = come_back(player, start(player), error="access_denied")
 
-    assert answer.headers["location"] == "/account?discord=cancelled"
+    assert answer.headers["location"] == "/account/sign-in?discord=cancelled"
     assert user(session, player).discord_user_id is None
 
 
@@ -196,7 +196,7 @@ def test_a_discord_account_linked_to_someone_else_is_refused(
 
     answer = come_back(player, start(player), code="good-code")
 
-    assert answer.headers["location"] == "/account?discord=taken"
+    assert answer.headers["location"] == "/account/sign-in?discord=taken"
     assert user(session, player).discord_user_id is None
     assert user(session, first).discord_user_id == DISCORD_ID
     assert actions(session, player) == ["account.discord_link_refused"]

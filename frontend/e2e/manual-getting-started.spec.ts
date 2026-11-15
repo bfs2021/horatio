@@ -76,16 +76,16 @@ test("manual: getting started", async ({ browser }, info) => {
   await expect(p.getByText("Profile saved.")).toBeHidden({ timeout: 15_000 });
   await shot(p.locator("form").filter({ has: p.getByRole("heading", { name: "Profile" }) }), "profile");
 
-  // Settings: how things show.
-  await p.goto("/account/settings");
+  // Preferences: how things show.
+  await p.goto("/account/preferences");
   const card = (title: string) => p.locator("section").filter({ has: p.getByRole("heading", { name: title, exact: true }) });
   await expect(card("Sheets")).toBeVisible();
   await shotAround(p, [card("Sheets"), card("Dates and times")], "settings");
 
   // Notifications by email, as on a server that can send it (this suite's can't).
   await p.route("**/api/preferences/email", (route) => route.fulfill({ json: { available: true } }));
-  await p.reload();
-  await expect(p.getByRole("radiogroup", { name: "Downtime results" })).toBeVisible();
+  await p.goto("/account/sign-in");
+  await expect(p.getByRole("switch", { name: "Downtime results" })).toBeVisible();
   await shot(card("Notifications by email"), "email-notifications");
 
   // The bell, with the custodian's answer in it.

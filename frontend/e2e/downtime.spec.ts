@@ -350,7 +350,7 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   await badges.close();
   // Each person's paper and badge size are settings: badges open at that size.
   const characters = lead.page.url();
-  await lead.page.goto("/account/settings");
+  await lead.page.goto("/account/preferences");
   for (const [setting, choice] of [
     ["Paper", "A4"],
     ["Badge size", "3 × 4 in"],
@@ -639,7 +639,7 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   // The whole page shows, scaled down on a phone to fit it; the paper size links to its setting.
   const paper = await p.locator("article").first().boundingBox();
   expect(paper!.width).toBeLessThanOrEqual(p.viewportSize()!.width);
-  await expect(p.getByRole("link", { name: "For US Letter · change" })).toHaveAttribute("href", "/account/settings");
+  await expect(p.getByRole("link", { name: "For US Letter · change" })).toHaveAttribute("href", "/account/preferences");
   await p.screenshot(shots("print"));
   if (test.info().project.name === "desktop") {
     await p.emulateMedia({ media: "print" });
@@ -662,7 +662,7 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   // them, with numbers now the chevron's choice.
   await p.goBack();
   const sheetPage = p.url();
-  await p.goto("/account/settings");
+  await p.goto("/account/preferences");
   await Promise.all([
     p.waitForResponse((r) => r.url().endsWith("/api/preferences") && r.ok()),
     p.getByRole("radiogroup", { name: "Show ratings as" }).getByRole("radio", { name: "Pips" }).click(),

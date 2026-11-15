@@ -376,7 +376,7 @@ On the **News** tab, **News desk** opens the desk; **Write a story** starts one.
 
 - **Save draft** keeps it on the desk under **Drafts**, for staff only.
 - **Publish now** puts it on everyone's News tab at once, with a bell notification, and sends it to Discord within a minute.
-- **Schedule…** asks for a date and time, entered and shown on your own clock (your time zone under Account › Settings, or your device's). It goes out within a minute of then.
+- **Schedule…** asks for a date and time, entered and shown on your own clock (your time zone under Account › Preferences, or your device's). It goes out within a minute of then.
 
 The desk's **Scheduled** list shows what goes out next and when. Each story's **⋯** has **Change**, **Publish now** and **Cancel**, which turns it back into a draft.
 

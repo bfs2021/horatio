@@ -151,7 +151,7 @@ function PrintShell({ back, count, children }: { back: { label: string; to: stri
         <BackLink print label={back.label} to={back.to} />
         {count !== undefined && <span className="text-sm">{count === 1 ? "1 sheet" : `${count} sheets`}</span>}
         <span className="flex items-center gap-3">
-          <Link to="/account/settings" className="text-sm text-neutral-600 underline">
+          <Link to="/account/preferences" className="text-sm text-neutral-600 underline">
             For {PAPERS[paper].name} · change
           </Link>
           <button onClick={() => window.print()} className="rounded bg-black px-4 py-1.5 text-sm text-white">

@@ -105,7 +105,7 @@ A file from a newer Horatio is refused: import it into a Horatio as new as the o
 
 ## Reading your sheet
 
-The **Sheet** tab is the character's record, laid out in the rule set's parts: Attributes, Skills, Backgrounds, Disciplines, Merits and Flaws, Morality, Health Levels and so on. Each part lists what the character holds, with its rating as dots or numbers (choose which in your settings). The character's clan, sect and archetype sit beside its name at the top of the page.
+The **Sheet** tab is the character's record, laid out in the rule set's parts: Attributes, Skills, Backgrounds, Disciplines, Merits and Flaws, Morality, Health Levels and so on. Each part lists what the character holds, with its rating as dots or numbers (choose which in your preferences). The character's clan, sect and archetype sit beside its name at the top of the page.
 
 On the right:
 
@@ -163,7 +163,7 @@ You can also name your Haven while making your character: on the Backgrounds ste
 
 ### Printing your sheet
 
-**Print**, at the top right of the sheet, opens the character laid out for paper, in the order of the official sheet, sized to fit one page. Press **Print** on that page to print it. The little arrow beside Print prints it once with numbers or pips, whichever your settings don't use. The paper size (A4 or US Letter) is in your settings.
+**Print**, at the top right of the sheet, opens the character laid out for paper, in the order of the official sheet, sized to fit one page. Press **Print** on that page to print it. The little arrow beside Print prints it once with numbers or pips, whichever your preferences don't use. The paper size (A4 or US Letter) is in your preferences.
 
 ## Spending XP
 
@@ -431,7 +431,7 @@ If the cycle gives XP for completing it, the card says **Submitting it earns** s
 
 ### The due date and the grace period
 
-The card says when the downtime is **Due** and when it is **Accepted until** (the end of the grace period), each with its day and time in your time zone, such as "Due Sat 14 Nov, 6:00 pm EST". Set your time zone in [Settings](getting-started.md#settings) if it isn't your device's. A downtime submitted after the due date is accepted, but marked late (**Submitted (late)**). After the grace period ends, only a storyteller can let one in. You can edit a submitted downtime until the grace period ends.
+The card says when the downtime is **Due** and when it is **Accepted until** (the end of the grace period), each with its day and time in your time zone, such as "Due Sat 14 Nov, 6:00 pm EST". Set your time zone in [Preferences](getting-started.md#preferences) if it isn't your device's. A downtime submitted after the due date is accepted, but marked late (**Submitted (late)**). After the grace period ends, only a storyteller can let one in. You can edit a submitted downtime until the grace period ends.
 
 *If your troupe uses this:* with absentee downtimes, only a character that came to a game recently can submit; the form says so.
 
@@ -476,9 +476,9 @@ The tabs are **Sheet** (to look things up), **Tracker**, **Pools**, **Status** (
 
 **Boons** is where you report a boon your character owes or is owed: who (another player character, or **Someone else…** for an NPC or someone from another domain), which way, the kind, the night it was made, the reason, any conditions, and how many alike. It goes into your troupe's boon ledger, which its staff keep; a boon made off the record isn't enforced. Your troupe chooses what else you see there: nothing more, the boons your character owes, or those and the boons it is owed. A boon whose creditor holds **Disgraced** says it need not be repaid while they do (MET: VTM p. 316). Where your troupe allows it, you can mark a boon owed to your character **settled**, as called in or forgiven. Some troupes have their staff review each report first: it waits under **Your reports** until they accept it, and if they don't, it says why there for a month. Reporting and settling need a signal; what the tab shows is kept on your phone with the rest of the Play View. If your character holds the Harpy title and your troupe gives its Harpy the ledger, the tab also links to it: **Review boons** for the reports waiting for review, or **Open the boon ledger** to keep the whole ledger. If the Harpy gives your character access as a Lesser Harpy (or Talon), the tab links to the ledger too, and you do there what the Harpy allows: see it, and perhaps add boons, edit them or perform audits. As Harpy, you give that access from the ledger page. The Harpy, and a Lesser Harpy allowed to, can also audit a character's boons there and give the audit to another character. If your character is given one, it is listed under **Audits** in the Boons tab: open it to read it, as the ledger stood when it was made, or print it. What you do there is logged as done by your character; it needs a signal. Where your troupe allows it, the ledger page also shows **Standings** and **Statistics**: who has left shows there only as your court would know it.
 
-On **Throws**, **Throw** picks rock, paper or scissors on your phone; show the other player your screen. On a phone with a motion sensor you can also throw by **flipping the phone** face down and back up in your hand, so two players can flip together: as the screen comes back up it counts "Rock… Paper… Scissors…" like the button, then shows the throw with a short buzz. Turn **Throw by flipping** off on the tab, or in Settings › At game, if you'd rather not; it's kept on that phone. On an iPhone, tap **Turn on flipping the phone** once to let Horatio use the motion sensor.
+On **Throws**, **Throw** picks rock, paper or scissors on your phone; show the other player your screen. On a phone with a motion sensor you can also throw by **flipping the phone** face down and back up in your hand, so two players can flip together: as the screen comes back up it counts "Rock… Paper… Scissors…" like the button, then shows the throw with a short buzz. Turn **Throw by flipping** off on the tab, or in Preferences › At game, if you'd rather not; it's kept on that phone. On an iPhone, tap **Turn on flipping the phone** once to let Horatio use the motion sensor.
 
-The pictures are Horatio's own unless you choose another set in Settings › At game › **Throw pictures**: any troupe you play in that has made its own rock, paper and scissors is offered there. The set you choose is kept on your device with the rest of the Play View, so it shows with no signal. If you leave that troupe, or it removes its set, your throws go back to Horatio's.
+The pictures are Horatio's own unless you choose another set in Preferences › At game › **Throw pictures**: any troupe you play in that has made its own rock, paper and scissors is offered there. The set you choose is kept on your device with the rest of the Play View, so it shows with no signal. If you leave that troupe, or it removes its set, your throws go back to Horatio's.
 
 ![The Play View's Tracker, a few taps into the night: Blood, Willpower and Health](images/players/play-tracker.png)
 
@@ -607,7 +607,7 @@ A troupe's **News** tab, in its Troupe group, has the in-world news its storytel
 
 A dot marks each story you haven't read, and the News tab shows how many there are. Opening a story reads it; **Mark all as read** clears the lot. Stories from the last 30 days show first; **Show older stories** brings back the rest.
 
-Each new story also comes to the bell, as "New from *agency*: headline". To stop that, choose **Not in the bell** for **Troupe news in the bell** under Account › Settings, in **Troupes**. News doesn't come by email unless you turn on **Troupe news** under **Notifications by email**, so a busy week of news doesn't fill your inbox.
+Each new story also comes to the bell, as "New from *agency*: headline". To stop that, switch off **Troupe news in the bell** under Account › Preferences, in **Troupes**. News doesn't come by email unless you turn on **Troupe news** under **Notifications by email**, on Account › Sign-in and email, so a busy week of news doesn't fill your inbox.
 
 If your characters are kept on your phone (see [Using Horatio at a game with no signal](#using-horatio-at-a-game-with-no-signal)), their home troupe's news from the last 30 days is kept too, to read at a game with no signal.
 
@@ -619,7 +619,7 @@ A troupe's **Announcements** tab, beside News, has out-of-character messages fro
 
 **Banners.** Staff can pin an announcement to the troupe's front page for a while. It shows as a banner at the top of the troupe's **Overview**, and first on the Announcements tab. **Dismiss** hides the banner for you alone; the announcement stays on the Announcements tab.
 
-**Bell and email.** Each announcement comes to the bell as "Announcement: *title*" and, unlike news, by email too, since they're often practical. Turn either off under Account › Settings: **Troupe announcements in the bell** in **Troupes**, and **Troupe announcements** under **Notifications by email**. One the staff mark **Important** is emailed to everyone in the troupe even so. The email carries the announcement itself: its title, who it's from, its picture if it has one, and its words, with a **Read it in Horatio** button. If you get your emails in a daily digest and several are waiting, the digest lists each announcement as a line with a link instead.
+**Bell and email.** Each announcement comes to the bell as "Announcement: *title*" and, unlike news, by email too, since they're often practical. Turn either off in your account: **Troupe announcements in the bell** in **Preferences › Troupes**, and **Troupe announcements** under **Notifications by email**, on **Sign-in and email**. One the staff mark **Important** is emailed to everyone in the troupe even so. The email carries the announcement itself: its title, who it's from, its picture if it has one, and its words, with a **Read it in Horatio** button. If you get your emails in a daily digest and several are waiting, the digest lists each announcement as a line with a link instead.
 
 If your characters are kept on your phone, their home troupe's announcements from the last 30 days, and any pinned, are kept too.
 

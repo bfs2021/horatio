@@ -1,69 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useLocation } from "react-router";
 import { api, unwrap } from "../../api/client";
-import type { PlayerOut, Preferences } from "../../api/types";
+import type { Preferences } from "../../api/types";
 import { drawCurtains } from "../../components/Curtains";
 import { Segmented } from "../../components/Segmented";
+import { SettingCard } from "../../components/SettingCard";
+import { SettingRow } from "../../components/SettingRow";
 import { startSunrise } from "../../components/Sunrise";
 import { useToast } from "../../components/Toast";
-import { Toggle } from "../../components/Toggle";
-import { Card, ErrorText, Input } from "../../components/ui";
+import { Input } from "../../components/ui";
 import { deviceZone, useDates } from "../../dates";
-import { usePreferences, useSavingPreferences, useSetPreferences } from "../../hooks";
-import { AccountEmail } from "../AccountEmail";
+import { usePreferences } from "../../hooks";
 import { useOnline } from "../../offline/connection";
 import { tapsWaiting } from "../../offline/keep";
 import { openingChoices, TABS } from "../play/tabs";
 import { loadFlipping, saveFlipping } from "../play/flip";
 import { saveAwake } from "../play/wakeLock";
-import { ViewedAs } from "../ViewedAs";
-import { EmailNotifications } from "./EmailNotifications";
-import { PasswordCard } from "./PasswordCard";
+import { Choice, PreferenceCards, useSaveSetting } from "./PreferenceControls";
 import { ThrowPictures } from "./ThrowPictures";
-
-type Key = keyof Preferences;
-
-/** One setting: what it is, a hint, and its control. Shared with the cards in
- * their own files (EmailNotifications). */
-export function Setting({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2 border-b border-ash/60 py-3 last:border-0 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <p className="text-sm text-parchment">{label}</p>
-        {hint && <p className="text-xs text-mist">{hint}</p>}
-      </div>
-      <div className="shrink-0">{children}</div>
-    </div>
-  );
-}
-
-/** Save a change to the settings, and say so once it is kept: "Paper: A4. Saved." */
-function useSaveSetting() {
-  const set = useSetPreferences();
-  const toast = useToast();
-  return (changes: Partial<Preferences>, said: string) =>
-    set.mutate(changes, {
-      onSuccess: () => toast({ message: `${said}. Saved.` }),
-    });
-}
-
-/** A setting with a few choices, as buttons side by side. */
-export function Choice<K extends Key>({ name, label, choices }: { name: K; label: string; choices: [Preferences[K], string][] }) {
-  const prefs = usePreferences();
-  const save = useSaveSetting();
-  return (
-    <Segmented
-      label={label}
-      value={choices.findIndex(([value]) => value === prefs[name])}
-      options={choices.map(([, text], i) => ({ value: i, label: text }))}
-      onChange={(i) => {
-        const [value, text] = choices[i]!;
-        save({ [name]: value } as Partial<Preferences>, `${label}: ${text}`);
-      }}
-    />
-  );
-}
 
 // The tabs the Play View can open on, in the order offered.
 const OPENING: Preferences["play_tab"][] = ["tracker", "sheet", "pools", "throws"];
@@ -83,9 +37,9 @@ function OpeningTab() {
       ? off.map((o) => `${o.troupes.join(" and ")} ${o.troupes.length > 1 ? "have" : "has"} switched off ${label(o.tab)}, so there it opens on the first tab on.`).join(" ")
       : undefined;
   return (
-    <Setting label="The Play View opens on" hint={hint}>
+    <SettingRow label="The Play View opens on" hint={hint}>
       <Choice name="play_tab" label="The Play View opens on" choices={offered.map((tab) => [tab, label(tab)])} />
-    </Setting>
+    </SettingRow>
   );
 }
 
@@ -133,21 +87,12 @@ function Theme() {
   );
 }
 
-/** An on/off setting as a row of the list: its words, and its switch at the end. The whole row is the tap target. */
-function SwitchSetting({ label, hint, checked, onChange }: { label: string; hint?: ReactNode; checked: boolean; onChange: (on: boolean) => void }) {
-  return (
-    <div className="border-b border-ash/60 py-1 last:border-0">
-      <Toggle label={label} hint={hint} checked={checked} onChange={onChange} end />
-    </div>
-  );
-}
-
 /** An on/off setting kept with the others. */
-function PreferenceSwitch({ name, label, hint }: { name: "quick_notes" | "keep_awake"; label: string; hint?: ReactNode }) {
+function PreferenceSwitch({ name, label, hint }: { name: "quick_notes" | "keep_awake" | "bell_news" | "bell_announcements"; label: string; hint?: ReactNode }) {
   const prefs = usePreferences();
   const save = useSaveSetting();
   return (
-    <SwitchSetting
+    <SettingRow
       label={label}
       hint={hint}
       checked={prefs[name]}
@@ -164,7 +109,7 @@ function PreferenceSwitch({ name, label, hint }: { name: "quick_notes" | "keep_a
 function FlipSwitch({ hint }: { hint: ReactNode }) {
   const [on, setOn] = useState(loadFlipping);
   return (
-    <SwitchSetting
+    <SettingRow
       label="Throw by flipping"
       hint={hint}
       checked={on}
@@ -234,58 +179,33 @@ function DeadlineNow() {
   return <span className="text-sm text-parchment">{dates.deadline(new Date())}</span>;
 }
 
-/** True once `on` has stayed true for `ms`, so a quick save doesn't flash. */
-function useAfter(on: boolean, ms: number): boolean {
-  const [late, setLate] = useState(false);
-  useEffect(() => {
-    if (!on) return setLate(false);
-    const timer = setTimeout(() => setLate(true), ms);
-    return () => clearTimeout(timer);
-  }, [on, ms]);
-  return on && late;
-}
-
-/** Scroll to the part of the page the address names, such as #notifications from
- * the bell, once it is there. */
-function useScrollToHash() {
-  const { hash } = useLocation();
-  useEffect(() => {
-    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView();
-  }, [hash]);
-}
-
 /**
- * Settings for the signed-in person: which notifications come by email, their
- * email and password, then the settings saved on their account so they follow
- * them to their phone at game. Each of those takes effect as soon as it changes,
- * and a toast says it is kept.
+ * How Horatio looks and behaves for the signed-in person (#910): its look, sheets, dates
+ * and times, the Play View at game, and how they show in their troupes. All kept on
+ * their account, so they follow them to their phone at game.
  */
-export function SettingsPage({ player }: { player: PlayerOut }) {
-  const set = useSetPreferences();
-  // Every control waits while a change is saved, so changes reach the server one
-  // at a time and none is lost.
-  const saving = useSavingPreferences();
-  const slow = useAfter(saving, 200);
-  const waiting = `min-w-0 ${slow ? "cursor-wait opacity-60" : ""}`;
-  useScrollToHash();
+export function PreferencesPage() {
   return (
-    <div className="flex flex-col gap-6">
-      <p role="status" className="pointer-events-none fixed bottom-4 right-4 text-sm text-mist">
-        {slow ? "Saving…" : ""}
-      </p>
-      <div className="grid items-start gap-6 md:grid-cols-2">
-        <fieldset id="notifications" disabled={saving} aria-busy={saving} className={`scroll-mt-4 ${waiting}`}>
-          <EmailNotifications />
-        </fieldset>
-        <div className="flex min-w-0 flex-col gap-6">
-          <AccountEmail player={player} />
-          <PasswordCard />
-          <ViewedAs />
-        </div>
-      </div>
-      <fieldset disabled={saving} aria-busy={saving} className={`grid gap-6 md:grid-cols-2 ${waiting}`}>
-        <Card title="Sheets">
-          <Setting label="Show ratings as" hint="On character sheets, the Play View and printed sheets.">
+    <div className="max-w-2xl">
+      <PreferenceCards>
+        <SettingCard title="Appearance">
+          <SettingRow label="Theme" short>
+            <Theme />
+          </SettingRow>
+          <SettingRow label="Text size" hint="Everywhere but printed sheets and badges." short>
+            <Choice
+              name="text_size"
+              label="Text size"
+              choices={[
+                ["normal", "Normal"],
+                ["large", "Large"],
+              ]}
+            />
+          </SettingRow>
+        </SettingCard>
+
+        <SettingCard title="Sheets">
+          <SettingRow label="Show ratings as" hint="On character sheets, the Play View and printed sheets." short>
             <Choice
               name="ratings"
               label="Show ratings as"
@@ -294,8 +214,8 @@ export function SettingsPage({ player }: { player: PlayerOut }) {
                 ["pips", "Pips"],
               ]}
             />
-          </Setting>
-          <Setting label="Paper" hint="What printed sheets and badges are laid out for.">
+          </SettingRow>
+          <SettingRow label="Paper" hint="What printed sheets and badges are laid out for." short>
             <Choice
               name="paper"
               label="Paper"
@@ -304,8 +224,8 @@ export function SettingsPage({ player }: { player: PlayerOut }) {
                 ["a4", "A4"],
               ]}
             />
-          </Setting>
-          <Setting label="Badge size" hint="To fit your badge holders. You can pick another size when you print.">
+          </SettingRow>
+          <SettingRow label="Badge size" hint="To fit your badge holders. You can pick another size when you print.">
             <Choice
               name="badge_size"
               label="Badge size"
@@ -316,14 +236,14 @@ export function SettingsPage({ player }: { player: PlayerOut }) {
                 ["4x6", "4 × 6 in"],
               ]}
             />
-          </Setting>
-        </Card>
+          </SettingRow>
+        </SettingCard>
 
-        <Card title="Dates and times">
-          <Setting label="Time zone" hint={`Times show in this zone, wherever you are. This device is on ${zoneName(deviceZone())} time.`}>
+        <SettingCard title="Dates and times">
+          <SettingRow label="Time zone" hint={`Times show in this zone, wherever you are. This device is on ${zoneName(deviceZone())} time.`}>
             <TimeZone />
-          </Setting>
-          <Setting label="Dates">
+          </SettingRow>
+          <SettingRow label="Dates">
             <Choice
               name="date_format"
               label="Dates"
@@ -333,8 +253,8 @@ export function SettingsPage({ player }: { player: PlayerOut }) {
                 ["iso", "2026-10-20"],
               ]}
             />
-          </Setting>
-          <Setting label="Clock">
+          </SettingRow>
+          <SettingRow label="Clock" short>
             <Choice
               name="clock"
               label="Clock"
@@ -343,13 +263,13 @@ export function SettingsPage({ player }: { player: PlayerOut }) {
                 ["24", "21:30"],
               ]}
             />
-          </Setting>
-          <Setting label="Deadlines show as" hint="With their zone, so players elsewhere agree on them.">
+          </SettingRow>
+          <SettingRow label="Deadlines show as" hint="With their zone, so players elsewhere agree on them.">
             <DeadlineNow />
-          </Setting>
-        </Card>
+          </SettingRow>
+        </SettingCard>
 
-        <Card title="At game">
+        <SettingCard title="At game">
           <PreferenceSwitch name="quick_notes" label="Quick notes" hint="The Play View asks what each use was for, except Blood, Willpower and healing." />
           <PreferenceSwitch
             name="keep_awake"
@@ -362,29 +282,16 @@ export function SettingsPage({ player }: { player: PlayerOut }) {
           />
           <OpeningTab />
           <FlipSwitch hint="On the Throws tab, flip your phone face down and back up to throw. On this device, and only on phones with a motion sensor." />
-          <Setting label="Throw pictures" hint="What the Throws tab shows: Horatio's, or the set of a troupe you play in that has made its own. Kept on this device for games with no signal.">
+          <SettingRow
+            label="Throw pictures"
+            hint="What the Throws tab shows: Horatio's, or the set of a troupe you play in that has made its own. Kept on this device for games with no signal."
+          >
             <ThrowPictures />
-          </Setting>
-        </Card>
+          </SettingRow>
+        </SettingCard>
 
-        <Card title="Appearance">
-          <Setting label="Theme">
-            <Theme />
-          </Setting>
-          <Setting label="Text size" hint="Everywhere but printed sheets and badges.">
-            <Choice
-              name="text_size"
-              label="Text size"
-              choices={[
-                ["normal", "Normal"],
-                ["large", "Large"],
-              ]}
-            />
-          </Setting>
-        </Card>
-
-        <Card title="Troupes">
-          <Setting label="On a troupe's Who's Who, show me by" hint="Its players and staff see who plays each character.">
+        <SettingCard title="Troupes">
+          <SettingRow label="On a troupe's Who's Who, show me by" hint="Its players and staff see who plays each character.">
             <Choice
               name="whos_who_handle"
               label="On a troupe's Who's Who, show me by"
@@ -393,30 +300,15 @@ export function SettingsPage({ player }: { player: PlayerOut }) {
                 [true, "My handle"],
               ]}
             />
-          </Setting>
-          <Setting label="Troupe news in the bell" hint="Each new story from your troupes' news agencies. Email for it is under Notifications by email.">
-            <Choice
-              name="bell_news"
-              label="Troupe news in the bell"
-              choices={[
-                [true, "In the bell"],
-                [false, "Not in the bell"],
-              ]}
-            />
-          </Setting>
-          <Setting label="Troupe announcements in the bell" hint="Each announcement from your troupes' staff, such as a game moved. Email for it is under Notifications by email.">
-            <Choice
-              name="bell_announcements"
-              label="Troupe announcements in the bell"
-              choices={[
-                [true, "In the bell"],
-                [false, "Not in the bell"],
-              ]}
-            />
-          </Setting>
-        </Card>
-      </fieldset>
-      <ErrorText error={set.error} />
+          </SettingRow>
+          <PreferenceSwitch name="bell_news" label="Troupe news in the bell" hint="Each new story from your troupes' news agencies. Email for it is under Sign-in and email." />
+          <PreferenceSwitch
+            name="bell_announcements"
+            label="Troupe announcements in the bell"
+            hint="Each announcement from your troupes' staff, such as a game moved. Email for it is under Sign-in and email."
+          />
+        </SettingCard>
+      </PreferenceCards>
     </div>
   );
 }

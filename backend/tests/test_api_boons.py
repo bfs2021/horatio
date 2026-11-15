@@ -59,6 +59,14 @@ class Ledger:
         assert listed.status_code == 200, listed.text
         return listed.json()
 
+    def choices(self, by: Person | None = None) -> set[str]:
+        """The names of the characters the ledger may name (#978)."""
+        found = (by or self.troupe.storyteller).client.get(
+            f"/troupes/{self.troupe.id}/boon-characters"
+        )
+        assert found.status_code == 200, found.text
+        return {c["name"] for c in found.json()}
+
     def act(self, boon: dict[str, Any], action: str, by: Person | None = None, **body: Any):
         return (by or self.troupe.storyteller).client.post(
             f"{self.path}/{boon['id']}/{action}", json=body
@@ -449,8 +457,7 @@ def test_the_ledger_shows_open_departed_settled_and_void_boons(ledger: Ledger) -
         "2026-01-01",
     ]
     # The retired character can still be named.
-    names = {c["name"] for c in opened["characters"]}
-    assert {"Agnes", "Bram", "Vidal"} <= names
+    assert {"Agnes", "Bram", "Vidal"} <= ledger.choices()
 
 
 def test_the_ledger_narrows_to_a_character_a_name_a_kind_or_nights(ledger: Ledger) -> None:

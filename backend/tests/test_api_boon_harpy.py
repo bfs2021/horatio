@@ -237,7 +237,7 @@ def test_the_harpy_never_sees_or_writes_a_staff_note(court: Court) -> None:
 def test_the_harpy_names_only_characters_players_may_know(court: Court) -> None:
     ok(court.access("full"))
     harpy = court.harpy_player
-    choices = {c["name"] for c in court.ledger(by=harpy)["characters"]}
+    choices = court.choices(by=harpy)
     assert {"Agnes", "Bram", "Hestia"} <= choices
     assert "Vidal" not in choices
     hidden = court.register(row(court.agnes, court.vidal), by=harpy)
@@ -247,7 +247,7 @@ def test_the_harpy_names_only_characters_players_may_know(court: Court) -> None:
     # Once staff put the NPC in the ledger, the Harpy may name him too.
     court.one(court.vidal, court.bram)
 
-    assert "Vidal" in {c["name"] for c in court.ledger(by=harpy)["characters"]}
+    assert "Vidal" in court.choices(by=harpy)
     made = court.register(row(court.agnes, court.vidal), by=harpy)
     assert made.status_code == 201, made.text
 

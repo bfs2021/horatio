@@ -14,7 +14,7 @@ import { searchPlayers, troupePlayers } from "./troupePlayers";
  */
 export function PlayersTab({ troupeId }: { troupeId: string }) {
   const path = { params: { path: { troupe_id: troupeId } } };
-  // Shares the Characters tab's query.
+  // Shares the Roster tab's query.
   const roster = useQuery({ queryKey: ["roster", troupeId], queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/characters", path)) });
   const staff = useQuery({ queryKey: ["staff", troupeId], queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/staff", path)) });
   const [query, setQuery] = useState("");

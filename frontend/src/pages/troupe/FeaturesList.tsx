@@ -166,17 +166,17 @@ function FeatureLinks({ feature: f, base, settings }: { feature: Feature; base: 
   return (
     <p className="flex flex-wrap gap-x-4 text-xs">
       {f.tab && (
-        <Link to={`${base}/${f.tab.to}`} className="text-mist underline hover:text-parchment">
+        <Link to={`${base}/${f.tab.to}`} className="inline-flex items-center text-mist underline hover:text-parchment pointer-coarse:min-h-10">
           Open {f.tab.label}
         </Link>
       )}
       {settings &&
         (settings.startsWith("#") ? (
-          <a href={settings} className="text-mist underline hover:text-parchment" aria-label={`Settings for ${f.name}`}>
+          <a href={settings} className="inline-flex items-center text-mist underline hover:text-parchment pointer-coarse:min-h-10" aria-label={`Settings for ${f.name}`}>
             Settings
           </a>
         ) : (
-          <Link to={`${base}/${settings}`} className="text-mist underline hover:text-parchment" aria-label={`Settings for ${f.name}`}>
+          <Link to={`${base}/${settings}`} className="inline-flex items-center text-mist underline hover:text-parchment pointer-coarse:min-h-10" aria-label={`Settings for ${f.name}`}>
             Settings
           </Link>
         ))}

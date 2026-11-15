@@ -4,7 +4,7 @@ import { MotifsTouched } from "./MotifTags";
 import { SettingDocumentFor } from "./SettingDocument";
 
 /**
- * The Setting tab: the troupe's Setting Style Document for every member to read before
+ * The setting tab: the troupe's Setting Style Document for every member to read before
  * they build (MET: VTM p. 331), and to print for the Storyteller table. Its running
  * staff write their parts under Troupe settings; the rest follows the troupe's own
  * settings, each part linking to where it is changed.

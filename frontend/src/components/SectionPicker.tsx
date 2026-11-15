@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router";
 import { openTab } from "../title";
 import { Dialog } from "./Dialog";
+import { SectionLabel } from "./Headings";
 import { CountBubble, type Tab } from "./ui";
 
 type Group = { label: string; tabs: Tab[] };
@@ -99,7 +100,7 @@ export function TabSheet({ groups, open, onChoose }: { groups: { label?: string;
     <div className="space-y-5">
       {groups.map((g, i) => (
         <section key={g.label ?? i}>
-          {g.label && <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">{g.label}</h3>}
+          {g.label && <SectionLabel className="mb-1">{g.label}</SectionLabel>}
           <ul aria-label={g.label}>
             {g.tabs.map((t) => {
               const isOpen = t === open;

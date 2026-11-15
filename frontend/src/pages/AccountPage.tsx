@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, Route, Routes, useMatch } from "react-router";
 import { api, unwrap } from "../api/client";
 import type { PlayerOut, ProfileLink } from "../api/types";
+import { SectionLabel } from "../components/Headings";
 import { PronounsInput } from "../components/PronounsInput";
 import { useToast } from "../components/Toast";
 import { Button, Card, ErrorText, Field, Input, Loading, PageTitle, Tabs, Textarea } from "../components/ui";
@@ -153,7 +154,7 @@ function ProfileForm({ player }: { player: PlayerOut }) {
             </Field>
           </div>
           <div className="flex flex-col gap-3">
-            <h3 className="text-sm text-mist">Social media</h3>
+            <SectionLabel>Social media</SectionLabel>
             {links.map((link, i) => (
               <fieldset key={i} className="flex flex-col gap-2 rounded-md border border-ash p-3 sm:flex-row sm:items-end">
                 <legend className="sr-only">Link {i + 1}</legend>

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { components } from "../../api/schema";
 import type { PlayerSummary } from "../../api/types";
+import { SectionLabel } from "../../components/Headings";
 import { AtHandle, PersonPicker } from "../../components/PersonPicker";
 import { Button, ErrorText, Field, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
@@ -105,7 +106,7 @@ function Confirm({
         Merge {p.merge.display_name} <AtHandle handle={p.merge.handle} /> into {p.keep.display_name} <AtHandle handle={p.keep.handle} />? This can't be undone.
       </p>
       <section>
-        <h3 className="mb-1 text-mist">Moves to {keep}</h3>
+        <SectionLabel className="mb-1">Moves to {keep}</SectionLabel>
         <ul className="list-disc space-y-1 pl-5">
           {p.characters.map((c) => (
             <li key={c.id}>
@@ -135,7 +136,7 @@ function Confirm({
       </section>
       {p.also.length > 0 && (
         <section>
-          <h3 className="mb-1 text-mist">Also</h3>
+          <SectionLabel className="mb-1">Also</SectionLabel>
           <ul className="list-disc space-y-1 pl-5">
             {p.also.map((a) => (
               <li key={a}>{a}</li>

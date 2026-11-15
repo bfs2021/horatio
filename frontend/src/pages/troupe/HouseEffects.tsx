@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { api, unwrap } from "../../api/client";
 import type { CatalogueOut, EffectBlock, EffectChoicesOut, HousePreviewOut, HouseTraitIn, PoolChange, PoolChoiceOut } from "../../api/types";
+import { CardHeading } from "../../components/Headings";
 import { Button, Empty, ErrorText, Input, Select } from "../../components/ui";
 import {
   BLOCK_TYPES,
@@ -597,7 +598,7 @@ export function HousePreview({
   return (
     <section aria-label="Preview" className="flex flex-col gap-2 rounded-md border border-gold/40 bg-gold/5 p-3 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-gold">A character with this would…</h3>
+        <CardHeading>A character with this would…</CardHeading>
         <Select aria-label="Try it on" value={characterId} onChange={(e) => onCharacter(e.target.value)} className="sm:w-64">
           <option value="">A new character</option>
           {preview?.samples.map((s) => (

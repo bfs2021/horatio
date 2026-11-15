@@ -1,4 +1,5 @@
 import type { PowerSwitch } from "../../api/types";
+import { SectionLabel } from "../../components/Headings";
 import { pageLabel } from "../../components/TraitInfo";
 import { addedNote, formsOn, isPaused, pickKey, switchKey, withPicks } from "./powers";
 import type { makeTap } from "./tracker";
@@ -187,7 +188,7 @@ export function PowersList({ powers: all, forms: atOnce = 1, tap }: { powers: Po
   const others = powers.filter((p) => !p.form);
   return (
     <div>
-      <h3 className="text-xs tracking-wide text-mist uppercase">From your powers</h3>
+      <SectionLabel>From your powers</SectionLabel>
       {forms.length > 0 && (
         <>
           <p className="mt-1 text-xs text-mist">

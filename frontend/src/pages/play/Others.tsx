@@ -6,6 +6,7 @@ import type { SeenOut } from "../../api/types";
 import { Pronouns } from "../../components/PronounsInput";
 import { Badge, Button, Empty, ErrorText, Input, Loader } from "../../components/ui";
 import { BackLink } from "../../components/BackLink";
+import { SectionLabel } from "../../components/Headings";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { endingText } from "../character/status";
@@ -154,7 +155,7 @@ function OtherStatus({ view, otherId, undo, online, onBack }: { view: Shown; oth
                 if (items.length === 0) return null;
                 return (
                   <div key={g.type}>
-                    <h4 className="text-xs tracking-wide text-gold uppercase">{g.title}</h4>
+                    <SectionLabel as="h4">{g.title}</SectionLabel>
                     <ul className="divide-y divide-ash">
                       {items.map((s) => (
                         <SeenRow

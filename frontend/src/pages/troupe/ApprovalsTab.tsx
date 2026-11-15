@@ -6,6 +6,7 @@ import { api, unwrap } from "../../api/client";
 import type { QueuedApproval, XpReviewOut } from "../../api/types";
 import { Avatar } from "../../components/Avatar";
 import { useClanName } from "../../components/ClanNames";
+import { SectionLabel } from "../../components/Headings";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
@@ -291,7 +292,7 @@ function ApprovalCard({ approval }: { approval: QueuedApproval }) {
       )}
       {joining && approval.free_choices.length > 0 && (
         <div className="mb-3 flex flex-col gap-1" data-free-choices>
-          <h3 className="font-sans text-xs text-mist uppercase">Free traits the player chose</h3>
+          <SectionLabel>Free traits the player chose</SectionLabel>
           <ul className="text-sm">
             {approval.free_choices.map((f) => (
               <li key={f.merit}>
@@ -430,7 +431,7 @@ function XpReview({
     ].filter(Boolean);
     return (
       <div className="mb-3 flex flex-col gap-1">
-        <h3 className="font-sans text-xs text-mist uppercase">Experience</h3>
+        <SectionLabel>Experience</SectionLabel>
         {intro}
         <p className="text-sm text-mist">{done.length ? `On joining: ${done.join(", ")}.` : "Nothing was changed on joining."}</p>
       </div>
@@ -438,7 +439,7 @@ function XpReview({
   }
   return (
     <div className="mb-3 flex flex-col gap-2">
-      <h3 className="font-sans text-xs text-mist uppercase">Experience</h3>
+      <SectionLabel>Experience</SectionLabel>
       {intro}
       {r.self_entered > 0 && (
         <Field label={`Self-entered XP: ${r.self_entered}`}>

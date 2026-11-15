@@ -10,6 +10,7 @@ import { useHouseSplat } from "./HouseSplat";
 import { InfluenceLookback } from "./InfluenceLookback";
 import { RareDisciplinesSetting } from "./RareDisciplinesSetting";
 import { useCatalogue } from "../../catalogue";
+import { CardHeading, SectionLabel } from "../../components/Headings";
 
 type Scheme = AllowanceOut["scheme"];
 
@@ -78,7 +79,7 @@ export function AllowancesSection({ troupeId, canEdit }: { troupeId: string; can
         <div className="flex flex-col gap-5">
           {[...groups].map(([kind, rules]) => (
             <section key={kind}>
-              <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">{kindName(kind)}</h3>
+              <SectionLabel className="mb-1">{kindName(kind)}</SectionLabel>
               <ul className="divide-y divide-ash">
                 {rules.map((r) => {
                   const change: Editing = r.house ? { kind: "change", rule: r } : { kind: "replace", rule: r };
@@ -179,7 +180,7 @@ function AllowanceEditor({ troupeId, splat, data, editing, onClose }: { troupeId
 
   return (
     <section aria-label={title} className="flex flex-col gap-3 rounded-md border border-gold/40 p-3 sm:p-4">
-      <h3 className="text-gold">{title}</h3>
+      <CardHeading>{title}</CardHeading>
       <form
         className="flex flex-col gap-4"
         onSubmit={(e) => {

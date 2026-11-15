@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api/client";
 import type { BanOut, CharacterOut, CharacterTitlesOut, HeldTitleOut, StatusOut, TitleChoiceOut } from "../../api/types";
 import { useClanName } from "../../components/ClanNames";
 import { Dialog } from "../../components/Dialog";
+import { CardHeading } from "../../components/Headings";
 import { InfoButton } from "../../components/InfoButton";
 import { pageLabel } from "../../components/TraitInfo";
 import { Badge, Button, Card, Empty, ErrorText } from "../../components/ui";
@@ -182,7 +183,7 @@ function Choices({ character, titles, active }: { character: CharacterOut; title
         // Titles of any sect give no status in the rules: out of the way until wanted.
         return sect ? (
           <div key={sect}>
-            <h4 className="mb-1 text-sm text-gold">{sect} titles</h4>
+            <CardHeading as="h4" className="mb-1">{sect} titles</CardHeading>
             {rows}
           </div>
         ) : (

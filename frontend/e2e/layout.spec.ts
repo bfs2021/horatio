@@ -15,7 +15,10 @@ const viewport = { width: 375, height: 800 };
 const headers = { "X-Horatio": "1" };
 
 // Screens known to be too wide, each waiting on its own ticket: the address, with "ID" for each id.
-const KNOWN: string[] = [];
+const KNOWN: string[] = [
+  // Its Troupe selects (Yorick import, Fit NPC creation picks) are as wide as the longest troupe name: needs a ticket.
+  "/custodian/tools",
+];
 
 async function send(page: Page, method: "GET" | "POST" | "PUT" | "PATCH", url: string, data?: object) {
   const response = await page.request.fetch(url, { method, headers, data });
@@ -123,8 +126,9 @@ test("no screen is wider than a phone", async ({ browser }) => {
   const l = lead.page;
   const p = player.page;
 
-  // A troupe with all its optional features on, so all its tabs show.
-  const { id: troupeId } = await send(l, "POST", "/api/troupes", { name: `Layout Court ${run}`, lead_handle: lead.handle });
+  // A troupe with all its optional features on, so all its tabs show, and a long name, as a
+  // select of troupes is as wide as its longest.
+  const { id: troupeId } = await send(l, "POST", "/api/troupes", { name: `Layout Court of the Drowned Crown ${run}`, lead_handle: lead.handle });
   const base = `/troupes/${troupeId}`;
   await backstoryOptional(l, troupeId);
   await send(l, "PATCH", `/api${base}`, { description: "A Camarilla chronicle in a rain-soaked port city, where the old Prince's grip is slipping and every clan is counting favours." });

@@ -15,6 +15,7 @@ import { useHouseSplat } from "./HouseSplat";
 import { FACTS, flat, linesOf, newLine, overlaps, parseTable, previewRatings, priceAt, sameCondition, SCHEMES, TESTS, toCondition } from "./costs";
 import type { Fact, Line, Pricing, Scheme } from "./costs";
 import { useCatalogue } from "../../catalogue";
+import { CardHeading, SectionLabel } from "../../components/Headings";
 
 /** What a price is about, in a few words: "Path of Blood, Assamite clan". */
 function subject(cost: CostOut, category: CostCategoryOut | undefined): string {
@@ -118,7 +119,7 @@ export function CostsSection({ troupeId, canEdit }: { troupeId: string; canEdit:
             const category = categories.get(key);
             return (
               <section key={key}>
-                <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">{category?.name ?? key}</h3>
+                <SectionLabel className="mb-1">{category?.name ?? key}</SectionLabel>
                 <ul className="divide-y divide-ash">
                   {rows.map((c) => {
                     const change: Editing = c.house ? { kind: "change", cost: c } : { kind: "replace", cost: c };
@@ -178,7 +179,7 @@ export function CostsSection({ troupeId, canEdit }: { troupeId: string; canEdit:
           })}
           {free.length > 0 && (
             <section>
-              <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">Free</h3>
+              <SectionLabel className="mb-1">Free</SectionLabel>
               <p className="py-2.5 text-sm">
                 {free.map(([key]) => categories.get(key)?.name ?? key).join(", ")}.
                 {canEdit && <span className="text-mist"> To price one of these, add a price for it.</span>}
@@ -262,7 +263,7 @@ function PriceEditor({ troupeId, splat, data, editing, onClose }: { troupeId: st
 
   return (
     <section aria-label={title} className="flex flex-col gap-3 rounded-md border border-gold/40 p-3 sm:p-4">
-      <h3 className="text-gold">{title}</h3>
+      <CardHeading>{title}</CardHeading>
       <form
         className="flex flex-col gap-4"
         onSubmit={(e) => {

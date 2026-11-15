@@ -13,6 +13,7 @@ import { useToast } from "../../components/Toast";
 import { Badge, Button, Card, Empty, ErrorText, Input, Loading, Select } from "../../components/ui";
 import { useConfirm } from "../../components/ConfirmDialog";
 import { BackLink } from "../../components/BackLink";
+import { SectionLabel } from "../../components/Headings";
 import { WebLink } from "../../components/WebLink";
 import { useAction } from "../../hooks";
 import { LocationForm, Warnings } from "./LocationForm";
@@ -453,7 +454,7 @@ function Record({ location: l, catalogue, onEdit, onQuest }: { location: Locatio
       {l.description && <p className="mt-3 text-sm whitespace-pre-wrap">{l.description}</p>}
       {l.qualities.length > 0 && (
         <section className="mt-4">
-          <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">Qualities</h3>
+          <SectionLabel className="mb-1">Qualities</SectionLabel>
           <ul className="flex flex-col gap-1 text-sm">
             {l.qualities.map((q, i) => (
               <li key={i}>
@@ -469,7 +470,7 @@ function Record({ location: l, catalogue, onEdit, onQuest }: { location: Locatio
       )}
       {l.negatives.length > 0 && (
         <section className="mt-4">
-          <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">Negative qualities</h3>
+          <SectionLabel className="mb-1">Negative qualities</SectionLabel>
           <ul className="flex flex-col gap-1 text-sm">
             {l.negatives.map((n) => (
               <li key={n.name}>
@@ -496,7 +497,7 @@ function Record({ location: l, catalogue, onEdit, onQuest }: { location: Locatio
       )}
       {l.haven_advantages.length > 0 && (
         <section className="mt-4">
-          <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">Haven advantages</h3>
+          <SectionLabel className="mb-1">Haven advantages</SectionLabel>
           <ul className="flex flex-col gap-1 text-sm">
             {l.haven_advantages.map((a) => (
               <li key={a}>
@@ -510,7 +511,7 @@ function Record({ location: l, catalogue, onEdit, onQuest }: { location: Locatio
       )}
       {l.notes && (
         <section className="mt-4">
-          <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">Notes for staff</h3>
+          <SectionLabel className="mb-1">Notes for staff</SectionLabel>
           <p className="text-sm whitespace-pre-wrap">{l.notes}</p>
         </section>
       )}

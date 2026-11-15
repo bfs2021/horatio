@@ -1,4 +1,5 @@
 import type { BackstoryLineOut } from "../../api/types";
+import { SectionLabel } from "../../components/Headings";
 
 /**
  * How one text differs from another, line by line: what changed since it was
@@ -21,7 +22,7 @@ export function Differences({
   const custom = added !== "Added";
   return (
     <div className="mb-4">
-      <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">{title}</h3>
+      <SectionLabel className="mb-1">{title}</SectionLabel>
       {custom && (
         <p className="mb-1 flex flex-wrap gap-3 text-xs text-mist">
           <span>

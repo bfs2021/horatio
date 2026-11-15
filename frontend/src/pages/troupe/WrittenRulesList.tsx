@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router";
 import type { WrittenRuleOut } from "../../api/types";
+import { CardHeading } from "../../components/Headings";
 import { Markdown } from "../../components/Markdown";
 import { PageRef } from "../../components/TraitInfo";
 import { rulesLink } from "../rules/rulesBrowser";
@@ -46,7 +47,7 @@ export function WrittenRulesList({ rules, troupeId }: { rules: WrittenRuleOut[];
       )}
       {sections.map((s) => (
         <section key={s.section} className="flex flex-col gap-4 border-t border-ash pt-4 first:border-t-0 first:pt-0">
-          {headed && <h3 className="text-base text-gold">{sectionLabel(s.section)}</h3>}
+          {headed && <CardHeading>{sectionLabel(s.section)}</CardHeading>}
           {s.rules.map((r) => (
             <article key={r.id} id={ruleAnchor(r.id)} className="flex scroll-mt-20 flex-col gap-2" data-testid="written-rule">
               <h4 className="font-sans text-sm font-medium text-parchment">{r.title}</h4>

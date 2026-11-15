@@ -9,6 +9,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { useToast } from "../../components/Toast";
 import { Checkbox } from "../../components/Checkbox";
 import { DataTable, type Column } from "../../components/DataTable";
+import { CardHeading } from "../../components/Headings";
 import { Toggle } from "../../components/Toggle";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
@@ -73,7 +74,7 @@ export function TitlesTab({ troupeId }: { troupeId: string }) {
             <div className="flex flex-col gap-5">
               {vacant.map(([sect, list]) => (
                 <section key={sect ?? ""}>
-                  <h3 className="text-gold">{sect ? `${sect} titles` : "Titles of any sect"}</h3>
+                  <CardHeading>{sect ? `${sect} titles` : "Titles of any sect"}</CardHeading>
                   <TitleTable label={sect ? `${sect} titles` : "Titles of any sect"} troupeId={troupeId} titles={list} data={titles.data} />
                 </section>
               ))}

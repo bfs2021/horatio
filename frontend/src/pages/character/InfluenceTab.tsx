@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api/client";
 import type { CharacterOut, HistoryEntryOut, InfluenceStandingOut } from "../../api/types";
 import { DateInput } from "../../components/DateInput";
 import { EmptyState, FilterBar } from "../../components/EmptyState";
+import { SectionLabel } from "../../components/Headings";
 import { InfoButton } from "../../components/InfoButton";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useDates } from "../../dates";
@@ -49,7 +50,7 @@ export function InfluenceTab({ character, mine }: { character: CharacterOut; min
         actions={h.log_troupe_id && <LogInfluenceButton troupeId={h.log_troupe_id} characterId={character.id} label={`Log influence for ${character.name}`} />}
       >
         <section aria-label="This month">
-          <h3 className="mb-1 font-sans text-xs text-mist uppercase">This month</h3>
+          <SectionLabel className="mb-1">This month</SectionLabel>
           {month.length ? (
             <ul className="flex flex-col gap-1 text-sm">
               {month.map((line) => (

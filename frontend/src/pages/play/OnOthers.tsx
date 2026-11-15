@@ -3,6 +3,7 @@ import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { EffectMadeOut, PlayEffectOut, PlayView } from "../../api/types";
 import { Dialog } from "../../components/Dialog";
+import { SectionLabel } from "../../components/Headings";
 import { Button, Empty, ErrorText, Loader, Select, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
 
@@ -223,7 +224,7 @@ export function OnOthers({ view, online, onChange }: { view: PlayView; online: b
     <section className="rounded-lg border border-line bg-dusk px-3 py-2 text-sm" aria-label="Powers used on others">
       {from.length > 0 && (
         <>
-          <h2 className="text-xs tracking-wide text-mist uppercase">On you, from others</h2>
+          <SectionLabel as="h2">On you, from others</SectionLabel>
           <ul className="divide-y divide-ash/60" aria-label="On you, from others">
             {from.map((e) => (
               <FromOther key={e.id} view={view} effect={e} online={online} onChange={onChange} />
@@ -233,7 +234,7 @@ export function OnOthers({ view, online, onChange }: { view: PlayView; online: b
       )}
       {made.length > 0 && (
         <>
-          <h2 className={`text-xs tracking-wide text-mist uppercase ${from.length ? "mt-2" : ""}`}>Your powers on others</h2>
+          <SectionLabel as="h2" className={from.length ? "mt-2" : undefined}>Your powers on others</SectionLabel>
           <ul className="divide-y divide-ash/60" aria-label="Your powers on others">
             {made.map((e) => (
               <MadeOn key={e.id} view={view} effect={e} online={online} onChange={onChange} />

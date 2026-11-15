@@ -1,3 +1,4 @@
+import { BoonImportCard } from "./tools/BoonImportCard";
 import { CryptTemplates } from "./tools/CryptTemplates";
 import { DarkPackResources } from "./tools/DarkPackResources";
 import { FitNpcPicks } from "./tools/FitNpcPicks";
@@ -13,6 +14,7 @@ export function ToolsTab() {
   return (
     <div className="flex flex-col gap-4">
       <YorickImportCard />
+      <BoonImportCard />
       <FitNpcPicks />
       <DarkPackResources />
       <VtesSymbols />

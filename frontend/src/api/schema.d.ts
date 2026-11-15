@@ -683,6 +683,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/boon-imports/{troupe_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Ledger
+         * @description Import the spreadsheet into the troupe's boon ledger, or, with `dry_run`, say
+         *     what importing it would do and change nothing. The custodian only.
+         */
+        post: operations["import_ledger_api_boon_imports__troupe_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/calendar/links": {
         parameters: {
             query?: never;
@@ -15589,6 +15610,14 @@ export interface components {
             /** Troupe Id */
             troupe_id?: string | null;
         };
+        /** Body_import_ledger_api_boon_imports__troupe_id__post */
+        Body_import_ledger_api_boon_imports__troupe_id__post: {
+            /**
+             * File
+             * @description The spreadsheet, downloaded as .xlsx.
+             */
+            file: string;
+        };
         /** Body_review_bundle_api_characters_import_bundle_review_post */
         Body_review_bundle_api_characters_import_bundle_review_post: {
             /**
@@ -16407,6 +16436,49 @@ export interface components {
             access: "none" | "submissions" | "full";
             /** Standings */
             standings?: boolean | null;
+        };
+        /** BoonImportOut */
+        BoonImportOut: {
+            /** Added */
+            added: number;
+            /** By Account */
+            by_account: number;
+            /**
+             * Csv
+             * @default
+             */
+            csv: string;
+            /** Dry Run */
+            dry_run: boolean;
+            /** Duplicates */
+            duplicates: components["schemas"]["DuplicateOut"][];
+            /** Flagged */
+            flagged: number;
+            /** General */
+            general: string[];
+            /** Kinds */
+            kinds: components["schemas"]["KindCountOut"][];
+            /** Ledger On */
+            ledger_on: boolean;
+            /** Names */
+            names: components["schemas"]["NameCountOut"][];
+            /** Notes */
+            notes: components["schemas"]["RowNoteOut"][];
+            /** Rows */
+            rows: number;
+            /** Skipped */
+            skipped: components["schemas"]["RowNoteOut"][];
+            /**
+             * Troupe Id
+             * Format: uuid
+             */
+            troupe_id: string;
+            /** Troupe Name */
+            troupe_name: string;
+            /** Unchanged */
+            unchanged: number;
+            /** Updated */
+            updated: number;
         };
         /** BoonKindCount */
         BoonKindCount: {
@@ -20123,6 +20195,15 @@ export interface components {
              * @enum {string}
              */
             source: "game" | "downtime" | "staff";
+        };
+        /** DuplicateOut */
+        DuplicateOut: {
+            /** In Ledger */
+            in_ledger: boolean;
+            /** Rows */
+            rows: string[];
+            /** What */
+            what: string;
         };
         /** DyscrasiaOut */
         DyscrasiaOut: {
@@ -24229,6 +24310,18 @@ export interface components {
             /** Steps */
             steps: components["schemas"]["StepOut"][];
         };
+        /** KindCountOut */
+        KindCountOut: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "trivial" | "minor" | "major" | "blood" | "life";
+            /** Settled */
+            settled: number;
+            /** Standing */
+            standing: number;
+        };
         /** KindOut */
         KindOut: {
             /** Allowed */
@@ -26169,6 +26262,22 @@ export interface components {
             chosen: components["schemas"]["ThrowSetOut"] | null;
             /** Offered */
             offered: components["schemas"]["ThrowSetOut"][];
+        };
+        /** NameCountOut */
+        NameCountOut: {
+            /** Boons */
+            boons: number;
+            /** Character Id */
+            character_id: string | null;
+            /** Character Name */
+            character_name: string | null;
+            /**
+             * How
+             * @enum {string}
+             */
+            how: "matched" | "alias" | "unmatched" | "ambiguous";
+            /** Name */
+            name: string;
         };
         /** NameIn */
         NameIn: {
@@ -31550,6 +31659,13 @@ export interface components {
             titles: string[];
             /** Waiting */
             waiting: boolean;
+        };
+        /** RowNoteOut */
+        RowNoteOut: {
+            /** Note */
+            note: string;
+            /** Row */
+            row: string;
         };
         /** RsvpIn */
         RsvpIn: {
@@ -38473,6 +38589,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoonAuditOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_ledger_api_boon_imports__troupe_id__post: {
+        parameters: {
+            query?: {
+                dry_run?: boolean;
+            };
+            header?: never;
+            path: {
+                troupe_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_ledger_api_boon_imports__troupe_id__post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoonImportOut"];
                 };
             };
             /** @description Validation Error */

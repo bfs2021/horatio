@@ -5041,6 +5041,21 @@
         "title": "Body_import_bundle_api_characters_import_bundle_post",
         "type": "object"
       },
+      "Body_import_ledger_api_boon_imports__troupe_id__post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "description": "The spreadsheet, downloaded as .xlsx.",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_ledger_api_boon_imports__troupe_id__post",
+        "type": "object"
+      },
       "Body_review_bundle_api_characters_import_bundle_review_post": {
         "properties": {
           "files": {
@@ -7123,6 +7138,118 @@
           "access"
         ],
         "title": "BoonHarpyIn",
+        "type": "object"
+      },
+      "BoonImportOut": {
+        "properties": {
+          "added": {
+            "title": "Added",
+            "type": "integer"
+          },
+          "by_account": {
+            "title": "By Account",
+            "type": "integer"
+          },
+          "csv": {
+            "default": "",
+            "title": "Csv",
+            "type": "string"
+          },
+          "dry_run": {
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "duplicates": {
+            "items": {
+              "$ref": "#/components/schemas/DuplicateOut"
+            },
+            "title": "Duplicates",
+            "type": "array"
+          },
+          "flagged": {
+            "title": "Flagged",
+            "type": "integer"
+          },
+          "general": {
+            "items": {
+              "type": "string"
+            },
+            "title": "General",
+            "type": "array"
+          },
+          "kinds": {
+            "items": {
+              "$ref": "#/components/schemas/KindCountOut"
+            },
+            "title": "Kinds",
+            "type": "array"
+          },
+          "ledger_on": {
+            "title": "Ledger On",
+            "type": "boolean"
+          },
+          "names": {
+            "items": {
+              "$ref": "#/components/schemas/NameCountOut"
+            },
+            "title": "Names",
+            "type": "array"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/RowNoteOut"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "rows": {
+            "title": "Rows",
+            "type": "integer"
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/RowNoteOut"
+            },
+            "title": "Skipped",
+            "type": "array"
+          },
+          "troupe_id": {
+            "format": "uuid",
+            "title": "Troupe Id",
+            "type": "string"
+          },
+          "troupe_name": {
+            "title": "Troupe Name",
+            "type": "string"
+          },
+          "unchanged": {
+            "title": "Unchanged",
+            "type": "integer"
+          },
+          "updated": {
+            "title": "Updated",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "dry_run",
+          "troupe_id",
+          "troupe_name",
+          "ledger_on",
+          "rows",
+          "added",
+          "updated",
+          "unchanged",
+          "kinds",
+          "names",
+          "skipped",
+          "duplicates",
+          "notes",
+          "flagged",
+          "by_account",
+          "general"
+        ],
+        "title": "BoonImportOut",
         "type": "object"
       },
       "BoonKindCount": {
@@ -17359,6 +17486,32 @@
           "night"
         ],
         "title": "DrinkIn",
+        "type": "object"
+      },
+      "DuplicateOut": {
+        "properties": {
+          "in_ledger": {
+            "title": "In Ledger",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "what": {
+            "title": "What",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rows",
+          "what",
+          "in_ledger"
+        ],
+        "title": "DuplicateOut",
         "type": "object"
       },
       "DyscrasiaOut": {
@@ -27757,6 +27910,36 @@
         "title": "KeywordsOut",
         "type": "object"
       },
+      "KindCountOut": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "trivial",
+              "minor",
+              "major",
+              "blood",
+              "life"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "settled": {
+            "title": "Settled",
+            "type": "integer"
+          },
+          "standing": {
+            "title": "Standing",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "standing",
+          "settled"
+        ],
+        "title": "KindCountOut",
+        "type": "object"
+      },
       "KindOut": {
         "properties": {
           "allowed": {
@@ -32582,6 +32765,60 @@
           "offered"
         ],
         "title": "MyThrowImagesOut",
+        "type": "object"
+      },
+      "NameCountOut": {
+        "properties": {
+          "boons": {
+            "title": "Boons",
+            "type": "integer"
+          },
+          "character_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Character Id"
+          },
+          "character_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Character Name"
+          },
+          "how": {
+            "enum": [
+              "matched",
+              "alias",
+              "unmatched",
+              "ambiguous"
+            ],
+            "title": "How",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "how",
+          "character_id",
+          "character_name",
+          "boons"
+        ],
+        "title": "NameCountOut",
         "type": "object"
       },
       "NameIn": {
@@ -46038,6 +46275,24 @@
           "lines_veils"
         ],
         "title": "RosterEntry",
+        "type": "object"
+      },
+      "RowNoteOut": {
+        "properties": {
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "row": {
+            "title": "Row",
+            "type": "string"
+          }
+        },
+        "required": [
+          "row",
+          "note"
+        ],
+        "title": "RowNoteOut",
         "type": "object"
       },
       "RsvpIn": {
@@ -62548,6 +62803,70 @@
         "summary": "Read Audit",
         "tags": [
           "boons"
+        ]
+      }
+    },
+    "/api/boon-imports/{troupe_id}": {
+      "post": {
+        "description": "Import the spreadsheet into the troupe's boon ledger, or, with `dry_run`, say\nwhat importing it would do and change nothing. The custodian only.",
+        "operationId": "import_ledger_api_boon_imports__troupe_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "troupe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Troupe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dry_run",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Dry Run",
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_ledger_api_boon_imports__troupe_id__post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoonImportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Ledger",
+        "tags": [
+          "custodian"
         ]
       }
     },

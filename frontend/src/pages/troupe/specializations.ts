@@ -1,4 +1,4 @@
-/** The Specialisations tab's own tabs: one per kind, grouped as on a sheet. */
+/** The Specialisations tab's parts: one per kind, grouped as on a sheet. */
 
 type Kind = { category: string; name: string; group: string };
 

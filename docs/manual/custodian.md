@@ -127,7 +127,7 @@ A troupe archived before Horatio settled characters on archiving may still hold 
 
 ![The People table, with a suspended account, a reset link out and a new email waiting](images/custodian/people.png)
 
-The chevron at the start of a row opens it, to list every character that person has, whatever its standing: active, still in creation, waiting for a troupe to accept it, or retired (with why: Final Death, off-field or inactive), and the NPCs they made, each marked as one. Each shows its picture, or its initials without one, and its home troupe, or **no home troupe**. Its name opens it. Choose the chevron again to close the row; you can have several open at once.
+The chevron at the start of a row opens it, to show the person's handle, email and when they joined in full, and to list every character that person has, whatever its standing: active, still in creation, waiting for a troupe to accept it, or retired (with why: Final Death, off-field or inactive), and the NPCs they made, each marked as one. Each shows its picture, or its initials without one, and its home troupe, or **no home troupe**. Its name opens it. Choose the chevron again to close the row; you can have several open at once.
 
 ![A person's row open on the People table, listing their characters](images/custodian/people-characters.png)
 
@@ -147,7 +147,7 @@ Each opens in a dialog over the list, so you don't lose your place.
 
 Accounts closed by a [merge](#merging-two-accounts) aren't listed.
 
-On a phone, each row folds into a card, with the handle, email and badges under the name, and the chevron at its start. Its characters open below it, across the card.
+A long handle or email is cut short in its column rather than broken in two; open the row to read it in full. On a phone, each row folds into two lines: the name and any badges, then the handle, with the chevron at its start. Its email, when they joined and their characters open below it, across the card.
 
 ### Viewing as someone
 

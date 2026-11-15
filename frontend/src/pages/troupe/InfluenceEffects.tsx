@@ -6,6 +6,7 @@ import type { InfluenceChoicesOut, InfluenceEffectOut, InfluenceEntryOut, Influe
 import { DateInput } from "../../components/DateInput";
 import { Dialog } from "../../components/Dialog";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
+import { useConfirm } from "../../components/ConfirmDialog";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { TYPE_NAMES, type InfluenceType } from "../../influence";
@@ -216,6 +217,7 @@ export function EffectsCard({ troupeId }: { troupeId: string }) {
     const removed = await unwrap(api.DELETE("/api/influence-effects/{effect_id}", { params: { path: { effect_id: effect.id } } }));
     if (removed.note) window.alert(removed.note);
   });
+  const [confirmed, confirming] = useConfirm();
 
   return (
     <Card
@@ -230,6 +232,7 @@ export function EffectsCard({ troupeId }: { troupeId: string }) {
     >
       <p className="mb-3 text-sm text-mist">Attacks, Boosts and Blocks holding now. They end by themselves.</p>
       {adding && <BlockForm troupeId={troupeId} onDone={() => setAdding(false)} />}
+      {confirming}
       {effects.isPending ? (
         <Loading />
       ) : effects.error ? (
@@ -250,8 +253,8 @@ export function EffectsCard({ troupeId }: { troupeId: string }) {
               <Button
                 variant="ghost"
                 className="ml-auto px-2 py-0"
-                onClick={() => {
-                  if (window.confirm(`Take back ${e.text}?`)) remove.mutate(e);
+                onClick={async () => {
+                  if (await confirmed({ title: `Take back ${e.text}?`, body: "It ends now, as if never resolved, and its entry can be resolved again.", action: "Take back" })) remove.mutate(e);
                 }}
               >
                 Take back

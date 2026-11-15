@@ -7,6 +7,7 @@ import { Avatar } from "../components/Avatar";
 import { clanNamed } from "../clanNames";
 import type { TroupeOut } from "../api/types";
 import { Badge, Button, Card, CountBubble, Empty, ErrorText, Field, Input, Loading, PageTitle, Select } from "../components/ui";
+import { LinkButton } from "../components/LinkButton";
 import { useAction, useMe } from "../hooks";
 import { useDates } from "../dates";
 import { BuildFor } from "./character/BuildFor";
@@ -59,18 +60,13 @@ export function CharactersPage() {
             title={troupesFirst ? "Your characters" : undefined}
             actions={
               <span className="ml-auto flex flex-wrap gap-2">
-                <Link to="/characters/import" className="inline-flex min-h-8 items-center rounded-md border border-ash px-3 text-sm text-parchment hover:border-mist">
+                <LinkButton variant="secondary" to="/characters/import">
                   Import a character
-                </Link>
+                </LinkButton>
                 {!!characters.data?.length && (
-                  <a
-                    href="/api/character-backups"
-                    download
-                    className="inline-flex min-h-8 items-center rounded-md border border-ash px-3 text-sm text-parchment hover:border-mist"
-                    title="Every character of yours, retired ones too, in one .zip"
-                  >
+                  <LinkButton variant="secondary" href="/api/character-backups" download title="Every character of yours, retired ones too, in one .zip">
                     Export all
-                  </a>
+                  </LinkButton>
                 )}
               </span>
             }

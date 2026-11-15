@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api/client";
 import type { SharedBackgroundOut, SharedChoicesOut, SharedEntryOut } from "../../api/types";
 import { DateInput } from "../../components/DateInput";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
+import { useConfirm } from "../../components/ConfirmDialog";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { actionText, dotsText, entryText, sharersText, totalText } from "./sharedBackgrounds";
@@ -29,6 +30,7 @@ export function SharedBackgroundView({ shared, onDeleted }: { shared: SharedBack
     onDeleted?.();
   });
   const unlog = useAction((id: string) => unwrap(api.DELETE("/api/shared-background-entries/{entry_id}", { params: { path: { entry_id: id } } })));
+  const [confirmed, confirming] = useConfirm();
   const users = shared.sharers.filter((s) => s.can_log_use);
   const done = () => setOpen(null);
 
@@ -56,8 +58,8 @@ export function SharedBackgroundView({ shared, onDeleted }: { shared: SharedBack
             <Button
               variant="ghost"
               disabled={remove.isPending}
-              onClick={() => {
-                if (window.confirm(`Delete ${shared.name} and its whole log?`)) remove.mutate(undefined);
+              onClick={async () => {
+                if (await confirmed({ title: `Delete ${shared.name}?`, body: "Its whole log goes with it.", action: "Delete" })) remove.mutate(undefined);
               }}
             >
               Delete
@@ -83,6 +85,7 @@ export function SharedBackgroundView({ shared, onDeleted }: { shared: SharedBack
         {open === "dots" && (choices.data ? <DotsForm shared={shared} choices={choices.data} onDone={done} /> : <ErrorText error={choices.error} />)}
         {open === "edit" && (choices.data ? <EditForm shared={shared} choices={choices.data} onDone={done} /> : <ErrorText error={choices.error} />)}
         <ErrorText error={remove.error ?? unlog.error} />
+        {confirming}
         <h3 className="mt-2 text-base text-gold">Log</h3>
         {shared.entries.length === 0 ? (
           <Empty>Nothing logged yet.</Empty>
@@ -92,8 +95,9 @@ export function SharedBackgroundView({ shared, onDeleted }: { shared: SharedBack
               <EntryRow
                 key={e.id}
                 entry={e}
-                onDelete={() => {
-                  if (window.confirm(`Take “${entryText(e)}” off the log?`)) unlog.mutate(e.id);
+                onDelete={async () => {
+                  const ask = { title: `Take “${entryText(e)}” off the log?`, body: "The background's dots and uses are counted without it.", action: "Take it off" };
+                  if (await confirmed(ask)) unlog.mutate(e.id);
                 }}
               />
             ))}

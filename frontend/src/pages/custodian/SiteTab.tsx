@@ -54,12 +54,13 @@ function LoadingAnimationCard({ bySplat }: { bySplat: MotifsBySplat }) {
         What everyone sees while Horatio waits: full screen under the logo as it opens, signed in or not, and small in a page while it waits for an answer. Where a
         device asks for less motion, each stands still and fades gently instead.
       </p>
-      <div role="radiogroup" aria-label="Loading animation" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Two to a row on a phone, four on a desktop, so the four together are about a screen tall (#911). */}
+      <div role="radiogroup" aria-label="Loading animation" className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
         {MOTIFS.map((motif) => {
           const { label, about } = loaders[motif];
           const on = shown === motif;
           return (
-            <div key={motif} className={`flex flex-col gap-3 rounded-md border p-3 ${on ? "border-gold bg-gold/10" : "border-ash"}`}>
+            <div key={motif} className={`flex flex-col gap-2 rounded-md border p-2 sm:gap-3 sm:p-3 ${on ? "border-gold bg-gold/10" : "border-ash"}`}>
               <button
                 type="button"
                 role="radio"
@@ -67,9 +68,9 @@ function LoadingAnimationCard({ bySplat }: { bySplat: MotifsBySplat }) {
                 aria-describedby={`loader-about-${motif}`}
                 disabled={save.isPending}
                 onClick={() => !on && save.mutate(motif)}
-                className="flex flex-col items-center gap-3 rounded-md py-2 text-center"
+                className="flex flex-col items-center gap-2 rounded-md py-1 text-center sm:gap-3 sm:py-2"
               >
-                <span className="grid h-20 place-items-center">
+                <span className="grid h-16 place-items-center sm:h-20">
                   <LoaderMark motif={motif} size="block" />
                 </span>
                 <span className={on ? "font-medium text-gold" : "font-medium text-parchment"}>
@@ -80,7 +81,7 @@ function LoadingAnimationCard({ bySplat }: { bySplat: MotifsBySplat }) {
               <p id={`loader-about-${motif}`} className="text-center text-xs text-mist">
                 {about}
               </p>
-              <div className="flex flex-wrap items-center justify-center gap-x-3 border-t border-ash pt-2 text-xs text-mist">
+              <div className="mt-auto flex flex-wrap items-center justify-center gap-x-3 border-t border-ash pt-1 text-xs text-mist sm:pt-2">
                 <span className="inline-flex items-center gap-1.5" aria-hidden="true">
                   <LoaderMark motif={motif} size="compact" />
                   Searching…

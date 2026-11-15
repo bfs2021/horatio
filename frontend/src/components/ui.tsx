@@ -13,7 +13,7 @@ function cx(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+export type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 const variants: Record<Variant, string> = {
   primary: "bg-blood text-parchment hover:bg-blood-bright",
@@ -22,21 +22,21 @@ const variants: Record<Variant, string> = {
   danger: "border border-blood text-blood-bright hover:bg-blood hover:text-parchment",
 };
 
+/** A `Button`'s classes, for a link that looks like one (`LinkButton`). */
+export function buttonClasses(variant: Variant = "primary", className?: string): string {
+  return cx(
+    "inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+    variants[variant],
+    className,
+  );
+}
+
 export function Button({
   variant = "primary",
   className,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; ref?: Ref<HTMLButtonElement> }) {
-  return (
-    <button
-      className={cx(
-        "inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-        variants[variant],
-        className,
-      )}
-      {...props}
-    />
-  );
+  return <button className={buttonClasses(variant, className)} {...props} />;
 }
 
 export function Card({

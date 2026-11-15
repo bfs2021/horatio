@@ -162,7 +162,7 @@ test("the custodian changes a player's email, and the player confirms it from th
   await fresh.getByRole("button", { name: "Confirm new email" }).click();
   await expect(fresh.getByText(`Done: your email is now ${newEmail}.`, { exact: false })).toBeVisible();
   await fresh.screenshot(shots("email-confirmed"));
-  await fresh.getByRole("link", { name: "Sign in" }).click();
+  await fresh.getByRole("main").getByRole("link", { name: "Sign in" }).click();
   await fresh.getByLabel("Email or handle").fill(player.email);
   await fresh.getByLabel("Password").fill(PASSWORD);
   await fresh.getByRole("button", { name: "Sign in" }).click();
@@ -414,7 +414,12 @@ test("the custodian searches the audit log across troupes by person, days and ch
   expect(byCharacter).toContain(`chose Camarilla as ${character}'s sect.`);
   expect(byCharacter).toContain(`chose Brujah as ${character}'s clan.`);
 
-  // Each change leads to its character.
+  // Each change leads to its character; on a phone each link is a finger tall (#911).
+  if (test.info().project.name === "phone") {
+    for (const link of [found.first().getByRole("link", { name: /Camarilla/ }), found.first().getByRole("link", { name: "logsearch-play", exact: true })]) {
+      expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(40);
+    }
+  }
   await found.first().getByRole("link", { name: /Camarilla/ }).click();
   await expect(c).toHaveURL(new RegExp(`/characters/${made.id}`));
 });
@@ -565,8 +570,17 @@ test("the custodian opens a player's row on People to see every character they h
   await expect(chevron).toHaveAttribute("aria-expanded", "false");
   const characters = c.getByRole("region", { name: "rowchar-player's characters" });
   await expect(characters).toHaveCount(0);
+  // On a phone the row is the name over the handle, cut short rather than broken; the email waits in the opened row (#911).
+  const phone = test.info().project.name === "phone";
+  if (phone) await expect(row.getByText(player.email, { exact: true })).toBeHidden();
   await chevron.click();
   await expect(chevron).toHaveAttribute("aria-expanded", "true");
+  const opened = c.locator("main tr").filter({ has: characters });
+  await expect(opened.getByText(player.email, { exact: true })).toBeVisible();
+  await expect(opened.getByText(`@${player.handle}`, { exact: true })).toBeVisible();
+  expect(await c.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  // A long email is cut short in its column, so the table keeps inside its card.
+  expect(await c.getByRole("table", { name: "People" }).evaluate((t) => t.getBoundingClientRect().right <= t.parentElement!.getBoundingClientRect().right + 1)).toBe(true);
   const items = characters.getByRole("listitem");
   await expect(items).toHaveCount(2);
 
@@ -1003,6 +1017,27 @@ test("the custodian previews fitting a troupe's NPC creation picks, then fits th
   await expect(again).toContainText("17 → 17");
   await expect(again).toContainText("Fitted already");
   await expect(tool.getByRole("button", { name: "Fit 0 NPCs" })).toBeDisabled();
+});
+
+test("Clan logos and Site fit a phone: nothing sideways, and the loading animations two to a row (#911)", async ({ browser }) => {
+  const custodian = await person(browser, "fitphone-cust");
+  makeCustodian(custodian.email);
+  const c = custodian.page;
+  await c.reload();
+  const sideways = () => c.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  await (await topBar(c)).getByRole("link", { name: "Custodian", exact: true }).click();
+  await c.getByRole("link", { name: "Clan logos", exact: true }).click();
+  // The longest name is cut short in its row, which keeps to the card.
+  await expect(c.getByLabel("Logo for Malkavian: Knights of the Moon", { exact: true })).toBeAttached();
+  expect(await sideways()).toBe(0);
+
+  await c.getByRole("link", { name: "Site", exact: true }).click();
+  const radios = c.getByRole("radiogroup", { name: "Loading animation" }).getByRole("radio");
+  await expect(radios).toHaveCount(4);
+  expect(await sideways()).toBe(0);
+  // Two to a row on a phone, four on a desktop.
+  const tops = await radios.evaluateAll((all) => all.map((r) => Math.round(r.getBoundingClientRect().top)));
+  expect(new Set(tops).size).toBe(test.info().project.name === "phone" ? 2 : 1);
 });
 
 test("the custodian fetches the Dark Pack resources and the VTES symbols onto the server, then removes them", async ({ browser }) => {

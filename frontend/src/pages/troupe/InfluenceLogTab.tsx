@@ -7,6 +7,7 @@ import { DateInput } from "../../components/DateInput";
 import { EmptyState, FilterBar } from "../../components/EmptyState";
 import { InfoButton } from "../../components/InfoButton";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Notice, PageTabs, Select } from "../../components/ui";
+import { useConfirm } from "../../components/ConfirmDialog";
 import { useWidePage } from "../../components/widePage";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
@@ -81,6 +82,7 @@ function Log({ troupeId }: { troupeId: string }) {
     setSelected([]);
   });
   const remove = useAction((id: string) => unwrap(api.DELETE("/api/influence-entries/{entry_id}", { params: { path: { entry_id: id } } })));
+  const [confirmed, confirming] = useConfirm();
 
   if (choices.isPending) return <Loading />;
   if (choices.error) return <ErrorText error={choices.error} />;
@@ -184,6 +186,7 @@ function Log({ troupeId }: { troupeId: string }) {
         </div>
       )}
       <ErrorText error={merge.error ?? remove.error} />
+      {confirming}
       {log.isPending ? (
         <Loading />
       ) : log.error ? (
@@ -211,8 +214,9 @@ function Log({ troupeId }: { troupeId: string }) {
                   selected={selected.includes(entry.id)}
                   onSelect={(on) => setSelected(on ? [...selected, entry.id] : selected.filter((i) => i !== entry.id))}
                   onEdit={() => setEditing(entry.id)}
-                  onDelete={() => {
-                    if (window.confirm(`Delete ${entry.short_id} from the influence log?`)) remove.mutate(entry.id);
+                  onDelete={async () => {
+                    const ask = { title: `Delete ${entry.short_id} from the influence log?`, body: "Downtime answers logged in it can be logged again.", action: "Delete" };
+                    if (await confirmed(ask)) remove.mutate(entry.id);
                   }}
                 />
               ),

@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
 import { useMe } from "../hooks";
 import { useAppearance } from "../loaders/useMotif";
+import { useNext, withNext } from "../next";
 import { NeedsConnection } from "../offline/NeedsConnection";
 import { OfflineStrip, useSendWaiting, useSignOut } from "../offline/Offline";
 import { NotificationBell } from "./NotificationBell";
@@ -40,14 +41,8 @@ export function Layout() {
             <img src="/mark-64.png" alt="" width={32} height={32} className="h-8 w-8" />
             Horatio
           </Link>
-          {/* Signed out, the manual is the one place to go: it's for anyone. */}
-          {!me.data && (
-            <nav className="flex items-center gap-4 text-sm">
-              <NavLink to="/help" className={link}>
-                Help
-              </NavLink>
-            </nav>
-          )}
+          {/* Signed out: the manual, which is for anyone, and the ways in (#907). */}
+          {!me.data && <SignedOutLinks link={link} />}
           {me.data && (
             <>
               {/* The whole bar from lg up; below it, the bell and a menu, so the bar stays one line (#746). */}
@@ -85,12 +80,52 @@ export function Layout() {
         <Link to="/about" className="underline hover:text-parchment">
           About Horatio
         </Link>
+        {/* Signed out on a narrow phone, Help is here rather than in the header. */}
+        {!me.data && (
+          <span className="min-[26rem]:hidden">
+            {" "}
+            ·{" "}
+            <Link to="/help" className="underline hover:text-parchment">
+              Help
+            </Link>
+          </span>
+        )}
       </footer>
     </div>
   );
 }
 
 type LinkClass = (state: { isActive: boolean }) => string;
+
+/** The sign-in pages, whose own `?next=` the header passes on. */
+const SIGN_IN_PAGES = /^\/(sign-in|sign-up|forgot-password)(\/|$)/;
+/** Links from an email that are spent once used: nowhere to come back to. */
+const SPENT_LINKS = /^\/(reset-password|confirm-email|unsubscribe)\//;
+
+/**
+ * Help, Sign in and a primary Create account, for someone signed out (#907). Both
+ * ways in come back to this page afterwards, as the sign-in page does for a page
+ * that needs it; from the sign-in pages, to where those were going.
+ */
+function SignedOutLinks({ link }: { link: LinkClass }) {
+  const { pathname, search, hash } = useLocation();
+  const passedOn = useNext();
+  const next = SIGN_IN_PAGES.test(pathname) ? passedOn : SPENT_LINKS.test(pathname) || pathname === "/" ? null : pathname + search + hash;
+  return (
+    <nav aria-label="Main" className="flex items-center gap-3 text-sm whitespace-nowrap sm:gap-4">
+      {/* Too narrow for all three, the footer has Help instead. */}
+      <NavLink to="/help" className={(state) => `hidden min-[26rem]:inline ${link(state)}`}>
+        Help
+      </NavLink>
+      <NavLink to={withNext("/sign-in", next)} className={link}>
+        Sign in
+      </NavLink>
+      <Link to={withNext("/sign-up", next)} className="inline-flex min-h-9 items-center rounded-md bg-blood px-3 font-medium text-parchment hover:bg-blood-bright">
+        Create account
+      </Link>
+    </nav>
+  );
+}
 
 /** The places every signed-in person can go, then Custodian for the custodian. */
 function SiteLinks({ isCustodian, link, onPick }: { isCustodian: boolean; link: LinkClass; onPick?: () => void }) {

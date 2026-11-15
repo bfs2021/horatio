@@ -1,5 +1,6 @@
-import { Link, Navigate, Route, Routes, useLocation } from "react-router";
+import { Navigate, Route, Routes, useLocation } from "react-router";
 import { Loading, PageTitle, Tabs } from "../../components/ui";
+import { BackLink } from "../../components/BackLink";
 import { useMe } from "../../hooks";
 import { AuditTab } from "./AuditTab";
 import { BackupsTab } from "./BackupsTab";
@@ -53,9 +54,7 @@ export function CustodianPage() {
           path="tools/yorick-import"
           element={
             <>
-              <Link to="/custodian/tools" className="mb-3 inline-block text-sm text-mist hover:text-parchment">
-                ← Tools
-              </Link>
+              <BackLink label="Tools" to="/custodian/tools" className="mb-3" />
               <YorickImportTab />
             </>
           }

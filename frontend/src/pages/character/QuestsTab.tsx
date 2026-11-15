@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api/client";
 import type { CharacterQuestsOut, PlayerQuestOut } from "../../api/types";
 import { useToast } from "../../components/Toast";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Notice, RichText, Select, Textarea } from "../../components/ui";
+import { BackLink } from "../../components/BackLink";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { NEGATIVES, REQUEST_KINDS, type RequestKind } from "../quests/locationQuests";
@@ -332,11 +333,7 @@ function OneQuest({ characterId, staffOf }: { characterId: string; staffOf?: str
   const q = quest.data;
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm">
-        <Link to=".." relative="path" className="text-mist hover:text-parchment">
-          ← All quests
-        </Link>
-      </p>
+      <BackLink label="All quests" to=".." relative="path" className="self-start" />
       <Card title={q.name} actions={<Badge tone={q.status === "active" ? "gold" : q.status === "completed" ? "gold" : "mist"}>{questStatus(q.status)}</Badge>}>
         <div className="flex flex-col gap-2 text-sm">
           <p className="text-mist">

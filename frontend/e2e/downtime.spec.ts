@@ -616,8 +616,8 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   await edit.getByLabel("Times taken").fill("3");
   await edit.getByRole("button", { name: "Save changes" }).click();
   await expect(uw1.getByText("logged 3 times")).toBeVisible();
-  lead.page.once("dialog", (d) => d.accept());
   await uw1.getByRole("button", { name: "Delete" }).click();
+  await lead.page.getByRole("dialog", { name: "Delete UW1 from the influence log?" }).getByRole("button", { name: "Delete" }).click();
   await expect(lead.page.getByText("No influence actions match these filters.")).toBeVisible();
 
   // The printable sheet, in the paper sheet's order.

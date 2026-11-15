@@ -37,7 +37,7 @@ export function AuditTab() {
         title="Found"
         actions={
           entries.length > 0 && (
-            <a href={exportHref(query)} download className="text-sm text-gold hover:underline">
+            <a href={exportHref(query)} download className="text-sm text-gold hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-10 pointer-coarse:items-center">
               Export as CSV
             </a>
           )
@@ -133,29 +133,31 @@ function SearchForm({ applied, onSearch }: { applied: AuditFilters; onSearch: (f
 /** One change: when, who, in which troupe, and what, each leading to its own page. */
 function Entry({ entry }: { entry: AuditEntry }) {
   const dates = useDates();
+  // On touch each link is a finger tall (#911); the row keeps a little padding of its own for the lines without one.
+  const tap = "hover:text-gold pointer-coarse:inline-flex pointer-coarse:min-h-10 pointer-coarse:items-center";
   const character = entry.character_id ? `/characters/${entry.character_id}${entry.troupe_id ? `?troupe=${entry.troupe_id}` : ""}` : null;
   return (
-    <li className="flex flex-col gap-0.5 py-2 sm:flex-row sm:gap-4">
-      <span className="flex shrink-0 flex-wrap gap-x-3 text-xs text-mist sm:w-96 sm:text-sm">
+    <li className="flex flex-col gap-0.5 py-2 sm:flex-row sm:gap-4 pointer-coarse:py-1">
+      <span className="flex shrink-0 flex-wrap items-center gap-x-3 text-xs text-mist sm:w-96 sm:text-sm">
         <time dateTime={entry.at} className="whitespace-nowrap">
           {dates.dateTime(entry.at)}
         </time>
         {entry.actor_id && entry.actor_name ? (
-          <Link className="hover:text-gold" to={`/players/${entry.actor_id}`}>
+          <Link className={tap} to={`/players/${entry.actor_id}`}>
             {entry.actor_name}
           </Link>
         ) : (
           <span>{entry.actor_name ?? "Horatio"}</span>
         )}
         {entry.troupe_id && (
-          <Link className="hover:text-gold" to={`/troupes/${entry.troupe_id}`}>
+          <Link className={tap} to={`/troupes/${entry.troupe_id}`}>
             {entry.troupe_name}
           </Link>
         )}
       </span>
       <span>
         {character ? (
-          <Link className="hover:text-gold" to={character}>
+          <Link className="hover:text-gold pointer-coarse:block pointer-coarse:py-2.5" to={character}>
             {entry.message}
           </Link>
         ) : (

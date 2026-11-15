@@ -29,7 +29,6 @@ export function CharacterPicture({ character }: { character: CharacterOut }) {
         type="button"
         onClick={() => setOpen(true)}
         aria-label={character.picture ? `Change ${character.name}'s picture` : `Add a picture of ${character.name}`}
-        title={character.picture ? "Change the picture" : "Add a picture"}
         className="group relative shrink-0 rounded-full"
       >
         {avatar}

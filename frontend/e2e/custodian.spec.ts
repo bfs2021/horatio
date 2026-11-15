@@ -918,19 +918,26 @@ test("the custodian sees whether mail and Discord are set up, never their secret
   const c = custodian.page;
   await c.goto("/custodian/site");
 
-  // The e2e server has no mail server and no Discord bot: both cards say so, and why.
+  // The e2e server has no mail server and no Discord bot: both cards say so, and why, without opening anything.
   const mail = c.locator("section").filter({ has: c.getByRole("heading", { name: "Mail", exact: true }) });
   await expect(mail.getByText("Mail is off", { exact: true })).toBeVisible();
   await expect(mail.getByText(/HORATIO_SMTP_HOST/).first()).toBeVisible();
-  await expect(mail.getByText("deploy/production.env")).toBeVisible();
   await expect(mail.getByRole("button", { name: "Send a test email" })).toHaveCount(0);
-  await expect(mail.getByText("Nothing has failed lately.")).toBeVisible();
+  await expect(mail.getByText("No mail has failed lately.")).toBeVisible();
+  // What it uses and who emails come from are folded under Details (#944).
+  const mailDetails = mail.getByText("Details, and who emails come from", { exact: true });
+  await expect(mail.getByText("deploy/production.env")).toBeHidden();
+  await mailDetails.click();
+  await expect(mail.getByText("deploy/production.env")).toBeVisible();
 
   const discord = c.locator("section").filter({ has: c.getByRole("heading", { name: "Discord", exact: true }) });
   await expect(discord.getByText("Discord is off", { exact: true })).toBeVisible();
+  await expect(discord.getByText(/No troupe has connected a Discord server yet\./)).toBeVisible();
+  await expect(discord.getByText("No Discord post has failed lately.")).toBeVisible();
+  await expect(discord.getByRole("textbox", { name: "OAuth2 redirect" })).toBeHidden();
+  await discord.getByText("Details, and the troupes connected", { exact: true }).click();
   await expect(discord.getByRole("textbox", { name: "OAuth2 redirect" })).toHaveValue(/\/api\/discord\/callback$/);
   await expect(discord.getByRole("button", { name: "Copy the OAuth2 redirect" })).toBeVisible();
-  await expect(discord.getByText("No troupe has connected a Discord server yet.")).toBeVisible();
 
   // Who emails come from is the whole site's: only one project's run changes it, and puts it back.
   if (test.info().project.name === "phone") return;
@@ -939,6 +946,7 @@ test("the custodian sees whether mail and Discord are set up, never their secret
   await mail.getByRole("button", { name: "Save who emails come from" }).click();
   await expect(c.getByText("Saved. Every email from now on uses it.")).toBeVisible();
   await c.reload();
+  await mailDetails.click();
   await expect(mail.getByRole("textbox", { name: "From name" })).toHaveValue("The Night Desk");
   await expect(mail.getByRole("textbox", { name: "From address" })).toHaveValue("desk@example.org");
   await mail.getByRole("textbox", { name: "From name" }).fill("");
@@ -955,7 +963,12 @@ test("the custodian designs Horatio's emails: a header, colours and a footer, pr
   await c.goto("/custodian/site");
 
   const card = c.locator("section").filter({ has: c.getByRole("heading", { name: "Email design", exact: true }) });
+  // The design as it is now is in sight; changing it and the preview are folded (#944).
+  await expect(card.getByText(/^Now: .* in the header, /)).toBeVisible();
+  await expect(card.getByRole("textbox", { name: "Site's name" })).toBeHidden();
+  await card.getByText("Change the design", { exact: true }).click();
   await expect(card.getByRole("textbox", { name: "Site's name" })).toBeVisible();
+  await card.getByText("Preview a sample email", { exact: true }).click();
   const preview = card.frameLocator("iframe[title='Preview of an email in the design']");
   await expect(preview.getByText("This is how Horatio's emails look", { exact: false })).toBeVisible();
   await expect(preview.getByText("Sent by Horatio", { exact: false })).toBeVisible();
@@ -1058,7 +1071,7 @@ test("the custodian previews fitting a troupe's NPC creation picks, then fits th
   await expect(tool.getByRole("button", { name: "Fit 0 NPCs" })).toBeDisabled();
 });
 
-test("Clan logos and Site fit a phone: nothing sideways, and the loading animations two to a row (#911)", async ({ browser }) => {
+test("Clan logos and Site fit a phone: nothing sideways, the loading animations two to a row (#911), and Site under 2,500 px (#944)", async ({ browser }) => {
   const custodian = await person(browser, "fitphone-cust");
   makeCustodian(custodian.email);
   const c = custodian.page;
@@ -1077,6 +1090,21 @@ test("Clan logos and Site fit a phone: nothing sideways, and the loading animati
   // Two to a row on a phone, four on a desktop.
   const tops = await radios.evaluateAll((all) => all.map((r) => Math.round(r.getBoundingClientRect().top)));
   expect(new Set(tops).size).toBe(test.info().project.name === "phone" ? 2 : 1);
+
+  // At 375 px the whole of Site is under 2,500 px tall (#944): what is rarely looked at is folded,
+  // and each card's status is still in sight without opening anything.
+  if (test.info().project.name !== "phone") return;
+  await c.setViewportSize({ width: 375, height: 800 });
+  const card = (title: string) => c.locator("section").filter({ has: c.getByRole("heading", { name: title, exact: true }) });
+  await expect(card("Mail").getByText("Mail is off", { exact: true })).toBeVisible();
+  await expect(card("Mail").getByText(/^Horatio sends no email: /)).toBeVisible();
+  await expect(card("Email design").getByText(/^Now: /)).toBeVisible();
+  await expect(card("Discord").getByText("Discord is off", { exact: true })).toBeVisible();
+  await expect(card("Discord").getByText(/^Troupes can't connect Discord until these are set: /)).toBeVisible();
+  await expect(card("What is running").getByText("Running since")).toBeVisible();
+  await expect(c.locator("main details[open]")).toHaveCount(0);
+  expect(await sideways()).toBe(0);
+  expect(await c.evaluate(() => document.documentElement.scrollHeight)).toBeLessThan(2500);
 });
 
 test("the custodian fetches the Dark Pack resources and the VTES symbols onto the server, then removes them", async ({ browser }) => {

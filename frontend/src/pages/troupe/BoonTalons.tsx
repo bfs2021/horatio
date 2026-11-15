@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { BoonTalonsOut, TalonOut, TroupeOut } from "../../api/types";
+import { InfoButton } from "../../components/InfoButton";
 import { useToast } from "../../components/Toast";
 import { Button, Card, Empty, ErrorText, Field, Loading, Select } from "../../components/ui";
 import { useDates } from "../../dates";
@@ -168,19 +169,22 @@ function TalonRow({ troupeId, talon, word, manage }: { troupeId: string; talon: 
       {manage && (
         <div role="group" aria-label={`What ${talon.name} may do`} className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
           {ABILITIES.map((a) => (
-            <label key={a.key} className="flex items-center gap-2" title={a.hint}>
-              <input
-                type="checkbox"
-                checked={can[a.key]}
-                disabled={change.isPending}
-                onChange={(e) => {
-                  const next = { ...can, [a.key]: e.target.checked };
-                  setCan(next);
-                  change.mutate(next, { onError: () => setCan(can) });
-                }}
-              />
-              {a.label}
-            </label>
+            <span key={a.key} className="flex items-center gap-1">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={can[a.key]}
+                  disabled={change.isPending}
+                  onChange={(e) => {
+                    const next = { ...can, [a.key]: e.target.checked };
+                    setCan(next);
+                    change.mutate(next, { onError: () => setCan(can) });
+                  }}
+                />
+                {a.label}
+              </label>
+              <InfoButton label={`About ${a.label}`}>{a.hint}</InfoButton>
+            </span>
           ))}
         </div>
       )}
@@ -252,10 +256,13 @@ export function TalonsCard({ troupeId }: { troupeId: string }) {
           </Field>
           <div role="group" aria-label="What they may do" className="flex flex-wrap gap-x-4 gap-y-1">
             {ABILITIES.map((a) => (
-              <label key={a.key} className="flex items-center gap-2" title={a.hint}>
-                <input type="checkbox" checked={can[a.key]} onChange={(e) => setCan({ ...can, [a.key]: e.target.checked })} />
-                {a.label}
-              </label>
+              <span key={a.key} className="flex items-center gap-1">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={can[a.key]} onChange={(e) => setCan({ ...can, [a.key]: e.target.checked })} />
+                  {a.label}
+                </label>
+                <InfoButton label={`About ${a.label}`}>{a.hint}</InfoButton>
+              </span>
             ))}
           </div>
           <div>

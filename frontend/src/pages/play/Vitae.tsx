@@ -35,14 +35,13 @@ export function VitaeTracker({ view, spend, restore, drink }: { view: PlayView; 
             <span
               key={i}
               aria-label={box === "human" ? "Human Blood" : "Spent"}
-              title={box === "human" ? "Human Blood: it can't be spent" : "Spent: it comes back as human Blood, 1 a day"}
               className={cx("h-10 w-10 rounded-md border", box === "human" ? "border-mist/60 bg-mist/30" : "border-line bg-night")}
             />
           ),
         )}
       </div>
       <p className="mt-2 text-xs text-mist">
-        {vitae.human} human Blood, which can't be spent. Vitae goes 1 a turn, on healing, attributes or disciplines.
+        {vitae.human} human Blood, which can't be spent. Vitae goes 1 a turn, on healing, attributes or disciplines. An empty box comes back as human Blood, 1 a day. The + is for a correction; a drink is Drank vitae.
       </p>
       <p className={cx("mt-2 rounded-md px-3 py-2 text-sm", reminder.level === "ok" ? "text-mist" : "border border-blood/60 bg-blood/15")} role={reminder.level === "ok" ? undefined : "note"}>
         {reminder.text}
@@ -64,7 +63,6 @@ export function VitaeTracker({ view, spend, restore, drink }: { view: PlayView; 
         <button
           type="button"
           aria-label="Restore Vitae"
-          title="A correction; a drink is Drank vitae"
           onClick={restore}
           disabled={value >= view.blood.most}
           className="grid h-12 min-w-12 place-items-center rounded-full border border-line bg-night px-3 text-lg font-semibold text-parchment transition-colors hover:border-mist active:scale-95 tap-off"

@@ -74,7 +74,7 @@ export function XpTab({ characterId, selfEntering = false }: { characterId: stri
               phone: "shown",
               numeric: true,
               cell: (e) => (
-                <span className={e.balance < 0 ? "text-blood-bright" : ""} title={e.balance < 0 ? `${-e.balance} XP owed` : undefined}>
+                <span className={e.balance < 0 ? "text-blood-bright" : ""}>
                   {e.balance}
                 </span>
               ),

@@ -3,10 +3,11 @@ import { useEffect, useId, useState, type FormEvent, type ReactNode } from "reac
 import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { components } from "../../api/schema";
-import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loaded } from "../../components/ui";
+import { Badge, Button, Card, ErrorText, Field, Input, Loaded } from "../../components/ui";
 import { useToast } from "../../components/Toast";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
+import { SiteFold } from "./SiteFold";
 
 type MailOut = components["schemas"]["SiteMailOut"];
 type DiscordOut = components["schemas"]["SiteDiscordOut"];
@@ -51,26 +52,31 @@ function MailShown({ mail }: { mail: MailOut }) {
   const security = { ssl: "SSL", starttls: "STARTTLS", none: "None" }[mail.security];
   return (
     <Card title="Mail" actions={<Badge tone={mail.on ? "gold" : "blood"}>{mail.on ? "Mail is set up" : "Mail is off"}</Badge>}>
+      {/* The status, the test and what failed stay in sight; what it uses and who emails come from fold away (#944). */}
       <div className="flex flex-col gap-4 text-sm">
-        {!mail.on && <p className="text-parchment">Horatio sends no email: {mail.off_reason}</p>}
-        <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
-          <Row label="Mail server">{mail.host ? `${mail.host}, port ${mail.port}` : <span className="text-mist">Not set</span>}</Row>
-          <Row label="Security">
-            <span className="flex flex-col gap-1">
-              {security}
-              {mail.security_note && <span className="text-xs text-blood-bright">{mail.security_note}</span>}
-            </span>
-          </Row>
-          <Row label="Username">{mail.username ?? <span className="text-mist">None</span>}</Row>
-          <Row label="Password">
-            <SetOrNot set={mail.password_set} />
-          </Row>
-          <Row label="Emails come from">{mail.sends_from ?? <span className="text-mist">Nobody yet</span>}</Row>
-        </dl>
-        <Secrets where={mail.where} names="The mail server, its username and password" />
-        <SenderForm mail={mail} />
+        {mail.on ? (
+          <p className="text-parchment">
+            Emails come from {mail.sends_from ?? "nobody yet"}, through {mail.host}.
+          </p>
+        ) : (
+          <p className="text-parchment">Horatio sends no email: {mail.off_reason}</p>
+        )}
+        {mail.security_note && <p className="text-xs text-blood-bright">{mail.security_note}</p>}
         {mail.on && <TestEmail />}
-        <Failures title="Mail that failed lately" failures={mail.failures} queryKey={MAIL} />
+        <Failures title="Mail that failed lately" none="No mail has failed lately." failures={mail.failures} queryKey={MAIL} />
+        <SiteFold summary="Details, and who emails come from">
+          <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
+            <Row label="Mail server">{mail.host ? `${mail.host}, port ${mail.port}` : <span className="text-mist">Not set</span>}</Row>
+            <Row label="Security">{security}</Row>
+            <Row label="Username">{mail.username ?? <span className="text-mist">None</span>}</Row>
+            <Row label="Password">
+              <SetOrNot set={mail.password_set} />
+            </Row>
+            <Row label="Emails come from">{mail.sends_from ?? <span className="text-mist">Nobody yet</span>}</Row>
+          </dl>
+          <Secrets where={mail.where} names="The mail server, its username and password" />
+          <SenderForm mail={mail} />
+        </SiteFold>
       </div>
     </Card>
   );
@@ -157,32 +163,38 @@ export function DiscordCard() {
 function DiscordShown({ discord }: { discord: DiscordOut }) {
   return (
     <Card title="Discord" actions={<Badge tone={discord.on ? "gold" : "blood"}>{discord.on ? "Discord is set up" : "Discord is off"}</Badge>}>
+      {/* The status, the check and what failed stay in sight; what it uses, the portal's links and the troupes fold away (#944). */}
       <div className="flex flex-col gap-4 text-sm">
-        {!discord.on && <p className="text-parchment">Troupes can't connect Discord until these are set: {discord.missing.join(", ")}.</p>}
-        <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
-          <Row label="Client ID">{discord.client_id ? <span className="font-mono">{discord.client_id}</span> : <span className="text-mist">Not set</span>}</Row>
-          <Row label="Client secret">
-            <SetOrNot set={discord.client_secret_set} />
-          </Row>
-          <Row label="Bot token">
-            <SetOrNot set={discord.bot_token_set} />
-          </Row>
-        </dl>
-        <Secrets where={discord.where} names="The client ID, client secret and bot token" />
-        <div className="flex flex-col gap-3 border-t border-ash pt-4">
-          <h3 className="text-parchment">For Discord's developer portal</h3>
-          <Copyable label="OAuth2 redirect" hint="Add it under OAuth2 › Redirects, exactly as it is." value={discord.redirect} />
-          {discord.invite && (
-            <Copyable
-              label="Invite link for the bot"
-              hint="Adds the bot to a server by hand, asking for every permission Horatio uses (see Setting up Discord in the manual). Opened again for a server the bot is in already, it updates the bot's permissions there. A troupe connects its own server from its Connectors tab instead."
-              value={discord.invite}
-            />
-          )}
-        </div>
+        <p className="text-parchment">
+          {!discord.on && <>Troupes can't connect Discord until these are set: {discord.missing.join(", ")}. </>}
+          {connectedCount(discord.troupes)}
+        </p>
         {discord.bot_token_set && <CheckBot />}
-        <ConnectedTroupes troupes={discord.troupes} />
-        <Failures title="Discord posts that failed lately" failures={discord.failures} queryKey={DISCORD} />
+        <Failures title="Discord posts that failed lately" none="No Discord post has failed lately." failures={discord.failures} queryKey={DISCORD} />
+        <SiteFold summary="Details, and the troupes connected">
+          <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
+            <Row label="Client ID">{discord.client_id ? <span className="font-mono">{discord.client_id}</span> : <span className="text-mist">Not set</span>}</Row>
+            <Row label="Client secret">
+              <SetOrNot set={discord.client_secret_set} />
+            </Row>
+            <Row label="Bot token">
+              <SetOrNot set={discord.bot_token_set} />
+            </Row>
+          </dl>
+          <Secrets where={discord.where} names="The client ID, client secret and bot token" />
+          <div className="flex flex-col gap-3 border-t border-ash pt-4">
+            <h3 className="text-parchment">For Discord's developer portal</h3>
+            <Copyable label="OAuth2 redirect" hint="Add it under OAuth2 › Redirects, exactly as it is." value={discord.redirect} />
+            {discord.invite && (
+              <Copyable
+                label="Invite link for the bot"
+                hint="Adds the bot to a server by hand, asking for every permission Horatio uses (see Setting up Discord in the manual). Opened again for a server the bot is in already, it updates the bot's permissions there. A troupe connects its own server from its Connectors tab instead."
+                value={discord.invite}
+              />
+            )}
+          </div>
+          <ConnectedTroupes troupes={discord.troupes} />
+        </SiteFold>
       </div>
     </Card>
   );
@@ -242,83 +254,85 @@ function CheckBot() {
   );
 }
 
+/** How many troupes have connected a server, in a line. */
+function connectedCount(troupes: DiscordOut["troupes"]): string {
+  if (troupes.length === 0) return "No troupe has connected a Discord server yet.";
+  return troupes.length === 1 ? "One troupe has connected a Discord server." : `${troupes.length} troupes have connected a Discord server.`;
+}
+
+/** Each troupe connected, with its server and channels; the card's own line says when there are none. */
 function ConnectedTroupes({ troupes }: { troupes: DiscordOut["troupes"] }) {
+  if (troupes.length === 0) return null;
   return (
     <div className="flex flex-col gap-2 border-t border-ash pt-4">
       <h3 className="text-parchment">Troupes connected</h3>
-      {troupes.length === 0 ? (
-        <Empty>No troupe has connected a Discord server yet.</Empty>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {troupes.map((t) => (
-            <li key={t.troupe_id} className="flex flex-col">
-              <span>
-                <Link to={`/troupes/${t.troupe_id}/connectors`} className="text-gold hover:underline">
-                  {t.troupe_name}
-                </Link>
-                {t.archived && <span className="text-mist"> (archived)</span>}
-                {t.server && <span className="text-mist"> · {t.server}</span>}
-              </span>
-              <span className="text-xs text-mist">
-                {t.characters} {t.characters === 1 ? "character's channel" : "characters' channels"} for results
-                {t.test_channel ? ", a test channel" : ""}
-                {t.posts.length ? `, posts: ${t.posts.join(" and ")}` : ""}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul className="flex flex-col gap-2">
+        {troupes.map((t) => (
+          <li key={t.troupe_id} className="flex flex-col">
+            <span>
+              <Link to={`/troupes/${t.troupe_id}/connectors`} className="text-gold hover:underline">
+                {t.troupe_name}
+              </Link>
+              {t.archived && <span className="text-mist"> (archived)</span>}
+              {t.server && <span className="text-mist"> · {t.server}</span>}
+            </span>
+            <span className="text-xs text-mist">
+              {t.characters} {t.characters === 1 ? "character's channel" : "characters' channels"} for results
+              {t.test_channel ? ", a test channel" : ""}
+              {t.posts.length ? `, posts: ${t.posts.join(" and ")}` : ""}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
-/** What failed lately, newest first, with where it is and a Retry where the card can. */
-function Failures({ title, failures, queryKey }: { title: string; failures: Failure[]; queryKey: string[] }) {
+/** What failed lately, newest first, with where it is and a Retry where the card can;
+ * a line saying so when nothing has. */
+function Failures({ title, none, failures, queryKey }: { title: string; none: string; failures: Failure[]; queryKey: string[] }) {
   const dates = useDates();
   const toast = useToast();
   const retry = useAction(async (f: Failure) => {
     if (f.retry === "post" && f.post_id) await unwrap(api.POST("/api/posts/{post_id}/discord/retry", { params: { path: { post_id: f.post_id } } }));
     else await unwrap(api.POST("/api/deliveries/{delivery_id}/retry", { params: { path: { delivery_id: f.id } } }));
   }, [queryKey]);
+  if (failures.length === 0) return <p className="text-mist">{none}</p>;
   return (
     <div className="flex flex-col gap-2 border-t border-ash pt-4">
       <h3 className="text-parchment">{title}</h3>
-      {failures.length === 0 ? (
-        <Empty>Nothing has failed lately.</Empty>
-      ) : (
-        <ul className="flex flex-col gap-3" aria-label={title}>
-          {failures.map((f) => (
-            <li key={f.id} className="flex flex-wrap items-start justify-between gap-2">
-              <span className="flex min-w-0 flex-col">
-                <span>
-                  {f.link ? (
-                    <Link to={f.link} className="text-gold hover:underline">
-                      {f.about}
-                    </Link>
-                  ) : (
-                    f.about
-                  )}
-                  {f.troupe_name && <span className="text-mist"> · {f.troupe_name}</span>}
-                </span>
-                <span className="text-xs break-words text-mist">
-                  {dates.dateTime(f.at)} · {f.state === "failed" ? "Gave up" : "Trying again"} · {f.reason}
-                </span>
+      <ul className="flex flex-col gap-3" aria-label={title}>
+        {failures.map((f) => (
+          <li key={f.id} className="flex flex-wrap items-start justify-between gap-2">
+            <span className="flex min-w-0 flex-col">
+              <span>
+                {f.link ? (
+                  <Link to={f.link} className="text-gold hover:underline">
+                    {f.about}
+                  </Link>
+                ) : (
+                  f.about
+                )}
+                {f.troupe_name && <span className="text-mist"> · {f.troupe_name}</span>}
               </span>
-              {f.retry && (
-                <Button
-                  variant="secondary"
-                  className="min-h-8 px-2"
-                  disabled={retry.isPending}
-                  aria-label={`Retry ${f.about}`}
-                  onClick={() => retry.mutate(f, { onSuccess: () => toast({ message: "Horatio will try it again shortly." }) })}
-                >
-                  Retry
-                </Button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+              <span className="text-xs break-words text-mist">
+                {dates.dateTime(f.at)} · {f.state === "failed" ? "Gave up" : "Trying again"} · {f.reason}
+              </span>
+            </span>
+            {f.retry && (
+              <Button
+                variant="secondary"
+                className="min-h-8 px-2"
+                disabled={retry.isPending}
+                aria-label={`Retry ${f.about}`}
+                onClick={() => retry.mutate(f, { onSuccess: () => toast({ message: "Horatio will try it again shortly." }) })}
+              >
+                Retry
+              </Button>
+            )}
+          </li>
+        ))}
+      </ul>
       <ErrorText error={retry.error} />
     </div>
   );

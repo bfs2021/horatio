@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { LocationCatalogueOut, LocationIn, LocationOut } from "../../api/types";
+import { InfoButton } from "../../components/InfoButton";
 import { Button, Empty, ErrorText, Field, Input, Notice, Select, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { WhoPicker } from "./WhoPicker";
@@ -427,17 +428,20 @@ export function LocationForm({
             </legend>
             <div className="grid grid-cols-2 gap-1">
               {catalogue.haven_advantages.map((a) => (
-                <label key={a.name} className="flex items-center gap-2" title={a.text}>
-                  <input
-                    type="checkbox"
-                    checked={d.haven_advantages.includes(a.name)}
-                    onChange={(e) =>
-                      set({ haven_advantages: e.target.checked ? [...d.haven_advantages, a.name] : d.haven_advantages.filter((x) => x !== a.name) })
-                    }
-                  />
-                  {a.name}
-                  {freeHere.includes(a.name) && <span className="text-xs text-mist">Free with {a.free_with}</span>}
-                </label>
+                <span key={a.name} className="flex items-center gap-1">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={d.haven_advantages.includes(a.name)}
+                      onChange={(e) =>
+                        set({ haven_advantages: e.target.checked ? [...d.haven_advantages, a.name] : d.haven_advantages.filter((x) => x !== a.name) })
+                      }
+                    />
+                    {a.name}
+                    {freeHere.includes(a.name) && <span className="text-xs text-mist">Free with {a.free_with}</span>}
+                  </label>
+                  {a.text && <InfoButton label={`About ${a.name}`}>{a.text}</InfoButton>}
+                </span>
               ))}
             </div>
           </fieldset>

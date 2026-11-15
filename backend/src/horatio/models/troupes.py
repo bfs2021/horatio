@@ -205,6 +205,9 @@ class Troupe(Imported, Record):
     # The Harpy sees, in a boon's log, what their Lesser Harpies changed (#992). Off, a
     # Lesser Harpy's lines are kept from the Harpy as an earlier Harpy's are.
     boon_harpy_sees_talons: Mapped[bool] = mapped_column(default=True, server_default="true")
+    # The Harpy with the full ledger may export it as a CSV file or a spreadsheet, as
+    # they see it (horatio.boon_export, #987); a Lesser Harpy too, if the Harpy lets them.
+    boon_harpy_export: Mapped[bool] = mapped_column(default=False, server_default="false")
     # The court over time (horatio.title_history, #712): whether its players see who
     # held each title and when. Its staff always do.
     court_history_players: Mapped[bool] = mapped_column(default=False, server_default="false")

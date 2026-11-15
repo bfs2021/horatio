@@ -26,7 +26,10 @@ Harpy gave access (horatio.boon_talons, #689). It answers for one `need`:
 - "edit": correcting them: what one says, and linking a name on it to a character;
 - "settle": trading, passing on, settling, voiding and reopening them, and answering
   a status loss or Gallant (#984);
-- "audit": auditing a character's boons (#690).
+- "audit": auditing a character's boons (#690);
+- "export": exporting the ledger as they see it (horatio.boon_export, #987): staff
+  always; a Harpy with the full ledger only where the troupe lets them
+  (`boon_harpy_export`), and a Lesser Harpy only if the Harpy also let them.
 Audits (#690), Gallant's offers (#693) and Boonbreakers (#717) are meant to ask it too.
 
 A Harpy or a Lesser Harpy learns who has left only as the court knows it
@@ -74,7 +77,7 @@ ACCESS = {
 }
 RANK = {level: n for n, level in enumerate(ACCESS)}
 # What working the ledger can take (`keeper`'s `need`).
-NEEDS = ("submissions", "view", "add", "edit", "settle", "audit")
+NEEDS = ("submissions", "view", "add", "edit", "settle", "audit", "export")
 EVERYTHING = frozenset(NEEDS)
 # What a Harpy may do, by the troupe's setting.
 HARPY_CAN = {
@@ -151,6 +154,33 @@ def set_standings(db: Session, user: User, troupe: Troupe, on: bool) -> None:
         troupe_id=troupe.id,
         setting="let the Harpy read" if on else "kept from the Harpy",
     )
+
+
+def set_export(db: Session, user: User, troupe: Troupe, on: bool) -> None:
+    """Whether the Harpy with the full ledger may export it (#987). Logged if it
+    changes."""
+    if troupe.boon_harpy_export == on:
+        return
+    troupe.boon_harpy_export = on
+    audit.record(
+        db,
+        user,
+        "house.boon_harpy_export",
+        troupe_id=troupe.id,
+        setting="let the Harpy export" if on else "stopped the Harpy exporting",
+    )
+
+
+def exports(troupe: Troupe) -> bool:
+    """Whether the troupe's setting lets its Harpy export the ledger: only with the full
+    ledger. Lesser Harpies the Harpy lets export follow it."""
+    return troupe.boon_harpy_export and reaches(troupe, "full")
+
+
+def within(troupe: Troupe, can: frozenset[str]) -> frozenset[str]:
+    """What a Harpy or a Lesser Harpy may do, less exporting where the troupe doesn't
+    let the Harpy export."""
+    return can if exports(troupe) else can - {"export"}
 
 
 def reads_standings(troupe: Troupe) -> bool:
@@ -234,10 +264,10 @@ def keeper(db: Session, user: User, troupe: Troupe, need: str = "view") -> Keepe
     if not boons.tracked(troupe) or troupe.archived_at is not None:
         return None
     harpy = harpy_of(db, user, troupe)
-    if harpy is not None and need in HARPY_CAN[troupe.boon_harpy]:
+    if harpy is not None and need in within(troupe, HARPY_CAN[troupe.boon_harpy]):
         return Keeper(
             harpy,
-            HARPY_CAN[troupe.boon_harpy],
+            within(troupe, HARPY_CAN[troupe.boon_harpy]),
             "harpy",
             court_knows.listed(db, troupe),
             began=began(db, troupe, harpy),
@@ -246,8 +276,9 @@ def keeper(db: Session, user: User, troupe: Troupe, need: str = "view") -> Keepe
     from horatio import boon_talons  # imports this module
 
     found = boon_talons.talon_of(db, user, troupe)
-    if found is not None and need in boon_talons.can(found[1]):
-        return Keeper(found[0], boon_talons.can(found[1]), "talon", court_knows.listed(db, troupe))
+    can = within(troupe, boon_talons.can(found[1])) if found is not None else frozenset[str]()
+    if found is not None and need in can:
+        return Keeper(found[0], can, "talon", court_knows.listed(db, troupe))
     return None
 
 

@@ -48,6 +48,7 @@ export function HarpyLedgerPage() {
         settle: shown.can_settle ?? true,
         review: shown.can_review ?? true,
         audit: shown.can_audit ?? true,
+        export: shown.can_export ?? false,
         word: shown.talon_word ?? "Lesser Harpy",
       }
     : null;

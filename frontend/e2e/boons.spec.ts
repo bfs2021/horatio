@@ -478,6 +478,86 @@ test("staff export the ledger from its ⋯ menu: this view or the whole ledger, 
   expect(messages).toContain("bexport-lead exported the whole boon ledger as a spreadsheet (2 boons).");
 });
 
+test("where the troupe lets them, the Harpy exports the ledger as they see it, and lets a Lesser Harpy export it too (#987)", async ({ browser }) => {
+  const custodian = await person(browser, "hexport-custodian");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "hexport-lead");
+  const harpy = await person(browser, "hexport-harpy");
+  const talon = await person(browser, "hexport-talon");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Close Accounts ${run}`, lead_handle: lead.handle });
+  await backstoryOptional(custodian.page, troupe.id);
+  const build = { ...ATTRIBUTES_AND_FOCUSES, backgrounds: [["Fame", 3], ["Herd", 2], ["Generation", 1]] as [string, number][], disciplines: [["Celerity", 2], ["Potence", 1], ["Presence", 1]] as [string, number][] };
+  const home = async (page: Page, name: string) => {
+    const id = await builtVampire(page, name, "Brujah", build);
+    await send(page, "PUT", `/api/characters/${id}/traits`, { category: "sect", name: "Camarilla", rating: null });
+    const asked = await send(page, "POST", `/api/characters/${id}/home-troupe`, { troupe_id: troupe.id });
+    await send(lead.page, "POST", `/api/approvals/${asked.id}/approve`);
+    return id;
+  };
+  const sabine = await home(harpy.page, "Sabine Lorne");
+  const teodor = await home(talon.page, "Teodor Vasz");
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/boon-ledger`, { on: true });
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/boon-harpy`, { access: "full" });
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/boon-talons-setting`, { on: true, word: "Lesser Harpies" });
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/characters/${sabine}/titles`, { titles: ["Harpy"] });
+  await send(lead.page, "POST", `/api/troupes/${troupe.id}/boons`, {
+    boons: [{ debtor: { character_id: teodor }, creditor: { name: "Ysolde Marr" }, kind: "major", made_on: "2026-10-03", reason: "Safe haven", staff_note: "Ysolde's player is new" }],
+  });
+
+  // Off to begin with: the Harpy's ledger has no ⋯ to export from.
+  const h = harpy.page;
+  await h.goto(`/play/characters/${sabine}/ledger`);
+  await expect(ledgerOf(h).rows).toHaveCount(1);
+  await expect(h.getByRole("button", { name: "More for the ledger" })).toHaveCount(0);
+
+  // The lead lets the Harpy export.
+  const l = lead.page;
+  await l.goto(`/troupes/${troupe.id}/boons#settings`);
+  const lets = (await tabSettings(l, "Boons")).getByRole("switch", { name: /^The Harpy may export the ledger/ });
+  await lets.click();
+  await expect(l.getByText("Saved: the Harpy may export the ledger.")).toBeVisible();
+  await expect(lets).toBeChecked();
+
+  // Sabine's player downloads the whole ledger: no staff's columns, no staff note.
+  const { readFile } = await import("node:fs/promises");
+  const exported = async (page: Page) => {
+    await page.getByRole("button", { name: "More for the ledger" }).click();
+    const downloading = page.waitForEvent("download");
+    await page.getByRole("menuitem", { name: "Whole ledger (CSV)" }).click();
+    return (await readFile(await (await downloading).path(), "utf8")).trimEnd().split("\r\n");
+  };
+  await h.reload();
+  const csv = await exported(h);
+  expect(csv[0]).toMatch(/^\uFEFFOwed By,Owed To,Type,Date,Reason,Stipulation,State,.*,Registered,ID$/);
+  expect(csv[0]).not.toContain("Staff Note");
+  expect(csv).toHaveLength(2);
+  expect(csv[1]).toMatch(/^Teodor Vasz,Ysolde Marr,Major,2026-10-03,Safe haven,/);
+  expect(csv.join("\n")).not.toContain("Ysolde's player is new");
+
+  // She makes Teodor a Lesser Harpy who may export it too.
+  await h.getByLabel("Make a Lesser Harpy").selectOption({ label: "Teodor Vasz" });
+  const may = h.getByRole("group", { name: "What they may do" });
+  await may.getByRole("checkbox", { name: "Export the ledger" }).check();
+  await h.getByRole("button", { name: "Give access" }).click();
+  await expect(h.getByText("Teodor Vasz has access to the ledger.")).toBeVisible();
+  const t = talon.page;
+  await t.goto(`/play/characters/${teodor}/ledger`);
+  expect(await exported(t)).toHaveLength(2);
+
+  // Each export is in the troupe's log, with the character it was done as.
+  const log = await (await l.request.get(`/api/troupes/${troupe.id}/log`)).json();
+  const messages = log.map((e: { message: string }) => e.message);
+  expect(messages).toContain("hexport-harpy as Sabine Lorne exported the whole boon ledger as a CSV file (1 boon).");
+  expect(messages).toContain("hexport-talon as Teodor Vasz exported the whole boon ledger as a CSV file (1 boon).");
+});
+
 test("staff see the boon standings: each character's net by the troupe's weights, which they can change", async ({ browser }) => {
   const custodian = await person(browser, "bstand-custodian");
   makeCustodian(custodian.email);

@@ -1596,8 +1596,8 @@ test("Throws on the Play View: rock, paper or scissors, the last three kept, wit
   await p.context().setOffline(false);
   await p.screenshot({ ...shots("throws"), animations: "disabled" });
 
-  // Settings › the Play View opens on Throws, here in Ultra goth.
-  await p.goto("/account/settings");
+  // Preferences › the Play View opens on Throws, here in Ultra goth.
+  await p.goto("/account/preferences");
   const saved = p.waitForResponse((r) => r.url().endsWith("/api/preferences") && r.ok());
   await p.getByRole("radiogroup", { name: "The Play View opens on" }).getByRole("radio", { name: "Throws" }).click();
   await saved;
@@ -1690,7 +1690,7 @@ test("a player chooses a troupe's own throw pictures in Settings, and the Throws
   const id = new URL(p.url()).pathname.split("/")[2]!;
 
   // Until the troupe has all three, only Horatio's are offered.
-  await p.goto("/account/settings");
+  await p.goto("/account/preferences");
   const choice = p.getByRole("radiogroup", { name: "Throw pictures" });
   await expect(choice.getByRole("radio")).toHaveCount(1);
   await expect(choice.getByRole("radio", { name: /Horatio's/ })).toHaveAttribute("aria-checked", "true");
@@ -1715,7 +1715,7 @@ test("a player chooses a troupe's own throw pictures in Settings, and the Throws
   await p.screenshot({ ...shots("throws-troupe-pictures"), animations: "disabled" });
 
   // Back to Horatio's own.
-  await p.goto("/account/settings");
+  await p.goto("/account/preferences");
   await choice.getByRole("radio", { name: /Horatio's/ }).click();
   await expect(p.getByText("Throw pictures: Horatio's. Saved.")).toBeVisible();
   await p.goto(`/play/characters/${id}`);
@@ -1777,7 +1777,7 @@ test("throwing by flipping the phone face down and back up, on a phone, and swit
   await orient(flip);
   await p.waitForTimeout(300);
   await expect(past).toHaveCount(1);
-  await p.goto("/account/settings");
+  await p.goto("/account/preferences");
   await expect(p.getByRole("switch", { name: "Throw by flipping" })).not.toBeChecked();
 });
 

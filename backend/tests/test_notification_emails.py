@@ -319,5 +319,5 @@ def test_a_made_up_link_does_nothing(
     ):
         refused = custodian.client.post(f"/unsubscribe/{forged}")
         assert refused.status_code == 404, forged
-        assert "Account → Settings" in refused.json()["detail"]
+        assert "Account → Sign-in and email" in refused.json()["detail"]
     assert custodian.client.get("/preferences").json()["email_troupe_requests"] is True

@@ -38,7 +38,7 @@ Under **New character**, on the right of the Characters page:
 
 A troupe's page may also have a **Play here** link that opens this form with the troupe already chosen.
 
-Horatio then opens the creation wizard on the character's **Create** tab. Each step saves itself a moment after your last tap, and again when you leave it, so you can stop at any point and come back with **Continue creating** on the character's page. **Save and continue** goes to the next step; **Back** goes to the last. The list of steps down the side lets you jump about: a tick marks a step that is done, and a red mark one that has something that needs a look. On a phone the steps are one line at the top, such as "Step 3 of 8 · Focuses", with arrows to the steps either side; tap the line for the whole list. You can't go past a step that still needs something essential, such as a vampire's Generation; the locked steps say which one to finish first.
+Horatio then opens the creation wizard on the character's **Create** tab. Each step saves itself a moment after your last tap, and again when you leave it, so you can stop at any point and come back: until it is finished, opening the character opens the wizard, and its **Sheet** tab has **Continue creating** at the top. **Save and continue** goes to the next step; **Back** goes to the last. The list of steps down the side lets you jump about: a tick marks a step that is done, and a red mark one that has something that needs a look. On a phone the steps are one line at the top, such as "Step 3 of 8 · Focuses", with arrows to the steps either side; tap the line for the whole list. You can't go past a step that still needs something essential, such as a vampire's Generation; the locked steps say which one to finish first.
 
 ### The creation wizard, step by step
 
@@ -55,7 +55,7 @@ The steps follow the book's order. A troupe's house rules can add a step (for a 
 
 ![The wizard's Concept step with Gangrel: Coyote chosen as the clan: its in-clan disciplines, weakness, and the bloodline merit it takes from the merit points](images/players/wizard-concept.png)
 
-While a character is in creation you can also place picks from its **Sheet** tab, under **Character creation**. Picks placed there wait in the cart until you press **Apply picks**.
+If you know the rules, you can also place picks from the character's **Sheet** tab: under **Character creation**, open **Quick picks (for those who know the rules)**. Picks placed there wait in the cart until you press **Apply picks**, and **Finish creation** is there too.
 
 ### Clans and bloodlines
 

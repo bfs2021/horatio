@@ -43,7 +43,8 @@ export function characterTabGroups(t: TabsFor): TabGroup[] {
     {
       label: "Sheet",
       tabs: [
-        { to: base, label: "Sheet", end: true },
+        // While its player creates it, the page opens on Create and the sheet moves aside (#915).
+        creating ? { to: `${base}/sheet`, label: "Sheet" } : { to: base, label: "Sheet", end: true },
         { to: `${base}/status`, label: "Status & Titles" },
         { to: `${base}/equipment`, label: "Equipment" },
         ...(creating ? [] : [{ to: `${base}/xp`, label: "Experience" }]),

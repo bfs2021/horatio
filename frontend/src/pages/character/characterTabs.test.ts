@@ -52,6 +52,19 @@ describe("characterTabGroups", () => {
   });
 });
 
+describe("the Sheet tab", () => {
+  const sheet = (t: TabsFor) => characterTabGroups(t).flatMap((g) => g.tabs).find((tab) => tab.label === "Sheet")!;
+
+  it("is the page itself, once the character is made or for anyone else", () => {
+    expect(sheet({ ...none, mine: true }).to).toBe("/characters/c1");
+    expect(sheet(none).to).toBe("/characters/c1");
+  });
+
+  it("has its own address while its player creates it, as the page opens on Create (#915)", () => {
+    expect(sheet({ ...none, mine: true, creating: true }).to).toBe("/characters/c1/sheet");
+  });
+});
+
 describe("repeatedLabels", () => {
   it("names a label two tabs carry, even in different groups", () => {
     expect(

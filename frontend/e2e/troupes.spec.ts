@@ -149,8 +149,9 @@ test("a troupe's or character's tab that isn't there, or isn't open to them, say
   const characterId: string = (await character.json()).id;
   await p.goto(`/characters/${characterId}/nonsense`);
   await expect(p.getByText("This part of Hollis Doorward isn't open to you, or doesn't exist.")).toBeVisible();
+  // Back to it opens it, and a character in creation opens on its wizard (#915).
   await p.getByRole("link", { name: "Back to Hollis Doorward" }).click();
-  await expect(p).toHaveURL(new RegExp(`/characters/${characterId}$`));
+  await expect(p).toHaveURL(new RegExp(`/characters/${characterId}/create$`));
 });
 
 test("Troupe settings open on a Features list: each optional feature on or off, and switching one on brings its tab, its settings folded at the top (#783, #784)", async ({ browser }) => {

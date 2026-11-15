@@ -283,6 +283,39 @@ test("People is wider on a wide screen, so no handle or email wraps, while Site 
   expect(await width()).toBeLessThanOrEqual(1024);
 });
 
+test("on a phone People folds into blocks, nothing sideways with 20 long names; from sm up it is a table (#914)", async ({ browser }) => {
+  const custodian = await person(browser, "pfold914-cust");
+  makeCustodian(custodian.email);
+  // Twenty accounts with long names and emails, signed up in a context of their own.
+  const signing = await browser.newContext();
+  for (let i = 0; i < 20; i++) {
+    const made = await signing.request.post("/api/auth/signup", {
+      headers: { "X-Horatio": "1" },
+      data: {
+        display_name: i === 0 ? "Wolfeschlegelsteinhausenbergerdorffvoralternwarengewissenhaft" : `Wilhelmina Featherstonehaugh-Cholmondeley of Wolverhampton ${i + 1}`,
+        email: `pfold914-${run}-wilhelmina-featherstonehaugh-${i}@example.com`,
+        password: PASSWORD,
+      },
+    });
+    expect(made.status(), await made.text()).toBe(201);
+    await signing.clearCookies();
+  }
+  const c = custodian.page;
+  const phone = test.info().project.name === "phone";
+  if (phone) await c.setViewportSize({ width: 375, height: 800 });
+  await c.goto("/custodian/people");
+  await c.getByLabel("Search people").fill(`pfold914-${run}-`);
+  const table = c.getByRole("table", { name: "People" });
+  await expect(table.locator("tbody tr")).toHaveCount(20);
+  await expect(table.getByRole("link", { name: "Wolfeschlegelsteinhausenbergerdorffvoralternwarengewissenhaft" })).toBeVisible();
+  // Against the viewport, not innerWidth: a phone widens its layout to fit what is too wide.
+  expect(await c.evaluate(() => document.documentElement.scrollWidth)).toBe(c.viewportSize()!.width);
+  // From sm up a table, its headings showing; on a phone the handle shows under the name, the email waits in the opened row.
+  if (phone) await expect(table.getByText(`pfold914-${run}-wilhelmina-featherstonehaugh-0@example.com`, { exact: true })).toBeHidden();
+  else await expect(table.getByRole("columnheader", { name: "Email" })).toBeVisible();
+  await c.screenshot(shots("people-long-names"));
+});
+
 test("the custodian views Horatio as a player, read-only, and the player sees that they did", async ({ browser }) => {
   const custodian = await person(browser, "viewas-custodian");
   makeCustodian(custodian.email);

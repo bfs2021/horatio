@@ -276,7 +276,6 @@ test("screenshots for Running a troupe", async ({ browser }) => {
   await shot(l, "troupe-features", card(l, "Features"), 1600);
 
   // Troupe settings › Game XP chart, being changed to a taper.
-  await l.getByRole("button", { name: "Change the game XP chart" }).click();
   const chart = card(l, "Game XP chart");
   await chart.getByRole("group", { name: "Start from a preset" }).getByRole("button").nth(1).click();
   await shot(l, "game-xp-chart", chart, 1300);

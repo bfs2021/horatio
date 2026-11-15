@@ -5,7 +5,8 @@ import type { TeacherRuleIn, TeacherRuleOut } from "../../api/types";
 import { Dialog } from "../../components/Dialog";
 import { EmptyState } from "../../components/EmptyState";
 import { RowEditor, useRowEditor } from "../../components/RowEditor";
-import { Button, Card, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
+import { SettingCard } from "../../components/SettingCard";
+import { Button, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { TraitList } from "./HouseEffects";
 import { Blocks } from "./OwnChecks";
@@ -38,8 +39,10 @@ export function TeacherRules({ troupeId, canEdit }: { troupeId: string; canEdit:
   );
 
   return (
-    <Card
+    <SettingCard
       title="Teachers"
+      readOnly={!canEdit}
+      about="Discipline dots need a teacher by the book. Rules here ask one for other traits too. A player buying a matching trait picks a teacher from the troupe's characters who qualify, or names an NPC for you to approve, and the purchase waits on the Approvals tab."
       actions={
         canEdit &&
         !editing && (
@@ -49,10 +52,6 @@ export function TeacherRules({ troupeId, canEdit }: { troupeId: string; canEdit:
         )
       }
     >
-      <p className="mb-3 text-sm text-mist">
-        Discipline dots need a teacher by the book. Rules here ask one for other traits too. A player buying a matching trait picks a teacher from the
-        troupe's characters who qualify, or names an NPC for you to approve, and the purchase waits on the Approvals tab.
-      </p>
       {editing === "new" && (
         <RowEditor className="mb-4">
           <TeacherRuleEditor troupeId={troupeId} editing="new" onClose={editor.close} />
@@ -113,7 +112,7 @@ export function TeacherRules({ troupeId, canEdit }: { troupeId: string; canEdit:
         </div>
         <ErrorText error={remove.error} />
       </Dialog>
-    </Card>
+    </SettingCard>
   );
 }
 

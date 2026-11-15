@@ -6,6 +6,7 @@ import type { RosterEntry, TitlesOut } from "../../api/types";
 import { ActionMenu, MenuItem } from "../../components/ActionMenu";
 import { Avatar } from "../../components/Avatar";
 import { useClanName } from "../../components/ClanNames";
+import { DataTable, type Column } from "../../components/DataTable";
 import { Dialog } from "../../components/Dialog";
 import { LinesVeilsNote } from "../../components/LinesVeils";
 import { AtHandle } from "../../components/PersonPicker";
@@ -324,59 +325,29 @@ export function RosterTab({ troupeId, canEmail = false }: { troupeId: string; ca
       ) : shown.length === 0 ? (
         <Empty>{byKind.length === 0 ? "No NPCs of that kind." : "No characters match."}</Empty>
       ) : (
-        <table
-          aria-label={show === "npcs" ? "NPCs" : "Characters"}
-          aria-busy={stale || undefined}
-          className={`w-full text-sm transition-opacity ${stale ? "opacity-60" : ""}`}
-        >
-          {/* On a phone or a narrow window each row folds into a card, under the one heading. */}
-          <thead className="max-lg:sr-only">
-            <tr className="border-b border-ash text-left text-xs text-mist">
-              <th className="w-px py-2 pr-2 font-normal">
-                <span className="sr-only">Selected</span>
-              </th>
-              <SortHeading label={npcColumns ? "NPC" : "Character"} by="character" sort={sort} onSort={sortBy} />
-              {npcColumns ? (
-                <>
-                  <SortHeading label="Kind" by="kind" sort={sort} onSort={sortBy} className={WIDE} />
-                  <SortHeading label="Form" by="form" sort={sort} onSort={sortBy} className={WIDE} />
-                  <SortHeading label="Rating" by="rating" sort={sort} onSort={sortBy} className={WIDE} />
-                  <SortHeading label="On the Who’s Who" by="listed" sort={sort} onSort={sortBy} className={WIDE} />
-                </>
-              ) : (
-                <>
-                  <SortHeading label="Player" by="player" sort={sort} onSort={sortBy} className={WIDE} />
-                  <SortHeading label="Clan" by="clan" sort={sort} onSort={sortBy} className={WIDE} />
-                  <SortHeading label="Age" by="age" sort={sort} onSort={sortBy} className={WIDE} />
-                  <th className={`${WIDE} py-2 pr-3 font-normal`}>Here as</th>
-                  <th className={`${WIDE} py-2 pr-3 font-normal`}>Flags</th>
-                </>
-              )}
-              {valueColumns.map((c) => (
-                <SortHeading key={c.key} label={c.label} by={`value:${c.key}`} sort={sort} onSort={sortBy} className={`${WIDE} text-right`} />
-              ))}
-              {showEquipment && <th className={`${WIDE} py-2 pr-3 font-normal`}>Equipment asked about</th>}
-              <th className="py-2 font-normal">
-                <span className="sr-only">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-ash">
-            {rows.map((entry) => (
-              <RosterRow
-                key={entry.character_id}
-                troupeId={troupeId}
-                entry={entry}
-                npcColumns={npcColumns}
-                staffing={staffing}
-                selected={selected.has(entry.character_id)}
-                onSelect={() => toggle(entry.character_id)}
-                values={valueColumns.map((c) => [c.label, valueOf(entry, c.key)])}
-                equipment={showEquipment ? (matched?.get(entry.character_id)?.equipment ?? []) : null}
-              />
-            ))}
-          </tbody>
-        </table>
+        <DataTable
+          label={show === "npcs" ? "NPCs" : "Characters"}
+          busy={stale}
+          className={`transition-opacity ${stale ? "opacity-60" : ""}`}
+          stackBelow="lg"
+          // Lined up with the name, past the picture.
+          foldClassName="pl-11"
+          rows={rows}
+          rowKey={(e) => e.character_id}
+          columns={rosterColumns({
+            troupeId,
+            npcColumns,
+            named,
+            staffing,
+            sort,
+            onSort: sortBy,
+            selected,
+            onSelect: toggle,
+            valueColumns,
+            valueOf,
+            equipmentOf: showEquipment ? (e) => matched?.get(e.character_id)?.equipment ?? [] : null,
+          })}
+        />
       )}
       {show === "npcs" && npcsInShow.length > 0 && <p className="mt-3 text-xs text-mist">NPCs with a title here are on the Who’s Who. List one without from its ⋯.</p>}
     </Card>
@@ -407,16 +378,13 @@ function titleList(titles: TitlesOut | undefined): string[] {
   return (titles?.titles ?? []).map((t) => t.name);
 }
 
-/** A column shown only on a wide screen; on a narrow one it folds in under the name. */
-const WIDE = "hidden lg:table-cell";
-
 /** A heading that sorts the list by its column: A to Z, Z to A, then back to the
  * list's own order. On a narrow screen the headings are for screen readers only,
  * and the list keeps its own order. */
-function SortHeading({ label, by, sort, onSort, className = "" }: { label: string; by: string; sort: Sort; onSort: (by: string) => void; className?: string }) {
+function SortHeading({ label, by, sort, onSort }: { label: string; by: string; sort: Sort; onSort: (by: string) => void }) {
   const on = sort?.by === by;
   return (
-    <th aria-sort={on ? (sort.descending ? "descending" : "ascending") : undefined} className={`py-2 pr-3 font-normal ${className}`}>
+    <>
       <span className="lg:hidden">{label}</span>
       <button type="button" className="inline-flex items-center gap-1 hover:text-parchment max-lg:hidden" onClick={() => onSort(by)}>
         {label}
@@ -424,42 +392,164 @@ function SortHeading({ label, by, sort, onSort, className = "" }: { label: strin
           {on ? (sort.descending ? "↓" : "↑") : ""}
         </span>
       </button>
-    </th>
+    </>
   );
 }
 
-/** One row per character: who it is and who plays it, its clan and social age, how it
- * stands here, what needs staff (or, among NPCs alone, an NPC's kind, form, rating
- * and listing), the numbers the filter compares, and what staff do for it behind ⋯
- * (StaffActions). */
-function RosterRow({
+/**
+ * The roster's columns: who each character is and who plays it, its clan and social
+ * age, how it stands here, what needs staff (or, among NPCs alone, an NPC's kind,
+ * form, rating and listing), the numbers the filter compares, and what staff do for
+ * it behind ⋯ (StaffActions). On a phone or a narrow window all but the tick box,
+ * the name and the ⋯ fold in under the name (DataTable).
+ */
+function rosterColumns({
   troupeId,
-  entry,
   npcColumns,
+  named,
   staffing,
+  sort,
+  onSort,
   selected,
   onSelect,
-  values,
-  equipment,
+  valueColumns,
+  valueOf,
+  equipmentOf,
 }: {
   troupeId: string;
-  entry: RosterEntry;
   /** The NPCs' own columns in place of the player, clan, age and flags. */
   npcColumns: boolean;
+  named: ReturnType<typeof useClanName>;
   staffing: Staffing;
-  selected: boolean;
-  onSelect: () => void;
-  /** The numbers the filter compares, such as ["Occult", 2]. */
-  values: [string, number][];
-  /** With a filter on equipment, the items it asks about that the character holds; null without one. */
-  equipment: string[] | null;
-}) {
-  const named = useClanName();
+  sort: Sort;
+  onSort: (by: string) => void;
+  selected: Set<string>;
+  onSelect: (id: string) => void;
+  /** The numbers the filter compares, such as Occult. */
+  valueColumns: { label: string; key: string }[];
+  valueOf: (e: RosterEntry, key: string) => number;
+  /** With a filter on equipment, the items it asks about that a character holds; null without one. */
+  equipmentOf: ((e: RosterEntry) => string[]) | null;
+}): Column<RosterEntry>[] {
+  const sorted = (label: string, by: string): Pick<Column<RosterEntry>, "header" | "label" | "sort"> => ({
+    header: <SortHeading label={label} by={by} sort={sort} onSort={onSort} />,
+    label,
+    sort: sort?.by === by ? (sort.descending ? "descending" : "ascending") : undefined,
+  });
+  const clan = (e: RosterEntry) => clanText(named(e.clan), e.social_age);
+  const represented = (e: RosterEntry) =>
+    !e.seated && <span className="block text-xs text-mist">Represented by: {named(e.represented_by) ?? "nobody yet"}</span>;
+  const held = (e: RosterEntry) => {
+    const items = equipmentOf?.(e);
+    return items?.length ? (
+      <span title="What it holds that the filter asks about" className="text-xs text-gold/90">
+        {items.join(" · ")}
+      </span>
+    ) : null;
+  };
+  const kind = (e: RosterEntry) => e.npc_kind_name ?? e.splat;
+  const form = (e: RosterEntry) => FORM_NAMES[(e.npc_form ?? "sheeted") as NpcForm];
+  return [
+    {
+      key: "select",
+      header: <span className="sr-only">Selected</span>,
+      label: "Selected",
+      phone: "always",
+      className: "pr-2",
+      cell: (e) => <input type="checkbox" aria-label={`Select ${e.character_name}`} checked={selected.has(e.character_id)} onChange={() => onSelect(e.character_id)} className="mt-2.5" />,
+    },
+    { key: "character", ...sorted(npcColumns ? "NPC" : "Character", "character"), phone: "title", cell: (e) => <CharacterCell troupeId={troupeId} entry={e} /> },
+    ...(npcColumns
+      ? ([
+          { key: "kind", ...sorted("Kind", "kind"), phone: "shown", bare: true, cell: (e) => <Badge tone="gold">{kind(e)}</Badge> },
+          { key: "form", ...sorted("Form", "form"), phone: "shown", className: "text-mist", cell: form },
+          {
+            key: "rating",
+            ...sorted("Rating", "rating"),
+            phone: "shown",
+            className: "text-mist",
+            cell: (e) => e.stock_rating ?? <span aria-label="None">–</span>,
+            folded: (e) => e.stock_rating,
+          },
+          {
+            key: "listed",
+            ...sorted("On the Who’s Who", "listed"),
+            phone: "shown",
+            className: "text-mist",
+            cell: (e) => (e.on_whos_who ? "Yes" : "No"),
+            folded: (e) => (e.on_whos_who ? "Yes" : null),
+          },
+        ] satisfies Column<RosterEntry>[])
+      : ([
+          { key: "player", ...sorted("Player", "player"), phone: "shown", cell: (e) => e.player_id && <PlayerLink entry={e} /> },
+          {
+            key: "clan",
+            ...sorted("Clan", "clan"),
+            phone: "shown",
+            className: "text-parchment/80",
+            cell: (e) => (clan(e) || represented(e)) && (
+              <>
+                {clan(e) && <span>{clan(e)}</span>}
+                {represented(e)}
+              </>
+            ),
+          },
+          { key: "age", ...sorted("Age", "age"), phone: "shown", className: "whitespace-nowrap text-parchment/80", cell: (e) => e.social_age },
+          { key: "here", header: "Here as", phone: "shown", bare: true, cell: (e) => <HereAs entry={e} /> },
+          { key: "flags", header: "Flags", phone: "shown", bare: true, cell: (e) => <Flags troupeId={troupeId} entry={e} />, folded: (e) => (hasFlags(e) ? <Flags troupeId={troupeId} entry={e} /> : null) },
+        ] satisfies Column<RosterEntry>[])),
+    ...valueColumns.map(
+      (c): Column<RosterEntry> => ({ key: `value:${c.key}`, ...sorted(c.label, `value:${c.key}`), phone: "shown", numeric: true, cell: (e) => valueOf(e, c.key) }),
+    ),
+    ...(equipmentOf ? [{ key: "equipment", header: "Equipment asked about", phone: "shown", cell: held } satisfies Column<RosterEntry>] : []),
+    {
+      key: "actions",
+      header: <span className="sr-only">Actions</span>,
+      label: "Actions",
+      phone: "always",
+      className: "text-right",
+      // Its dialogs sit here too, as nothing but cells may sit in a row (Dialog sets its own text-left).
+      cell: (e) => <StaffActions troupeId={troupeId} entry={e} staffing={staffing} />,
+    },
+  ];
+}
+
+/** The character's picture and name, linking to its sheet, with its pronouns, the titles it holds here and its lines and veils. */
+function CharacterCell({ troupeId, entry }: { troupeId: string; entry: RosterEntry }) {
   const name = entry.character_name;
-  const clan = clanText(named(entry.clan), entry.social_age);
-  const here = entry.kind === "npc" ? <Badge>NPC</Badge> : entry.home ? <Badge tone="gold">Home</Badge> : <Badge>Visiting</Badge>;
-  const flags = (
-    <>
+  // A Stock NPC's builder stands in for a sheet (issue #215).
+  const to = entry.npc_form === "stock" ? `/troupes/${troupeId}/npcs/${entry.character_id}` : `/characters/${entry.character_id}`;
+  return (
+    <div className="flex items-start gap-2">
+      <Avatar name={name} picture={entry.picture} clan={entry.clan} />
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="flex flex-wrap items-baseline gap-x-2">
+          <Link to={to} className="font-medium wrap-anywhere hover:text-gold">
+            {name}
+          </Link>
+          <Pronouns pronouns={entry.pronouns} />
+          {entry.claim_expires_at && <Badge>Claim link out</Badge>}
+        </span>
+        <HeldTitles entry={entry} />
+        <LinesVeilsNote value={entry.lines_veils} who={entry.player_name} className="text-xs text-parchment/80" />
+      </div>
+    </div>
+  );
+}
+
+/** How the character stands here: an NPC, at home, or visiting. */
+function HereAs({ entry }: { entry: RosterEntry }) {
+  return entry.kind === "npc" ? <Badge>NPC</Badge> : entry.home ? <Badge tone="gold">Home</Badge> : <Badge>Visiting</Badge>;
+}
+
+function hasFlags(entry: RosterEntry): boolean {
+  return entry.player_suspended || entry.waiting || entry.backstory_waiting || entry.disciplines_waiting > 0;
+}
+
+/** What needs staff: a suspended player, a request to make this home, a backstory to read, disciplines to approve. */
+function Flags({ troupeId, entry }: { troupeId: string; entry: RosterEntry }) {
+  return (
+    <span className="flex flex-wrap gap-1">
       {entry.player_suspended && <Badge tone="blood">Player suspended</Badge>}
       {entry.waiting && (
         <Link to={`/troupes/${troupeId}/approvals`} className="rounded-full hover:underline">
@@ -476,115 +566,7 @@ function RosterRow({
           {entry.disciplines_waiting} discipline{entry.disciplines_waiting > 1 ? "s" : ""} to approve
         </Badge>
       )}
-    </>
-  );
-  const represented = !entry.seated && <span className="block text-xs text-mist">Represented by: {named(entry.represented_by) ?? "nobody yet"}</span>;
-  const held = equipment?.length ? equipment.join(" · ") : null;
-  const kind = entry.npc_kind_name ?? entry.splat;
-  const form = FORM_NAMES[(entry.npc_form ?? "sheeted") as NpcForm];
-  const listed = entry.on_whos_who;
-  // A Stock NPC's builder stands in for a sheet (issue #215).
-  const to = entry.npc_form === "stock" ? `/troupes/${troupeId}/npcs/${entry.character_id}` : `/characters/${entry.character_id}`;
-  return (
-    <tr>
-      <td className="w-px py-2.5 pr-2 align-top">
-        <input type="checkbox" aria-label={`Select ${name}`} checked={selected} onChange={onSelect} className="mt-1.5" />
-      </td>
-      <td className="py-2.5 pr-3 align-top">
-        <div className="flex items-start gap-2">
-          <Avatar name={name} picture={entry.picture} clan={entry.clan} />
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="flex flex-wrap items-baseline gap-x-2">
-              <Link to={to} className="font-medium break-words hover:text-gold">
-                {name}
-              </Link>
-              <Pronouns pronouns={entry.pronouns} />
-              {entry.claim_expires_at && <Badge>Claim link out</Badge>}
-            </span>
-            {!npcColumns && entry.player_id && (
-              <span className="lg:hidden">
-                <PlayerLink entry={entry} />
-              </span>
-            )}
-            {/* What the wide columns show, folded under the name. */}
-            {npcColumns ? (
-              <span className="flex flex-wrap items-center gap-1 text-xs text-mist lg:hidden">
-                <Badge tone="gold">{kind}</Badge>
-                <Badge>{form}</Badge>
-                {entry.stock_rating != null && <Badge>Rating {entry.stock_rating}</Badge>}
-                {listed && <span>On the Who’s Who</span>}
-              </span>
-            ) : (
-              <>
-                <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs lg:hidden">
-                  <span className="text-parchment/80">
-                    {clan && <span>{clan}</span>}
-                    {clan && " · "}
-                    <span>{entry.social_age}</span>
-                  </span>
-                  {here}
-                  {flags}
-                </span>
-                <span className="lg:hidden">{represented}</span>
-              </>
-            )}
-            {values.length > 0 && (
-              <span className="flex flex-wrap gap-1 lg:hidden">
-                {values.map(([label, value]) => (
-                  <span key={label} className="rounded bg-ash px-1.5 py-0.5 text-xs text-parchment">
-                    {label} {value}
-                  </span>
-                ))}
-              </span>
-            )}
-            {held && (
-              <span title="What it holds that the filter asks about" className="text-xs text-gold/90 lg:hidden">
-                {held}
-              </span>
-            )}
-            <HeldTitles entry={entry} />
-            <LinesVeilsNote value={entry.lines_veils} who={entry.player_name} className="text-xs text-parchment/80" />
-          </div>
-        </div>
-      </td>
-      {npcColumns ? (
-        <>
-          <td className={`${WIDE} py-2.5 pr-3 align-top`}>
-            <Badge tone="gold">{kind}</Badge>
-          </td>
-          <td className={`${WIDE} py-2.5 pr-3 align-top text-mist`}>{form}</td>
-          <td className={`${WIDE} py-2.5 pr-3 align-top text-mist`}>{entry.stock_rating ?? <span aria-label="None">–</span>}</td>
-          <td className={`${WIDE} py-2.5 pr-3 align-top text-mist`}>{listed ? "Yes" : "No"}</td>
-        </>
-      ) : (
-        <>
-          <td className={`${WIDE} py-2.5 pr-3 align-top`}>{entry.player_id && <PlayerLink entry={entry} />}</td>
-          <td className={`${WIDE} py-2.5 pr-3 align-top text-parchment/80`}>
-            {clan && <span>{clan}</span>}
-            {represented}
-          </td>
-          <td className={`${WIDE} py-2.5 pr-3 align-top whitespace-nowrap text-parchment/80`}>{entry.social_age}</td>
-          <td className={`${WIDE} py-2.5 pr-3 align-top`}>{here}</td>
-          <td className={`${WIDE} py-2.5 pr-3 align-top`}>
-            <span className="flex flex-wrap gap-1">{flags}</span>
-          </td>
-        </>
-      )}
-      {values.map(([label, value]) => (
-        <td key={label} className={`${WIDE} py-2.5 pr-3 text-right align-top tabular-nums`}>
-          {value}
-        </td>
-      ))}
-      {equipment && (
-        <td title="What it holds that the filter asks about" className={`${WIDE} py-2.5 pr-3 align-top text-xs text-gold/90`}>
-          {held}
-        </td>
-      )}
-      <td className="w-px py-1.5 text-right align-top">
-        {/* Its dialogs sit here too, as nothing but cells may sit in a row (Dialog sets its own text-left). */}
-        <StaffActions troupeId={troupeId} entry={entry} staffing={staffing} />
-      </td>
-    </tr>
+    </span>
   );
 }
 

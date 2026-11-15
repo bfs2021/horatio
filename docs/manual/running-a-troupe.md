@@ -150,7 +150,7 @@ Narrators see the player's answer and the question, never the character's sheet.
 
 Your choice is kept in the page's address, so you can bookmark it or share it with other staff.
 
-With player characters, or everyone, it's a table: the character (with the titles it holds here), its player, its clan, its social age, whether it is **Home**, **Visiting** or an **NPC**, and its flags. Red flags show what needs you: **Asking to make this home**, **Backstory to read**, disciplines to approve, or **Player suspended**. Each player's lines and veils show under their character. On a phone, each character folds into a card, with the same details under its name.
+With player characters, or everyone, it's a table: the character (with the titles it holds here), its player, its clan, its social age, whether it is **Home**, **Visiting** or an **NPC**, and its flags. Red flags show what needs you: **Asking to make this home**, **Backstory to read**, disciplines to approve, or **Player suspended**. Each player's lines and veils show under their character. On a phone, each character folds into a card, with the same details under its name, each with what it is: **Player**, **Clan**, **Age** and so on.
 
 - A clan without a seat at court shows who represents it, under the clan.
 - An NPC that isn't a vampire, such as a mortal or a werewolf, shows its kind where a social age would be, and no clan. A ghoul shows its domitor's clan and **Ghoul**.
@@ -316,7 +316,7 @@ A boon is a debt one character owes another, registered with the Harpy (MET: VTM
 - The ledger's tabs are **Open** (standing, with everyone on it in play), **Departed** (standing, but someone on it has met Final Death or is off-field), **Settled**, **Void** and **All**. Narrow them to a character or a name, a kind, or the nights the boons were made.
 - **Open** on a boon shows its log and what you can do with it: **Edit** (with why: what changed shows only to storytellers and assistant storytellers), **Trade** (a new creditor holds it; tick **Tell the debtor's player if it's traded** on a boon whose conditions ask for that), **Pass on** (either side, to a broodmate after a death, say), **Settle** (called in, forgiven, or formally ignored by the debtor), **Make void** (entered by mistake) and **Reopen**. Each goes in the boon's own log and the troupe's log.
 - On a character's sheet, staff see a **Boons** card: what they owe and are owed, by kind, with a link to the ledger narrowed to them.
-- **Standings** shows where everyone stands, live. Each kind of boon has a weight (Trivial 0.5, Minor 1, Major 3, Blood 5, Life 10 to begin with; **Change** sets the troupe's own), and a character's **net** is the weight owed to them less the weight they owe. It shows open boons by kind, each character's standing, the court (each title holder, and who owes them and whom they owe most), clans, ages and sects, how long open debts have stood, how boons get settled and who calls theirs in, boons across clan and sect lines, and characters who owe each other. **Active** leaves out boons that involve someone dead or off-field; **Everyone** keeps them.
+- **Standings** shows where everyone stands, live. Each kind of boon has a weight (Trivial 0.5, Minor 1, Major 3, Blood 5, Life 10 to begin with; **Change** sets the troupe's own), and a character's **net** is the weight owed to them less the weight they owe. It shows open boons by kind, each character's standing, the court (each title holder, and who owes them and whom they owe most), clans, ages and sects, how long open debts have stood, how boons get settled and who calls theirs in, boons across clan and sect lines, and characters who owe each other. **Active** leaves out boons that involve someone dead or off-field; **Everyone** keeps them. On a phone each table's rows fold into short blocks, the figures under each name, without the bars.
 - **Statistics** shows how the ledger has moved over time: boons registered, settled and open debt, by count or by weight, who owes whom as a network, debt between clans and sects, and boons at each game. It counts with the same weights and the same **Active** or **Everyone**, and every chart can be read as a table.
 - **Status and boons** (MET: VTM p. 316): while a boon's creditor holds **Disgraced**, the ledger and the Play View say beside it that it need not be repaid while they do; nothing is settled or changed, and the note goes when the status does. On a character's **Status**, staff see **Apology boon…** beside a held **Warned** or **Disgraced**: an apology and a boon put a slip right, a minor boon under Warned and a major one under Disgraced. It registers that boon in the ledger, owed by the character to whoever was wronged (the status's patron to begin with). Horatio doesn't record slips themselves, so the offer stays there while the status lasts.
 - With **Judge "No boons registered" from the ledger** on in the Boons tab's **Settings** (off by default), the Camarilla's lesser status ban on **no boons registered with the Harpy** (MET: VTM p. 403) is judged from the ledger: it applies to a character with no boon registered, owed or owed to them, standing or settled, in any troupe they're in that keeps a ledger and judges it. Pending and void boons don't count (a Boonbreaker's boons are made void), and a standing boon stops counting once the other side has left as the court knows it (the Who's Who lists them), as on the Harpy's standings; a settled boon always counts. Switch it on once the ledger holds every boon, or the whole court comes under the ban. A mark staff put on the ban still decides it.
@@ -502,7 +502,7 @@ The **Log** tab in the Troupe group shows what has happened in the troupe, newes
 
 ![Customise › Setup: the Setting up checklist, the troupe's features and the house rules that differ from the book.](images/running-a-troupe/customise-overview.png)
 
-Everything under **Customise** can stay as the book has it. Storytellers and the lead change it; assistant storytellers can read it all. Each change saves straight away.
+Everything under **Customise** can stay as the book has it. Storytellers and the lead change it; assistant storytellers can read it all.
 
 **Customise › Setup** starts with **Setting up**, the four things a new troupe does first, each ticked when done and linked to where you do it:
 
@@ -519,6 +519,8 @@ Below it, nothing is changed: Setup points to where things are.
 ## Customise: troupe settings
 
 **Customise › Troupe settings** holds the settings for the whole troupe, in groups, under a list of its features. A feature with a tab of its own keeps the rest of its settings at the top of that tab (see [A feature's own settings](#a-features-own-settings)).
+
+Every settings card saves the same way, here and in a feature's own settings. Switches, ticks and choices save as you make them, and Horatio says **Saved.** each time. A card with fields to type in, such as **Experience**, is always open: change what you like, then choose its **Save**, at the bottom of the card. Until you do, it says **Not saved yet**, and leaving the page asks first. A card you can only read says who changes it.
 
 ### Features
 
@@ -598,7 +600,7 @@ Each of these sits in the **Settings** at the top of its tab.
 
 > **If your troupe uses this:** quests are off by default.
 
-Quests are switched on in the [Features list](#features). While they're off, players see nothing of them. With them on, **Downtimes › Quests** has **Quest requests** in its Settings: choose **Change** to set the **Requests per character per cycle**.
+Quests are switched on in the [Features list](#features). While they're off, players see nothing of them. With them on, **Downtimes › Quests** has **Quest requests** in its Settings: set the **Requests per character per cycle** and choose **Save**.
 
 #### Retainers
 
@@ -614,7 +616,7 @@ Quests are switched on in the [Features list](#features). While they're off, pla
 - **Free text or the questions**: each player chooses;
 - **The questions only**: players answer the troupe's questions, then can edit what they build.
 
-Tick **Need an approved backstory before accepting a character** to make approval a step in joining (it is on for a new troupe). Under **Questions**, make question sets (such as a Short Form) and their questions: a long or short answer, a year, a choice, a scale between two poles, or a heading only, each shown always or only by social age, sect or a trait on the sheet.
+Switch on **Need an approved backstory before accepting a character** to make approval a step in joining (it is on for a new troupe). Under **Questions**, make question sets (such as a Short Form) and their questions: a long or short answer, a year, a choice, a scale between two poles, or a heading only, each shown always or only by social age, sect or a trait on the sheet.
 
 #### Free changes
 
@@ -640,7 +642,7 @@ NPCs are never limited by either.
 - **Experience**: what the troupe usually gives, **To start**, **For a game session** and **For completing a downtime**. Awarding XP starts at the session amount, and each new cycle at the completion amount.
 - **XP floor and ceiling**: see [The XP floor and ceiling](#the-xp-floor-and-ceiling).
 - **Game XP chart**: see [The game XP chart](#the-game-xp-chart).
-- **New Character Incentive**: the book's optional rule (MET: VTM p. 349). Ticked, a new character built for the troupe starts with the starting XP and a quarter of the XP a character could have earned here (the XP ceiling less the starting XP), rather than at the XP floor. The card gives the figure now. Characters already made keep their XP.
+- **New Character Incentive**: the book's optional rule (MET: VTM p. 349). Switched on, a new character built for the troupe starts with the starting XP and a quarter of the XP a character could have earned here (the XP ceiling less the starting XP), rather than at the XP floor. The card gives the figure now. Characters already made keep their XP.
 
 ### Status and titles settings
 
@@ -672,6 +674,8 @@ Switching feeding off only hides it. What was recorded is kept and comes back if
 ## Customise: house rules
 
 **Customise › House rules** holds the troupe's changes to the rule set. It opens on **As players read it**: the troupe's **House rules** tab exactly as its players see it, everything the troupe plays differently from the book in one page. After it come the parts, one page each, where storytellers change the rules and assistant storytellers read them: Checks, Costs, Starting points, Downtime actions, Downtime keywords, Languages, House merits and flaws, Written rules and Book traits. Locations, Quests, Retainers, Backstories, Free changes and Teachers set up a feature rather than a rule, so they're in the Settings at the top of that feature's tab (see [Settings moved from House rules](#settings-moved-from-house-rules)). A house rule applies to characters whose home troupe this is, and those being built for it.
+
+On a wide screen the parts are listed down the left of the page, with the open one beside them. On a phone or a tablet, one button above the page names the open part, such as **Costs**; tap it for them all.
 
 The tab was **Customise › Rules** before; links to its old addresses open the same part of **House rules**, or the tab a moved part now sits on.
 
@@ -801,7 +805,7 @@ Choose **Add a written rule**, then give it a **Title**, a **Section** (such as 
 
 ### Specialisations
 
-**Customise › Specialisations** holds the troupe's own lists of specialisations, one kind at a time: the areas its influences cover, the notable people Contacts can be, and so on. Where a kind has a list, characters choose from it. Choose **Make our own list** (or **Edit our list**), one a line, then **Save our list**.
+**Customise › Specialisations** holds the troupe's own lists of specialisations, one kind at a time: the areas its influences cover, the notable people Contacts can be, and so on. The kinds are listed as the House rules parts are, under **Skills** and **Backgrounds**. Where a kind has a list, characters choose from it. Choose **Make our own list** (or **Edit our list**), one a line, then **Save our list**.
 
 ### Connectors: Discord and email
 
@@ -1348,7 +1352,7 @@ The **XP floor and ceiling** card (on the Overview and in Troupe settings) shows
 - **Ceiling**: the most XP a character here could have by now: the starting XP, every game's XP and every downtime's XP.
 - **Floor**: the same without the downtimes. New characters built for the troupe start at the floor, unless the troupe uses the [New Character Incentive](#xp-settings).
 
-Awarding a game's XP and closing a cycle can add to them (the tick boxes above). **What changed them** lists each change. For a chronicle that began before Horatio, storytellers can **Set by hand** either figure, with **Why**; games and downtimes still add to them afterwards.
+Awarding a game's XP and closing a cycle can add to them (the tick boxes above). **What changed them** lists each change. For a chronicle that began before Horatio, storytellers can set either figure by hand on the card in Troupe settings: change it, say **Why**, and choose **Save**. Games and downtimes still add to them afterwards.
 
 When a character asks to join, Horatio sets its XP against these figures: below the floor it is offered a top-up, and above the ceiling staff choose to keep or take away the excess (see [Characters asking to join](#characters-asking-to-join)).
 

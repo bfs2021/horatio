@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, characterTab, chooseDots, choosePick, closeContextsAfterEach, makeCustodian, openNewTroupe, PASSWORD, person, run, shots, tapMid, topBar, troupeTab, expectTabOpen, expectTabCount, isPhone, shutSections, groupTabs } from "./support";
+import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, characterTab, chooseDots, choosePick, closeContextsAfterEach, makeCustodian, openNewTroupe, PASSWORD, person, run, shots, tapMid, topBar, troupeTab, expectTabOpen, expectTabCount, isPhone, shutSections, groupTabs, pagePart } from "./support";
 
 /** A troupe's setup: its rules, XP range, staff, profile and archiving, and asking for one. */
 
@@ -23,14 +23,14 @@ test("a troupe changes what new characters start with and their downtime actions
   await (await topBar(l)).getByRole("link", { name: "Troupes" }).click();
   await l.getByRole("link", { name: troupeName }).click();
   await troupeTab(l, "House rules");
-  await l.getByRole("link", { name: "Starting points", exact: true }).click();
+  await pagePart(l, "Starting points");
   await l.getByRole("button", { name: "Change starting Merits" }).click();
   await l.getByLabel("Points for merits").fill("9");
   await l.getByRole("button", { name: "Save", exact: true }).click();
   await expect(l.getByText("The rule set's: 7 points")).toBeVisible();
   await l.screenshot(shots("starting"));
   // …and four downtime actions a cycle instead of three.
-  await l.getByRole("link", { name: "Downtime actions", exact: true }).click();
+  await pagePart(l, "Downtime actions");
   await l.getByRole("button", { name: "Change actions for Everyone" }).click();
   await l.getByLabel("Downtime actions each cycle").fill("4");
   await l.getByRole("button", { name: "Save", exact: true }).click();
@@ -377,41 +377,80 @@ test("a troupe's players read its house rules: a price the lead changes shows th
   await p.screenshot(shots("house-rules"));
 });
 
-test("on a phone the house rules tabs wrap onto more rows, so the last shows without scrolling sideways, and Tab walks across the rows (#649)", async ({ browser }) => {
-  const custodian = await person(browser, "tabwrap-custodian");
+test("House rules and Specialisations pick their parts from one list: down the side on a wide screen, behind one button on a phone (#906)", async ({ browser }) => {
+  const custodian = await person(browser, "partpick-custodian");
   makeCustodian(custodian.email);
-  const lead = await person(browser, "tabwrap-lead", { viewport: { width: 360, height: 780 }, isMobile: true, hasTouch: true });
-  const made = await custodian.page.request.post("/api/troupes", { headers: { "X-Horatio": "1" }, data: { name: `Wrapped Tabs ${run}`, lead_handle: lead.handle } });
+  const lead = await person(browser, "partpick-lead", { viewport: { width: 375, height: 800 }, isMobile: true, hasTouch: true });
+  const made = await custodian.page.request.post("/api/troupes", { headers: { "X-Horatio": "1" }, data: { name: `Picked Parts ${run}`, lead_handle: lead.handle } });
   expect(made.status(), await made.text()).toBe(201);
-  const troupeId: string = (await made.json()).id;
+  const base = `/troupes/${(await made.json()).id}`;
+  const parts = ["As players read it", "Checks", "Costs", "Starting points", "Downtime actions", "Downtime keywords", "Languages", "House merits and flaws", "Written rules", "Book traits"];
 
+  // On a phone: no row of parts, one button naming the open one.
   const l = lead.page;
   // Customise › Rules became the House rules tab (#782): its old address opens Checks there.
-  await l.goto(`/troupes/${troupeId}/rules`);
-  await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/house-rules/checks$`));
-  const tabs = l.getByRole("navigation", { name: "House rules" });
-  const bookTraits = tabs.getByRole("link", { name: "Book traits", exact: true });
-  await expect(bookTraits).toBeInViewport();
-  // The parts that set up a feature moved to that feature's tab (#785).
-  for (const name of ["Locations", "Quests", "Retainers", "Backstories", "Free changes", "Teachers"]) await expect(tabs.getByRole("link", { name, exact: true })).toHaveCount(0);
+  await l.goto(`${base}/rules`);
+  await expect(l).toHaveURL(new RegExp(`${base}/house-rules/checks$`));
+  const picker = l.locator("main").getByRole("navigation", { name: "House rules", exact: true });
+  const button = picker.getByRole("button");
+  await expect(button).toHaveAccessibleName("Checks");
+  await expect(picker.getByRole("link")).toHaveCount(0);
+  expect((await button.boundingBox())!.height).toBeLessThan(50);
   expect(await l.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  expect(await tabs.evaluate((nav) => nav.scrollWidth <= nav.clientWidth)).toBe(true);
-  // More than one row, and the longest label still on one line.
-  const checks = (await tabs.getByRole("link", { name: "Checks", exact: true }).boundingBox())!;
-  const longest = (await tabs.getByRole("link", { name: "House merits and flaws", exact: true }).boundingBox())!;
-  const last = (await bookTraits.boundingBox())!;
-  expect(last.y).toBeGreaterThan(checks.y);
-  expect(longest.height).toBe(checks.height);
+  // It opens every part, one a line; the parts that set up a feature moved to that feature's tab (#785).
+  await button.click();
+  const sheet = l.getByRole("dialog", { name: "House rules" });
+  await expect(sheet.getByRole("link")).toHaveText(parts);
+  await expect(sheet.getByRole("link", { name: "Checks", exact: true })).toHaveAttribute("aria-current", "page");
+  await l.screenshot(shots("house-rules-parts-sheet"));
+  await sheet.getByRole("link", { name: "Book traits", exact: true }).click();
+  await expect(sheet).toBeHidden();
+  await expect(l).toHaveURL(new RegExp(`${base}/house-rules/book-traits$`));
+  await expect(button).toHaveAccessibleName("Book traits");
+  await l.screenshot(shots("house-rules-parts-phone"));
 
-  // The keyboard goes through every tab in order, across the rows.
-  await tabs.getByRole("link", { name: "Written rules", exact: true }).focus();
-  await l.keyboard.press("Tab");
-  await expect(bookTraits).toBeFocused();
-  await l.keyboard.press("Enter");
-  await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/house-rules/book-traits$`));
-  await expect(bookTraits).toHaveAttribute("aria-current", "page");
-  await expect(bookTraits).toBeInViewport();
-  await l.screenshot(shots("house-rules-tabs-phone"));
+  // Specialisations: the same picker, its kinds under Skills and Backgrounds.
+  await l.goto(`${base}/specializations`);
+  await expect(l).toHaveURL(new RegExp(`${base}/specializations/lore$`));
+  const kinds = l.locator("main").getByRole("navigation", { name: "Specialisations", exact: true });
+  await expect(kinds.getByRole("button")).toHaveAccessibleName(/^Skills\W+Lore$/);
+  await kinds.getByRole("button").click();
+  const kindSheet = l.getByRole("dialog", { name: "Specialisations" });
+  await expect(kindSheet.getByRole("heading", { level: 3 })).toHaveText(["Skills", "Backgrounds"]);
+  await kindSheet.getByRole("list", { name: "Backgrounds" }).getByRole("link", { name: "Haven", exact: true }).click();
+  await expect(l).toHaveURL(new RegExp(`${base}/specializations/haven$`));
+  await expect(kinds.getByRole("button")).toHaveAccessibleName(/^Backgrounds\W+Haven$/);
+
+  // On a desktop: the parts in one column down the left, the open part beside them.
+  const desk = await (await browser.newContext({ storageState: await l.context().storageState(), viewport: { width: 1280, height: 900 }, isMobile: false, hasTouch: false })).newPage();
+  await desk.goto(`${base}/house-rules/checks`);
+  const list = desk.locator("main").getByRole("navigation", { name: "House rules", exact: true });
+  await expect(list.getByRole("button")).toBeHidden();
+  await expect(list.getByRole("link")).toHaveText(parts);
+  const boxes = await Promise.all((await list.getByRole("link").all()).map(async (link) => (await link.boundingBox())!));
+  for (const [i, box] of boxes.entries()) {
+    expect(box.x).toBe(boxes[0]!.x);
+    // One line each, under the one before.
+    expect(box.height).toBeLessThan(40);
+    if (i > 0) expect(box.y).toBeGreaterThan(boxes[i - 1]!.y + boxes[i - 1]!.height - 1);
+  }
+  const search = (await desk.getByLabel("Search checks").boundingBox())!;
+  expect(search.x).toBeGreaterThan(boxes[0]!.x + boxes[0]!.width);
+  expect(await desk.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await list.getByRole("link", { name: "Costs", exact: true }).click();
+  await expect(desk).toHaveURL(new RegExp(`${base}/house-rules/costs$`));
+  await expect(list.getByRole("link", { name: "Costs", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(desk.getByRole("button", { name: "Add a price" })).toBeVisible();
+  await desk.screenshot(shots("house-rules-parts-desktop"));
+  await desk.goto(`${base}/specializations/lore`);
+  const kindList = desk.locator("main").getByRole("navigation", { name: "Specialisations", exact: true });
+  await expect(kindList.getByRole("heading", { level: 3 })).toHaveText(["Skills", "Backgrounds"]);
+  await expect(kindList.getByRole("link", { name: "Lore", exact: true })).toHaveAttribute("aria-current", "page");
+  const lore = (await kindList.getByRole("link", { name: "Lore", exact: true }).boundingBox())!;
+  const haven = (await kindList.getByRole("link", { name: "Haven", exact: true }).boundingBox())!;
+  expect(haven.x).toBe(lore.x);
+  expect(haven.y).toBeGreaterThan(lore.y);
+  await desk.screenshot(shots("specializations-parts-desktop"));
 });
 
 test("on a touch screen the page tabs, info buttons, ⋯ menus and feature links are at least 40 px, and a mouse keeps them small (#903)", async ({ browser }) => {
@@ -433,10 +472,14 @@ test("on a touch screen the page tabs, info buttons, ⋯ menus and feature links
     expect(height, await target.textContent()).toBeGreaterThanOrEqual(40);
   };
 
+  // House rules' part picker (#906): its button, and each part in its sheet.
   await l.goto(`${base}/house-rules/checks`);
-  const tabs = l.getByRole("navigation", { name: "House rules" }).getByRole("link");
-  await expect(tabs.first()).toBeVisible();
-  for (const tab of await tabs.all()) await tappable(tab);
+  await tappable(l.locator("main").getByRole("navigation", { name: "House rules", exact: true }).getByRole("button"));
+  await l.locator("main").getByRole("navigation", { name: "House rules", exact: true }).getByRole("button").click();
+  const parts = l.getByRole("dialog", { name: "House rules" }).getByRole("link");
+  await expect(parts.first()).toBeVisible();
+  for (const part of await parts.all()) await tappable(part);
+  await l.keyboard.press("Escape");
 
   await l.goto(`${base}/characters`);
   await tappable(l.getByRole("button", { name: "More for the troupe's characters" }));
@@ -461,7 +504,7 @@ test("on a touch screen the page tabs, info buttons, ⋯ menus and feature links
   const small = await box(desk.getByRole("button", { name: "About equipment" }));
   expect(small.width).toBe(20);
   await desk.goto(`${base}/house-rules/checks`);
-  expect((await box(desk.getByRole("navigation", { name: "House rules" }).getByRole("link", { name: "Checks", exact: true }))).height).toBeLessThan(30);
+  expect((await box(desk.getByRole("navigation", { name: "House rules" }).getByRole("link", { name: "Checks", exact: true }))).height).toBeLessThan(40);
 });
 
 test("at 700 px a troupe's tab row that scrolls shows a chevron at the edge with more, and pressing it brings the rest into view (#921)", async ({ browser }) => {
@@ -613,7 +656,7 @@ test("a troupe's written rules: the lead adds and orders them, and a player read
   // The lead writes three rules under Customise › House rules › Written rules, one about a merit.
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/house-rules/checks`);
-  await l.getByRole("link", { name: "Written rules", exact: true }).click();
+  await pagePart(l, "Written rules");
   const add = async (title: string, section: string, body: string, trait?: [string, string]) => {
     await l.getByRole("button", { name: "Add a rule" }).click();
     const dialog = l.getByRole("dialog", { name: "Add a written rule" });
@@ -738,8 +781,9 @@ test("staff write the setting: a theme from the book, a mood of their own, put i
   await expect(notes.getByRole("list", { name: "Storyteller notes" })).toContainText("ten years past the Embrace");
   const scope = theirs.filter({ has: a.getByRole("heading", { name: "Scope", exact: true }) });
   await scope.getByLabel("Power").fill("Neonates and ancillae.");
-  await scope.getByRole("button", { name: "Save scope" }).click();
-  await expect(scope.getByRole("button", { name: "Save scope" })).toBeDisabled();
+  await expect(scope.getByText("Not saved yet")).toBeVisible();
+  await scope.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(scope.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
   await l.reload();
   await expect(card("Scope").getByLabel("Power")).toHaveValue("Neonates and ancillae.");
   await a.screenshot(shots("setting-style"));
@@ -790,8 +834,9 @@ test("players read the whole setting on its tab, in print, on the profile when s
 
   // The lead switches on the New Character Incentive; the document gives its working.
   await l.goto(`/troupes/${troupeId}/settings`);
-  await l.getByRole("checkbox", { name: /Use the New Character Incentive/ }).click();
-  await expect(l.getByRole("checkbox", { name: /Use the New Character Incentive/ })).toBeChecked();
+  await l.getByRole("switch", { name: /Use the New Character Incentive/ }).click();
+  await expect(l.getByRole("switch", { name: /Use the New Character Incentive/ })).toBeChecked();
+  await expect(l.getByText("Saved.", { exact: true })).toBeVisible();
   await l.goto(`/troupes/${troupeId}/setting`);
   await expect(l.getByRole("region", { name: "Setting-specific mechanics" })).toContainText("+ the New Character Incentive");
   await expect(l.getByRole("link", { name: "Edit in Settings" })).toHaveAttribute("href", `/troupes/${troupeId}/settings`);
@@ -1300,13 +1345,13 @@ test("a troupe's XP floor and ceiling: new characters start at the floor, and st
   await (await topBar(l)).getByRole("link", { name: "Troupes" }).click();
   await l.getByRole("link", { name: troupeName }).click();
   await troupeTab(l, "Troupe settings");
-  await l.getByRole("button", { name: "Set by hand" }).click();
-  await l.getByLabel("Floor", { exact: true }).fill("100");
-  await l.getByLabel("Ceiling", { exact: true }).fill("120");
-  await l.getByLabel("Why", { exact: true }).fill("Chronicle began in 2019");
-  await l.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(l.getByText("(30 starting + 70 set by hand)")).toBeVisible();
-  await expect(l.getByText("(30 starting + 90 set by hand)")).toBeVisible();
+  const range = l.getByRole("region", { name: "XP floor and ceiling" });
+  await range.getByLabel("Floor", { exact: true }).fill("100");
+  await range.getByLabel("Ceiling", { exact: true }).fill("120");
+  await range.getByLabel("Why", { exact: true }).fill("Chronicle began in 2019");
+  await range.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(range.getByText("30 starting + 70 set by hand")).toBeVisible();
+  await expect(range.getByText("30 starting + 90 set by hand")).toBeVisible();
   await l.screenshot(shots("xp-range"));
 
   // Players see where the troupe stands on its page.
@@ -1512,6 +1557,61 @@ test("the troupe's characters show a loader while the list and its filter load, 
   await expect(list).not.toHaveAttribute("aria-busy");
   await expect(list.getByRole("link", { name: "Wenzel" })).toBeVisible();
   await expect(none).toHaveCount(0);
+});
+
+test("on a phone the troupe's characters and a character's experience fold into blocks, nothing sideways with 20 long names; from sm up they are tables (#914)", async ({ browser }) => {
+  const custodian = await person(browser, "fold914-cust");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "fold914-lead");
+  const c = custodian.page;
+  await c.reload();
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, url: string, data: object) => {
+    const response = await page.request.post(url, { headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  const troupe = await send(c, "/api/troupes", { name: `Hall of Long Names ${run}`, lead_handle: lead.handle });
+  const l = lead.page;
+  // Twenty NPCs with long names, one a single word longer than a phone is wide.
+  const names = Array.from({ length: 20 }, (_, i) =>
+    i === 0 ? "Wolfeschlegelsteinhausenbergerdorffvoralternwarengewissenhaft" : `Bartholomew Featherstonehaugh-Cholmondeley of Wolverhampton ${i + 1}`,
+  );
+  for (const name of names) await send(l, `/api/troupes/${troupe.id}/npcs`, { name, wizard: false });
+  const phone = test.info().project.name === "phone";
+  // The narrowest phone the review measured.
+  if (phone) await l.setViewportSize({ width: 375, height: 800 });
+  // Against the viewport, not innerWidth: a phone widens its layout to fit what is too wide.
+  const sideways = async () => (await l.evaluate(() => document.documentElement.scrollWidth)) - l.viewportSize()!.width;
+
+  for (const show of ["everyone", "npcs"]) {
+    await l.goto(`/troupes/${troupe.id}/characters?show=${show}`);
+    const list = l.getByRole("table", { name: show === "npcs" ? "NPCs" : "Characters" });
+    await expect(list.locator("tbody tr")).toHaveCount(20);
+    await expect(list.getByRole("link", { name: names[0] })).toBeVisible();
+    expect(await sideways()).toBe(0);
+    // From sm up a table, its headings showing; on a phone what the columns show folds under the name, each with what it is.
+    if (phone) await expect(list.locator("tbody tr").first().getByText(show === "npcs" ? "Form:" : "Age:", { exact: true })).toBeVisible();
+    else await expect(list.getByRole("columnheader", { name: show === "npcs" ? "Kind" : "Clan" })).toBeVisible();
+    await l.screenshot(shots(`roster-long-names-${show}`));
+  }
+
+  // Twenty entries with long reasons on the Experience tab of the lead's own character.
+  const own = await send(l, "/api/characters", { name: names[1], splat: "vampire" });
+  for (let i = 0; i < 20; i++) {
+    await send(l, `/api/characters/${own.id}/xp/self-entered`, { amount: 1, reason: `Game ${i + 1}: held the Elysium against the Sabbat incursion until the sunrise, and wrote the whole report afterwards` });
+  }
+  await l.goto(`/characters/${own.id}/xp`);
+  const history = l.getByRole("table", { name: "Experience history" });
+  // Those and the XP it started with.
+  await expect(history.locator("tbody tr")).toHaveCount(21);
+  await expect(history.getByRole("cell", { name: /^Game 20: / })).toBeVisible();
+  expect(await sideways()).toBe(0);
+  // Its date, XP and balance: under what it was on a phone, in columns from sm up.
+  if (phone) await expect(history.locator("tbody tr").first().getByText("Balance:", { exact: true })).toBeVisible();
+  else await expect(history.getByRole("columnheader", { name: "Balance" })).toBeVisible();
+  await expect(history.locator("tbody tr").first().getByText("+1", { exact: true }).filter({ visible: true })).toBeVisible();
+  await l.screenshot(shots("xp-long-reasons"));
 });
 
 test("staff award XP, give equipment and print from a character's ⋯ on the Characters list, and see only what they may do (#539)", async ({ browser }) => {
@@ -2612,11 +2712,13 @@ test("with Retainer upkeep on, checking in starts the night with the upkeep as i
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/rules/retainers`);
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/characters#settings-retainers$`));
-  await expect(l.getByText("None.").first()).toBeVisible();
-  await l.getByRole("button", { name: "Change Retainer rules" }).click();
-  await l.getByLabel("Retainers cost upkeep").check();
-  await l.getByRole("button", { name: "Save" }).click();
-  await expect(l.getByText("1 Blood for each Retainer a game, taken as the night starts")).toBeVisible();
+  const retainers = l.getByRole("region", { name: "Retainers", exact: true });
+  await expect(retainers.getByLabel("Retainers cost upkeep")).not.toBeChecked();
+  await retainers.getByLabel("Retainers cost upkeep").check();
+  await expect(retainers.getByText("Not saved yet")).toBeVisible();
+  await retainers.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(l.getByText("Saved.", { exact: true })).toBeVisible();
+  await expect(retainers.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
 
   // The House rules tab shows it; and so does each Retainer on the sheet.
   await p.goto(`/troupes/${troupeId}/house-rules`);
@@ -2679,7 +2781,6 @@ test("staff set a tapering game XP chart and award a game by it, with an absente
   await l.goto(`/troupes/${troupeId}/settings`);
   const card = l.locator("section").filter({ has: l.getByRole("heading", { name: "Game XP chart", exact: true }) });
   await expect(card.getByText(/^Flat: everyone there gets the same XP/)).toBeVisible();
-  await card.getByRole("button", { name: "Change the game XP chart" }).click();
   await card.getByRole("button", { name: "Tapering" }).click();
   await expect(card.getByLabel("Band 2: earned XP up to")).toHaveValue("300");
   await card.getByLabel("Record absentee games").check();
@@ -2689,16 +2790,18 @@ test("staff set a tapering game XP chart and award a game by it, with an absente
   await card.getByLabel(/^Off/).check();
   await expect(card.getByText(/^Payments aren't tracked in Horatio/)).toBeVisible();
   await l.screenshot(shots("game-xp-chart-editor"));
-  await card.getByRole("button", { name: "Save" }).click();
-  await expect(l.getByText("Game XP saved.")).toBeVisible();
-  const chart = card.getByRole("table", { name: "Game XP chart" });
-  await expect(chart.getByRole("row")).toHaveCount(6);
-  await expect(chart.getByRole("row", { name: "201–300 4 XP 3 XP" })).toBeVisible();
-  await expect(card.getByText("Helped +1, once a month")).toBeVisible();
+  await card.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(l.getByText("Saved.", { exact: true })).toBeVisible();
+  await expect(card.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
+  await expect(card.getByLabel("Adjustment 1: name")).toHaveValue("Helped");
 
   // Players see it on the House rules tab.
   await player.page.goto(`/troupes/${troupeId}/house-rules`);
-  await expect(player.page.getByRole("table", { name: "Game XP chart" }).getByRole("row", { name: "501+ 1 XP 0 XP" })).toBeVisible();
+  const chart = player.page.getByRole("table", { name: "Game XP chart" });
+  await expect(chart.getByRole("row")).toHaveCount(6);
+  await expect(chart.getByRole("row", { name: "201–300 4 XP 3 XP" })).toBeVisible();
+  await expect(chart.getByRole("row", { name: "501+ 1 XP 0 XP" })).toBeVisible();
+  await expect(player.page.getByText("Adjustments: Helped +1, once a month.")).toBeVisible();
 
   // At the game: Tamsin is checked in by hand, Ulric marked absentee.
   await l.goto(`/troupes/${troupeId}`);
@@ -2845,18 +2948,18 @@ test("a troupe's Overview switches it public at once, shows its XP range, and Wa
   await expect(l.locator("main").getByRole("link", { name: "Award XP", exact: true })).toBeVisible();
   await expect(l.getByText("Player characters from any sect may join.")).toBeVisible();
   await expect(l.getByRole("checkbox")).toHaveCount(0);
-  await expect(l.getByRole("button", { name: "Set by hand" })).toHaveCount(0);
+  await expect(l.getByLabel("Floor", { exact: true })).toHaveCount(0);
   // The lead sets them by hand in Customise's Troupe settings, with the rest of the troupe's settings.
   await l.getByRole("link", { name: "Change in Customise" }).first().click();
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/settings$`));
   for (const group of ["Who may join", "XP", "Status and titles", "Blood and diablerie"]) await expect(l.getByRole("group", { name: group, exact: true })).toBeVisible();
-  await l.getByRole("button", { name: "Set by hand" }).click();
-  await l.getByLabel("Floor", { exact: true }).fill("60");
-  await l.getByLabel("Ceiling", { exact: true }).fill("75");
-  await l.getByLabel("Why", { exact: true }).fill("Chronicle began in 2021");
-  await l.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(l.getByText("(30 starting + 30 set by hand)")).toBeVisible();
-  await expect(l.getByText("(30 starting + 45 set by hand)")).toBeVisible();
+  const range = l.getByRole("region", { name: "XP floor and ceiling" });
+  await range.getByLabel("Floor", { exact: true }).fill("60");
+  await range.getByLabel("Ceiling", { exact: true }).fill("75");
+  await range.getByLabel("Why", { exact: true }).fill("Chronicle began in 2021");
+  await range.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(range.getByText("30 starting + 30 set by hand")).toBeVisible();
+  await expect(range.getByText("30 starting + 45 set by hand")).toBeVisible();
   // Starting points leads there for them, and the log on About has the change.
   await l.goto(`/troupes/${troupeId}/house-rules/starting`);
   await expect(l.getByRole("heading", { name: "XP floor and ceiling" })).toHaveCount(0);
@@ -2926,7 +3029,7 @@ test("a troupe's Overview switches it public at once, shows its XP range, and Wa
   await expect(p.getByRole("heading", { name: "XP floor and ceiling" })).toBeVisible();
   await expect(p.getByText("60 XP", { exact: true })).toBeVisible();
   await expect(p.getByRole("heading", { name: "Waiting on you" })).toHaveCount(0);
-  await expect(p.getByRole("button", { name: "Set by hand" })).toHaveCount(0);
+  await expect(p.getByLabel("Floor", { exact: true })).toHaveCount(0);
 });
 
 test("Waiting on you shows the open cycle, a quest request and a backstory waiting, the tabs count them, and staff land on their troupes", async ({ browser }) => {

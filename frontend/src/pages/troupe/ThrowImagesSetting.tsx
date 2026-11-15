@@ -3,7 +3,8 @@ import { useRef, useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { ThrowImagesOut, TroupeOut } from "../../api/types";
 import { Segmented } from "../../components/Segmented";
-import { Button, Card, ErrorText, Loading } from "../../components/ui";
+import { SettingCard, SettingForm, useSettingForm } from "../../components/SettingCard";
+import { Button, ErrorText, Field, Input, Loading } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { THROW_PANEL, THEMES, type Theme } from "../../theme";
 import { ThrowFace, troupeImages } from "../play/throwImages";
@@ -39,10 +40,12 @@ export function fullSet(images: ThrowImagesOut): Record<Throw, string> | null {
 export function ThrowImagesSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean }) {
   const images = useThrowImages(troupe.id);
   return (
-    <Card title="Throw pictures">
-      <p className="mb-3 text-sm text-mist">
-        Your troupe's own rock, paper and scissors for the Play View's Throws tab, instead of Horatio's. Once all three are here, the set can be offered to your players.
-      </p>
+    <SettingCard
+      title="Throw pictures"
+      readOnly={!canEdit}
+      state={!images.data ? undefined : fullSet(images.data) ? "Set up" : "Not set up"}
+      about="Your troupe's own rock, paper and scissors for the Play View's Throws tab, instead of Horatio's. Once all three are here, the set can be offered to your players."
+    >
       {images.isPending ? (
         <Loading />
       ) : images.error ? (
@@ -53,15 +56,16 @@ export function ThrowImagesSetting({ troupe, canEdit }: { troupe: TroupeOut; can
         <p className="text-sm">{fullSet(images.data) ? `The troupe has its own set${images.data.name ? `: ${images.data.name}` : ""}.` : "The troupe throws with Horatio's own pictures."}</p>
       )}
       {!images.isPending && !images.error && <Preview images={images.data} />}
-    </Card>
+    </SettingCard>
   );
 }
 
 function Editor({ troupeId, images }: { troupeId: string; images: ThrowImagesOut }) {
   const path = { params: { path: { troupe_id: troupeId } } };
-  const [name, setName] = useState(images.name);
   const [removing, setRemoving] = useState(false);
-  const saveName = useAction(() => unwrap(api.PUT("/api/troupes/{troupe_id}/throw-images/name", { ...path, body: { name } })), [throwImagesKey(troupeId)]);
+  const title = useSettingForm({ name: images.name }, (body) => unwrap(api.PUT("/api/troupes/{troupe_id}/throw-images/name", { ...path, body })), {
+    first: [throwImagesKey(troupeId)],
+  });
   const remove = useAction(() => unwrap(api.DELETE("/api/troupes/{troupe_id}/throw-images", path)), [throwImagesKey(troupeId)]);
   const any = THROWS.some((which) => images[which]);
   return (
@@ -72,23 +76,11 @@ function Editor({ troupeId, images }: { troupeId: string; images: ThrowImagesOut
         ))}
       </ul>
       {!fullSet(images) && <p className="text-mist">{any ? "Add the rest: the set is offered only with all three." : "JPEG, PNG, WebP or HEIC, up to 10 MB each. A PNG keeps its transparency."}</p>}
-      <form
-        className="flex flex-wrap items-end gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          saveName.mutate(undefined);
-        }}
-      >
-        <label className="flex min-w-0 flex-1 flex-col gap-1">
-          <span>
-            Title for the set <span className="text-mist">(optional)</span>
-          </span>
-          <input value={name} maxLength={60} placeholder="Land of the Sky bones" onChange={(e) => setName(e.target.value)} className="rounded-md border border-line bg-night px-3 py-2" />
-        </label>
-        <Button type="submit" variant="secondary" disabled={saveName.isPending || name.trim() === images.name}>
-          Use this title
-        </Button>
-      </form>
+      <SettingForm form={title}>
+        <Field label="Title for the set (optional)">
+          <Input value={title.value.name} maxLength={60} placeholder="Land of the Sky bones" onChange={(e) => title.set({ name: e.target.value })} />
+        </Field>
+      </SettingForm>
       {any &&
         (removing ? (
           <div role="alertdialog" aria-label="Remove the throw pictures" className="flex flex-col gap-2 rounded-md border border-blood/60 bg-blood/10 p-3">
@@ -114,7 +106,7 @@ function Editor({ troupeId, images }: { troupeId: string; images: ThrowImagesOut
             </Button>
           </div>
         ))}
-      <ErrorText error={saveName.error ?? remove.error} />
+      <ErrorText error={remove.error} />
     </div>
   );
 }

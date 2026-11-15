@@ -2,9 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { api, unwrap } from "../../api/client";
 import type { ClanName } from "../../clanNames";
 import { RadioList } from "../../components/RadioList";
-import { useToast } from "../../components/Toast";
-import { Card, ErrorText } from "../../components/ui";
-import { useRulesAction } from "../../hooks";
+import { SettingCard, useSaveOnChange } from "../../components/SettingCard";
+import { ErrorText } from "../../components/ui";
 
 const NAMES: { value: ClanName; meaning: string }[] = [
   { value: "Banu Haqim", meaning: "The clan's name in later World of Darkness books: Banu Haqim: Vizier, Kiss of the Asp (Banu Haqim)." },
@@ -24,20 +23,19 @@ export function clanNamesChangeText(name: ClanName): string {
 export function ClanNamesSetting({ troupeId, canEdit }: { troupeId: string; canEdit: boolean }) {
   const path = { params: { path: { troupe_id: troupeId } } };
   const troupe = useQuery({ queryKey: ["troupe", troupeId], queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}", path)) });
-  const toast = useToast();
-  const save = useRulesAction(async (assamite: ClanName) => {
-    await unwrap(api.PUT("/api/troupes/{troupe_id}/clan-names", { ...path, body: { assamite } }));
-    toast({ message: clanNamesChangeText(assamite) });
+  const save = useSaveOnChange((assamite: ClanName) => unwrap(api.PUT("/api/troupes/{troupe_id}/clan-names", { ...path, body: { assamite } })), {
+    rules: true,
+    message: clanNamesChangeText,
   });
   if (!troupe.data) return null;
   const now = troupe.data.assamite_name;
 
   return (
-    <Card title="Banu Haqim or Assamite">
-      <p className="mb-3 text-sm text-mist">
-        What Horatio calls the clan of Haqim on every screen here: sheets, the Play View, creation, the roster, the Who's Who and the rules. Only the name shown changes;
-        the rules and the sheets are the same either way.
-      </p>
+    <SettingCard
+      title="Banu Haqim or Assamite"
+      readOnly={!canEdit}
+      about="What Horatio calls the clan of Haqim on every screen here: sheets, the Play View, creation, the roster, the Who's Who and the rules. Only the name shown changes; the rules and the sheets are the same either way."
+    >
       {!canEdit ? (
         <p className="text-sm">The clan is called {now === "Banu Haqim" ? "the Banu Haqim" : "the Assamites"} here.</p>
       ) : (
@@ -62,6 +60,6 @@ export function ClanNamesSetting({ troupeId, canEdit }: { troupeId: string; canE
           <ErrorText error={save.error} />
         </div>
       )}
-    </Card>
+    </SettingCard>
   );
 }

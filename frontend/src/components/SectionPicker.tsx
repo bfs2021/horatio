@@ -79,6 +79,7 @@ export function SectionPicker({ label, groups, className }: { label: string; gro
                     <li key={t.to}>
                       <Link
                         to={t.to}
+                        aria-label={t.ariaLabel}
                         aria-current={isOpen ? "page" : undefined}
                         ref={isOpen ? current : undefined}
                         onClick={() => setOpen(false)}

@@ -256,7 +256,7 @@ export function CountBubble({ count, label }: { count: number; label: string }) 
  * `countInGroup: false` keeps a count that isn't waiting on anyone (characters being
  * built, #774) out of its group's "waiting" total. */
 /** A tab: `also` is another address under which it shows as open (see `tabOpens`). */
-export type Tab = { to: string; label: string; end?: boolean; also?: string; count?: number; countLabel?: string; countInGroup?: boolean };
+export type Tab = { to: string; label: string; ariaLabel?: string; end?: boolean; also?: string; count?: number; countLabel?: string; countInGroup?: boolean };
 
 /** How wide the fade is at an edge of a tab bar with more beyond it. */
 const FADE_PX = 32;

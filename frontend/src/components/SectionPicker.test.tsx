@@ -69,11 +69,36 @@ describe("SectionPicker", () => {
     expect(screen.getByRole("button").textContent).toBe("Create▾");
   });
 
+  it("names a tab in the sheet by its ariaLabel, when it has one (#922)", () => {
+    render(
+      <MemoryRouter initialEntries={["/troupes/1/play"]}>
+        <SectionPicker
+          label="Troupe sections"
+          groups={[
+            {
+              label: "Games",
+              tabs: [
+                { to: "/troupes/1/play", label: "At game" },
+                { to: "/play/troupes/1/scenes", label: "Scenes ↗", ariaLabel: "Scenes (opens the scenes page)" },
+              ],
+            },
+          ]}
+        />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button"));
+    expect(screen.getByRole("link", { name: "Scenes (opens the scenes page)" }).textContent).toBe("Scenes ↗");
+  });
+
   it("lists every group with its tabs, the open one marked, and goes where you choose", () => {
     const nav = show("/troupes/1/settings");
     fireEvent.click(within(nav).getByRole("button"));
     const sheet = screen.getByRole("dialog", { name: "Troupe sections" });
-    expect(within(sheet).getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual(["Troupe", "Characters", "Customise"]);
+    expect(
+      within(sheet)
+        .getAllByRole("heading", { level: 3 })
+        .map((h) => h.textContent),
+    ).toEqual(["Troupe", "Characters", "Customise"]);
     const links = within(sheet).getAllByRole("link");
     expect(links.map((l) => l.textContent)).toEqual(["Overview", "Approvals2", "Being built4", "Setup", "Troupe settings"]);
     for (const link of links) expect(link.className).toContain("min-h-11");

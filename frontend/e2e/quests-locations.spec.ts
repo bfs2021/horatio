@@ -575,7 +575,7 @@ test("the troupe's locations: a storyteller adds the Grove Arcade, is refused an
 
   // An eleventh quality is refused, with the reason.
   await l.getByRole("button", { name: "Edit" }).click();
-  const edit = l.getByRole("form", { name: "Change Grove Arcade" });
+  const edit = l.getByRole("form", { name: "Edit Grove Arcade" });
   await edit.getByLabel("Add a quality").selectOption("Isolated");
   await edit.getByRole("button", { name: "Save", exact: true }).click();
   await expect(edit.getByRole("alert")).toHaveText(/A prestige 5 location has at most 10 qualities .*p\. 121.*this one would have 11\./);
@@ -604,7 +604,7 @@ test("the troupe's locations: a storyteller adds the Grove Arcade, is refused an
   const actions = row.getByRole("button", { name: "Actions for Grove Arcade" });
   await actions.click();
   await l.getByRole("menuitem", { name: "Edit…" }).click();
-  const dialog = l.getByRole("dialog", { name: "Change Grove Arcade" });
+  const dialog = l.getByRole("dialog", { name: "Edit Grove Arcade" });
   await dialog.getByLabel("Locked").check();
   await dialog.getByRole("button", { name: "Save", exact: true }).click();
   await expect(dialog).toBeHidden();

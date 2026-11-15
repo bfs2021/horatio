@@ -127,7 +127,7 @@ export function EquipmentEditor({
   const qualities = qualityChoices(book, draft.kind, draft.qualities);
   const problems = check.data?.problems ?? [];
   const changing = !!item || (!!start && !start.fresh);
-  const label = item ? `Change ${item.name}` : changing && start ? `Change ${start.draft.name}` : "Give equipment";
+  const label = item ? `Edit ${item.name}` : changing && start ? `Edit ${start.draft.name}` : "Give equipment";
   const text = draft.kind === "text";
 
   const startFrom = (value: string) => {

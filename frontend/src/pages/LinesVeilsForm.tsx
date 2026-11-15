@@ -78,7 +78,7 @@ export function LinesVeilsForm({ value }: { value: LinesVeils }) {
           <ErrorText error={save.error} />
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" disabled={save.isPending}>
-              Save lines and veils
+              Save
             </Button>
             {unsaved && <span className="text-mist">Not saved yet</span>}
           </div>

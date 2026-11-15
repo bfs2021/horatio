@@ -250,7 +250,7 @@ function LocationActions({ location: l, troupeId, locations, catalogue, questsOn
         </MenuGroup>
       </ActionMenu>
       {/* The dialogs sit here, as nothing but cells may sit in a row (Dialog sets its own text-left). */}
-      <Dialog title={`Change ${l.name}`} open={open === "edit"} onClose={close} wide>
+      <Dialog title={`Edit ${l.name}`} open={open === "edit"} onClose={close} wide>
         <LocationForm
           troupeId={troupeId}
           catalogue={catalogue}
@@ -328,7 +328,7 @@ function One({ troupeId, locations, catalogue, questsOn }: Props & { questsOn: b
         <>
           <Warnings warnings={warnings} />
           {editing ? (
-            <Card title={`Change ${location.data.name}`}>
+            <Card title={`Edit ${location.data.name}`}>
               <LocationForm
                 troupeId={troupeId}
                 catalogue={catalogue}

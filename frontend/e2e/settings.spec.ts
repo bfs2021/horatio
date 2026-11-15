@@ -190,7 +190,7 @@ test("a handle to be found by, and to sign in with", async ({ browser }) => {
   await expect(page.getByLabel("Your handle")).toHaveValue(`handle-player_${run.slice(-10)}`);
   const handle = `Owl_${run.slice(-10)}`;
   await page.getByLabel("Your handle").fill(handle);
-  await page.getByRole("button", { name: "Change handle" }).click();
+  await page.getByRole("button", { name: "Save handle" }).click();
   await expect(page.getByText(`Your handle is now @${handle}.`)).toBeVisible();
   await expect(page.getByText(/^You can change it again on /)).toBeVisible();
   await page.screenshot(shots("settings-handle"));
@@ -248,10 +248,10 @@ test("a signed-in person changes their password, and signs in with the new one",
   // The wrong current password is refused.
   await card.getByLabel("Current password").fill("not my password");
   await card.getByLabel("New password").fill(newPassword);
-  await card.getByRole("button", { name: "Change password" }).click();
+  await card.getByRole("button", { name: "Save new password" }).click();
   await expect(card.getByText("That's not your current password.")).toBeVisible();
   await card.getByLabel("Current password").fill(PASSWORD);
-  await card.getByRole("button", { name: "Change password" }).click();
+  await card.getByRole("button", { name: "Save new password" }).click();
   await expect(page.getByText("Password changed. You're signed out everywhere else.")).toBeVisible();
   await expect(card.getByLabel("New password")).toHaveValue("");
   await page.screenshot(shots("settings-password"));

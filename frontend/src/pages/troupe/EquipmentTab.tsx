@@ -434,7 +434,7 @@ function ItemActions({ item, troupeId, troupeName, holders }: { item: EquipmentI
         <MenuGroup label="Change it">
           {item.can_change && (
             <>
-              <MenuItem onSelect={() => setOpen("change")}>Change…</MenuItem>
+              <MenuItem onSelect={() => setOpen("change")}>Edit…</MenuItem>
               <MenuItem onSelect={() => setOpen("move")}>Move…</MenuItem>
               <MenuItem onSelect={() => setOpen("discard")}>Discard…</MenuItem>
               <MenuItem onSelect={() => setOpen("take")}>Take back…</MenuItem>
@@ -452,7 +452,7 @@ function ItemActions({ item, troupeId, troupeName, holders }: { item: EquipmentI
       <Dialog title={`History of ${item.name}`} open={open === "history"} onClose={close}>
         <History troupeId={troupeId} item={item} />
       </Dialog>
-      <Dialog title={`Change ${item.name}`} open={open === "change"} onClose={close} wide phoneFull>
+      <Dialog title={`Edit ${item.name}`} open={open === "change"} onClose={close} wide phoneFull>
         <EquipmentEditor troupeId={troupeId} troupeName={troupeName} holders={holders} item={item} onDone={close} />
       </Dialog>
       <Dialog title={`Move ${item.name}`} open={open === "move"} onClose={close}>

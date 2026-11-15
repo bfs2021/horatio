@@ -32,7 +32,7 @@ test("a player fills in their profile, and the custodian resets their password",
   await p.getByRole("button", { name: "Add a link" }).click();
   await p.getByLabel("Label").fill("Bluesky");
   await p.getByLabel("Address").fill("https://bsky.app/profile/carbuncle.example");
-  await p.getByRole("button", { name: "Save profile" }).click();
+  await p.getByRole("button", { name: "Save", exact: true }).click();
   await expect(p.getByText("Saved.")).toBeVisible();
 
   // The custodian finds them in Custodian → People and makes a reset link without
@@ -138,8 +138,8 @@ test("the custodian changes a player's email, and the player confirms it from th
   await c.getByRole("link", { name: "People", exact: true }).click();
   await c.getByLabel("Search people").fill(player.email);
   const row = c.locator("main tr").filter({ hasText: player.email });
-  await personAction(row, "chmail-player", "Change email…");
-  const change = c.getByRole("dialog", { name: "Change chmail-player's email" });
+  await personAction(row, "chmail-player", "Edit email…");
+  const change = c.getByRole("dialog", { name: "Edit chmail-player's email" });
   await change.getByLabel("New email").fill(custodian.email);
   await change.getByLabel("Reason").fill("Lost access to the old address");
   await change.getByRole("button", { name: /^(Send|Make) the link$/ }).click();
@@ -347,7 +347,7 @@ test("the custodian views Horatio as a player, read-only, and the player sees th
   // Nothing can be changed: the API refuses, whatever the page sends.
   await (await topBar(c)).getByRole("link", { name: "viewas-player" }).click();
   await c.getByLabel("Bio").fill("Not mine to write.");
-  await c.getByRole("button", { name: "Save profile" }).click();
+  await c.getByRole("button", { name: "Save", exact: true }).click();
   await expect(c.getByText(`You are viewing Horatio as @${player.handle}, read-only. Stop viewing to make changes.`)).toBeVisible();
   const refused = await c.request.post("/api/characters", { headers: { "X-Horatio": "1" }, data: { splat: "vampire", name: "Intruder" } });
   expect(refused.status()).toBe(403);

@@ -40,7 +40,7 @@ export function PasswordCard() {
         </Field>
         <ErrorText error={change.error} />
         <Button type="submit" variant="secondary" className="self-start" disabled={change.isPending}>
-          Change password
+          Save new password
         </Button>
       </form>
     </Card>

@@ -150,9 +150,9 @@ test("a troupe gives equipment: a dagger from a template, a rifle by hand, refus
   await l.screenshot(shots("troupe-equipment"));
 
   // The lead changes the dagger with a reason, and takes the rifle back, each from the ⋯ on its row.
-  await itemAction(l, "Silver Dagger, held by Agnes", "Change…");
+  await itemAction(l, "Silver Dagger, held by Agnes", "Edit…");
   await l.screenshot(shots("troupe-equipment-change"));
-  const change = l.getByRole("dialog", { name: "Change Silver Dagger" }).getByRole("form", { name: "Change Silver Dagger" });
+  const change = l.getByRole("dialog", { name: "Edit Silver Dagger" }).getByRole("form", { name: "Edit Silver Dagger" });
   await change.getByLabel("Name", { exact: true }).fill("Grandmother's dagger");
   await change.getByLabel("Why it changes").fill("An heirloom");
   await change.getByRole("button", { name: "Save changes" }).click();
@@ -542,7 +542,7 @@ test("players give equipment to each other in their home troupe and discard it, 
   await expect(kept.getByText("Discarded", { exact: true })).toHaveCount(0);
   // Held again, it can be changed, moved, discarded or taken back.
   const restored = await itemAction(l, "Silver Dagger, held by Corwin");
-  await expect(restored.getByRole("menuitem")).toHaveText(["History", "Change…", "Move…", "Discard…", "Take back…"]);
+  await expect(restored.getByRole("menuitem")).toHaveText(["History", "Edit…", "Move…", "Discard…", "Take back…"]);
   await l.keyboard.press("Escape");
   expect(await holds(s, corwin)).toEqual(["Silver Dagger"]);
 });

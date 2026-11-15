@@ -85,7 +85,7 @@ function BanClans({
       {own && <p className="text-xs text-mist">The book&apos;s: {named(ban.book_applies_to)}</p>}
       {canEdit && (
         <details className="mt-2">
-          <summary className="cursor-pointer text-mist hover:text-parchment">Change the clans</summary>
+          <summary className="cursor-pointer text-mist hover:text-parchment">Edit the clans</summary>
           <fieldset className="mt-2 flex flex-col gap-2" disabled={pending}>
             <legend className="mb-1 text-xs text-mist">
               {banHint(ban)} Tick none for no such ban here.

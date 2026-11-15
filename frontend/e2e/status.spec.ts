@@ -251,7 +251,7 @@ test("a troupe names the Gangrel a pillar clan in Customise, and the Camarilla's
   await expect(pillars).toContainText("Not Embraced into a pillar clan: Banu Haqim, Malkavian, Nosferatu, Toreador, Tremere or Ventrue.");
   // Its tick boxes are folded until asked for (#908).
   await expect(pillars.getByLabel("Brujah", { exact: true })).toBeHidden();
-  await pillars.getByText("Change the clans").click();
+  await pillars.getByText("Edit the clans").click();
   await expect(pillars.getByLabel("Brujah", { exact: true })).not.toBeChecked();
   await pillars.getByLabel("Gangrel", { exact: true }).click();
   await expect(pillars.getByLabel("Gangrel", { exact: true })).toBeChecked();
@@ -265,7 +265,7 @@ test("a troupe names the Gangrel a pillar clan in Customise, and the Camarilla's
 
   // The core book's list, a preset, keeps the Gangrel out and the Brujah in.
   await settingsPart(l, troupeId, "status");
-  await pillars.getByText("Change the clans").click();
+  await pillars.getByText("Edit the clans").click();
   await pillars.getByRole("button", { name: "As the core book (2013)" }).click();
   await expect(pillars.getByLabel("Brujah", { exact: true })).toBeChecked();
   await expect(pillars.getByLabel("Gangrel", { exact: true })).not.toBeChecked();
@@ -1034,7 +1034,7 @@ test("titles by sect: a Camarilla troupe gives Camarilla titles only to its own,
   // Who holds what; and changing what the house title gives changes it for its holders.
   await expect(master.getByRole("link", { name: "Elena Varga" })).toBeVisible();
   await master.getByRole("button", { name: "Actions for Master of Elysium" }).click();
-  await p.getByRole("menuitem", { name: "Change…" }).click();
+  await p.getByRole("menuitem", { name: "Edit…" }).click();
   await dialog.getByLabel("Prominent").check();
   await dialog.getByRole("button", { name: "Save" }).click();
   await expect(master.getByText("Gives Guardian · Prominent").filter({ visible: true })).toBeVisible();

@@ -133,7 +133,7 @@ The chevron at the start of a row opens it, to show the person's handle, email a
 
 Everything you can do with an account is behind the **⋯** at the end of its row:
 
-- to help with the account: **View as…**, **Change email…** and **Reset password…**;
+- to help with the account: **View as…**, **Edit email…** and **Reset password…**;
 - below a line, to suspend or merge it: **Suspend…** (or **Lift suspension…**) and **Merge…**.
 
 Each opens in a dialog over the list, so you don't lose your place.
@@ -181,7 +181,7 @@ To hand an NPC to a player, give it instead: from the NPCs on the troupe's **Cha
 
 For a player who has lost their old address:
 
-1. Choose **⋯ › Change email…**.
+1. Choose **⋯ › Edit email…**.
 2. Give the **New email** and a **Reason**, which is for the log: they aren't shown it.
 3. Choose **Send the link** (or **Make the link**, where Horatio can't send email).
 

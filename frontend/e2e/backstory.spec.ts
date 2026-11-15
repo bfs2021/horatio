@@ -48,10 +48,9 @@ test("a troupe asks its questions only: the lead loads the template and rewords 
   const l = lead.page;
   // Backstories are set in the Settings at the top of Approvals, where they're approved (#785).
   await l.goto(`/troupes/${troupe.id}/approvals#settings-backstories`);
-  await l.getByRole("button", { name: "Change backstory settings" }).click();
-  await l.getByRole("radio", { name: /The questions only/ }).check();
-  await l.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(l.getByText("The questions only:")).toBeVisible();
+  await l.getByRole("radio", { name: /The questions only/ }).click();
+  await expect(l.getByText("Saved.", { exact: true })).toBeVisible();
+  await expect(l.getByRole("radio", { name: /The questions only/ })).toBeChecked();
   await l.getByRole("button", { name: "Load the template" }).click();
   const shortForm = l.getByRole("list", { name: "Short Form questions" });
   await expect(shortForm.getByRole("listitem")).toHaveCount(24);

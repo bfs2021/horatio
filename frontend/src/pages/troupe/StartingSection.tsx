@@ -5,8 +5,10 @@ import { api, unwrap } from "../../api/client";
 import type { StartingCategoryOut, StartingRule } from "../../api/types";
 import { Explainer } from "../../components/Explainer";
 import { Checkbox } from "../../components/Checkbox";
-import { Badge, Button, Card, ErrorText, Input, Loading } from "../../components/ui";
-import { useAction, useRulesAction } from "../../hooks";
+import { RadioList } from "../../components/RadioList";
+import { SettingCard, SettingForm, useSettingForm } from "../../components/SettingCard";
+import { Badge, Button, Card, ErrorText, Field, Input, Loading } from "../../components/ui";
+import { useRulesAction } from "../../hooks";
 import { ClanRarity } from "./ClanRarity";
 import { DefaultBloodlines } from "./DefaultBloodlines";
 import { useHouseSplat } from "./HouseSplat";
@@ -62,66 +64,16 @@ export function StartingSection({ troupeId, canEdit }: { troupeId: string; canEd
 export function ExperienceDefaults({ troupeId, canEdit }: { troupeId: string; canEdit: boolean }) {
   const path = { params: { path: { troupe_id: troupeId } } };
   const troupe = useQuery({ queryKey: ["troupe", troupeId], queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}", path)) });
-  const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ starting_xp: 30, session_xp: 8, downtime_xp: 2 });
-  const save = useAction(async () => {
-    await unwrap(api.PATCH("/api/troupes/{troupe_id}", { ...path, body: form }));
-    setEditing(false);
-  });
-  if (!troupe.data) return null;
   const t = troupe.data;
-  return (
-    <Card
-      title="Experience"
-      actions={
-        canEdit &&
-        !editing && (
-          <Button
-            variant="secondary"
-            className="min-h-8 px-3"
-            onClick={() => {
-              setForm({ starting_xp: t.starting_xp, session_xp: t.session_xp, downtime_xp: t.downtime_xp });
-              setEditing(true);
-            }}
-          >
-            Change
-          </Button>
-        )
-      }
-    >
-      <p className="mb-3 text-sm text-mist">
-        What this troupe usually gives. Awarding XP starts at the session amount, and each new downtime cycle at the completion amount; either can be changed
-        there. The XP floor and ceiling start from the starting XP.
-      </p>
-      {editing ? (
-        <form
-          className="flex flex-wrap items-end gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate(undefined);
-          }}
-        >
-          <label className="flex flex-col gap-1 text-sm">
-            To start
-            <Input type="number" min={0} max={10000} required value={form.starting_xp} onChange={(e) => setForm({ ...form, starting_xp: Number(e.target.value) })} className="w-24" />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            For a game session
-            <Input type="number" min={0} max={100} required value={form.session_xp} onChange={(e) => setForm({ ...form, session_xp: Number(e.target.value) })} className="w-24" />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            For completing a downtime
-            <Input type="number" min={0} max={100} required value={form.downtime_xp} onChange={(e) => setForm({ ...form, downtime_xp: Number(e.target.value) })} className="w-24" />
-          </label>
-          <Button type="submit" disabled={save.isPending}>
-            Save
-          </Button>
-          <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
-            Cancel
-          </Button>
-          <ErrorText error={save.error} />
-        </form>
-      ) : (
+  const form = useSettingForm({ starting_xp: t?.starting_xp ?? 0, session_xp: t?.session_xp ?? 0, downtime_xp: t?.downtime_xp ?? 0 }, (body) =>
+    unwrap(api.PATCH("/api/troupes/{troupe_id}", { ...path, body })),
+  );
+  if (!t) return null;
+  const about =
+    "What this troupe usually gives. Awarding XP starts at the session amount, and each new downtime cycle at the completion amount; either can be changed there. The XP floor and ceiling start from the starting XP.";
+  if (!canEdit)
+    return (
+      <SettingCard title="Experience" about={about} readOnly>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
           <dt className="text-mist">To start</dt>
           <dd>{t.starting_xp} XP</dd>
@@ -130,8 +82,21 @@ export function ExperienceDefaults({ troupeId, canEdit }: { troupeId: string; ca
           <dt className="text-mist">For completing a downtime</dt>
           <dd>{t.downtime_xp} XP</dd>
         </dl>
-      )}
-    </Card>
+      </SettingCard>
+    );
+  const number = (key: keyof typeof form.value, max: number) => (
+    <Input type="number" min={0} max={max} required value={form.value[key]} onChange={(e) => form.set({ [key]: Number(e.target.value) })} className="w-24" />
+  );
+  return (
+    <SettingCard title="Experience" about={about}>
+      <SettingForm form={form}>
+        <div className="flex flex-wrap items-end gap-3">
+          <Field label="To start">{number("starting_xp", 10000)}</Field>
+          <Field label="For a game session">{number("session_xp", 100)}</Field>
+          <Field label="For completing a downtime">{number("downtime_xp", 100)}</Field>
+        </div>
+      </SettingForm>
+    </SettingCard>
   );
 }
 
@@ -139,76 +104,52 @@ export function ExperienceDefaults({ troupeId, canEdit }: { troupeId: string; ca
 export function StartingBlood({ troupeId, canEdit }: { troupeId: string; canEdit: boolean }) {
   const path = { params: { path: { troupe_id: troupeId } } };
   const troupe = useQuery({ queryKey: ["troupe", troupeId], queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}", path)) });
-  const [editing, setEditing] = useState(false);
-  const [full, setFull] = useState(true);
-  const [blood, setBlood] = useState(5);
-  const save = useRulesAction(async () => {
-    await unwrap(api.PUT("/api/troupes/{troupe_id}/starting-blood", { ...path, body: { blood: full ? null : blood } }));
-    setEditing(false);
-  });
+  const now = troupe.data?.starting_blood ?? null;
+  const form = useSettingForm(
+    { full: now === null, blood: now ?? 5 },
+    ({ full, blood }) => unwrap(api.PUT("/api/troupes/{troupe_id}/starting-blood", { ...path, body: { blood: full ? null : blood } })),
+    { rules: true },
+  );
   if (!troupe.data) return null;
-  const t = troupe.data;
-  const text = t.starting_blood === null ? "Full: the generation's most" : `${t.starting_blood} blood, or the generation's most if that is less`;
+  const about = "What resetting a character's Play View for the next game puts their blood back to.";
+  if (!canEdit)
+    return (
+      <SettingCard title="Blood at the start of a game" about={about} readOnly>
+        <p className="text-sm">{now === null ? "Full: the generation's most" : `${now} blood, or the generation's most if that is less`}</p>
+      </SettingCard>
+    );
+  const { full, blood } = form.value;
   return (
-    <Card
-      title="Blood at the start of a game"
-      actions={
-        canEdit &&
-        !editing && (
-          <Button
-            variant="secondary"
-            className="min-h-8 px-3"
-            aria-label="Change starting blood"
-            onClick={() => {
-              setFull(t.starting_blood === null);
-              setBlood(t.starting_blood ?? 5);
-              setEditing(true);
-            }}
-          >
-            Change
-          </Button>
-        )
-      }
-    >
-      <p className="mb-3 text-sm text-mist">What resetting a character's Play View for the next game puts their blood back to.</p>
-      {editing ? (
-        <form
-          className="flex flex-wrap items-end gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate(undefined);
-          }}
-        >
-          <label className="flex min-h-10 items-center gap-2 text-sm">
-            <input type="radio" name="starting-blood" checked={full} onChange={() => setFull(true)} />
-            Full
-          </label>
-          <label className="flex min-h-10 items-center gap-2 text-sm">
-            <input type="radio" name="starting-blood" checked={!full} onChange={() => setFull(false)} />
-            This much:
-            <Input
-              type="number"
-              min={0}
-              max={30}
-              aria-label="Starting blood"
-              value={blood}
-              disabled={full}
-              onChange={(e) => setBlood(Number(e.target.value))}
-              className="w-20"
-            />
-          </label>
-          <Button type="submit" disabled={save.isPending}>
-            Save
-          </Button>
-          <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
-            Cancel
-          </Button>
-          <ErrorText error={save.error} />
-        </form>
-      ) : (
-        <p className="text-sm">{text}</p>
-      )}
-    </Card>
+    <SettingCard title="Blood at the start of a game" about={about}>
+      <SettingForm form={form}>
+        <RadioList
+          label="Blood at the start of a game"
+          hideLabel
+          value={full}
+          options={[
+            { value: true, label: "Full", hint: "The generation's most." },
+            {
+              value: false,
+              label: "This much",
+              hint: "Or the generation's most, if that is less.",
+              children: (
+                <Input
+                  type="number"
+                  min={0}
+                  max={30}
+                  aria-label="Starting blood"
+                  value={blood}
+                  disabled={full}
+                  onChange={(e) => form.set({ blood: Number(e.target.value) })}
+                  className="w-20"
+                />
+              ),
+            },
+          ]}
+          onChange={(next) => form.set({ full: next })}
+        />
+      </SettingForm>
+    </SettingCard>
   );
 }
 

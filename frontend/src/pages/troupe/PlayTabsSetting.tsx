@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
+import { SettingCard, useSaveOnChange } from "../../components/SettingCard";
 import { Toggle } from "../../components/Toggle";
-import { Button, Card, ErrorText } from "../../components/ui";
-import { useAction } from "../../hooks";
+import { Button, ErrorText } from "../../components/ui";
 import { TABS, tabNames, tabsOn, troupeTabs, type Tab } from "../play/tabs";
 
 // What a few of the tabs bring with them, under their switches.
@@ -20,7 +20,7 @@ const NOTES: Partial<Record<Tab, string>> = {
  * NPCs, and run them and scenes whatever is set.
  */
 export function PlayTabsSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean }) {
-  const save = useAction((play_tabs_off: Tab[]) => unwrap(api.PATCH("/api/troupes/{troupe_id}", { params: { path: { troupe_id: troupe.id } }, body: { play_tabs_off } })));
+  const save = useSaveOnChange((play_tabs_off: Tab[]) => unwrap(api.PATCH("/api/troupes/{troupe_id}", { params: { path: { troupe_id: troupe.id } }, body: { play_tabs_off } })));
   // The last tab switched off waits here until the storyteller says yes.
   const [last, setLast] = useState<Tab | null>(null);
   const off = troupe.play_tabs_off;
@@ -33,10 +33,11 @@ export function PlayTabsSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdi
     else save.mutate(checked ? off.filter((t) => t !== tab) : [...off, tab]);
   };
   return (
-    <Card title="Play View tabs">
-      <p className="mb-3 text-sm text-mist">
-        The tabs players see on the Play View at games. Staff always see every tab on NPCs. Turn them all off if your players keep their sheets here but don't play from Horatio.
-      </p>
+    <SettingCard
+      title="Play View tabs"
+      readOnly={!canEdit}
+      about="The tabs players see on the Play View at games. Staff always see every tab on NPCs. Turn them all off if your players keep their sheets here but don't play from Horatio."
+    >
       {!canEdit ? (
         <p className="text-sm">{on.length === 0 ? "The troupe doesn't use the Play View for players." : on.length === every ? "Players see every tab." : `Players see ${tabNames(on)}.`}</p>
       ) : (
@@ -77,6 +78,6 @@ export function PlayTabsSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdi
           <ErrorText error={save.error} />
         </div>
       )}
-    </Card>
+    </SettingCard>
   );
 }

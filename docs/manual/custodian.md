@@ -147,7 +147,7 @@ Each opens in a dialog over the list, so you don't lose your place.
 
 Accounts closed by a [merge](#merging-two-accounts) aren't listed.
 
-A long handle or email is cut short in its column rather than broken in two; open the row to read it in full. On a phone, each row folds into two lines: the name and any badges, then the handle, with the chevron at its start. Its email, when they joined and their characters open below it, across the card.
+A long handle or email is cut short in its column rather than broken in two; open the row to read it in full. On a phone, each row folds into two lines: the name, then the handle and any badges, with the chevron at its start. Its email, when they joined and their characters open below it, across the card.
 
 ### Viewing as someone
 

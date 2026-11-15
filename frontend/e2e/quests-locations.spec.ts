@@ -49,10 +49,10 @@ test("quests: a player asks for one, staff build it Complex 2 and send it, it is
   await expect(row.getByRole("switch", { name: "Quests" })).toHaveAttribute("aria-checked", "true");
   await row.getByRole("link", { name: "Settings for Quests" }).click();
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/quests#settings-quests$`));
-  await l.getByRole("button", { name: "Change quest settings" }).click();
-  await l.getByLabel("Requests per character per cycle").fill("1");
-  await l.getByRole("button", { name: "Save" }).click();
-  await expect(l.getByText("1 request per character each downtime cycle.")).toBeVisible();
+  // One a cycle, as a troupe starts: nothing to save until it changes.
+  const requests = l.getByRole("region", { name: "Quest requests" });
+  await expect(requests.getByLabel("Requests per character per cycle")).toHaveValue("1");
+  await expect(requests.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
 
   // The player asks for a quest, from behind a button below their quests; a second is refused with the reason.
   await p.reload();

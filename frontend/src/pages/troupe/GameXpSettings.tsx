@@ -1,12 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { GameXpSettings } from "../../api/types";
 import { RadioList } from "../../components/RadioList";
-import { useToast } from "../../components/Toast";
 import { Checkbox } from "../../components/Checkbox";
+import { SettingCard, SettingForm, useSettingForm } from "../../components/SettingCard";
 import { Button, Card, ErrorText, Input } from "../../components/ui";
-import { useAction } from "../../hooks";
 import { addBand, adjustmentText, bandLabel, BOOK_MONTHLY, capText, DEFAULTS, fromRows, PRESETS, removeBand, toRows, type BandRow } from "./gameXp";
 
 /** Said wherever absentee games are: Horatio doesn't take payments. */
@@ -87,90 +85,88 @@ type AdjustmentRow = { key: string; name: string; amount: string; perMonth: stri
  * Game XP (issue #438): a chart of XP by earned-XP band for a game attended and an
  * absentee game, adjustments staff tick when awarding, the monthly cap, and absentee
  * games. With nothing set it is the book's way: everyone there gets the same XP,
- * warned past 10 a month. Its storytellers change it; players see it on the House
- * rules tab.
+ * warned past 10 a month. Its storytellers change it, its fields always open and saved
+ * with one button; players see it on the House rules tab.
  */
 export function GameXpCard({ troupeId, canEdit, sessionXp }: { troupeId: string; canEdit: boolean; sessionXp: number }) {
   const found = useGameXp(troupeId);
-  const [editing, setEditing] = useState(false);
   if (found.isPending) return null;
   if (found.error) return <ErrorText error={found.error} />;
   return (
-    <Card
+    <SettingCard
       title="Game XP chart"
       className="md:col-span-2"
-      actions={
-        canEdit &&
-        !editing && (
-          <Button variant="secondary" className="min-h-8 px-3" aria-label="Change the game XP chart" onClick={() => setEditing(true)}>
-            Change
-          </Button>
-        )
-      }
+      readOnly={!canEdit}
+      about="How much XP a game gives each character. The book suggests 3 to 5 a game and no more than 8 to 10 a month (MET: VtM core, p. 108). A chart tapers it by how much XP a character has earned in all, not counting starting XP or what joining gave."
     >
-      <p className="mb-3 text-sm text-mist">
-        How much XP a game gives each character. The book suggests 3 to 5 a game and no more than 8 to 10 a month (MET: VtM core, p. 108). A chart tapers it by how much XP a
-        character has earned in all, not counting starting XP or what joining gave.
-      </p>
-      {editing ? <Editor troupeId={troupeId} settings={found.data} onClose={() => setEditing(false)} /> : <Summary settings={found.data} sessionXp={sessionXp} />}
-    </Card>
+      {canEdit ? <Editor troupeId={troupeId} settings={found.data} /> : <Summary settings={found.data} sessionXp={sessionXp} />}
+    </SettingCard>
   );
 }
 
-function Editor({ troupeId, settings, onClose }: { troupeId: string; settings: GameXpSettings; onClose: () => void }) {
-  const toast = useToast();
-  const [rows, setRows] = useState<BandRow[]>(toRows(settings.bands));
-  const [adjustments, setAdjustments] = useState<AdjustmentRow[]>(
-    settings.adjustments.map((a) => ({ key: a.key, name: a.name, amount: String(a.amount), perMonth: a.per_month == null ? "" : String(a.per_month) })),
-  );
-  const [cap, setCap] = useState(settings.cap);
-  const [monthly, setMonthly] = useState(settings.monthly_xp == null ? "" : String(settings.monthly_xp));
-  const [absentee, setAbsentee] = useState(settings.absentee);
-  const [byPlayers, setByPlayers] = useState(settings.absentee_by_players);
-  const [downtime, setDowntime] = useState(settings.absentee_downtime);
-  const [lookback, setLookback] = useState(String(settings.absentee_lookback_days));
-  const [problem, setProblem] = useState("");
-  const save = useAction(
-    async (body: GameXpSettings) => {
-      await unwrap(api.PUT("/api/troupes/{troupe_id}/game-xp", { params: { path: { troupe_id: troupeId } }, body }));
-      toast({ message: "Game XP saved." });
-      onClose();
+/** The chart as the form holds it, typed figures as text. */
+type Draft = {
+  rows: BandRow[];
+  adjustments: AdjustmentRow[];
+  cap: GameXpSettings["cap"];
+  monthly: string;
+  absentee: boolean;
+  byPlayers: boolean;
+  downtime: boolean;
+  lookback: string;
+};
+
+function draftOf(settings: GameXpSettings): Draft {
+  return {
+    rows: toRows(settings.bands),
+    adjustments: settings.adjustments.map((a) => ({ key: a.key, name: a.name, amount: String(a.amount), perMonth: a.per_month == null ? "" : String(a.per_month) })),
+    cap: settings.cap,
+    monthly: settings.monthly_xp == null ? "" : String(settings.monthly_xp),
+    absentee: settings.absentee,
+    byPlayers: settings.absentee_by_players,
+    downtime: settings.absentee_downtime,
+    lookback: String(settings.absentee_lookback_days),
+  };
+}
+
+/** The settings a draft makes; a problem with it is thrown, for the form to show. */
+function bodyOf(d: Draft): GameXpSettings {
+  const chart = fromRows(d.rows);
+  if (chart.error !== null) throw new Error(chart.error);
+  const bad = d.adjustments.find((a) => !a.name.trim() || !/^-?\d+$/.test(a.amount.trim()) || Number(a.amount) === 0 || (a.perMonth.trim() !== "" && !/^\d+$/.test(a.perMonth.trim())));
+  if (bad) throw new Error(`Give ${bad.name.trim() || "each adjustment"} a name, an amount more or less than 0, and any monthly limit as a whole number.`);
+  return {
+    ...DEFAULTS,
+    bands: chart.bands,
+    adjustments: d.adjustments.map((a) => ({ key: a.key, name: a.name.trim(), amount: Number(a.amount), per_month: a.perMonth.trim() ? Number(a.perMonth) : null })),
+    cap: d.cap,
+    monthly_xp: d.monthly.trim() ? Number(d.monthly) : null,
+    absentee: d.absentee,
+    absentee_by_players: d.absentee && d.byPlayers,
+    absentee_downtime: d.absentee && d.downtime,
+    absentee_lookback_days: Number(d.lookback) || 60,
+  };
+}
+
+function Editor({ troupeId, settings }: { troupeId: string; settings: GameXpSettings }) {
+  const form = useSettingForm(
+    draftOf(settings),
+    (d) => unwrap(api.PUT("/api/troupes/{troupe_id}/game-xp", { params: { path: { troupe_id: troupeId } }, body: bodyOf(d) })),
+    {
+      first: [
+        ["game-xp", troupeId],
+        ["house-rules", troupeId],
+      ],
     },
-    [
-      ["game-xp", troupeId],
-      ["house-rules", troupeId],
-    ],
   );
+  const { rows, adjustments, cap, monthly, absentee, byPlayers, downtime, lookback } = form.value;
+  const setRows = (next: BandRow[]) => form.set({ rows: next });
+  const setAdjustments = (next: AdjustmentRow[]) => form.set({ adjustments: next });
   const changeRow = (i: number, change: Partial<BandRow>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...change } : r)));
   const changeAdjustment = (i: number, change: Partial<AdjustmentRow>) => setAdjustments(adjustments.map((a, j) => (j === i ? { ...a, ...change } : a)));
 
-  const submit = () => {
-    const chart = fromRows(rows);
-    if (chart.error !== null) return setProblem(chart.error);
-    const bad = adjustments.find((a) => !a.name.trim() || !/^-?\d+$/.test(a.amount.trim()) || Number(a.amount) === 0 || (a.perMonth.trim() !== "" && !/^\d+$/.test(a.perMonth.trim())));
-    if (bad) return setProblem(`Give ${bad.name.trim() || "each adjustment"} a name, an amount more or less than 0, and any monthly limit as a whole number.`);
-    setProblem("");
-    save.mutate({
-      ...DEFAULTS,
-      bands: chart.bands,
-      adjustments: adjustments.map((a) => ({ key: a.key, name: a.name.trim(), amount: Number(a.amount), per_month: a.perMonth.trim() ? Number(a.perMonth) : null })),
-      cap,
-      monthly_xp: monthly.trim() ? Number(monthly) : null,
-      absentee,
-      absentee_by_players: absentee && byPlayers,
-      absentee_downtime: absentee && downtime,
-      absentee_lookback_days: Number(lookback) || 60,
-    });
-  };
-
   return (
-    <form
-      className="flex flex-col gap-5 text-sm"
-      onSubmit={(e) => {
-        e.preventDefault();
-        submit();
-      }}
-    >
+    <SettingForm form={form} className="gap-5">
       <section aria-labelledby="xp-bands" className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 id="xp-bands" className="text-xs tracking-wide text-mist uppercase">
@@ -294,7 +290,7 @@ function Editor({ troupeId, settings, onClose }: { troupeId: string; settings: G
           ),
           hint: c.meaning,
         }))}
-        onChange={setCap}
+        onChange={(next) => form.set({ cap: next })}
       >
         <label className="mt-1 flex items-center gap-2">
           <Input
@@ -304,7 +300,7 @@ function Editor({ troupeId, settings, onClose }: { troupeId: string; settings: G
             placeholder={String(BOOK_MONTHLY)}
             value={monthly}
             disabled={cap === "off"}
-            onChange={(e) => setMonthly(e.target.value)}
+            onChange={(e) => form.set({ monthly: e.target.value })}
             className="w-20"
           />
           <span className="text-mist">XP a month (empty for the book's {BOOK_MONTHLY})</span>
@@ -317,13 +313,13 @@ function Editor({ troupeId, settings, onClose }: { troupeId: string; settings: G
           label="Record absentee games"
           hint="A character who missed a game can be marked absentee for it once it has started. It never counts as attended, and gets the chart's absentee XP."
           checked={absentee}
-          onChange={setAbsentee}
+          onChange={(on) => form.set({ absentee: on })}
         />
         <Checkbox
           label="Players can mark their own characters absentee, as well as staff"
           checked={byPlayers}
           disabled={!absentee}
-          onChange={setByPlayers}
+          onChange={(on) => form.set({ byPlayers: on })}
           className={`pl-8 ${absentee ? "" : "opacity-60"}`}
         />
         <Checkbox
@@ -331,7 +327,7 @@ function Editor({ troupeId, settings, onClose }: { troupeId: string; settings: G
           hint="A character can submit a cycle's downtime only if it attended a game in the lookback before the cycle closes."
           checked={downtime}
           disabled={!absentee}
-          onChange={setDowntime}
+          onChange={(on) => form.set({ downtime: on })}
           className={`pl-8 ${absentee ? "" : "opacity-60"}`}
         />
         <label className={`flex items-center gap-2 pl-8 ${absentee && downtime ? "" : "opacity-60"}`}>
@@ -342,7 +338,7 @@ function Editor({ troupeId, settings, onClose }: { troupeId: string; settings: G
             aria-label="Lookback in days"
             value={lookback}
             disabled={!absentee || !downtime}
-            onChange={(e) => setLookback(e.target.value)}
+            onChange={(e) => form.set({ lookback: e.target.value })}
             className="w-20"
           />
           <span className="text-mist">days back</span>
@@ -350,21 +346,7 @@ function Editor({ troupeId, settings, onClose }: { troupeId: string; settings: G
         <p className="text-xs text-mist">{PAYMENTS_NOTE}</p>
       </fieldset>
 
-      {problem && (
-        <p role="alert" className="text-sm text-blood-bright">
-          {problem}
-        </p>
-      )}
-      <ErrorText error={save.error} />
-      <div className="flex gap-2">
-        <Button type="submit" disabled={save.isPending}>
-          Save
-        </Button>
-        <Button type="button" variant="ghost" onClick={onClose}>
-          Cancel
-        </Button>
-      </div>
-    </form>
+    </SettingForm>
   );
 }
 

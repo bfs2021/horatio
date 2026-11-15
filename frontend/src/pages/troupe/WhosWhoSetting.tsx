@@ -1,17 +1,21 @@
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
+import { SettingCard, useSaveOnChange } from "../../components/SettingCard";
 import { Toggle } from "../../components/Toggle";
-import { Card, ErrorText } from "../../components/ui";
-import { useAction } from "../../hooks";
+import { ErrorText } from "../../components/ui";
 
 /** What the troupe's Who's Who shows of sect status: none, or the negative status
  * each character carries into a game here, which is public in the sect anyway. */
 export function WhosWhoSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean }) {
-  const save = useAction((body: { whos_who_negative?: boolean; sire_lines_players?: boolean }) =>
+  const save = useSaveOnChange((body: { whos_who_negative?: boolean; sire_lines_players?: boolean }) =>
     unwrap(api.PATCH("/api/troupes/{troupe_id}", { params: { path: { troupe_id: troupe.id } }, body })),
   );
   return (
-    <Card title="Who's Who">
+    <SettingCard
+      title="Who's Who"
+      readOnly={!canEdit}
+      about="The troupe’s players and staff see its characters there. It shows no sect status unless you add negative status."
+    >
       {!canEdit ? (
         <div className="flex flex-col gap-1 text-sm">
           <p>The Who’s Who shows {troupe.whos_who_negative ? "negative status" : "no sect status"}.</p>
@@ -19,7 +23,6 @@ export function WhosWhoSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit
         </div>
       ) : (
         <div className="flex flex-col gap-2 text-sm">
-          <p className="text-mist">The troupe’s players and staff see its characters there. It shows no sect status unless you add negative status.</p>
           <Toggle
             label="Show negative status"
             hint="The negative status each character carries into a game here, which is public in the sect (p. 312)."
@@ -37,6 +40,6 @@ export function WhosWhoSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit
           <ErrorText error={save.error} />
         </div>
       )}
-    </Card>
+    </SettingCard>
   );
 }

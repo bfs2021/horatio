@@ -3,7 +3,8 @@ import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
 import { useToast } from "../../components/Toast";
 import { Toggle } from "../../components/Toggle";
-import { Badge, Card, ErrorText } from "../../components/ui";
+import { SettingCard } from "../../components/SettingCard";
+import { Badge, ErrorText } from "../../components/ui";
 import { useRulesAction } from "../../hooks";
 import { features, settingsOnTab, type Feature, type FeatureKey } from "./features";
 
@@ -110,12 +111,15 @@ export function FeaturesList({ troupe, canEdit }: { troupe: TroupeOut; canEdit: 
   });
   const base = `/troupes/${troupe.id}`;
   return (
-    <Card title="Features">
-      <p className="mb-3 text-sm text-mist">
-        {canEdit
+    <SettingCard
+      title="Features"
+      readOnly={!canEdit && "Its storytellers switch them on and off."}
+      about={
+        canEdit
           ? "What the troupe uses beyond the sheets and downtimes. Switched off, a feature's tabs are hidden, and what was recorded is kept for when it's on again."
-          : "What the troupe uses beyond the sheets and downtimes. Its storytellers switch them on and off."}
-      </p>
+          : "What the troupe uses beyond the sheets and downtimes."
+      }
+    >
       <ul aria-label="Features" className="flex flex-col divide-y divide-ash">
         {features(troupe).map((f) => {
           // A feature's settings on its own tab are folded there for its storytellers only (#784).
@@ -156,7 +160,7 @@ export function FeaturesList({ troupe, canEdit }: { troupe: TroupeOut; canEdit: 
         })}
       </ul>
       <ErrorText error={save.error} />
-    </Card>
+    </SettingCard>
   );
 }
 

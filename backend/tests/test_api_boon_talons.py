@@ -1,8 +1,8 @@
 """Lesser Harpies, or talons (#689): the troupe's setting, the Harpy giving others access
-to the boon ledger as their character with what each may do (add, edit, audit), each
-permission alone, the access belonging to the office when the Harpy changes, staff
-seeing who has what and taking it away, and a Lesser Harpy never seeing what only
-staff see (MET: VTM p. 379)."""
+to the boon ledger as their character with what each may do (add, correct, settle,
+audit; #984), each permission alone against every boon endpoint, the access belonging
+to the office when the Harpy changes, staff seeing who has what and taking it away, and
+a Lesser Harpy never seeing what only staff see (MET: VTM p. 379)."""
 
 import json
 from collections.abc import Callable
@@ -13,9 +13,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from tests.api_helpers import Person, Troupe, sign_up
-from tests.test_api_boon_harpy import Court, ok
+from tests.test_api_boon_harpy import Court, hold, ok, report
 from tests.test_api_boon_standings import at_home
-from tests.test_api_boons import row
+from tests.test_api_boons import named, row
 
 
 class Talons(Court):
@@ -133,7 +133,9 @@ def test_an_add_only_lesser_harpy_sees_and_adds_but_never_edits(court: Talons) -
     assert ledgers[0]["talon_word"] == "Lesser Harpy"
 
 
-def test_an_edit_only_lesser_harpy_edits_and_reviews_but_never_adds(court: Talons) -> None:
+def test_a_correct_only_lesser_harpy_corrects_but_never_settles_or_reviews(
+    court: Talons,
+) -> None:
     ok(court.setting(True))
     iris = court.iris_player
     standing = court.one(court.agnes, court.bram)
@@ -146,9 +148,33 @@ def test_an_edit_only_lesser_harpy_edits_and_reviews_but_never_adds(court: Talon
     # What an edit changed is for storytellers and assistant storytellers alone.
     assert not line.get("changes")
     assert ok(court.get(edited))["events"][-1]["changes"]
-    ok(court.act(standing, "settle", by=iris, how="called_in", note=""))
-    assert ok(iris.client.get(court.queue))["boons"] == []
+    assert court.act(standing, "settle", by=iris, how="called_in", note="").status_code == 403
+    assert iris.client.get(court.queue).status_code == 404
     assert court.register(row(court.bram, court.agnes), by=iris).status_code == 403
+    ledgers = court.ledgers(court.iris, iris)
+    assert [(lg["can_edit"], lg["can_settle"], lg["can_review"]) for lg in ledgers] == [
+        (True, False, False)
+    ]
+
+
+def test_a_settle_only_lesser_harpy_settles_and_reviews_but_never_corrects(
+    court: Talons,
+) -> None:
+    ok(court.setting(True))
+    iris = court.iris_player
+    standing = court.one(court.agnes, court.bram)
+    ok(court.give(court.iris, can_settle=True))
+
+    settled = ok(court.act(standing, "settle", by=iris, how="called_in", note=""))
+
+    line = settled["events"][-1]
+    assert (line["kind"], line["as_character"]) == ("settled", "Iris")
+    assert ok(iris.client.get(court.queue))["boons"] == []
+    assert court.edit(standing, by=iris, reason="New", note="Fixed").status_code == 403
+    ledgers = court.ledgers(court.iris, iris)
+    assert [(lg["can_edit"], lg["can_settle"], lg["can_review"]) for lg in ledgers] == [
+        (False, True, True)
+    ]
 
 
 def test_audit_alone_is_kept_for_audits(court: Talons) -> None:
@@ -157,22 +183,125 @@ def test_audit_alone_is_kept_for_audits(court: Talons) -> None:
 
     ledgers = court.ledgers(court.iris, court.iris_player)
 
-    assert [(lg["can_add"], lg["can_edit"], lg["can_audit"]) for lg in ledgers] == [
-        (False, False, True)
-    ]
+    assert [
+        (lg["can_add"], lg["can_edit"], lg["can_settle"], lg["can_audit"]) for lg in ledgers
+    ] == [(False, False, False, True)]
     assert court.register(row(court.bram, court.agnes), by=court.iris_player).status_code == 403
+
+
+# --- each right alone, against every boon endpoint (#984) ----------------------------------
+
+
+def standing(court: Talons) -> dict[str, Any]:
+    return court.one(court.agnes, court.bram)
+
+
+def closed(court: Talons) -> dict[str, Any]:
+    boon = standing(court)
+    ok(court.act(boon, "void", note="Entered twice"))
+    return boon
+
+
+def pending(court: Talons) -> dict[str, Any]:
+    """A boon a player reported, waiting for review (the troupe holds reports)."""
+    report(court, court.agnes, court.troupe.player, court.bram)
+    queue = ok(court.troupe.storyteller.client.get(court.queue))["boons"]
+    return next(b for b in queue if b["state"] == "pending")
+
+
+def flagged(court: Talons) -> dict[str, Any]:
+    raised = ok(court.act(standing(court), "flags", note="Which night?"), 201)
+    return raised["flags"][0]
+
+
+Call = Callable[[Talons, Person], Any]
+
+# Each endpoint, with the right it asks of a Lesser Harpy ("view": any of them;
+# "harpy": none, it is the Harpy's own), and a call to it as one.
+ENDPOINTS: dict[str, tuple[str, Call]] = {
+    "see the ledger": ("view", lambda c, p: p.client.get(c.path)),
+    "open a boon": ("view", lambda c, p: c.get(standing(c), by=p)),
+    "register": ("add", lambda c, p: c.register(row(c.bram, c.agnes), by=p)),
+    "edit": ("edit", lambda c, p: c.edit(standing(c), by=p, reason="New", note="Fixed")),
+    "link a name": (
+        "edit",
+        lambda c, p: c.act(
+            c.one(named("A stranger"), c.agnes), "link", by=p, side="debtor", character_id=c.bram
+        ),
+    ),
+    "trade": (
+        "settle",
+        lambda c, p: c.act(standing(c), "trade", by=p, creditor={"character_id": c.hugo}),
+    ),
+    "pass on": (
+        "settle",
+        lambda c, p: c.act(standing(c), "pass-on", by=p, side="debtor", to=named("A broodmate")),
+    ),
+    "settle": ("settle", lambda c, p: c.act(standing(c), "settle", by=p, how="called_in")),
+    "void": ("settle", lambda c, p: c.act(standing(c), "void", by=p, note="Entered twice")),
+    "reopen": ("settle", lambda c, p: c.act(closed(c), "reopen", by=p, note="It stands")),
+    "status loss": ("settle", lambda c, p: c.act(standing(c), "status-loss", by=p, taken=False)),
+    "Gallant": ("settle", lambda c, p: c.act(standing(c), "gallant", by=p, give=False)),
+    "the review queue": ("settle", lambda c, p: p.client.get(c.queue)),
+    "accept": ("settle", lambda c, p: c.act(pending(c), "accept", by=p)),
+    "reject": ("settle", lambda c, p: c.act(pending(c), "reject", by=p, reason="Not so")),
+    "flag": ("settle", lambda c, p: c.act(standing(c), "flags", by=p, note="Which night?")),
+    "clear a flag": (
+        "settle",
+        lambda c, p: p.client.post(
+            f"/troupes/{c.troupe.id}/boon-flags/{flagged(c)['id']}/clear", json={"note": ""}
+        ),
+    ),
+    "audit": (
+        "audit",
+        lambda c, p: p.client.post(
+            f"/troupes/{c.troupe.id}/boon-audits", json={"character_id": c.agnes}
+        ),
+    ),
+    "declare a Boonbreaker": (
+        "harpy",
+        lambda c, p: p.client.post(
+            f"/troupes/{c.troupe.id}/boonbreakers", json={"character_id": c.bram, "note": "Lied"}
+        ),
+    ),
+}
+# Allowed, but with nothing to answer on a plain standing boon.
+NOTHING_TO_ANSWER = {"status loss", "Gallant"}
+
+
+@pytest.mark.parametrize("right", ["add", "edit", "settle", "audit"])
+def test_each_right_alone_reaches_its_endpoints_and_no_others(court: Talons, right: str) -> None:
+    ok(court.setting(True))
+    hold(court)
+    ok(court.harpy_player.client.put(f"{court.talons}/{court.iris}", json={f"can_{right}": True}))
+
+    for name, (needs, call) in ENDPOINTS.items():
+        code = call(court, court.iris_player).status_code
+        if needs in ("view", right):
+            answered = code < 300 or (name in NOTHING_TO_ANSWER and code == 409)
+            assert answered, f"{right} alone: {name} gave {code}"
+        else:
+            assert code in (403, 404), f"{right} alone: {name} gave {code}"
 
 
 def test_the_harpy_changes_and_takes_away_access(court: Talons) -> None:
     ok(court.setting(True))
     ok(court.give(court.iris, can_add=True))
 
-    changed = ok(court.give(court.iris, can_add=True, can_edit=True, can_audit=True))
+    changed = ok(
+        court.give(court.iris, can_add=True, can_edit=True, can_settle=True, can_audit=True)
+    )
 
+    assert changed["talons"][0]["can_settle"] is True
     assert changed["talons"][0]["can_audit"] is True
     assert (
-        "harpy-688 as Hestia let Iris, a Lesser Harpy, see the ledger, add boons, edit them and"
-        " perform audits." in court.messages()
+        "harpy-688 as Hestia let Iris, a Lesser Harpy, see the ledger, add boons, correct them,"
+        " settle them and perform audits." in court.messages()
+    )
+    ok(court.give(court.iris, can_settle=True))
+    assert (
+        "harpy-688 as Hestia let Iris, a Lesser Harpy, see the ledger and settle boons."
+        in court.messages()
     )
     taken = ok(court.harpy_player.client.delete(f"{court.talons}/{court.iris}"))
     assert taken["talons"] == []

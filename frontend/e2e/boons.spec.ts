@@ -634,7 +634,7 @@ test("the Harpy keeps the ledger from the Play View as their character, and neve
   await expect(atCourt.getByText("Dead", { exact: true })).toHaveCount(0);
 });
 
-test("the Harpy gives a Lesser Harpy add-only access: they register a boon as their character but can't edit it (#689)", async ({ browser }) => {
+test("the Harpy gives a Lesser Harpy add-only access: they register a boon as their character but can't edit it, then may settle but not correct it (#689, #984)", async ({ browser }) => {
   const custodian = await person(browser, "btalon-custodian");
   makeCustodian(custodian.email);
   const lead = await person(browser, "btalon-lead");
@@ -676,7 +676,8 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
   await h.getByLabel("Make a Lesser Harpy").selectOption({ label: "Wren Ashby" });
   const may = h.getByRole("group", { name: "What they may do" });
   await expect(may.getByRole("checkbox", { name: "Add boons" })).toBeChecked();
-  await expect(may.getByRole("checkbox", { name: "Edit boons" })).not.toBeChecked();
+  await expect(may.getByRole("checkbox", { name: "Correct boons" })).not.toBeChecked();
+  await expect(may.getByRole("checkbox", { name: "Settle and move boons" })).not.toBeChecked();
   await h.getByRole("button", { name: "Give access" }).click();
   await expect(h.getByText("Wren Ashby has access to the ledger.")).toBeVisible();
   await expect(h.getByRole("list", { name: "Lesser Harpies" })).toContainText("Wren Ashby sees the ledger and adds boons");
@@ -706,6 +707,18 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
   await expect(debt.getByRole("button", { name: "Edit" })).toHaveCount(0);
   await expect(debt.getByRole("button", { name: "Settle" })).toHaveCount(0);
   await t.screenshot(shots("talon-ledger"));
+
+  // Morwen's player lets her settle and move boons too, but still not correct them (#984).
+  await h
+    .getByRole("group", { name: "What Wren Ashby may do" })
+    .getByRole("checkbox", { name: "Settle and move boons" })
+    .check();
+  await expect(h.getByRole("list", { name: "Lesser Harpies" })).toContainText("Wren Ashby sees the ledger, adds boons and settles them");
+  await t.reload();
+  await debt.getByRole("button", { name: "Open" }).click();
+  await expect(debt.getByRole("button", { name: "Settle" })).toBeVisible();
+  await expect(debt.getByRole("button", { name: "Trade" })).toBeVisible();
+  await expect(debt.getByRole("button", { name: "Edit" })).toHaveCount(0);
 });
 
 test("staff declare a Boonbreaker: their open boons are made void, both ways, and they hold Disgraced while the mark stands (#717)", async ({ browser }) => {

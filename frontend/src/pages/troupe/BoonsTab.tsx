@@ -50,7 +50,11 @@ export type LedgerKeeper = {
   access: "submissions" | "full";
   role: "harpy" | "talon";
   add: boolean;
+  // Correct boons: edit what one says, and link a name to a character (#984).
   edit: boolean;
+  // Settle and move boons: trade, pass on, settle, void and reopen them, and answer a
+  // status loss or Gallant (#984).
+  settle: boolean;
   review: boolean;
   // Audit a character's boons (#690).
   audit: boolean;
@@ -414,6 +418,8 @@ function BoonDetail({ troupeId, boonId, characters }: { troupeId: string; boonId
   if (boon.error) return <ErrorText error={boon.error} />;
   const b = boon.data;
   const done = () => setDoing(null);
+  // A Lesser Harpy sees only what the Harpy let them do (#984).
+  const actions = actionsFor(b.state).filter((a) => !harpy || (a === "edit" ? harpy.edit : harpy.settle));
   return (
     <div className="mt-3 flex flex-col gap-3 border-t border-ash pt-3">
       {b.creditor_disgraced && <p className="text-sm text-blood-bright">{disgracedText(partyName(b.creditor))}</p>}
@@ -457,12 +463,20 @@ function BoonDetail({ troupeId, boonId, characters }: { troupeId: string; boonId
           </>
         )}
       </dl>
-      {(!harpy || harpy.review) && <ReviewPanel troupeId={troupeId} boon={b} characters={characters} />}
-      {b.status_loss && (!harpy || harpy.edit) && <StatusLoss troupeId={troupeId} boon={b} />}
-      {b.gallant && (!harpy || harpy.edit) && <GallantOffer troupeId={troupeId} boon={b} offer={b.gallant} />}
-      {harpy && !harpy.edit ? null : doing === null ? (
+      {(!harpy || harpy.review || harpy.edit) && (
+        <ReviewPanel
+          troupeId={troupeId}
+          boon={b}
+          characters={characters}
+          review={!harpy || harpy.review}
+          link={!harpy || harpy.role === "harpy" || harpy.edit}
+        />
+      )}
+      {b.status_loss && (!harpy || harpy.settle) && <StatusLoss troupeId={troupeId} boon={b} />}
+      {b.gallant && (!harpy || harpy.settle) && <GallantOffer troupeId={troupeId} boon={b} offer={b.gallant} />}
+      {actions.length === 0 ? null : doing === null ? (
         <div role="group" aria-label="What to do with it" className="flex flex-wrap gap-2">
-          {actionsFor(b.state).map((a) => (
+          {actions.map((a) => (
             <Button key={a} variant={a === "void" ? "ghost" : "secondary"} onClick={() => setDoing(a)}>
               {ACTION_LABELS[a]}
             </Button>

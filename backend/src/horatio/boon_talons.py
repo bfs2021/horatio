@@ -5,8 +5,9 @@ A troupe lets its Harpy do this (`boon_talons`) only while the Harpy has the ful
 ledger (horatio.boon_harpy), and calls them "Lesser Harpies" or "Talons"
 (`boon_talon_word`). For each one, the Harpy chooses whether they may:
 - add boons (register them);
-- edit boons: edit, trade, pass on, settle, void and reopen them, and review what
-  players report;
+- correct boons: edit what one says, and link a name on it to a character;
+- settle and move boons: trade, pass on, settle, void and reopen them, answer a
+  status loss or Gallant, and review what players report (#984);
 - perform audits of a character's boons (#690).
 Everyone given access sees the ledger, as a Harpy does: never what an edit changed,
 nor a boon's staff note, nor who entered a boon, nor why a character retired.
@@ -48,19 +49,25 @@ def can(talon: BoonTalon) -> frozenset[str]:
     if talon.can_add:
         found.add("add")
     if talon.can_edit:
-        found |= {"edit", "submissions"}
+        found.add("edit")
+    if talon.can_settle:
+        found |= {"settle", "submissions"}
     if talon.can_audit:
         found.add("audit")
     return frozenset(found)
 
 
 def describe(talon: BoonTalon) -> str:
-    """What they may do, in words: "see the ledger, add boons and edit them"."""
+    """What they may do, in words: "see the ledger, add boons, correct them and settle
+    them"."""
     parts = ["see the ledger"]
-    if talon.can_add:
-        parts.append("add boons")
-    if talon.can_edit:
-        parts.append("edit them" if talon.can_add else "edit boons")
+    for on, verb in (
+        (talon.can_add, "add"),
+        (talon.can_edit, "correct"),
+        (talon.can_settle, "settle"),
+    ):
+        if on:
+            parts.append(f"{verb} {'them' if len(parts) > 1 else 'boons'}")
     if talon.can_audit:
         parts.append("perform audits")
     return parts[0] if len(parts) == 1 else f"{', '.join(parts[:-1])} and {parts[-1]}"
@@ -165,6 +172,7 @@ def give(
     *,
     add: bool,
     edit: bool,
+    settle: bool,
     audits: bool,
     by: Character | None,
 ) -> BoonTalon:
@@ -186,9 +194,15 @@ def give(
             given_by_id=by.id if by is not None else None,
         )
         db.add(talon)
-    elif (talon.can_add, talon.can_edit, talon.can_audit) == (add, edit, audits):
+    elif (talon.can_add, talon.can_edit, talon.can_settle, talon.can_audit) == (
+        add,
+        edit,
+        settle,
+        audits,
+    ):
         return talon
-    talon.can_add, talon.can_edit, talon.can_audit = add, edit, audits
+    talon.can_add, talon.can_edit, talon.can_settle = add, edit, settle
+    talon.can_audit = audits
     if by is not None:
         talon.given_by_id = by.id
     db.flush()

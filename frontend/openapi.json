@@ -23512,6 +23512,11 @@
             "title": "Can Review",
             "type": "boolean"
           },
+          "can_settle": {
+            "default": true,
+            "title": "Can Settle",
+            "type": "boolean"
+          },
           "gives_access": {
             "default": false,
             "title": "Gives Access",
@@ -52922,6 +52927,11 @@
             "default": false,
             "title": "Can Edit",
             "type": "boolean"
+          },
+          "can_settle": {
+            "default": false,
+            "title": "Can Settle",
+            "type": "boolean"
           }
         },
         "title": "TalonIn",
@@ -52939,6 +52949,10 @@
           },
           "can_edit": {
             "title": "Can Edit",
+            "type": "boolean"
+          },
+          "can_settle": {
+            "title": "Can Settle",
             "type": "boolean"
           },
           "character_id": {
@@ -52969,6 +52983,7 @@
           "name",
           "can_add",
           "can_edit",
+          "can_settle",
           "can_audit",
           "given_by",
           "given_at",

@@ -89,7 +89,7 @@ function KindCard({ troupeId, kind, canEdit }: { troupeId: string; kind: TroupeK
             placeholder="One per line"
           />
           <div className="flex flex-wrap gap-2">
-            <Button type="submit">Save our list</Button>
+            <Button type="submit">Save</Button>
             <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
               Cancel
             </Button>

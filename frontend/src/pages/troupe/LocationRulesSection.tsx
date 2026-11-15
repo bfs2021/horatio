@@ -151,8 +151,8 @@ function OwnQualities({ troupeId, catalogue, canEdit }: { troupeId: string; cata
                 </span>
                 {canEdit && (
                   <span className="flex shrink-0 gap-1">
-                    <Button variant="secondary" className="min-h-8 px-3" aria-label={`Change ${q.name}`} onClick={() => setEditing(q.id)}>
-                      Change
+                    <Button variant="secondary" className="min-h-8 px-3" aria-label={`Edit ${q.name}`} onClick={() => setEditing(q.id)}>
+                      Edit
                     </Button>
                     <Button variant="ghost" className="min-h-8 px-2" onClick={() => archive.mutate(q)}>
                       {q.archived ? "Bring back" : "Archive"}
@@ -187,7 +187,7 @@ function OwnForm({ troupeId, quality, onDone }: { troupeId: string; quality: Own
   });
   return (
     <form
-      aria-label={quality ? `Change ${quality.name}` : "Add a location quality"}
+      aria-label={quality ? `Edit ${quality.name}` : "Add a location quality"}
       className="mb-3 grid gap-3 sm:grid-cols-2"
       onSubmit={(e) => {
         e.preventDefault();

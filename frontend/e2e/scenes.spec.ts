@@ -405,7 +405,7 @@ test("staff tag a scene with the setting's themes and moods, The setting tab cou
   await tags.getByRole("list", { name: "Moods" }).getByRole("button", { name: "Brooding" }).click();
   await expect(tags.getByRole("button", { name: "Betrayal" })).toHaveAttribute("aria-pressed", "true");
   await tags.getByRole("button", { name: "Save tags" }).click();
-  await expect(tags.getByRole("button", { name: "Change tags" })).toBeVisible();
+  await expect(tags.getByRole("button", { name: "Edit tags" })).toBeVisible();
   await expect(tags).toContainText("Betrayal");
   await expect(tags).toContainText("Brooding");
   await l.reload();

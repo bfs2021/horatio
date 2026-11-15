@@ -24,14 +24,14 @@ test("a troupe changes what new characters start with and their downtime actions
   await l.getByRole("link", { name: troupeName }).click();
   await troupeTab(l, "House rules");
   await pagePart(l, "Starting points");
-  await l.getByRole("button", { name: "Change starting Merits" }).click();
+  await l.getByRole("button", { name: "Edit starting Merits" }).click();
   await l.getByLabel("Points for merits").fill("9");
   await l.getByRole("button", { name: "Save", exact: true }).click();
   await expect(l.getByText("The rule set's: 7 points")).toBeVisible();
   await l.screenshot(shots("starting"));
   // …and four downtime actions a cycle instead of three.
   await pagePart(l, "Downtime actions");
-  await l.getByRole("button", { name: "Change actions for Everyone" }).click();
+  await l.getByRole("button", { name: "Edit actions for Everyone" }).click();
   await l.getByLabel("Downtime actions each cycle").fill("4");
   await l.getByRole("button", { name: "Save", exact: true }).click();
   await expect(l.getByText("Replaced here")).toBeVisible();
@@ -401,11 +401,11 @@ test("a troupe's players read its house rules: a price the lead changes shows th
   // The lead prices attributes at 4 XP a dot, with a note for players.
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/house-rules/costs`);
-  await l.getByRole("button", { name: "Change the price for All Attributes" }).click();
+  await l.getByRole("button", { name: "Edit the price for All Attributes" }).click();
   await l.getByLabel("How it's priced").selectOption({ label: "The same for each dot" });
   await l.getByLabel("XP per dot").fill("4");
   await l.getByLabel("Note for players").fill("Training is slow here");
-  await l.getByRole("button", { name: "Save price" }).click();
+  await l.getByRole("region", { name: /^Price for / }).getByRole("button", { name: "Save", exact: true }).click();
   await expect(l.getByText("Only house rules (1)")).toBeVisible();
 
   // A player's character visits the troupe; from its Troupes tab the player opens the house rules.
@@ -636,7 +636,7 @@ test("a lead prices skills at 1× for Generation background 2, and a Generation 
   await expect(l.getByRole("row", { name: "As written 2 6 12 20 30" })).toBeVisible();
   await expect(l.getByRole("row", { name: "With the change 1 3 6 10 15" })).toBeVisible();
   await l.screenshot(shots("costs-condition"));
-  await l.getByRole("button", { name: "Save price" }).click();
+  await l.getByRole("button", { name: "Add the price" }).click();
   await expect(l.getByText("All Skills, Generation background 2", { exact: true })).toBeVisible();
   await expect(l.getByText("Only house rules (1)")).toBeVisible();
 
@@ -865,7 +865,7 @@ test("players read the whole setting on its tab, in print, on the profile when s
   // The lead gives a clan rarity a reason, under Rules' starting points.
   await l.goto(`/troupes/${troupeId}/house-rules/starting`);
   const rarity = l.locator("section").filter({ has: l.getByRole("heading", { name: "Clan rarity", exact: true }) });
-  await rarity.getByRole("button", { name: "Change clan rarity" }).click();
+  await rarity.getByRole("button", { name: "Edit clan rarity" }).click();
   await rarity.getByLabel("Lasombra rarity").selectOption("uncommon");
   await rarity.getByLabel("Why the Lasombra are uncommon").fill("due to story");
   await rarity.getByRole("button", { name: "Save" }).click();
@@ -2429,7 +2429,7 @@ test("a troupe's profile: storytellers fill it in, and people not signed in see 
   await profile.getByRole("button", { name: "Add a portrait" }).click();
   await l.getByLabel("Choose a portrait").setInputFiles("e2e/portrait.jpg");
   await expect(l.getByRole("slider", { name: /Where the portrait is/ })).toBeVisible();
-  await l.getByRole("button", { name: "Save picture" }).click();
+  await l.getByRole("dialog", { name: /'s portrait$/ }).getByRole("button", { name: "Save", exact: true }).click();
   await expect(l.getByRole("dialog")).toBeHidden();
   await profile.getByRole("button", { name: "Edit links" }).click();
   await profile.getByLabel("Website").fill("https://lords.example.org");
@@ -3003,7 +3003,7 @@ test("a troupe's Overview switches it public at once, shows its XP range, and Wa
   await expect(l.getByRole("checkbox")).toHaveCount(0);
   await expect(l.getByLabel("Floor", { exact: true })).toHaveCount(0);
   // The lead sets them by hand in Customise's Troupe settings, with the rest of the troupe's settings.
-  await l.getByRole("link", { name: "Change in Customise" }).first().click();
+  await l.getByRole("link", { name: "Edit in Customise" }).first().click();
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/settings$`));
   for (const group of ["Who may join", "XP", "Status and titles", "Blood and diablerie"]) await expect(l.getByRole("group", { name: group, exact: true })).toBeVisible();
   const range = l.getByRole("region", { name: "XP floor and ceiling" });

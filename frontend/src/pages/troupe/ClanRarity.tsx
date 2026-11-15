@@ -58,13 +58,13 @@ export function ClanRarity({ troupeId, canEdit }: { troupeId: string; canEdit: b
           <Button
             variant="secondary"
             className="min-h-8 px-3"
-            aria-label="Change clan rarity"
+            aria-label="Edit clan rarity"
             onClick={() => {
               setNotes(Object.fromEntries(clans.filter((c) => c.house && c.note).map((c) => [c.clan, c.note!])));
               setEditing(own);
             }}
           >
-            Change
+            Edit
           </Button>
         )
       }

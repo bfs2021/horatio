@@ -83,7 +83,7 @@ export function ResponseEditor({
       )}
       <Textarea aria-label={`Response to ${item.character_name}`} value={body} onChange={(e) => setBody(e.target.value)} placeholder="The result…" />
       <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={() => save.mutate(undefined)} disabled={save.isPending || (body === item.body && !others.length)}>
+        <Button variant="secondary" onClick={() => save.mutate(undefined)} disabled={save.isPending || (body === item.body && !others.length)}>
           Save response
         </Button>
         {!!tables.data?.length && (

@@ -48,8 +48,8 @@ export function ResponseItems({ item, troupeId }: { item: WorkItemOut; troupeId:
               <Badge tone={row.given_at ? "gold" : "mist"}>{row.given_at ? "Given" : "With the results"}</Badge>
               {item.can_give && !row.given_at && (
                 <>
-                  <Button variant="ghost" className="px-2" aria-label={`Change ${row.text}`} onClick={() => change(row)}>
-                    Change
+                  <Button variant="ghost" className="px-2" aria-label={`Edit ${row.text}`} onClick={() => change(row)}>
+                    Edit
                   </Button>
                   <Button variant="ghost" className="px-2" aria-label={`Take ${row.text} off`} disabled={remove.isPending} onClick={() => remove.mutate(row.id)}>
                     Take off
@@ -71,10 +71,10 @@ export function ResponseItems({ item, troupeId }: { item: WorkItemOut; troupeId:
           </Button>
         </div>
       )}
-      <Dialog title={editing ? `Change ${editing.text}` : `Give ${who} an item`} open={open === "item"} onClose={close} wide phoneFull>
+      <Dialog title={editing ? `Edit ${editing.text}` : `Give ${who} an item`} open={open === "item"} onClose={close} wide phoneFull>
         {open === "item" && <GiveItem key={editing?.id ?? "new"} item={item} troupeId={troupeId} editing={editing} save={save} onDone={close} />}
       </Dialog>
-      <Dialog title={editing ? `Change ${editing.text}` : `Add a quality to one of ${who}'s items`} open={open === "quality"} onClose={close}>
+      <Dialog title={editing ? `Edit ${editing.text}` : `Add a quality to one of ${who}'s items`} open={open === "quality"} onClose={close}>
         {open === "quality" && <AddQuality key={editing?.id ?? "new"} item={item} editing={editing} save={save} onDone={close} />}
       </Dialog>
     </section>
@@ -207,7 +207,7 @@ function AddQuality({ item, editing, save, onDone }: { item: WorkItemOut; editin
       <ErrorText error={send.error} />
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={send.isPending || !chosen || !name}>
-          {editing ? "Save changes" : "Add it"}
+          {editing ? "Save" : "Add it"}
         </Button>
         <Button type="button" variant="ghost" onClick={onDone}>
           Cancel

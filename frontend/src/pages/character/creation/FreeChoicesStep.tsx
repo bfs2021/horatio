@@ -55,7 +55,7 @@ export function FreeChoicesStep({ character, trait }: { character: CharacterOut;
           <FreeChoicesFields offers={offers} picks={draft} onChange={setDraft} />
           <ErrorText error={save.error} />
           <div className="flex items-center gap-2">
-            <Button type="submit" className="min-h-8 px-3 py-1 text-xs" disabled={save.isPending || same || !sayable(draft, offers)}>
+            <Button type="submit" variant="secondary" className="min-h-8 px-3 py-1 text-xs" disabled={save.isPending || same || !sayable(draft, offers)}>
               {done ? "Save changes" : "Save choices"}
             </Button>
             {!done && <span className="text-xs text-gold">Not chosen yet</span>}

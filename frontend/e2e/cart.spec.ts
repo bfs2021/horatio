@@ -159,7 +159,7 @@ test("a Ventrue takes Royalty from the sheet, places 4, 3 and 2 free dots, chang
   await expect(p.getByText("24", { exact: true })).toBeVisible();
 
   // Until a troupe accepts her, the choices change freely: Haven in place of Resources.
-  await p.getByRole("button", { name: "Change the free traits for Ventrue Royalty" }).click();
+  await p.getByRole("button", { name: "Edit the free traits for Ventrue Royalty" }).click();
   await p.getByLabel("4 dots in").selectOption("Haven");
   await p.getByRole("button", { name: "Save", exact: true }).click();
   await expect(trait("Haven")).toContainText("+4 from Ventrue Royalty");
@@ -180,7 +180,7 @@ test("a Ventrue takes Royalty from the sheet, places 4, 3 and 2 free dots, chang
   await p.reload();
   await expect(chosen).toContainText("Haven 4");
   await expect(chosen).toContainText("can't change once a home troupe has accepted");
-  await expect(p.getByRole("button", { name: "Change the free traits for Ventrue Royalty" })).toHaveCount(0);
+  await expect(p.getByRole("button", { name: "Edit the free traits for Ventrue Royalty" })).toHaveCount(0);
   const refused = await p.request.fetch(`/api/characters/${id}/traits/choices`, {
     method: "PUT",
     headers,

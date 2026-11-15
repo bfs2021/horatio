@@ -31,7 +31,7 @@ export function MotifTags({ troupeId, tags, canTag, onSave }: { troupeId: string
           ))}
         {canTag && picked === null && (
           <button type="button" className="text-xs text-mist underline hover:text-parchment" onClick={() => setPicked(tags.map((t) => t.id))}>
-            {tags.length ? "Change tags" : "Tag it"}
+            {tags.length ? "Edit tags" : "Tag it"}
           </button>
         )}
       </div>
@@ -81,7 +81,7 @@ function TagPicker({
       )}
       <div className="flex gap-2">
         {themes.length + moods.length > 0 && (
-          <Button type="button" className="min-h-8 px-3" disabled={pending} onClick={onSave}>
+          <Button type="button" variant="secondary" className="min-h-8 px-3" disabled={pending} onClick={onSave}>
             Save tags
           </Button>
         )}

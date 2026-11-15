@@ -118,7 +118,7 @@ function SenderForm({ mail }: { mail: MailOut }) {
         </Field>
       </div>
       <div>
-        <Button type="submit" disabled={save.isPending}>
+        <Button type="submit" variant="secondary" disabled={save.isPending}>
           Save who emails come from
         </Button>
       </div>

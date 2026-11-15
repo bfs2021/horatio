@@ -515,7 +515,7 @@ export function EntryForm({
       <ErrorText error={save.error} />
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={save.isPending || !ready}>
-          {entry ? "Save changes" : "Log it"}
+          {entry ? "Save" : "Log it"}
         </Button>
         {!entry && (
           <Button type="button" variant="secondary" disabled={save.isPending || !ready} onClick={() => save.mutate(true)}>

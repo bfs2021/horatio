@@ -240,7 +240,7 @@ function ThisGame({
             </span>
             {staff && status.sources.length > 1 && (
               <Button variant="ghost" className="min-h-8 px-2 text-xs" onClick={() => setChanging(true)}>
-                Change
+                Edit
               </Button>
             )}
           </p>

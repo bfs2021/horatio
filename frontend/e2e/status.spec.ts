@@ -684,7 +684,7 @@ test("at a game, a Seneschal elder chooses one source of status, spends Authorit
   await expect(abiding.getByText("Authority", { exact: true })).toHaveCount(0);
   await expect(p.getByText("Your choices are locked for this game; staff can change them.")).toBeVisible();
   await expect(p.getByRole("button", { name: "Choose Primogen" })).toHaveCount(0);
-  await expect(p.getByRole("button", { name: "Change" })).toHaveCount(0);
+  await expect(p.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
 
   // The Prince is away tonight: the Seneschal holds Authority.
   await p.getByRole("button", { name: "The Prince is absent" }).click();
@@ -738,7 +738,7 @@ test("at a game, a Seneschal elder chooses one source of status, spends Authorit
   // The lead, from the game's Play View, can change the locked choice.
   const l = lead.page;
   await l.goto(`/play/characters/${id}?tab=status`);
-  await l.getByRole("button", { name: "Change" }).click();
+  await l.getByRole("button", { name: "Edit", exact: true }).click();
   await expect(l.getByRole("button", { name: "Choose Primogen" })).toHaveCount(0);
   await l.getByRole("button", { name: "Choose Elder" }).click();
   await expect(l.getByText("Abiding status from Elder, chosen for this game.")).toBeVisible();
@@ -811,7 +811,7 @@ test("where the troupe chooses the night's status at check-in, an elder Senescha
   const abiding = p.locator("section").filter({ has: p.getByRole("heading", { name: "Abiding status" }) });
   await expect(abiding.getByText("Confirmed", { exact: true })).toBeVisible();
   await expect(p.getByRole("button", { name: "Choose Seneschal" })).toHaveCount(0);
-  await expect(p.getByRole("button", { name: "Change" })).toHaveCount(0);
+  await expect(p.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
   await p.screenshot(shots("play-status-fixed"));
 
   // Staff see it on Game night, and change it on the Play View with a reason for the game's log.
@@ -819,9 +819,9 @@ test("where the troupe chooses the night's status at check-in, an elder Senescha
   const wenna = l.getByRole("table", { name: "Checked in" }).locator("tbody tr").filter({ hasText: "Wenna" });
   await expect(wenna.getByText("Status from Elder").filter({ visible: true })).toBeVisible();
   await wenna.getByRole("button", { name: "Actions for Wenna" }).click();
-  await l.getByRole("menuitem", { name: "Change status" }).click();
+  await l.getByRole("menuitem", { name: "Edit status" }).click();
   await expect(l).toHaveURL(new RegExp(`/play/characters/${id}\\?tab=status$`));
-  await l.getByRole("button", { name: "Change" }).click();
+  await l.getByRole("button", { name: "Edit", exact: true }).click();
   await expect(l.getByRole("button", { name: "Choose Seneschal" })).toBeDisabled();
   await l.getByLabel("Why change it? (for the game's log)").fill("She named the wrong one at the door");
   await l.getByRole("button", { name: "Choose Seneschal" }).click();

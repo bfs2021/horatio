@@ -50,8 +50,10 @@ import { useCatalogue } from "../../catalogue";
 
 export function CharacterPage() {
   const { characterId = "" } = useParams();
-  // The Downtime tab has its own main button, Submit, so Play steps back there.
+  // The Downtime and Backstory tabs have their own main button (Submit, Approve), so
+  // Play steps back there (#920).
   const onDowntime = !!useMatch("/characters/:characterId/downtime");
+  const onBackstory = !!useMatch("/characters/:characterId/backstory");
   // In the wizard, Continue creating would only lead back to where the player is.
   const onCreate = !!useMatch("/characters/:characterId/create/*");
   const me = useMe();
@@ -119,7 +121,7 @@ export function CharacterPage() {
     </LinkButton>
   );
   // None where its troupe doesn't use the Play View (#673).
-  const play = c.play_view && primaryLink(`/play/characters/${c.id}`, "Play", onDowntime);
+  const play = c.play_view && primaryLink(`/play/characters/${c.id}`, "Play", onDowntime || onBackstory);
   const rename = renaming && <RenameCharacter key={c.id} character={c} asCustodian={custodian} onDone={() => setRenaming(false)} />;
   const pronouns = saying && <CharacterPronouns key={c.id} character={c} onDone={() => setSaying(false)} />;
   const sire = siring && sireOf.data && <CharacterSire key={c.id} character={c} sire={sireOf.data} onDone={() => setSiring(false)} />;

@@ -290,7 +290,7 @@ function BondRow({
             )}
             {bond.status === "fading" && (
               <Button variant="secondary" onClick={() => setDoing("fade")}>
-                Change the fade
+                Edit the fade
               </Button>
             )}
             <Button variant="ghost" onClick={() => setDoing("break")}>
@@ -888,7 +888,7 @@ function FadeForm({
   });
   return (
     <form
-      aria-label={`Change the fade of ${bond.thrall.name}'s bond to ${bond.regnant.name}`}
+      aria-label={`Edit the fade of ${bond.thrall.name}'s bond to ${bond.regnant.name}`}
       className="flex flex-col gap-3 rounded-md border border-ash p-3"
       onSubmit={(e) => {
         e.preventDefault();
@@ -926,7 +926,7 @@ function FadeForm({
           type="submit"
           disabled={save.isPending || !ends || !reason.trim()}
         >
-          Save the fade
+          Save
         </Button>
         <Button type="button" variant="ghost" onClick={onDone}>
           Cancel
@@ -999,7 +999,7 @@ function EntryRow({
             className="text-mist underline hover:text-parchment"
             onClick={() => setDoing("change")}
           >
-            Change
+            Edit
           </button>
           <button
             type="button"
@@ -1012,7 +1012,7 @@ function EntryRow({
       )}
       {doing === "change" && (
         <form
-          aria-label={`Change the night of ${dates.day(e.night)}`}
+          aria-label={`Edit the night of ${dates.day(e.night)}`}
           className="mt-1 flex flex-col gap-2 rounded-md border border-ash p-2"
           onSubmit={(ev) => {
             ev.preventDefault();

@@ -148,13 +148,13 @@ test("represented by: a Ravnos's player says the Brujah speak for them at court,
   const section = (name: string) => p.getByRole("region", { name, exact: true });
   const card = section("Other").getByRole("article", { name: "Ravindra" });
   await expect(card.getByText("Represented by: nobody yet")).toBeVisible();
-  await card.getByRole("button", { name: "Change who represents Ravindra" }).click();
+  await card.getByRole("button", { name: "Edit who represents Ravindra" }).click();
   await card.getByLabel("Who represents Ravindra").selectOption("Brujah");
   await card.getByRole("button", { name: "Save" }).click();
   await expect(card.getByText("Represented by: Brujah")).toBeVisible();
   await p.screenshot(shots("represented-by"));
   // Only their own: Rothgar's Brujah have a seat, and nothing to choose.
-  await expect(section("Brujah").getByRole("button", { name: /Change who represents/ })).toHaveCount(0);
+  await expect(section("Brujah").getByRole("button", { name: /Edit who represents/ })).toHaveCount(0);
 
   // Staff see it on the Roster tab.
   const l = lead.page;
@@ -324,7 +324,7 @@ test("sire lines: a player gives a sire from the menu, staff see the sire and bo
   const form = p.locator("section", { has: p.getByRole("heading", { name: "Aurelie's sire" }) });
   await form.getByRole("radio", { name: "A vampire in the troupe" }).check();
   await form.getByLabel("Sire", { exact: true }).selectOption({ label: "Mother Aldegonde (Toreador)" });
-  await form.getByRole("button", { name: "Save sire" }).click();
+  await form.getByRole("button", { name: "Save", exact: true }).click();
   await expect(form).toBeHidden();
   // Bertrand's through the API, the same way.
   await send(p, "PUT", `/api/characters/${bertrand}/sire`, { character_id: mother, name: "", clan: "", secret: false });
@@ -500,7 +500,7 @@ test("pronouns: a player gives their own and their character's, the Who's Who sh
   await p.getByRole("button", { name: "More for Ines" }).click();
   await p.getByRole("menuitem", { name: "Pronouns…" }).click();
   await p.getByLabel("Pronouns").fill("she/her");
-  await p.getByRole("button", { name: "Save pronouns" }).click();
+  await p.locator("section", { has: p.getByRole("heading", { name: "Ines's pronouns" }) }).getByRole("button", { name: "Save", exact: true }).click();
   await expect(p.getByRole("heading", { name: "Ines (she/her)" })).toBeVisible();
 
   // The Who's Who shows both: hers beside her name, theirs beside theirs.

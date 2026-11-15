@@ -203,7 +203,7 @@ export function LeavingCard({ character, canChange }: { character: CharacterOut;
         </p>
         {canChange && (
           <Button variant="secondary" onClick={() => setChanging(true)}>
-            {reason ? "Change…" : "Give a reason…"}
+            {reason ? "Edit…" : "Give a reason…"}
           </Button>
         )}
       </div>

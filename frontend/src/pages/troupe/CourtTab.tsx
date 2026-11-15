@@ -301,7 +301,7 @@ function HoldingDates({ troupeId, holding }: { troupeId: string; holding: CourtH
           <Input type="date" value={ended} onChange={(e) => setEnded(e.target.value)} aria-label={`${label}: ended in game`} />
         </label>
       )}
-      <Button disabled={!changed || save.isPending} onClick={() => save.mutate(undefined)}>
+      <Button variant="secondary" disabled={!changed || save.isPending} onClick={() => save.mutate(undefined)}>
         Save
       </Button>
       <ErrorText error={save.error} />

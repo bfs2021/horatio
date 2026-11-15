@@ -146,7 +146,7 @@ function DeskRow({ post, agency, writes, kind }: { post: PostOut; agency: Agency
       <ActionMenu label={`Actions for ${post.title}`} variant="ghost">
         <MenuGroup label="Open">
           <MenuLink to={`../${post.id}`}>Read</MenuLink>
-          {editable && <MenuLink to={`../${post.id}/edit`}>{post.status === "scheduled" ? "Change" : "Edit"}</MenuLink>}
+          {editable && <MenuLink to={`../${post.id}/edit`}>Edit</MenuLink>}
         </MenuGroup>
         {writes && (
           <MenuGroup label="Publish">

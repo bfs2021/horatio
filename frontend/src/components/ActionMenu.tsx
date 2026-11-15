@@ -7,6 +7,9 @@ import { Button } from "./ui";
 /** What a menu item looks like; for an item made by hand, such as one that explains why it can't be chosen. */
 export const MENU_ITEM = "block w-full px-3 py-2 text-left text-sm hover:bg-ash focus-visible:bg-ash disabled:cursor-default disabled:text-mist disabled:hover:bg-transparent";
 
+/** The button is at least 40 × 40 px on a touch screen, whatever it looks like. */
+const TOUCH = "pointer-coarse:min-h-10 pointer-coarse:min-w-10";
+
 /** Closes the menu and gives focus back to its button: what choosing an item does first. */
 const Chosen = createContext<() => void>(() => {});
 
@@ -89,11 +92,11 @@ export function ActionMenu({
   return (
     <div ref={root} className={`relative ${className ?? ""}`}>
       {buttonClassName ? (
-        <button {...buttonProps} className={buttonClassName}>
+        <button {...buttonProps} className={`${buttonClassName} ${TOUCH}`}>
           {trigger}
         </button>
       ) : (
-        <Button {...buttonProps} variant={variant}>
+        <Button {...buttonProps} variant={variant} className={TOUCH}>
           {trigger}
         </Button>
       )}

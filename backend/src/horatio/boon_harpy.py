@@ -31,17 +31,35 @@ A Harpy or a Lesser Harpy learns who has left only as the court knows it
 (horatio.court_knows, #749): their `Keeper` carries the troupe's Who's Who listing,
 and every view of the ledger they read goes by it. The troupe may also let them read
 its boon standings and statistics (`reads_standings`), by the same rule.
+**A boon's log** (#992; `in_sight`, `log_for`): a Harpy quietly altering the ledger is
+part of the game, so a Harpy or a Lesser Harpy reads only the lines within their own
+sight. Each line keeps who it was done as (`BoonEvent.role`):
+- a Harpy sees what was done since they took the title (the start of their current
+  holding of it: `Keeper.began`), by themselves, by another holder of the title, and,
+  where the troupe lets them (`boon_harpy_sees_talons`), by a Lesser Harpy. Nothing
+  done before, by them or anyone holding the office then; a Harpy who loses the title
+  and regains it starts again;
+- a Lesser Harpy sees only what they did themselves;
+- what staff did shows when the ledger's state changed (traded, passed on, settled,
+  voided, reopened, accepted or rejected, Gallant answered), without who did it, but
+  never their edits, their linking of a name, nor the flags they raised or cleared;
+- what a player did in the Play View (reporting a boon, settling one owed to them,
+  answering Gallant) shows.
+A boon's first line (registered, or submitted and then accepted) always shows; outside
+their sight, without who did it or the note. The boon itself shows as it now stands.
+Staff see every line; players see none (they never read a boon's log).
 """
 
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from horatio import audit, boons, court_knows, notifications, titles
-from horatio.models import Boon, Character, CharacterTitle, Troupe, User
+from horatio.models import Boon, BoonEvent, BoonTalon, Character, CharacterTitle, Troupe, User
 from horatio.sheets import unprocessable
 
 # The title whose holders keep the registry (p. 379), by its main name.
@@ -76,6 +94,12 @@ class Keeper:
     # "staff", "harpy" or "talon".
     role: str = "staff"
     court: frozenset[uuid.UUID] | None = None
+    # For a Harpy, when their current holding of the title began, as (when, id) of the
+    # title: what in a boon's log came after it is within their sight (#992). Ids are
+    # UUID v7, so they keep the order things were made in, even within one moment.
+    began: tuple[datetime, uuid.UUID] | None = None
+    # For a Harpy, whether they see what their Lesser Harpies change (#992).
+    sees_talons: bool = True
 
     @property
     def staff(self) -> bool:
@@ -94,6 +118,22 @@ def set_access(db: Session, user: User, troupe: Troupe, level: str) -> None:
         return
     troupe.boon_harpy = level
     audit.record(db, user, "house.boon_harpy", troupe_id=troupe.id, setting=ACCESS[level])
+
+
+def set_sees_talons(db: Session, user: User, troupe: Troupe, on: bool) -> None:
+    """Whether the Harpy sees, in a boon's log, what their Lesser Harpies change (#992).
+    Logged if it changes."""
+    if troupe.boon_harpy_sees_talons == on:
+        return
+    troupe.boon_harpy_sees_talons = on
+    audit.record(
+        db,
+        user,
+        "house.boon_harpy_sees_talons",
+        troupe_id=troupe.id,
+        setting="to see" if on else "not to see",
+        word=troupe.boon_talon_word,
+    )
 
 
 def set_standings(db: Session, user: User, troupe: Troupe, on: bool) -> None:
@@ -157,6 +197,23 @@ def offices_of(db: Session, character: Character) -> list[Troupe]:
     return sorted(found, key=lambda t: t.name)
 
 
+def began(db: Session, troupe: Troupe, character: Character) -> tuple[datetime, uuid.UUID] | None:
+    """When the character's current holding of the Harpy title in the troupe began, as
+    (when, id) of the title held; None if they hold none."""
+    names = titles.office_names(titles.title_data(db, troupe.id), HARPY)
+    found = db.execute(
+        select(CharacterTitle.created_at, CharacterTitle.id)
+        .where(
+            CharacterTitle.troupe_id == troupe.id,
+            CharacterTitle.character_id == character.id,
+            CharacterTitle.name.in_(names),
+        )
+        .order_by(CharacterTitle.created_at, CharacterTitle.id)
+        .limit(1)
+    ).first()
+    return (found[0], found[1]) if found is not None else None
+
+
 def reaches(troupe: Troupe, need: str) -> bool:
     """Whether the troupe's setting gives the Harpy `need`: "submissions" or "full"."""
     return RANK[troupe.boon_harpy] >= RANK[need]
@@ -176,7 +233,14 @@ def keeper(db: Session, user: User, troupe: Troupe, need: str = "view") -> Keepe
         return None
     harpy = harpy_of(db, user, troupe)
     if harpy is not None and need in HARPY_CAN[troupe.boon_harpy]:
-        return Keeper(harpy, HARPY_CAN[troupe.boon_harpy], "harpy", court_knows.listed(db, troupe))
+        return Keeper(
+            harpy,
+            HARPY_CAN[troupe.boon_harpy],
+            "harpy",
+            court_knows.listed(db, troupe),
+            began=began(db, troupe, harpy),
+            sees_talons=troupe.boon_harpy_sees_talons,
+        )
     from horatio import boon_talons  # imports this module
 
     found = boon_talons.talon_of(db, user, troupe)
@@ -207,3 +271,72 @@ def tell(db: Session, troupe: Troupe, made: Sequence[Boon], reporter: Character)
             troupe_id=troupe.id,
             character_id=harpy.id,
         )
+
+
+# --- a boon's log (#992) ------------------------------------------------------------------
+
+# What staff do that a Harpy or a Lesser Harpy still sees: the ledger's state changing.
+# Not staff's edits, linking of a name, or flags raised and cleared.
+STAFF_SHOWN = frozenset(
+    {
+        "registered",
+        "submitted",
+        "accepted",
+        "rejected",
+        "traded",
+        "passed_on",
+        "settled",
+        "voided",
+        "reopened",
+        "gallant_given",
+        "gallant_declined",
+    }
+)
+
+
+def acting_as(db: Session, troupe: Troupe, character: Character | None) -> str:
+    """Who a line of a boon's log is done as, for `BoonEvent.role`: "staff" (no
+    character); "harpy", a character holding the Harpy title where the troupe gives the
+    Harpy access; "talon", one the Harpy gave access (horatio.boon_talons); else
+    "player", in the Play View."""
+    if character is None:
+        return "staff"
+    if troupe.boon_harpy != "none" and began(db, troupe, character) is not None:
+        return "harpy"
+    from horatio import boon_talons  # imports this module
+
+    if boon_talons.enabled(troupe) and db.scalar(
+        select(BoonTalon.id).where(
+            BoonTalon.troupe_id == troupe.id, BoonTalon.character_id == character.id
+        )
+    ):
+        return "talon"
+    return "player"
+
+
+def in_sight(keeper: Keeper, line: BoonEvent) -> bool:
+    """Whether `keeper` sees the line of a boon's log, with who did it and its note."""
+    if keeper.staff:
+        return True
+    if line.role == "staff":
+        return line.kind in STAFF_SHOWN
+    if line.role == "player":
+        return True
+    mine = keeper.character is not None and line.as_character_id == keeper.character.id
+    if keeper.role != "harpy":
+        return mine
+    if keeper.began is None or (line.created_at, line.id) < keeper.began:
+        return False
+    return mine or line.role == "harpy" or keeper.sees_talons
+
+
+def log_for(keeper: Keeper, lines: Sequence[BoonEvent]) -> list[tuple[BoonEvent, bool]]:
+    """The lines of a boon's log `keeper` reads, each with whether it is in their sight.
+    Its first line (registered, or submitted and then accepted) always shows; outside
+    their sight, without who did it or its note. Any other line outside it doesn't."""
+    out: list[tuple[BoonEvent, bool]] = []
+    for n, line in enumerate(lines):
+        seen = in_sight(keeper, line)
+        if seen or n == 0 or line.kind == "accepted":
+            out.append((line, seen))
+    return out

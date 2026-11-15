@@ -226,7 +226,11 @@ test("Versatile asks for its extra focus on Focuses, and a pick on the focus it 
   await expect(versatile).toBeChecked();
   const notices = p.getByRole("group", { name: "Changed by other steps" });
   await expect(notices).toContainText("Versatile makes Wits free: your pick on Wits can go elsewhere.");
-  await inSteps(p, (steps) => expect(steps.getByRole("link", { name: /Focuses \(needs a look\)/ })).toBeVisible());
+  // The red mark, and a line under the list saying what it means (#919).
+  await inSteps(p, async (steps) => {
+    await expect(steps.getByRole("link", { name: /Focuses \(needs a look\)/ })).toBeVisible();
+    await expect(steps.getByText("Something on that step needs a look.")).toBeVisible();
+  });
 
   // Another focus is the extra one: held, with no pick to place on it.
   await versatile.click();

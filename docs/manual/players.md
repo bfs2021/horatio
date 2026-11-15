@@ -219,7 +219,7 @@ Free changes come only with a character's first acceptance. Moving home brings n
 
 ### XP history and where XP comes from
 
-The **Experience** tab lists every XP entry: **Date**, **What**, **XP** and the running **Balance**. Purchases show what was bought and from what rating to what. A mistaken award is put right by a correction, shown under it, rather than changed.
+The **Experience** tab lists every XP entry: **Date**, **What**, **XP** and the running **Balance**. On a phone each entry is a short block: what it was, with its date, XP and balance under it. Purchases show what was bought and from what rating to what. A mistaken award is put right by a correction, shown under it, rather than changed.
 
 XP comes from:
 

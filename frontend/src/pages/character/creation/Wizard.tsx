@@ -196,6 +196,7 @@ export function CreationWizard({ character }: { character: CharacterOut }) {
               <ol className="flex flex-col gap-1">
                 <StepLinks steps={steps} index={index} stuck={stuck} characterId={character.id} done={done} notices={notices} onGo={onGo} />
               </ol>
+              <NoticeKey steps={steps} notices={notices} />
               {lockedWhy && (
                 <p className="mt-3 flex gap-1.5 px-3 text-xs text-mist">
                   <Lock />
@@ -208,6 +209,9 @@ export function CreationWizard({ character }: { character: CharacterOut }) {
         <ol className="hidden flex-col gap-1 lg:flex">
           <StepLinks steps={steps} index={index} stuck={stuck} characterId={character.id} done={done} notices={notices} />
         </ol>
+        <div className="hidden lg:block">
+          <NoticeKey steps={steps} notices={notices} />
+        </div>
         {lockedWhy && (
           <p id="locked-why" className="mt-2 flex gap-1.5 px-3 text-xs text-mist">
             <Lock />
@@ -285,7 +289,7 @@ function StepBar({
           </span>
           {locked > 0 && (
             // A padlock and the number, to leave the step's name room; the line under says why.
-            <span className="ml-auto flex shrink-0 items-center gap-1 text-xs" title={`${locked} locked`}>
+            <span className="ml-auto flex shrink-0 items-center gap-1 text-xs">
               <Lock />
               {locked}
               <span className="sr-only"> locked</span>
@@ -341,7 +345,6 @@ function StepLinks({
         <span
           aria-disabled="true"
           aria-describedby="locked-why"
-          title={`Finish ${steps[stuck]!.title} first`}
           className="flex cursor-not-allowed items-center gap-1 rounded px-3 py-1.5 text-sm whitespace-nowrap text-line"
         >
           <Lock />
@@ -357,7 +360,7 @@ function StepLinks({
           {i + 1}. {s.title}
           {notices.some((n) => n.on.includes(s.key)) && (
             <>
-              <span aria-hidden className="ml-1.5 text-blood-bright" title="Something here needs a look">
+              <span aria-hidden className="ml-1.5 text-blood-bright">
                 •
               </span>
               <span className="sr-only"> (needs a look)</span>
@@ -365,7 +368,7 @@ function StepLinks({
           )}
           {done.has(s.key) && (
             <>
-              <span aria-hidden className="ml-auto pl-2 text-gold" title="Done">
+              <span aria-hidden className="ml-auto pl-2 text-gold">
                 ✓
               </span>
               <span className="sr-only"> (done)</span>
@@ -375,6 +378,16 @@ function StepLinks({
       )}
     </li>
   ));
+}
+
+/** What the red mark in the step list means, under it while a step has one: a hover title never shows on a phone. */
+function NoticeKey({ steps, notices }: { steps: Step[]; notices: StepNotice[] }) {
+  if (!steps.some((s) => notices.some((n) => n.on.includes(s.key)))) return null;
+  return (
+    <p aria-hidden className="mt-2 px-3 text-xs text-mist">
+      <span className="text-blood-bright">•</span> Something on that step needs a look.
+    </p>
+  );
 }
 
 /** An arrow for the step before (`back`) or after. */

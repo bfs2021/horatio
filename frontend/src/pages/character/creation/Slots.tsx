@@ -371,7 +371,6 @@ function ClearButton({ label, onClear, disabled }: { label: string; onClear: () 
     <button
       type="button"
       aria-label={label}
-      title={label}
       onClick={onClear}
       disabled={disabled}
       className="grid h-8 w-8 shrink-0 place-items-center rounded text-mist hover:bg-ash hover:text-parchment disabled:opacity-50 pointer-coarse:h-10 pointer-coarse:w-10"
@@ -493,7 +492,6 @@ export function TraitChoice({
         enterKeyHint="done"
         placeholder={placeholder}
         value={typed ?? value}
-        title={value || undefined}
         disabled={disabled}
         className={`text-sm ${held ? "pr-10" : "pr-8"} ${marked ? "border-blood" : value ? "" : "border-dashed"}`}
         onChange={(e) => {

@@ -10,8 +10,6 @@ export function HouseMark({
 }: {
   label: string;
   short?: boolean;
-  /** Not shown here: a `HouseSummary` beside it shows it. Kept while the sheet and the wizard still pass it. */
-  summary?: string | null;
 }) {
   return (
     <span className="ml-1 inline-flex items-baseline gap-1 text-xs text-gold">

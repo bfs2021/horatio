@@ -175,6 +175,11 @@ def test_the_harpy_s_ledger_shows_departures_as_the_court_knows_them(gone: Gone)
 
     assert sorted(b["debtor"]["name"] for b in theirs["boons"]) == ["Bram", "Dario"]
     assert {b["debtor"]["standing"] for b in theirs["boons"]} == {"retired", "off_field"}
+    # Beside the name only a reason the court would know (#975): none for Bram.
+    assert {b["debtor"]["name"]: b["debtor"]["left"] for b in theirs["boons"]} == {
+        "Bram": None,
+        "Dario": "off_field",
+    }
     # Staff see Cosima's Final Death; Bram's player stopping says nothing in game.
     assert sorted(b["debtor"]["name"] for b in staff["boons"]) == ["Cosima", "Dario"]
     assert {b["debtor"]["name"]: b["debtor"]["standing"] for b in gone.ledger("all")["boons"]} == {
@@ -186,6 +191,12 @@ def test_the_harpy_s_ledger_shows_departures_as_the_court_knows_them(gone: Gone)
     open_ones = gone.ledger("open", by=harpy)["boons"]
     assert [b["debtor"]["name"] for b in open_ones] == ["Cosima"]
     assert open_ones[0]["departed"] is False
+    assert open_ones[0]["debtor"]["left"] is None
+    assert {b["debtor"]["name"]: b["debtor"]["left"] for b in gone.ledger("all")["boons"]} == {
+        "Bram": None,
+        "Cosima": "dead",
+        "Dario": "off_field",
+    }
     assert "inactive" not in json.dumps(gone.ledger("all", by=harpy))
 
 

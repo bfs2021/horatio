@@ -65,6 +65,9 @@ EventKind = Literal[
 ]
 FlagKind = Literal["unmatched", "duplicate", "hand"]
 Side = Literal["debtor", "creditor"]
+Left = Literal["dead", "off_field"]
+# What the ledger shows beside a name for how it left play (#975), from its standing.
+LEFT: dict[str, Left] = {"final_death": "dead", "off_field": "off_field"}
 
 Text = Field(default="", max_length=boons.LONGEST_TEXT)
 
@@ -150,6 +153,10 @@ class BoonPartyOut(BaseModel):
     standing: Standing | None
     # Marked a Boonbreaker in this ledger now (#717): public at court.
     boonbreaker: bool = False
+    # Gone from play with a reason the ledger shows beside the name (#975), as the
+    # sheet's Debtor and Creditor Status columns do: dead (Final Death) or off-field.
+    # For a Harpy, only as the court knows it; None for anyone else, a name only too.
+    left: Left | None = None
 
 
 class BoonChangeOut(BaseModel):
@@ -225,6 +232,8 @@ class BoonOut(BaseModel):
     # Its flags still raised for review (#687): only on a single boon and in the
     # review queue, not in the ledger's list.
     flags: list[BoonFlagOut] | None = None
+    # A flag is still raised on it (#975): in the ledger's list and on a single boon.
+    flagged: bool = False
     # A great boon its debtor formally ignored costs them status (#717, p. 395): due
     # until staff or the Harpy say they took it, or won't.
     status_loss: StatusLoss | None = None
@@ -291,6 +300,7 @@ def party_out(
         name=character.name,
         kind=character.kind,
         standing=found,  # type: ignore[arg-type]  # one of boons.STANDINGS
+        left=LEFT.get(found or ""),
     )
 
 
@@ -401,6 +411,7 @@ def full_out(
     diffs = boons.sees_changes(db, user, troupe)
     out.events = [event_out(e, users, names, diffs, harpy) for e in lines]
     out.flags = [flag_out(f, users) for f in flags]
+    out.flagged = bool(flags)
     found = boon_gallant.offer(db, boon)
     if found is not None and boon_gallant.keeper_answers(keeper):
         out.gallant = gallant_out(found)
@@ -620,10 +631,12 @@ def troupe_boons(
     users = users_of(db, (b.submitted_by for b in shown))
     disgraced = standing_disgraced(db, shown)
     marks = boonbreakers.marked(db, troupe.id)
+    flagged = {f.boon_id for f in boon_reviews.raised(db, (b.id for b in shown))}
+    out = [boon_out(b, characters, users, disgraced, keeper=keeper, marked=marks) for b in shown]
+    for row in out:
+        row.flagged = row.id in flagged
     return TroupeBoonsOut(
-        boons=[
-            boon_out(b, characters, users, disgraced, keeper=keeper, marked=marks) for b in shown
-        ],
+        boons=out,
         counts=boons.counts(narrowed, characters, court),
         characters=choices_for(db, troupe, keeper),
     )

@@ -9,6 +9,7 @@ import { LogList } from "../../components/LogList";
 import { useToast } from "../../components/Toast";
 import { Chevron } from "../../components/TraitInfo";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
+import { useWidePage } from "../../components/widePage";
 import { useDates } from "../../dates";
 import { memberSince } from "../players";
 import { ChangeEmail, EmailChanges } from "./ChangeEmail";
@@ -24,6 +25,7 @@ import { ViewAs } from "./ViewAs";
  * suspended, the reset links out now and who has reset their password, and the
  * email changes. */
 export function PeopleTab() {
+  useWidePage();
   // A link can open it searched already: a new sign-up's notice names their handle (#757).
   const [params] = useSearchParams();
   const [q, setQ] = useState(() => params.get("q") ?? "");
@@ -145,14 +147,15 @@ function Person({ person }: { person: PlayerSummary }) {
             @{person.handle}
           </span>
         </td>
-        {/* A handle or an email is cut short, never broken mid-word; the opened row has it in full. */}
+        {/* A handle or an email is cut short, never broken mid-word; the opened row has it in full.
+            The page is wider from xl (#913), so the columns are too: most show in full. */}
         <td className={`${WIDE} py-2.5 pr-3 align-top text-mist`}>
-          <span className="block max-w-44 truncate" title={`@${person.handle}`}>
+          <span className="block max-w-44 truncate xl:max-w-60" title={`@${person.handle}`}>
             @{person.handle}
           </span>
         </td>
         <td className={`${WIDE} py-2.5 pr-3 align-top text-mist`}>
-          <span className="block max-w-64 truncate" title={person.email}>
+          <span className="block max-w-64 truncate xl:max-w-96" title={person.email}>
             {person.email}
           </span>
         </td>

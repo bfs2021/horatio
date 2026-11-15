@@ -68,6 +68,17 @@ test("Help opens the user manual from the top menu, signed out or in, with links
   // Back goes to the results as they were.
   await p.goBack();
   await expect(p.getByRole("searchbox", { name: "Search the manual" })).toHaveValue("calendar link");
+
+  // A long page offers a way back to the top once it is scrolled past one screen (#922).
+  await p.goto("/help/players");
+  await expect(p.getByRole("heading", { name: "Players", level: 1 })).toBeVisible();
+  const top = p.getByRole("button", { name: "Back to the top" });
+  await expect(top).toHaveCount(0);
+  await p.evaluate(() => window.scrollTo(0, window.innerHeight * 3));
+  await expect(top).toBeVisible();
+  await top.click();
+  await expect.poll(() => p.evaluate(() => window.scrollY)).toBe(0);
+  await expect(top).toHaveCount(0);
 });
 
 test("signed out, the header offers Sign in and Create account, and an address that leads nowhere says so with ways on (#907)", async ({ browser }) => {

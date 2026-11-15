@@ -31,9 +31,12 @@ export function AccountEmail({ player }: { player: PlayerOut }) {
   return (
     <Card title="Email">
       <div className="flex flex-col gap-3 text-sm">
-        <p>
-          You sign in with {player.email}, and Horatio's emails go there. <span className="text-mist">Only you and the custodian see it.</span>
-        </p>
+        {/* The address on a line of its own, as a long one breaks badly mid-sentence on a phone (#922). */}
+        <div>
+          <p>You sign in with this address, and Horatio's emails go there:</p>
+          <p className="break-all text-parchment">{player.email}</p>
+          <p className="mt-1 text-mist">Only you and the custodian see it.</p>
+        </div>
         {waiting ? (
           <>
             <p>

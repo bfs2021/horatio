@@ -1215,6 +1215,8 @@ function CreationPanel({
 }) {
   const named = useClanName();
   const lines = cart.lines;
+  // Folded away, as the wizard is the way to build (#915); open while the cart holds picks from here.
+  const [open, setOpen] = useState(() => lines.some((l) => l.kind === "pick" || l.kind === "unpick"));
   const takenBack = (p: Pool, name: string, detail: string) =>
     lines.some((l) => l.kind === "unpick" && l.category === p.category && l.name === name && l.detail === detail);
   // A pick goes in its category's points, or its picks at that rating.
@@ -1256,17 +1258,9 @@ function CreationPanel({
   };
 
   return (
-    <Card
-      title="Character creation"
-      actions={
-        <Link to={`/characters/${character.id}/create`}>
-          <Button tabIndex={-1}>Open step-by-step creation</Button>
-        </Link>
-      }
-    >
+    <Card title="Character creation">
       <p className="mb-3 text-sm text-mist">
-        Characters are built in step-by-step creation.
-        Picks placed or taken back here wait in the cart until you apply them.
+        Characters are built step by step: press Continue creating at the top.
         Experience can be spent once creation is finished.
       </p>
       {creation.xp && (
@@ -1275,100 +1269,104 @@ function CreationPanel({
           {xpText(creation.xp)}
         </p>
       )}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {[...byCategory].map(([category, pools]) => (
-          <div key={category}>
-            <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">
-              {category}
-            </h3>
-            <ul className="flex flex-col gap-1 text-sm">
-              {pools.map((p) => {
-                const n = used(p);
-                // Flaws can go past their budget, with the Storyteller's OK (p. 85).
-                const options = locked || (n >= p.allowed && !p.past_budget) ? [] : choices(p);
-                return (
-                  <li key={p.rating}>
-                    <span className={n < p.allowed ? "text-gold" : "text-mist"}>
-                      {p.kind === "points"
-                        ? pointsText(n, p.allowed, p.past_budget)
-                        : `At ${p.rating}: ${n} of ${p.allowed}`}
-                    </span>
-                    {p.traits.map((t) =>
-                      takenBack(p, t.name, t.detail) ? (
-                        <span key={`${t.name}/${t.detail}`} className="ml-2 inline-flex items-center gap-1">
-                          <span className="text-mist line-through">
+      <details open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
+        <summary className="cursor-pointer py-1 text-sm text-gold pointer-coarse:py-2.5">Quick picks (for those who know the rules)</summary>
+        <p className="mt-2 mb-3 text-sm text-mist">Picks placed or taken back here wait in the cart until you apply them.</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[...byCategory].map(([category, pools]) => (
+            <div key={category}>
+              <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">
+                {category}
+              </h3>
+              <ul className="flex flex-col gap-1 text-sm">
+                {pools.map((p) => {
+                  const n = used(p);
+                  // Flaws can go past their budget, with the Storyteller's OK (p. 85).
+                  const options = locked || (n >= p.allowed && !p.past_budget) ? [] : choices(p);
+                  return (
+                    <li key={p.rating}>
+                      <span className={n < p.allowed ? "text-gold" : "text-mist"}>
+                        {p.kind === "points"
+                          ? pointsText(n, p.allowed, p.past_budget)
+                          : `At ${p.rating}: ${n} of ${p.allowed}`}
+                      </span>
+                      {p.traits.map((t) =>
+                        takenBack(p, t.name, t.detail) ? (
+                          <span key={`${t.name}/${t.detail}`} className="ml-2 inline-flex items-center gap-1">
+                            <span className="text-mist line-through">
+                              {named(t.name)}
+                              {t.detail && `: ${t.detail}`}
+                            </span>
+                            <button
+                              aria-label={`Keep the pick on ${named(t.name)}`}
+                              className="text-xs text-gold hover:text-parchment"
+                              onClick={() => cart.update((l) => l.filter((x) => !(x.kind === "unpick" && x.category === p.category && x.name === t.name && x.detail === t.detail)))}
+                            >
+                              keep
+                            </button>
+                          </span>
+                        ) : (
+                          <span key={`${t.name}/${t.detail}`} className="ml-2 inline-flex items-center gap-1">
                             {named(t.name)}
                             {t.detail && `: ${t.detail}`}
+                            {!locked && (
+                              <button
+                                aria-label={`Take back the pick on ${named(t.name)}`}
+                                className="text-mist hover:text-blood-bright"
+                                onClick={() => cart.update((l) => unpick(l, { category: p.category, name: t.name, detail: t.detail }))}
+                              >
+                                ×
+                              </button>
+                            )}
                           </span>
+                        ),
+                      )}
+                      {cartPicks(p).map((l) => (
+                        <span key={`cart/${l.name}/${l.detail}`} className="ml-2 inline-flex items-center gap-1 text-gold">
+                          {named(l.name)}
+                          <span className="text-xs">(in the cart)</span>
                           <button
-                            aria-label={`Keep the pick on ${named(t.name)}`}
-                            className="text-xs text-gold hover:text-parchment"
-                            onClick={() => cart.update((l) => l.filter((x) => !(x.kind === "unpick" && x.category === p.category && x.name === t.name && x.detail === t.detail)))}
+                            aria-label={`Take the pick on ${named(l.name)} out of the cart`}
+                            className="text-mist hover:text-blood-bright"
+                            onClick={() => cart.remove(l)}
                           >
-                            keep
+                            ×
                           </button>
                         </span>
-                      ) : (
-                        <span key={`${t.name}/${t.detail}`} className="ml-2 inline-flex items-center gap-1">
-                          {named(t.name)}
-                          {t.detail && `: ${t.detail}`}
-                          {!locked && (
-                            <button
-                              aria-label={`Take back the pick on ${named(t.name)}`}
-                              className="text-mist hover:text-blood-bright"
-                              onClick={() => cart.update((l) => unpick(l, { category: p.category, name: t.name, detail: t.detail }))}
-                            >
-                              ×
-                            </button>
-                          )}
-                        </span>
-                      ),
-                    )}
-                    {cartPicks(p).map((l) => (
-                      <span key={`cart/${l.name}/${l.detail}`} className="ml-2 inline-flex items-center gap-1 text-gold">
-                        {named(l.name)}
-                        <span className="text-xs">(in the cart)</span>
-                        <button
-                          aria-label={`Take the pick on ${named(l.name)} out of the cart`}
-                          className="text-mist hover:text-blood-bright"
-                          onClick={() => cart.remove(l)}
+                      ))}
+                      {options.length > 0 && (
+                        <Select
+                          aria-label={p.kind === "points" ? `Pick ${category}` : `Pick ${category} at ${p.rating}`}
+                          value=""
+                          onChange={(e) => {
+                            const trait = options.find((t) => t.name === e.target.value);
+                            if (trait)
+                              cart.update((l) =>
+                                pick(l, { category: p.category, name: trait.name, detail: "" }, p.kind === "points" ? (trait.fixed_rating ?? 1) : p.rating),
+                              );
+                          }}
+                          className="mt-1 min-h-8 py-1 text-sm"
                         >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                    {options.length > 0 && (
-                      <Select
-                        aria-label={p.kind === "points" ? `Pick ${category}` : `Pick ${category} at ${p.rating}`}
-                        value=""
-                        onChange={(e) => {
-                          const trait = options.find((t) => t.name === e.target.value);
-                          if (trait)
-                            cart.update((l) =>
-                              pick(l, { category: p.category, name: trait.name, detail: "" }, p.kind === "points" ? (trait.fixed_rating ?? 1) : p.rating),
-                            );
-                        }}
-                        className="mt-1 min-h-8 py-1 text-sm"
-                      >
-                        <option value="">{p.kind === "points" ? "Pick one…" : `Pick one at ${p.rating}…`}</option>
-                        {options.map((t) => (
-                          <option key={t.name} value={t.name}>
-                            {named(t.name)}
-                            {p.kind === "points" ? ` (${t.fixed_rating ?? 1})` : ""}
-                          </option>
-                        ))}
-                      </Select>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
-      </div>
-      <FinishCreation character={character} cart={cart} disabled={locked} className="mt-4">
-        {left > 0 ? `Finish creation (${left} picks left)` : "Finish creation"}
-      </FinishCreation>
+                          <option value="">{p.kind === "points" ? "Pick one…" : `Pick one at ${p.rating}…`}</option>
+                          {options.map((t) => (
+                            <option key={t.name} value={t.name}>
+                              {named(t.name)}
+                              {p.kind === "points" ? ` (${t.fixed_rating ?? 1})` : ""}
+                            </option>
+                          ))}
+                        </Select>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <FinishCreation character={character} cart={cart} disabled={locked} variant="secondary" className="mt-4">
+          {left > 0 ? `Finish creation (${left} picks left)` : "Finish creation"}
+        </FinishCreation>
+      </details>
     </Card>
   );
 }

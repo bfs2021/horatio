@@ -48,8 +48,8 @@ export function GamesCard({ troupe, canAddGames, running }: { troupe: TroupeOut;
           title="No games planned yet."
           action={
             canAddGames && (
-              // The profile's When it plays is on this same page, the Overview (#781).
-              <span className="text-sm text-mist">Add games with Edit on When it plays, below.</span>
+              // The profile's When it plays is on this same page, the Overview (#781), under Edit profile (#912).
+              <span className="text-sm text-mist">Add games with Edit profile, below, under When it plays.</span>
             )
           }
         >

@@ -169,10 +169,14 @@ export function gallantText(offer: { debtor: string; reasons: ("nobility" | "gre
   return `Give ${offer.debtor} Gallant for repaying it? ${why.charAt(0).toUpperCase()}${why.slice(1)}.`;
 }
 
+/** A field a change in a boon's log is to: "Kind", "Date". */
+export function fieldName(field: string): string {
+  return FIELDS[field] ?? field;
+}
+
 /** One change in a boon's log: "Kind: Minor → Major". Empty text reads "(none)". */
 export function changeText(change: { field: string; before: string; after: string }): string {
-  const label = FIELDS[change.field] ?? change.field;
-  return `${label}: ${change.before || "(none)"} → ${change.after || "(none)"}`;
+  return `${fieldName(change.field)}: ${change.before || "(none)"} → ${change.after || "(none)"}`;
 }
 
 /** A summary of standing boons by kind, lightest first: "2 minor, 1 major", or "none". */

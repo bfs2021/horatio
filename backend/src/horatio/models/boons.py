@@ -92,9 +92,9 @@ class BoonEvent(Record):
     each edit, trade, passing on, settling, voiding and reopening, its review (#687:
     accepted or rejected, flags raised and cleared, a name linked to a character), and
     Gallant given for repaying it or not (#693),
-    with who did it, when, and their note. `changes`
-    says what it changed: for an edit, each field before and after, which only the
-    troupe's storytellers and assistant storytellers see; for the rest, what it did. A
+    with who did it, when, and their note. `changes` says what it changed, each field
+    before and after (for an edit, each field it changed; for the rest, what it did),
+    which only the troupe's storytellers and assistant storytellers see (#979). A
     Harpy or a Lesser Harpy sees only the lines in their sight (#992,
     horatio.boon_harpy.in_sight); a player, none."""
 

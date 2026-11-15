@@ -95,6 +95,35 @@ describe("DataTable", () => {
     expect(screen.queryByText("All of Isolde Fenwright")).toBeNull();
   });
 
+  it("with select, picks a row from a click on it to show elsewhere, marks it, and gives its chevron the focus once let go (#979)", async () => {
+    const picked: string[] = [];
+    const table = (selected: string | null) => (
+      <DataTable
+        label="People"
+        columns={COLUMNS}
+        rows={ROWS}
+        rowKey={(r) => r.id}
+        select={{ label: (r) => `Details: ${r.name}`, onSelect: (r) => picked.push(r.id), selected }}
+      />
+    );
+    const { rerender } = render(table(null));
+    fireEvent.click(screen.getAllByRole("cell").find((c) => c.textContent === "Toreador")!);
+    fireEvent.click(screen.getByRole("button", { name: "Details: Casimir Wode" }));
+    // A button of the row's own does its own thing.
+    fireEvent.click(screen.getByRole("button", { name: "Actions for Isolde Fenwright" }));
+    expect(picked).toEqual(["a", "b"]);
+    // Nothing opens under the row.
+    expect(screen.getAllByRole("row")).toHaveLength(3);
+
+    rerender(table("a"));
+    const chevron = screen.getByRole("button", { name: "Details: Isolde Fenwright" });
+    expect(chevron.getAttribute("aria-current")).toBe("true");
+    expect(screen.getByRole("button", { name: "Details: Casimir Wode" }).getAttribute("aria-current")).toBeNull();
+    rerender(table(null));
+    await new Promise((done) => requestAnimationFrame(done));
+    expect(document.activeElement).toBe(chevron);
+  });
+
   it("marks the column the list is sorted by", () => {
     const sorted = COLUMNS.map((c) => (c.key === "xp" ? { ...c, sort: "descending" as const } : c));
     render(<DataTable label="Characters" columns={sorted} rows={ROWS} rowKey={(r) => r.id} />);

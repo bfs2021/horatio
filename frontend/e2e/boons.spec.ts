@@ -7,16 +7,36 @@ closeContextsAfterEach();
 
 /**
  * The boon ledger's table (#975): a row for each boon, named "Agnes owes Bram, minor",
- * opened by a click on it into its detail, a region named "Boon: Agnes owes Bram, minor".
+ * opened by a click on it into the side panel (#979), its detail a region named
+ * "Boon: Agnes owes Bram, minor", with what to do with it in its Actions menu.
  */
 function ledgerOf(page: Page) {
   const table = page.getByRole("table", { name: "Boons" });
+  const row = (name: string) => table.getByRole("row", { name, exact: true });
+  const actions = (name: string) => page.getByRole("button", { name: `Actions: ${name}`, exact: true });
   return {
     table,
-    row: (name: string) => table.getByRole("row", { name, exact: true }),
-    // One chevron for each boon: the rows without the headings and the opened details.
+    row,
+    // One chevron for each boon: the rows without the headings.
     rows: table.getByRole("button", { name: /^Details: / }),
     detail: (name: string) => page.getByRole("region", { name: `Boon: ${name}`, exact: true }),
+    actions,
+    /** Opens a boon from its row (the first, of several alike), closing the one open first: over the whole page, on a phone. */
+    open: async (name: string) => {
+      if (await page.locator("dialog[open]").count()) await page.keyboard.press("Escape");
+      await expect(page.locator("dialog[open]")).toHaveCount(0);
+      await row(name).first().click();
+    },
+    /** Escape closes the open boon. */
+    close: async () => {
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("region", { name: /^Boon: / })).toHaveCount(0);
+    },
+    /** Chooses one of the open boon's actions from its Actions menu. */
+    act: async (name: string, action: string) => {
+      await actions(name).click();
+      await page.getByRole("menu", { name: `Actions: ${name}` }).getByRole("menuitem", { name: action, exact: true }).click();
+    },
   };
 }
 
@@ -110,16 +130,17 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   await expect(shown("Flagged")).toBeVisible();
 
   // One of the three is called in: it leaves the open boons for the settled. A click on its row opens it.
-  await boons.row("Mireille Dauvin owes Anselm Roque, minor").first().click();
+  await boons.open("Mireille Dauvin owes Anselm Roque, minor");
   const owed = boons.detail("Mireille Dauvin owes Anselm Roque, minor");
   await expect(owed).toContainText("Secret");
-  await owed.getByRole("button", { name: "Settle" }).click();
+  await boons.act("Mireille Dauvin owes Anselm Roque, minor", "Settle");
   const settle = owed.getByRole("form", { name: "Settle: Mireille Dauvin owes Anselm Roque" });
   await settle.getByLabel(/^Called in/).check();
   await settle.getByLabel("Note (optional)").fill("Called in for a favour at court");
   await settle.getByRole("button", { name: "Settle it" }).click();
   await expect(totalOf(l, "Open")).toHaveAccessibleName("Open 3");
   await expect(totalOf(l, "Settled")).toHaveAccessibleName("Settled 1");
+  await boons.close();
   await showView(l, "settled");
   await expect(boons.rows).toHaveCount(1);
   await expect(boons.row("Mireille Dauvin owes Anselm Roque, minor")).toContainText("Settled: called in");
@@ -130,11 +151,12 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   await expect(settledLog).toContainText("Called in for a favour at court");
 
   // The trivial boon was typed in wrong: an edit, with why, keeps what changed in its log.
+  await boons.close();
   await showView(l, "open");
   await expect(boons.rows).toHaveCount(3);
-  await boons.row("Elder Varga owes Mireille Dauvin, trivial").click();
+  await boons.open("Elder Varga owes Mireille Dauvin, trivial");
   const varga = boons.detail("Elder Varga owes Mireille Dauvin, trivial");
-  await varga.getByRole("button", { name: "Edit" }).click();
+  await boons.act("Elder Varga owes Mireille Dauvin, trivial", "Edit");
   const edit = varga.getByRole("form", { name: "Edit: Elder Varga owes Mireille Dauvin" });
   await edit.getByLabel("Kind").selectOption("minor");
   await edit.getByLabel("Why the edit").fill("Typed in wrong");
@@ -143,9 +165,9 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   await expect(edited.getByRole("list", { name: "Log of Elder Varga owes Mireille Dauvin" })).toContainText("Kind: Trivial → Minor");
 
   // Anselm trades one of his to Elder Varga: the boon keeps its history.
-  await boons.row("Mireille Dauvin owes Anselm Roque, minor").first().click();
+  await boons.open("Mireille Dauvin owes Anselm Roque, minor");
   const held = boons.detail("Mireille Dauvin owes Anselm Roque, minor");
-  await held.getByRole("button", { name: "Trade" }).click();
+  await boons.act("Mireille Dauvin owes Anselm Roque, minor", "Trade");
   const trade = held.getByRole("form", { name: "Trade: Mireille Dauvin owes Anselm Roque" });
   await trade.getByRole("combobox", { name: "Traded to" }).fill("Elder Varga");
   await trade.getByRole("listbox", { name: "Characters" }).getByRole("option", { name: /name only/ }).click();
@@ -167,6 +189,148 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   expect((await mine.json()).troupes).toEqual([]);
   const refused = await p.request.get(`/api/troupes/${troupe.id}/boons`);
   expect(refused.status()).toBe(403);
+});
+
+test("a boon opens in a side panel from its row or a link, facts first, what to do in its Actions menu, and Escape or Back closes it (#979)", async ({ browser }) => {
+  const custodian = await person(browser, "bpanel-custodian");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "bpanel-lead");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Ledger at the Side ${run}`, lead_handle: lead.handle });
+  const l = lead.page;
+  await send(l, "PUT", `/api/troupes/${troupe.id}/boon-ledger`, { on: true });
+  await send(l, "POST", `/api/troupes/${troupe.id}/boons`, {
+    boons: [
+      { debtor: { name: "Oriel Vance" }, creditor: { name: "Saskia Brandt" }, kind: "minor", made_on: "2026-09-12", reason: "A quiet word with the Sheriff", conditions: "Cannot be traded" },
+      { debtor: { name: "Teodor Lisk" }, creditor: { name: "Saskia Brandt" }, kind: "trivial", made_on: "2026-09-10", reason: "Directions to a haven" },
+    ],
+    note: "",
+  });
+  // 375 px on a phone; the desktop's 1280.
+  if (onPhone()) await l.setViewportSize({ width: 375, height: 800 });
+  await l.goto(`/troupes/${troupe.id}/boons`);
+  const boons = ledgerOf(l);
+  const oriel = "Oriel Vance owes Saskia Brandt, minor";
+  const chevron = boons.row(oriel).getByRole("button", { name: `Details: ${oriel}` });
+
+  // A click on its row opens it: beside the table, the row marked, from lg up; over the whole screen on a phone.
+  await boons.row(oriel).click();
+  const panel = (title: string) => (onPhone() ? l.getByRole("dialog", { name: title }) : l.getByRole("complementary", { name: title }));
+  await expect(panel("Oriel Vance owes Saskia Brandt")).toBeVisible();
+  await expect(chevron).toHaveAttribute("aria-current", "true");
+  const box = (await panel("Oriel Vance owes Saskia Brandt").boundingBox())!;
+  if (onPhone()) expect(box.width).toBe(375);
+  // Beside the table at 1280, and at 1024 where lg starts, with nothing sideways.
+  const besideTable = async () => {
+    const table = (await boons.table.boundingBox())!;
+    expect((await panel("Oriel Vance owes Saskia Brandt").boundingBox())!.x).toBeGreaterThanOrEqual(table.x + table.width);
+  };
+  const noSideways = async () => expect(await l.evaluate(() => document.documentElement.scrollWidth)).toBe(l.viewportSize()!.width);
+  if (!onPhone()) {
+    await besideTable();
+    await l.setViewportSize({ width: 1024, height: 720 });
+    await besideTable();
+    await noSideways();
+    await l.setViewportSize({ width: 1280, height: 720 });
+  }
+  await noSideways();
+  // Its facts first, the reason and conditions in full, its log last; what to do is in the menu, not in buttons.
+  const detail = boons.detail(oriel);
+  await expect(detail).toContainText("A quiet word with the Sheriff");
+  await expect(detail).toContainText("Cannot be traded");
+  await expect(detail.getByRole("button", { name: "Settle" })).toHaveCount(0);
+  await expect(detail.getByRole("list", { name: "Log of Oriel Vance owes Saskia Brandt" })).toContainText("Registered");
+  // It is in the address; Escape closes it and gives its row the focus back.
+  const id = new URL(l.url()).searchParams.get("boon");
+  expect(id).toBeTruthy();
+  await l.keyboard.press("Escape");
+  await expect(detail).toHaveCount(0);
+  await expect(chevron).toBeFocused();
+  expect(new URL(l.url()).searchParams.get("boon")).toBeNull();
+
+  // A link opens it too, with the rest of the search kept; Back closes one opened from its row.
+  await l.goto(`/troupes/${troupe.id}/boons?kind=minor&boon=${id}`);
+  await expect(detail).toBeVisible();
+  await expect(boons.rows).toHaveCount(1);
+  await l.keyboard.press("Escape");
+  await expect(detail).toHaveCount(0);
+  expect(new URL(l.url()).searchParams.get("kind")).toBe("minor");
+  await boons.row(oriel).click();
+  await expect(detail).toBeVisible();
+  await l.goBack();
+  await expect(detail).toHaveCount(0);
+  await expect(boons.rows).toHaveCount(1);
+
+  // Each action is in its Actions menu, Make void apart at its foot, and shows its form in the panel.
+  await boons.open(oriel);
+  await boons.actions(oriel).click();
+  const menu = l.getByRole("menu", { name: `Actions: ${oriel}` });
+  await expect(menu.getByRole("menuitem")).toHaveText(["Edit", "Trade", "Pass on", "Settle", "Make void"]);
+  await expect(menu.getByRole("group", { name: "Close or reopen it" }).getByRole("menuitem")).toHaveText(["Make void"]);
+  await l.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+  await expect(detail).toBeVisible();
+
+  await boons.act(oriel, "Edit");
+  const edit = detail.getByRole("form", { name: "Edit: Oriel Vance owes Saskia Brandt" });
+  await edit.getByLabel("Reason").fill("A quiet word with the Prince");
+  await edit.getByLabel("Why the edit").fill("Misheard");
+  await edit.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(edit).toHaveCount(0);
+  // Staff see what it changed, struck through and beside it, marked as theirs alone.
+  const log = detail.getByRole("list", { name: "Log of Oriel Vance owes Saskia Brandt" });
+  await expect(log).toContainText("Reason: A quiet word with the Sheriff → A quiet word with the Prince");
+  await expect(log.getByText("Staff only")).toBeVisible();
+  await expect(log.getByRole("deletion")).toHaveText("A quiet word with the Sheriff");
+
+  await boons.act(oriel, "Trade");
+  const trade = detail.getByRole("form", { name: "Trade: Oriel Vance owes Saskia Brandt" });
+  await trade.getByRole("combobox", { name: "Traded to" }).fill("Ines Harrow");
+  await trade.getByRole("listbox", { name: "Characters" }).getByRole("option", { name: /name only/ }).click();
+  await trade.getByRole("button", { name: "Record the trade" }).click();
+  const traded = "Oriel Vance owes Ines Harrow, minor";
+  await expect(boons.detail(traded)).toContainText("Creditor: Saskia Brandt → Ines Harrow");
+
+  await boons.act(traded, "Pass on");
+  const pass = boons.detail(traded).getByRole("form", { name: "Pass on: Oriel Vance owes Ines Harrow" });
+  await pass.getByRole("combobox", { name: "Passes on to" }).fill("Corin Vance");
+  await pass.getByRole("listbox", { name: "Characters" }).getByRole("option", { name: /name only/ }).click();
+  await pass.getByRole("button", { name: "Pass it on" }).click();
+  const corin = "Corin Vance owes Ines Harrow, minor";
+  await expect(boons.detail(corin)).toContainText("Debtor: Oriel Vance → Corin Vance");
+
+  await boons.act(corin, "Settle");
+  const settle = boons.detail(corin).getByRole("form", { name: "Settle: Corin Vance owes Ines Harrow" });
+  await settle.getByLabel(/^Called in/).check();
+  await settle.getByRole("button", { name: "Settle it" }).click();
+  await expect(boons.detail(corin)).toContainText("Settled: called in");
+
+  await boons.act(corin, "Make void");
+  const voiding = boons.detail(corin).getByRole("form", { name: "Make void: Corin Vance owes Ines Harrow" });
+  await voiding.getByLabel("Why").fill("Entered twice");
+  await voiding.getByRole("button", { name: "Make it void" }).click();
+  await expect(boons.detail(corin).getByRole("list", { name: "Log of Corin Vance owes Ines Harrow" })).toContainText("State: Settled → Void");
+
+  await boons.act(corin, "Reopen");
+  const reopen = boons.detail(corin).getByRole("form", { name: "Reopen: Corin Vance owes Ines Harrow" });
+  await reopen.getByLabel("Why").fill("Not twice after all");
+  await reopen.getByRole("button", { name: "Reopen it" }).click();
+  const corinLog = boons.detail(corin).getByRole("list", { name: "Log of Corin Vance owes Ines Harrow" });
+  await expect(corinLog.getByRole("listitem").filter({ hasText: /^Reopened/ })).toContainText("Not twice after all");
+  await expect(corinLog).toContainText("Edited");
+  await expect(corinLog).toContainText("Traded");
+  await expect(corinLog).toContainText("Passed on");
+  await expect(corinLog).toContainText("Settled");
+  await expect(corinLog).toContainText("Made void");
+  await l.screenshot(shots("boon-panel"));
+  await boons.close();
+  await expect(boons.row(corin).getByRole("button", { name: `Details: ${corin}` })).toBeFocused();
 });
 
 test("the ledger shows a hundred boons a page, with Previous and Next, and the page in the URL (#978)", async ({ browser }) => {
@@ -409,7 +573,8 @@ test("staff write a passage of story on a side of a boon, cut to a line, and its
   await line.click();
   const detail = l.getByRole("region", { name: /^Boon: The debt was written in silver/ });
   await expect(detail.getByText(story, { exact: true })).toBeVisible();
-  await detail.getByRole("button", { name: "Edit" }).click();
+  await l.getByRole("button", { name: /^Actions: The debt was written in silver/ }).click();
+  await l.getByRole("menuitem", { name: "Edit", exact: true }).click();
   await expect(detail.getByRole("textbox", { name: "Debtor" })).toHaveValue(story);
   await detail.getByRole("button", { name: "Cancel" }).click();
 
@@ -1019,9 +1184,9 @@ test("the Harpy keeps the ledger from the Play View as their character, and neve
 
   // She corrects it, with a note: her log shows the edit as hers, not what it changed.
   const boons = ledgerOf(h);
-  await boons.row("Edric Thorne owes Lady Ashgrove, minor").click();
+  await boons.open("Edric Thorne owes Lady Ashgrove, minor");
   const debt = boons.detail("Edric Thorne owes Lady Ashgrove, minor");
-  await debt.getByRole("button", { name: "Edit" }).click();
+  await boons.act("Edric Thorne owes Lady Ashgrove, minor", "Edit");
   const edit = debt.getByRole("form", { name: "Edit: Edric Thorne owes Lady Ashgrove" });
   await expect(edit.getByLabel("Staff note")).toHaveCount(0);
   await edit.getByLabel("Kind").selectOption("major");
@@ -1133,12 +1298,11 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
   await expect(totalOf(t, "Open")).toBeVisible();
   await expect(totalOf(t, "To review")).toHaveCount(0);
 
-  // She can open it, but not edit, settle or void it.
+  // She can open it, but not edit, settle or void it: it has no Actions menu (#979).
   await ledgerOf(t).row("Wren Ashby owes Lady Morrow, minor").click();
   const debt = ledgerOf(t).detail("Wren Ashby owes Lady Morrow, minor");
   await expect(debt.getByRole("list", { name: "Log of Wren Ashby owes Lady Morrow" })).toContainText("Wren Ashby");
-  await expect(debt.getByRole("button", { name: "Edit" })).toHaveCount(0);
-  await expect(debt.getByRole("button", { name: "Settle" })).toHaveCount(0);
+  await expect(ledgerOf(t).actions("Wren Ashby owes Lady Morrow, minor")).toHaveCount(0);
   await t.screenshot(shots("talon-ledger"));
 
   // The Harpy sees the boon, but not that Wren registered it (#992).
@@ -1153,11 +1317,14 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
     .getByRole("checkbox", { name: "Settle and move boons" })
     .check();
   await expect(h.getByRole("list", { name: "Lesser Harpies" })).toContainText("Wren Ashby sees the ledger, adds boons and settles them");
+  // The boon is in the address, so it opens again with the page.
   await t.reload();
-  await ledgerOf(t).row("Wren Ashby owes Lady Morrow, minor").click();
-  await expect(debt.getByRole("button", { name: "Settle" })).toBeVisible();
-  await expect(debt.getByRole("button", { name: "Trade" })).toBeVisible();
-  await expect(debt.getByRole("button", { name: "Edit" })).toHaveCount(0);
+  await expect(debt).toBeVisible();
+  await ledgerOf(t).actions("Wren Ashby owes Lady Morrow, minor").click();
+  const menu = t.getByRole("menu", { name: "Actions: Wren Ashby owes Lady Morrow, minor" });
+  await expect(menu.getByRole("menuitem", { name: "Settle" })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Trade" })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Edit" })).toHaveCount(0);
 });
 
 test("staff declare a Boonbreaker: their open boons are made void, both ways, and they hold Disgraced while the mark stands (#717)", async ({ browser }) => {

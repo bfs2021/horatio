@@ -25,6 +25,8 @@ export function usePopover<Root extends HTMLElement = HTMLSpanElement, Pop exten
     };
     const escape = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
+      // Only this closes: not a dialog it sits in too (#979).
+      e.preventDefault();
       setOpen(false);
       button.current?.focus();
     };

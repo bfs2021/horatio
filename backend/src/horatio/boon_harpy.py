@@ -12,10 +12,10 @@ The troupe says how far the Harpy reaches into its ledger (`ACCESS`):
   reopen boons as its staff do, and its review queue.
 
 The Harpy works from the Play View, as their character: what they do is logged on
-the boon as done by that character. They never see what an edit changed (only the
-troupe's storytellers and assistant storytellers do, horatio.boons.sees_changes),
-nor a boon's staff note, nor who entered a boon out of game, nor why a character
-retired.
+the boon as done by that character. They never see what a line of its log changed
+(only the troupe's storytellers and assistant storytellers do,
+horatio.boons.sees_changes), nor a boon's staff note, nor who entered a boon out of
+game, nor why a character retired.
 
 `keeper` is the one check of who may work the ledger, and as whom: the troupe's
 running staff, a Harpy within the troupe's setting, or a Lesser Harpy (a talon) the

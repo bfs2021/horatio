@@ -1,7 +1,8 @@
 """Who sees which lines of a boon's log (#992): a Harpy only what was done since they
 took the title, by them, another holder of it, or (where the troupe lets them) a
 Lesser Harpy; a Lesser Harpy only their own; staff's state changes but never their
-edits, links or flags; staff everything; players nothing of any edit, anywhere."""
+edits, links or flags; staff everything; players nothing of any edit, anywhere; and
+what a line changed, staff alone (#979)."""
 
 import json
 from collections.abc import Callable
@@ -208,6 +209,60 @@ def test_staff_edits_links_and_flags_are_kept_from_the_harpy_and_lesser_harpies(
     # No word of it reaches the Harpy's player.
     told = ok(court.harpy_player.client.get("/notifications"))["items"]
     assert "Staff's" not in json.dumps(told)
+
+
+# --- what a line changed (#979) -----------------------------------------------------------
+
+
+def test_what_each_line_changed_is_for_staff_alone(court: Sight) -> None:
+    hestia, iris = court.harpy_player, court.iris_player
+    ok(
+        court.troupe.storyteller.client.put(
+            f"/troupes/{court.troupe.id}/boon-players", json={"see": "owed", "settle": True}
+        )
+    )
+    # The Harpy does each thing to a boon, and a Lesser Harpy some to another: each
+    # line is in their sight.
+    theirs = court.one(named("The Hermit"), court.agnes)
+    ok(court.edit(theirs, by=hestia, reason="Secrecy", note="Misheard"))
+    ok(court.act(theirs, "link", by=hestia, side="debtor", character_id=court.bram, note=""))
+    ok(court.act(theirs, "trade", by=hestia, creditor=named("Grove"), note=""))
+    ok(court.act(theirs, "pass-on", by=hestia, side="debtor", to=named("Whoever"), note=""))
+    ok(court.act(theirs, "settle", by=hestia, how="called_in", note=""))
+    ok(court.act(theirs, "reopen", by=hestia, note="Settled by mistake"))
+    ok(court.act(theirs, "void", by=hestia, note="Never stood"))
+    hers = court.one(court.bram, court.agnes)
+    ok(court.edit(hers, by=iris, reason="Herbs", note="Iris's edit"))
+    ok(court.act(hers, "trade", by=iris, creditor=named("Grove"), note=""))
+    ok(court.act(hers, "settle", by=iris, how="forgiven", note=""))
+    ok(court.act(hers, "reopen", by=iris, note="Not forgiven after all"))
+
+    # Staff read what each line changed.
+    staff = court.log(theirs)
+    assert kinds(staff) == [
+        "registered",
+        "edited",
+        "linked",
+        "traded",
+        "passed_on",
+        "settled",
+        "reopened",
+        "voided",
+    ]
+    assert all(line["changes"] for line in staff[1:])
+    assert all(line["changes"] for line in court.log(hers)[1:])
+    # The Harpy and the Lesser Harpy read each line, but never what it changed.
+    for boon, person in ((theirs, hestia), (hers, iris)):
+        seen = court.log(boon, by=person)
+        assert kinds(seen) == kinds(court.log(boon))
+        assert [line["changes"] for line in seen] == [None] * len(seen)
+    # A narrator and a player read no log at all, nor anything with changes in it.
+    for person in (court.troupe.narrator, court.troupe.player):
+        for boon in (theirs, hers):
+            assert court.get(boon, by=person).status_code in (403, 404)
+    tab = ok(court.troupe.player.client.get(f"/characters/{court.agnes}/play-boons"))
+    assert '"changes"' not in json.dumps(tab)
+    assert '"changes"' not in json.dumps(ok(court.troupe.narrator.client.get("/notifications")))
 
 
 # --- players ------------------------------------------------------------------------------

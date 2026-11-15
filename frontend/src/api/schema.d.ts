@@ -8658,7 +8658,9 @@ export interface paths {
         /**
          * Export Boons
          * @description For the troupe's storytellers and assistant storytellers: its boon ledger as a
-         *     CSV file or a spreadsheet, newest first. With no view or filters, every boon;
+         *     CSV file or a spreadsheet, newest first. For its Harpy with the full ledger, where
+         *     the troupe lets them, and a Lesser Harpy the Harpy lets (#987): as their ledger
+         *     shows it to them, without staff's columns or the game. With no view or filters, every boon;
          *     otherwise those in the view (open, departed, settled, void, pending or all),
          *     narrowed and sorted as the ledger's list has them (horatio.api.boons.troupe_boons,
          *     #978): to a character or a name, a search (`q`), some kinds, the nights between
@@ -8727,7 +8729,8 @@ export interface paths {
          * Set Boon Harpy
          * @description How far the troupe's Harpy reaches into its boon ledger (#688): not at all, the
          *     review queue and word of each boon players report, or the full ledger; and whether,
-         *     with the full ledger, the Harpy also reads its standings and statistics (#749).
+         *     with the full ledger, the Harpy also reads its standings and statistics (#749), and
+         *     may export it (#987).
          */
         put: operations["set_boon_harpy_api_troupes__troupe_id__boon_harpy_put"];
         post?: never;
@@ -16457,6 +16460,8 @@ export interface components {
              * @enum {string}
              */
             access: "none" | "submissions" | "full";
+            /** Export */
+            export?: boolean | null;
             /** Standings */
             standings?: boolean | null;
         };
@@ -16882,6 +16887,11 @@ export interface components {
             choices: components["schemas"]["TalonChoice"][];
             /** Enabled */
             enabled: boolean;
+            /**
+             * Exports
+             * @default false
+             */
+            exports: boolean;
             /**
              * Role
              * @enum {string}
@@ -22592,6 +22602,11 @@ export interface components {
              * @default true
              */
             can_edit: boolean;
+            /**
+             * Can Export
+             * @default false
+             */
+            can_export: boolean;
             /**
              * Can Review
              * @default true
@@ -34272,6 +34287,11 @@ export interface components {
              */
             can_edit: boolean;
             /**
+             * Can Export
+             * @default false
+             */
+            can_export: boolean;
+            /**
              * Can Settle
              * @default false
              */
@@ -34285,6 +34305,11 @@ export interface components {
             can_audit: boolean;
             /** Can Edit */
             can_edit: boolean;
+            /**
+             * Can Export
+             * @default false
+             */
+            can_export: boolean;
             /** Can Settle */
             can_settle: boolean;
             /**
@@ -35524,6 +35549,11 @@ export interface components {
              * @enum {string}
              */
             boon_harpy: "none" | "submissions" | "full";
+            /**
+             * Boon Harpy Export
+             * @default false
+             */
+            boon_harpy_export: boolean;
             /**
              * Boon Harpy Sees Talons
              * @default true

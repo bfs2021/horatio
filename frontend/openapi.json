@@ -7107,6 +7107,17 @@
             "title": "Access",
             "type": "string"
           },
+          "export": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Export"
+          },
           "standings": {
             "anyOf": [
               {
@@ -8322,6 +8333,11 @@
           },
           "enabled": {
             "title": "Enabled",
+            "type": "boolean"
+          },
+          "exports": {
+            "default": false,
+            "title": "Exports",
             "type": "boolean"
           },
           "role": {
@@ -23516,6 +23532,11 @@
           "can_edit": {
             "default": true,
             "title": "Can Edit",
+            "type": "boolean"
+          },
+          "can_export": {
+            "default": false,
+            "title": "Can Export",
             "type": "boolean"
           },
           "can_review": {
@@ -52939,6 +52960,11 @@
             "title": "Can Edit",
             "type": "boolean"
           },
+          "can_export": {
+            "default": false,
+            "title": "Can Export",
+            "type": "boolean"
+          },
           "can_settle": {
             "default": false,
             "title": "Can Settle",
@@ -52960,6 +52986,11 @@
           },
           "can_edit": {
             "title": "Can Edit",
+            "type": "boolean"
+          },
+          "can_export": {
+            "default": false,
+            "title": "Can Export",
             "type": "boolean"
           },
           "can_settle": {
@@ -56291,6 +56322,11 @@
             ],
             "title": "Boon Harpy",
             "type": "string"
+          },
+          "boon_harpy_export": {
+            "default": false,
+            "title": "Boon Harpy Export",
+            "type": "boolean"
           },
           "boon_harpy_sees_talons": {
             "default": true,
@@ -85881,7 +85917,7 @@
     },
     "/api/troupes/{troupe_id}/boon-export": {
       "get": {
-        "description": "For the troupe's storytellers and assistant storytellers: its boon ledger as a\nCSV file or a spreadsheet, newest first. With no view or filters, every boon;\notherwise those in the view (open, departed, settled, void, pending or all),\nnarrowed and sorted as the ledger's list has them (horatio.api.boons.troupe_boons,\n#978): to a character or a name, a search (`q`), some kinds, the nights between\ntwo dates, the flagged, or a game; by date, debtor, creditor or kind. Every page\nat once. The export goes in the troupe's log.",
+        "description": "For the troupe's storytellers and assistant storytellers: its boon ledger as a\nCSV file or a spreadsheet, newest first. For its Harpy with the full ledger, where\nthe troupe lets them, and a Lesser Harpy the Harpy lets (#987): as their ledger\nshows it to them, without staff's columns or the game. With no view or filters, every boon;\notherwise those in the view (open, departed, settled, void, pending or all),\nnarrowed and sorted as the ledger's list has them (horatio.api.boons.troupe_boons,\n#978): to a character or a name, a search (`q`), some kinds, the nights between\ntwo dates, the flagged, or a game; by date, debtor, creditor or kind. Every page\nat once. The export goes in the troupe's log.",
         "operationId": "export_boons_api_troupes__troupe_id__boon_export_get",
         "parameters": [
           {
@@ -86237,7 +86273,7 @@
     },
     "/api/troupes/{troupe_id}/boon-harpy": {
       "put": {
-        "description": "How far the troupe's Harpy reaches into its boon ledger (#688): not at all, the\nreview queue and word of each boon players report, or the full ledger; and whether,\nwith the full ledger, the Harpy also reads its standings and statistics (#749).",
+        "description": "How far the troupe's Harpy reaches into its boon ledger (#688): not at all, the\nreview queue and word of each boon players report, or the full ledger; and whether,\nwith the full ledger, the Harpy also reads its standings and statistics (#749), and\nmay export it (#987).",
         "operationId": "set_boon_harpy_api_troupes__troupe_id__boon_harpy_put",
         "parameters": [
           {

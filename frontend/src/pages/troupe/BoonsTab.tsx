@@ -64,6 +64,8 @@ export type LedgerKeeper = {
   review: boolean;
   // Audit a character's boons (#690).
   audit: boolean;
+  // Export the ledger as they see it, where the troupe lets the Harpy (#987).
+  export?: boolean;
   // One of the troupe's Lesser Harpies, as it calls them: "Lesser Harpy" or "Talon".
   word: string;
 };
@@ -327,8 +329,8 @@ function Ledger({ troupeId }: { troupeId: string }) {
               Show every boon
             </Button>
           )}
-          {/* Staff's exports (#986): this view, or the whole ledger. */}
-          {!harpy && <BoonExportMenu troupeId={troupeId} query={reviewing ? null : query} />}
+          {/* Exports (#986): this view, or the whole ledger; the Harpy's where the troupe lets them (#987). */}
+          {(!harpy || harpy.export) && <BoonExportMenu troupeId={troupeId} query={reviewing ? null : query} />}
         </div>
       </div>
 

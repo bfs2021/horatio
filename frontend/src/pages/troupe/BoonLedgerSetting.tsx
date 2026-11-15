@@ -5,7 +5,8 @@ import { BOON_PAGE } from "../../boons";
 import { RadioList } from "../../components/RadioList";
 import { useToast } from "../../components/Toast";
 import { Toggle } from "../../components/Toggle";
-import { Card, ErrorText } from "../../components/ui";
+import { SettingCard } from "../../components/SettingCard";
+import { ErrorText } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { TalonsSetting } from "./BoonTalons";
 
@@ -18,12 +19,12 @@ import { TalonsSetting } from "./BoonTalons";
 export function BoonLedgerSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean }) {
   const on = troupe.boons ?? false;
   return (
-    <Card title="Boons">
-      <p className="mb-3 text-sm text-mist">
-        The troupe&apos;s boon ledger: the debts characters owe each other, registered with the Harpy ({BOON_PAGE}). A boon made off the record isn&apos;t
-        tracked here, and isn&apos;t enforced. Storytellers and assistant storytellers register boons, and edit, trade, pass on, settle and void them, each
-        with its own log.
-      </p>
+    <SettingCard
+      title="Boons"
+      state={on ? "On" : "Off"}
+      readOnly={!canEdit}
+      about={`The troupe's boon ledger: the debts characters owe each other, registered with the Harpy (${BOON_PAGE}). A boon made off the record isn't tracked here, and isn't enforced. Storytellers and assistant storytellers register boons, and edit, trade, pass on, settle and void them, each with its own log.`}
+    >
       {!canEdit ? (
         <p className="text-sm">{on ? "The troupe keeps a boon ledger." : "The troupe doesn't keep a boon ledger."}</p>
       ) : (
@@ -49,7 +50,7 @@ export function BoonLedgerSetting({ troupe, canEdit }: { troupe: TroupeOut; canE
       {!canEdit && on && troupe.boon_talons && troupe.boon_harpy === "full" && (
         <p className="mt-1 text-sm">The Harpy may give others access to the ledger, as {troupe.boon_talon_word ?? "Lesser Harpies"}.</p>
       )}
-    </Card>
+    </SettingCard>
   );
 }
 

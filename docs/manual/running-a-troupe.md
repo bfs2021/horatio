@@ -502,7 +502,7 @@ The **Log** tab in the Troupe group shows what has happened in the troupe, newes
 
 ![Customise › Setup: the Setting up checklist, the troupe's features and the house rules that differ from the book.](images/running-a-troupe/customise-overview.png)
 
-Everything under **Customise** can stay as the book has it. Storytellers and the lead change it; assistant storytellers can read it all. Each change saves straight away.
+Everything under **Customise** can stay as the book has it. Storytellers and the lead change it; assistant storytellers can read it all.
 
 **Customise › Setup** starts with **Setting up**, the four things a new troupe does first, each ticked when done and linked to where you do it:
 
@@ -519,6 +519,8 @@ Below it, nothing is changed: Setup points to where things are.
 ## Customise: troupe settings
 
 **Customise › Troupe settings** holds the settings for the whole troupe, in groups, under a list of its features. A feature with a tab of its own keeps the rest of its settings at the top of that tab (see [A feature's own settings](#a-features-own-settings)).
+
+Every settings card saves the same way, here and in a feature's own settings. Switches, ticks and choices save as you make them, and Horatio says **Saved.** each time. A card with fields to type in, such as **Experience**, is always open: change what you like, then choose its **Save**, at the bottom of the card. Until you do, it says **Not saved yet**, and leaving the page asks first. A card you can only read says who changes it.
 
 ### Features
 
@@ -598,7 +600,7 @@ Each of these sits in the **Settings** at the top of its tab.
 
 > **If your troupe uses this:** quests are off by default.
 
-Quests are switched on in the [Features list](#features). While they're off, players see nothing of them. With them on, **Downtimes › Quests** has **Quest requests** in its Settings: choose **Change** to set the **Requests per character per cycle**.
+Quests are switched on in the [Features list](#features). While they're off, players see nothing of them. With them on, **Downtimes › Quests** has **Quest requests** in its Settings: set the **Requests per character per cycle** and choose **Save**.
 
 #### Retainers
 
@@ -614,7 +616,7 @@ Quests are switched on in the [Features list](#features). While they're off, pla
 - **Free text or the questions**: each player chooses;
 - **The questions only**: players answer the troupe's questions, then can edit what they build.
 
-Tick **Need an approved backstory before accepting a character** to make approval a step in joining (it is on for a new troupe). Under **Questions**, make question sets (such as a Short Form) and their questions: a long or short answer, a year, a choice, a scale between two poles, or a heading only, each shown always or only by social age, sect or a trait on the sheet.
+Switch on **Need an approved backstory before accepting a character** to make approval a step in joining (it is on for a new troupe). Under **Questions**, make question sets (such as a Short Form) and their questions: a long or short answer, a year, a choice, a scale between two poles, or a heading only, each shown always or only by social age, sect or a trait on the sheet.
 
 #### Free changes
 
@@ -640,7 +642,7 @@ NPCs are never limited by either.
 - **Experience**: what the troupe usually gives, **To start**, **For a game session** and **For completing a downtime**. Awarding XP starts at the session amount, and each new cycle at the completion amount.
 - **XP floor and ceiling**: see [The XP floor and ceiling](#the-xp-floor-and-ceiling).
 - **Game XP chart**: see [The game XP chart](#the-game-xp-chart).
-- **New Character Incentive**: the book's optional rule (MET: VTM p. 349). Ticked, a new character built for the troupe starts with the starting XP and a quarter of the XP a character could have earned here (the XP ceiling less the starting XP), rather than at the XP floor. The card gives the figure now. Characters already made keep their XP.
+- **New Character Incentive**: the book's optional rule (MET: VTM p. 349). Switched on, a new character built for the troupe starts with the starting XP and a quarter of the XP a character could have earned here (the XP ceiling less the starting XP), rather than at the XP floor. The card gives the figure now. Characters already made keep their XP.
 
 ### Status and titles settings
 
@@ -1348,7 +1350,7 @@ The **XP floor and ceiling** card (on the Overview and in Troupe settings) shows
 - **Ceiling**: the most XP a character here could have by now: the starting XP, every game's XP and every downtime's XP.
 - **Floor**: the same without the downtimes. New characters built for the troupe start at the floor, unless the troupe uses the [New Character Incentive](#xp-settings).
 
-Awarding a game's XP and closing a cycle can add to them (the tick boxes above). **What changed them** lists each change. For a chronicle that began before Horatio, storytellers can **Set by hand** either figure, with **Why**; games and downtimes still add to them afterwards.
+Awarding a game's XP and closing a cycle can add to them (the tick boxes above). **What changed them** lists each change. For a chronicle that began before Horatio, storytellers can set either figure by hand on the card in Troupe settings: change it, say **Why**, and choose **Save**. Games and downtimes still add to them afterwards.
 
 When a character asks to join, Horatio sets its XP against these figures: below the floor it is offered a top-up, and above the ceiling staff choose to keep or take away the excess (see [Characters asking to join](#characters-asking-to-join)).
 

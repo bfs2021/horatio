@@ -446,11 +446,13 @@ test("with free changes by games played, a new character drops a skill for its f
   // The lead gives new characters free changes for their first 3 games, in the Settings at the top of Approvals.
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/approvals#settings-free-changes`);
-  await l.getByRole("button", { name: "Change free changes" }).click();
-  await l.getByLabel(/^By games played/).check();
-  await l.getByLabel("Games attended").fill("3");
-  await l.getByRole("button", { name: "Save" }).click();
-  await expect(l.getByText("Until a character has attended 3 games after the troupe accepts it.")).toBeVisible();
+  const freeChanges = l.getByRole("region", { name: "Free changes for new characters" });
+  await freeChanges.getByLabel(/^By games played/).check();
+  await freeChanges.getByLabel("Games attended").fill("3");
+  await freeChanges.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(l.getByText("Saved.", { exact: true })).toBeVisible();
+  await expect(freeChanges.getByLabel("Games attended")).toHaveValue("3");
+  await expect(freeChanges.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
 
   // Philippa bought Stealth with XP before the troupe accepted her.
   const p = player.page;

@@ -87,7 +87,7 @@ export function ResponseEditor({
         </Button>
         {!!tables.data?.length && (
           <>
-            <Select aria-label="Fill table" className="w-auto" value={table} onChange={(e) => setTable(e.target.value)}>
+            <Select aria-label="Fill table" className="w-auto max-w-full" value={table} onChange={(e) => setTable(e.target.value)}>
               <option value="">Fill table…</option>
               {tables.data.map((t) => (
                 <option key={t.id} value={t.name}>

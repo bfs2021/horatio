@@ -8,6 +8,8 @@ import {
   ATTRIBUTES_AND_FOCUSES,
   backstoryOptional,
   shots,
+  troupeTab,
+  expectTabOpen,
 } from "./support";
 
 /** Blood bonds: the troupe's setting, staff recording drinks on the Bonds screen, players reporting them (#661), and who sees them. */
@@ -82,7 +84,7 @@ test("staff record three drinks and the thrall's player sees a full bond; the re
 
   // The first drink, on the Bonds screen under Court, where its Settings are.
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/bonds#settings$`));
-  await expect(l.getByRole("navigation", { name: "Court", exact: true }).getByRole("link", { name: "Bonds", exact: true })).toHaveAttribute("aria-current", "page");
+  await expectTabOpen(l, "Court", "Bonds");
   await expect(l.getByText("No blood bonds yet.")).toBeVisible();
   await l.getByRole("button", { name: "Record a drink" }).click();
   const record = l.getByRole("form", { name: "Record a drink" });
@@ -305,8 +307,7 @@ test("staff see one web of obligation: boons, blood bonds and sire lines on the 
   await send(l, "POST", `/api/troupes/${troupe.id}/bonds/drinks`, { thrall: { name: "old hesper" }, regnant: { character_id: seraphine.id }, night: "2026-10-03", source: "game" });
 
   await l.goto(`/troupes/${troupe.id}`);
-  await l.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "Court", exact: true }).click();
-  await l.getByRole("link", { name: "Web of obligation", exact: true }).click();
+  await troupeTab(l, "Web of obligation");
   const chart = l.getByRole("figure", { name: "The web of obligation" });
   await expect(chart).toBeVisible();
   await expect(chart.locator('[data-tie="boons"]')).toHaveCount(2);

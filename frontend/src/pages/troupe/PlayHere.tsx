@@ -4,6 +4,7 @@ import { api, unwrap } from "../../api/client";
 import { useClanName } from "../../components/ClanNames";
 import type { CharacterOut, TroupeOut } from "../../api/types";
 import { Avatar } from "../../components/Avatar";
+import { CardHeading } from "../../components/Headings";
 import { AtHandle } from "../../components/PersonPicker";
 import { Badge, Card } from "../../components/ui";
 import { LinkButton } from "../../components/LinkButton";
@@ -79,7 +80,7 @@ export function PlayHere({ troupe }: { troupe: TroupeOut }) {
         </div>
         {bring.length > 0 && (
           <div>
-            <h3 className="text-sm text-parchment">Or bring one you have</h3>
+            <CardHeading>Or bring one you have</CardHeading>
             <ul className="mt-1 divide-y divide-ash">
               {bring.map((c) => (
                 <Bring key={c.id} character={c} troupeId={troupe.id} />

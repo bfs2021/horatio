@@ -3,6 +3,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { SettingsDocument, ShareImportOut, ShareReviewItemOut, ShareReviewOut, ShareSectionOut, TroupeOut } from "../../api/types";
+import { CardHeading } from "../../components/Headings";
 import { useToast } from "../../components/Toast";
 import { Badge, Button, Card, ErrorText, Field, Input, Loading, Notice, Select, Textarea } from "../../components/ui";
 import { useRulesAction } from "../../hooks";
@@ -622,7 +623,7 @@ function FindReplace({
   const offer = suggestion(document, items, ticked, here);
   return (
     <section aria-label="Find and replace" className="flex flex-col gap-2 rounded-lg border border-ash p-3">
-      <h3 className="text-sm text-gold">Find and replace</h3>
+      <CardHeading>Find and replace</CardHeading>
       <p className="text-xs text-mist">In the text of the ticked items: names, descriptions, house wording and the rest. Case matters.</p>
       {offer && offer !== find && (
         <p className="text-sm">

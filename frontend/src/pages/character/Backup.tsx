@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { BackupXpOut, BundleEntryOut, CharacterOut, CharacterReviewOut } from "../../api/types";
+import { CardHeading } from "../../components/Headings";
 import { useToast } from "../../components/Toast";
 import { Badge, Button, Card, ErrorText, Loading, Notice, PageTitle } from "../../components/ui";
 import { LinkButton } from "../../components/LinkButton";
@@ -270,7 +271,7 @@ export function ReviewParts({ review }: { review: CharacterReviewOut }) {
     <div role="group" aria-label="What comes in" className="flex flex-col gap-3">
       {review.parts.map((part) => (
         <section key={part.key} className="rounded-lg border border-ash p-3">
-          <h3 className="text-gold">{part.label}</h3>
+          <CardHeading>{part.label}</CardHeading>
           <ul className="divide-y divide-ash">
             {part.items.map((item, i) => (
               <li key={i} className="flex flex-col gap-1 py-2 text-sm">
@@ -405,7 +406,7 @@ function XpFigures({ xp, troupe, from }: { xp: BackupXpOut; troupe: string | nul
   const here = troupe ? `${troupe}'s prices` : "the book's prices";
   return (
     <section aria-label="XP" className="rounded-lg border border-ash p-3 text-sm">
-      <h3 className="mb-2 text-gold">XP</h3>
+      <CardHeading className="mb-2">XP</CardHeading>
       <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1">
         <dt className="text-mist">Earned, in the file</dt>
         <dd className="text-right">{xp.earned}</dd>

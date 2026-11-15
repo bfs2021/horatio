@@ -3,6 +3,7 @@ import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { CharacterOut, HavenOut, OwnHavenIn } from "../../api/types";
 import { Dialog } from "../../components/Dialog";
+import { SectionLabel } from "../../components/Headings";
 import { Button, ErrorText, Field, Input, Textarea } from "../../components/ui";
 import { WebLink } from "../../components/WebLink";
 import { useAction } from "../../hooks";
@@ -201,9 +202,7 @@ function HavenForm({ character, found, onDone }: { character: CharacterOut; foun
 export function WizardHaven({ character }: { character: CharacterOut }) {
   return (
     <section className="mt-6 text-sm" aria-labelledby="wizard-haven">
-      <h3 id="wizard-haven" className="text-xs tracking-wide text-mist uppercase">
-        Your Haven
-      </h3>
+      <SectionLabel id="wizard-haven">Your Haven</SectionLabel>
       <p className="mt-1 mb-2 text-xs text-mist">
         Optional: name it and choose its advantages now, or later from the sheet. The troupe that accepts {character.name} puts it on its list of locations.
       </p>

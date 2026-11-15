@@ -4,6 +4,7 @@ import { api, unwrap } from "../../api/client";
 import type { RosterEntry } from "../../api/types";
 import { ActionMenu, MenuGroup, MenuItem, MenuLink } from "../../components/ActionMenu";
 import { Dialog } from "../../components/Dialog";
+import { SectionLabel } from "../../components/Headings";
 import { useToast } from "../../components/Toast";
 import { Button, Empty, ErrorText, Input, Loading } from "../../components/ui";
 import { useAction, useMe } from "../../hooks";
@@ -239,7 +240,7 @@ function Titles({ troupeId, entry }: { troupeId: string; entry: RosterEntry }) {
   return (
     <div className="flex flex-col gap-4">
       <section>
-        <h3 className="mb-1 text-xs text-mist">Holds</h3>
+        <SectionLabel className="mb-1">Holds</SectionLabel>
         {entry.titles.length ? (
           <ul className="flex flex-wrap gap-1.5">
             {entry.titles.map((t) => (
@@ -273,7 +274,7 @@ function Titles({ troupeId, entry }: { troupeId: string; entry: RosterEntry }) {
         <ErrorText error={save.error} />
       </section>
       <section>
-        <h3 className="mb-1 text-xs text-mist">Give a title</h3>
+        <SectionLabel className="mb-1">Give a title</SectionLabel>
         <GiveTitle troupeId={troupeId} entry={entry} onGive={(title) => save.mutate([...entry.titles, title])} />
       </section>
     </div>
@@ -315,7 +316,7 @@ function GiveTitle({ troupeId, entry, onGive }: { troupeId: string; entry: Roste
       <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
         {titleGroups(entry.sect ? [entry.sect] : [], matching).map(([sect, list]) => (
           <section key={sect ?? ""}>
-            <h3 className="mb-1 text-xs text-mist">{sect ?? "Any sect"}</h3>
+            <SectionLabel className="mb-1">{sect ?? "Any sect"}</SectionLabel>
             <ul className="flex flex-wrap gap-1.5">
               {list.map((t) => (
                 <li key={t.name}>

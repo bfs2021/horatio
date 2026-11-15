@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { components } from "../../api/schema";
 import { Dialog } from "../../components/Dialog";
+import { SectionLabel } from "../../components/Headings";
 import { Badge, Button, Card, Empty, ErrorText, Field, Loading, Notice, Textarea } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
@@ -106,7 +107,7 @@ function Characters({ title, characters }: { title: string; characters: Archived
   if (!characters.length) return null;
   return (
     <div>
-      <h3 className="text-xs tracking-wide text-mist uppercase">{title}</h3>
+      <SectionLabel>{title}</SectionLabel>
       <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
         {characters.map((c) => (
           <li key={c.character_id} className="flex items-center gap-1">

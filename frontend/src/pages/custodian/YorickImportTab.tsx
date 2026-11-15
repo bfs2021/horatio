@@ -3,6 +3,7 @@ import { useId, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import { Dialog } from "../../components/Dialog";
+import { SectionLabel } from "../../components/Headings";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Notice, Select } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction, useRulesAction } from "../../hooks";
@@ -492,7 +493,7 @@ function CharacterDetail({ character: c }: { character: ReportCharacter }) {
         .filter(([, items]) => items.length)
         .map(([title, items]) => (
           <div key={title}>
-            <h3 className="text-xs uppercase tracking-wide text-mist">{title}</h3>
+            <SectionLabel>{title}</SectionLabel>
             <ul className="list-disc pl-5">
               {items.map((item) => (
                 <li key={item}>{item}</li>

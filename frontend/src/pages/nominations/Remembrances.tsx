@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, ApiError, unwrap } from "../../api/client";
 import type { CharacterOut, CharacterRemembrancesOut } from "../../api/types";
+import { CardHeading } from "../../components/Headings";
 import { Button, Card, Empty, ErrorText, Loading } from "../../components/ui";
 import { useAction } from "../../hooks";
 
@@ -63,7 +64,7 @@ export function RemembrancesPanel({ characterId, name }: { characterId: string; 
         ? r!.state === "open" && <Empty>None published yet.</Empty>
         : r!.months.map((m) => (
             <section key={m.cycle_id} aria-label={`Remembrances of ${name}, ${m.month}`}>
-              <h3 className="text-sm text-gold">{m.month}</h3>
+              <CardHeading>{m.month}</CardHeading>
               <ul className="divide-y divide-ash">
                 {m.memories.map((memory) => (
                   <li key={memory.id} className="py-2">

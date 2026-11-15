@@ -4,6 +4,7 @@ import { useId, useMemo, useState, type KeyboardEvent } from "react";
 import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import { AxisBottom, ChartFrame, Legend, plotArea, series, useMarks, useZoom, ZoomControls, type ChartTable, type LegendItem, type Tip } from "../../charts";
+import { CardHeading } from "../../components/Headings";
 import { ErrorText, Loading } from "../../components/ui";
 import { extent, gameDate, kindOf, KINDS, placed, rangeOf, RANGES, rows as rowsOf, type ChronicleEvent, type Kind, type Placed, type Range } from "./chronicle";
 
@@ -216,9 +217,9 @@ function Chosen({ event: e, full, onClose }: { event: ChronicleEvent; full: bool
   return (
     <section aria-label="Chosen event" className="rounded-lg border border-ash bg-dusk p-4 text-sm">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-base text-gold">
+        <CardHeading>
           {e.label}: {e.character_name}
-        </h3>
+        </CardHeading>
         <button type="button" className="text-sm text-mist underline hover:text-parchment" onClick={onClose}>
           Close
         </button>

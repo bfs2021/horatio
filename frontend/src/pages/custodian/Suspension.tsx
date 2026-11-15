@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { Suspended } from "../../api/types";
 import { DateInput } from "../../components/DateInput";
+import { SectionLabel } from "../../components/Headings";
 import { LogList } from "../../components/LogList";
 import { Button, Card, Empty, ErrorText, Field, Loading, Notice, Textarea } from "../../components/ui";
 import { useDates } from "../../dates";
@@ -103,7 +104,7 @@ export function SuspendedPeople() {
           )}
           {suspensions.data.log.length > 0 && (
             <section>
-              <h3 className="mb-1 text-sm text-mist">Recently</h3>
+              <SectionLabel className="mb-1">Recently</SectionLabel>
               <LogList entries={suspensions.data.log} linkTo={(e) => (typeof e.data.user_id === "string" ? `/players/${e.data.user_id}` : null)} />
             </section>
           )}

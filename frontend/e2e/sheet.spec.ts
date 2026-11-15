@@ -21,6 +21,42 @@ test("a character in no troupe can be deleted from the vault", async ({ browser 
   await expect(page.getByRole("heading", { name: "Welcome to Horatio" })).toBeVisible();
 });
 
+test("on a phone, Your characters puts each name on its own line, keeps Import and Export in its ⋯, and New character takes you to the form (#917)", async ({ browser }) => {
+  const { page: p } = await person(browser, "rows-on-phone");
+  for (const name of ["Bartholomew Ravenscroft-Ashdown", "Ysolde Marchetti"]) {
+    const made = await p.request.post("/api/characters", { headers: { "X-Horatio": "1" }, data: { splat: "vampire", name } });
+    expect(made.status(), await made.text()).toBe(201);
+  }
+  await p.setViewportSize({ width: 375, height: 800 });
+  await p.goto("/characters");
+  const list = p.getByRole("list").filter({ has: p.getByRole("link", { name: /Ysolde Marchetti/ }) });
+  // The list is the first thing in its card: no buttons above it.
+  await expect(list).toBeVisible();
+  expect(await list.evaluate((ul) => ul.previousElementSibling === null)).toBe(true);
+  // The name, then the splat under it, never on the one line.
+  for (const name of ["Bartholomew Ravenscroft-Ashdown", "Ysolde Marchetti"]) {
+    const row = list.getByRole("link", { name: new RegExp(name) });
+    const nameBox = (await row.getByText(name, { exact: true }).boundingBox())!;
+    const splatBox = (await row.getByText(/^vampire/).boundingBox())!;
+    expect(splatBox.y).toBeGreaterThanOrEqual(nameBox.y + nameBox.height - 1);
+    expect(nameBox.height).toBeLessThan(30); // one line, cut short if it's long
+  }
+  // Import and Export wait behind the ⋯ by the page's title.
+  await p.getByRole("button", { name: "More for your characters" }).click();
+  await expect(p.getByRole("menuitem", { name: "Import a character" })).toBeVisible();
+  await expect(p.getByRole("menuitem", { name: /^Export all/ })).toBeVisible();
+  await p.keyboard.press("Escape");
+  await p.screenshot(shots("characters-phone"));
+  // New character, below the list on a phone, is one tap away.
+  await p.getByRole("link", { name: "New character" }).click();
+  await expect(p.getByLabel("Name")).toBeFocused();
+  await expect(p.getByLabel("Name")).toBeInViewport();
+  // On a wide screen the form sits beside the list, so the link isn't needed.
+  await p.setViewportSize({ width: 1280, height: 800 });
+  await expect(p.getByRole("link", { name: "New character" })).toBeHidden();
+  await p.screenshot(shots("characters-wide"));
+});
+
 test("a player exports a character as a backup and imports it again as a new character, reviewed first (#567)", async ({ browser }) => {
   const { page: p } = await person(browser, "backup-player");
   const build: Record<string, [string, number][]> = {
@@ -47,9 +83,10 @@ test("a player exports a character as a backup and imports it again as a new cha
   const document = JSON.parse(readFileSync(file, "utf8"));
   expect([document.format, document.character.name, document.sections]).toEqual(["horatio-character", "Odile Varga", ["equipment"]]);
 
-  // Your characters › Import a character: the review, then a new character.
+  // Your characters › ⋯ › Import a character: the review, then a new character.
   await p.goto("/characters");
-  await p.getByRole("link", { name: "Import a character" }).click();
+  await p.getByRole("button", { name: "More for your characters" }).click();
+  await p.getByRole("menuitem", { name: "Import a character" }).click();
   await p.getByLabel("Character file").setInputFiles(file);
   await expect(p.getByRole("heading", { name: "Review Odile Varga" })).toBeVisible();
   const comes = p.getByRole("group", { name: "What comes in" });
@@ -69,8 +106,10 @@ test("a player exports a character as a backup and imports it again as a new cha
   await expect(p.getByRole("link", { name: /Odile Varga/ })).toHaveCount(2);
 
   // Export all is a .zip of every one; importing it brings in those still ticked.
-  const [all] = await Promise.all([p.waitForEvent("download"), p.getByRole("link", { name: "Export all" }).click()]);
-  await p.getByRole("link", { name: "Import a character" }).click();
+  await p.getByRole("button", { name: "More for your characters" }).click();
+  const [all] = await Promise.all([p.waitForEvent("download"), p.getByRole("menuitem", { name: /^Export all/ }).click()]);
+  await p.getByRole("button", { name: "More for your characters" }).click();
+  await p.getByRole("menuitem", { name: "Import a character" }).click();
   await p.getByLabel("Character file").setInputFiles({ name: all.suggestedFilename(), mimeType: "application/zip", buffer: readFileSync(await all.path()) });
   const inZip = p.getByRole("list", { name: "Characters in the .zip" }).getByRole("listitem");
   await expect(inZip).toHaveCount(2);

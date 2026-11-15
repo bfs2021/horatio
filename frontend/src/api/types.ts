@@ -253,6 +253,7 @@ export type VaulderieParticipantIn = Schemas["VaulderieParticipantIn"];
 export type BoonOut = Schemas["BoonOut"];
 export type BoonEventOut = Schemas["BoonEventOut"];
 export type TroupeBoonsOut = Schemas["TroupeBoonsOut"];
+export type BoonTotalsOut = Schemas["BoonTotalsOut"];
 export type CharacterBoonsOut = Schemas["CharacterBoonsOut"];
 export type BoonKindCount = Schemas["BoonKindCount"];
 export type PlayBoonsOut = Schemas["PlayBoonsOut"];

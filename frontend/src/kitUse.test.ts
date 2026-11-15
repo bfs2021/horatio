@@ -13,7 +13,8 @@ const pages = (readdirSync(dir, { recursive: true }) as string[])
 
 const raw: { what: string; pattern: RegExp; max: number; use: string }[] = [
   // `\b` so that `<ButtonGroup` and the like don't count; JSX is case-sensitive anyway.
-  { what: "<button", pattern: /<button\b/g, max: 161, use: "`Button` (components/ui.tsx) or `LinkButton` (components/LinkButton.tsx)" },
+  // 162: the boon ledger's totals strip (#977), a number with a small label, not a Button's shape.
+  { what: "<button", pattern: /<button\b/g, max: 162, use: "`Button` (components/ui.tsx) or `LinkButton` (components/LinkButton.tsx)" },
   {
     what: "<input",
     pattern: /<input\b/g,

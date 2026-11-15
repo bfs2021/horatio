@@ -9046,7 +9046,9 @@ export interface paths {
          *     nights; still `flagged` for review; or registered at a game (`game_id`). Sorted by
          *     `sort` (date, debtor, creditor or kind, by weight) in `direction` (asc or desc;
          *     newest first for the date, A to Z or trivial to life otherwise), ties newest
-         *     first, then by id. `limit` boons from `offset` (#978).
+         *     first, then by id. `limit` boons from `offset` (#978). With them, `totals`: the
+         *     whole ledger's views counted, whatever the filters, and its open boons by kind
+         *     (#977).
          */
         get: operations["troupe_boons_api_troupes__troupe_id__boons_get"];
         put?: never;
@@ -16994,6 +16996,19 @@ export interface components {
              * @enum {string}
              */
             word: "Lesser Harpies" | "Talons";
+        };
+        /**
+         * BoonTotalsOut
+         * @description The whole ledger at a glance (#977), whatever the filters: for a Harpy or a
+         *     Lesser Harpy, with who has left as the court knows it.
+         */
+        BoonTotalsOut: {
+            /** Open By Kind */
+            open_by_kind: components["schemas"]["BoonKindCount"][];
+            /** Views */
+            views: {
+                [key: string]: number;
+            };
         };
         /** BoonTradeIn */
         BoonTradeIn: {
@@ -35448,6 +35463,7 @@ export interface components {
             };
             /** Total */
             total: number;
+            totals: components["schemas"]["BoonTotalsOut"];
         };
         /** TroupeChanges */
         TroupeChanges: {

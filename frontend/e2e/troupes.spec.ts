@@ -149,8 +149,9 @@ test("a troupe's or character's tab that isn't there, or isn't open to them, say
   const characterId: string = (await character.json()).id;
   await p.goto(`/characters/${characterId}/nonsense`);
   await expect(p.getByText("This part of Hollis Doorward isn't open to you, or doesn't exist.")).toBeVisible();
+  // Back to it opens it, and a character in creation opens on its wizard (#915).
   await p.getByRole("link", { name: "Back to Hollis Doorward" }).click();
-  await expect(p).toHaveURL(new RegExp(`/characters/${characterId}$`));
+  await expect(p).toHaveURL(new RegExp(`/characters/${characterId}/create$`));
 });
 
 test("Troupe settings open on a Features list: each optional feature on or off, and switching one on brings its tab, its settings folded at the top (#783, #784)", async ({ browser }) => {
@@ -2249,7 +2250,7 @@ test("a troupe's profile: storytellers fill it in, and people not signed in see 
   await c.getByRole("button", { name: "Create troupe" }).click();
   await expect(c.getByRole("link", { name: troupeName })).toBeVisible();
 
-  // The lead fills in the profile on the troupe's Overview, card by card (#781).
+  // The lead fills in the profile on the troupe's Overview, part by part (#781), behind Edit profile (#912).
   const l = lead.page;
   await (await topBar(l)).getByRole("link", { name: "Troupes" }).click();
   await l.getByRole("link", { name: troupeName }).click();
@@ -2262,6 +2263,10 @@ test("a troupe's profile: storytellers fill it in, and people not signed in see 
     await profile.getByRole("button", { name: "Save", exact: true }).click();
     await expect(profile.getByRole("button", { name: /^(Save|Saving…)$/ })).toHaveCount(0);
   };
+  // Folded away until asked for: the profile as players see it, with one Edit profile.
+  await expect(profile.getByRole("button", { name: "Edit links" })).toHaveCount(0);
+  await expect(l.getByRole("switch", { name: "Public" })).toHaveCount(0);
+  await profile.getByRole("button", { name: "Edit profile" }).click();
   // A portrait, cropped square like a character's picture.
   await profile.getByRole("button", { name: "Add a portrait" }).click();
   await l.getByLabel("Choose a portrait").setInputFiles("e2e/portrait.jpg");
@@ -2303,6 +2308,7 @@ test("a troupe's profile: storytellers fill it in, and people not signed in see 
   await profile.getByLabel("Minimum age").fill("18");
   await profile.getByLabel("Content notes").fill("Violence and body horror.");
   await save();
+  await profile.getByRole("button", { name: "Done" }).click();
 
   // It shows on the Overview, with the next game in the lead's own zone.
   await expect(profile.getByText("Sat 12 Jan 2030, 7 pm EST")).toBeVisible();
@@ -2322,7 +2328,7 @@ test("a troupe's profile: storytellers fill it in, and people not signed in see 
   await expect(p.getByRole("link", { name: troupeName }).locator('img[src*="/portraits/"]')).toBeVisible();
   await p.getByRole("link", { name: troupeName }).click();
   await expect(p.getByText("12 Mill Lane, Leeds")).toBeVisible();
-  await expect(p.getByRole("button", { name: /^Edit / })).toHaveCount(0);
+  await expect(p.getByRole("button", { name: /^Edit/ })).toHaveCount(0);
   await expect(p.getByRole("switch", { name: "Public" })).toHaveCount(0);
   // The old Profile address opens the Overview.
   await p.goto(`/troupes/${troupeId}/profile`);
@@ -2335,6 +2341,7 @@ test("a troupe's profile: storytellers fill it in, and people not signed in see 
   await expect(visitor.getByText(troupeName)).toHaveCount(0);
 
   // Switched on: anyone can see it at its public address, but never the street address.
+  await profile.getByRole("button", { name: "Edit profile" }).click();
   await l.getByRole("switch", { name: "Public" }).click();
   await expect(l.getByText("Public: anyone can see this profile, even people not signed in")).toBeVisible();
   await visitor.reload();
@@ -2756,6 +2763,7 @@ test("a troupe's public page asks a newcomer to make an account, which brings th
 
   // Public, the troupe's name leads, with the same two ways in.
   await l.getByRole("link", { name: "Overview", exact: true }).click();
+  await l.getByRole("button", { name: "Edit profile" }).click();
   await l.getByRole("switch", { name: "Public" }).click();
   await expect(l.getByRole("switch", { name: "Public" })).toBeChecked();
   await visitor.reload();
@@ -2801,7 +2809,9 @@ test("a troupe's Overview switches it public at once, shows its XP range, and Wa
   const waiting = l.locator("section").filter({ has: l.getByRole("heading", { name: "Waiting on you" }) });
   await expect(waiting.getByText("Nothing waiting.")).toBeVisible();
 
-  // The Public switch saves as soon as it is changed.
+  // The Public switch, under Edit profile, saves as soon as it is changed.
+  const editProfile = l.getByRole("region", { name: "Profile" }).getByRole("button", { name: "Edit profile" });
+  await editProfile.click();
   const publicSwitch = l.getByRole("switch", { name: "Public" });
   await expect(publicSwitch).not.toBeChecked();
   await expect(l.getByText("Signed-in only")).toBeVisible();
@@ -2812,12 +2822,16 @@ test("a troupe's Overview switches it public at once, shows its XP range, and Wa
   await expect(l.getByText("Public: anyone can see this profile, even people not signed in")).toBeVisible();
   await expect(l.getByText(`/t/${troupeId}`)).toBeVisible();
   await l.reload();
+  await editProfile.click();
   await expect(l.getByRole("switch", { name: "Public" })).toBeChecked();
   await visitor.reload();
   await expect(visitor.getByRole("heading", { name: troupeName })).toBeVisible();
-  // The lead's name and description are here too, and archiving under its own heading.
+  // The lead's name and description are under Edit profile too (#912), and archiving under its own heading.
+  await l.getByRole("button", { name: "Edit name and description" }).click();
   await l.getByLabel("Description").fill("A court that meets where the roads cross.");
   await l.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(l.getByRole("button", { name: "Edit name and description" })).toBeVisible();
+  await l.getByRole("button", { name: "Done" }).click();
   await expect(l.getByRole("region", { name: "Profile" }).getByText("A court that meets where the roads cross.")).toBeVisible();
   await expect(l.getByRole("heading", { name: "Archive the troupe" })).toBeVisible();
   await l.screenshot(shots("troupe-profile-tab"));

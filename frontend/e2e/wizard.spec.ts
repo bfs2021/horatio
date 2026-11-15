@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { closeContextsAfterEach, shots, person, creatingVampire, tapMid, CAITIFF_THREE, ATTRIBUTES_AND_FOCUSES, choiceIn, choosePick, choosePicks, openSlot, pickedAt, slotsAt, goToStep, inSteps } from "./support";
+import { closeContextsAfterEach, characterTab, shots, person, creatingVampire, tapMid, CAITIFF_THREE, ATTRIBUTES_AND_FOCUSES, choiceIn, choosePick, choosePicks, openSlot, pickedAt, slotsAt, goToStep, inSteps } from "./support";
 
 /** The creation wizard: merits and flaws, and what each step lets a character take. */
 
@@ -769,8 +769,9 @@ test("each step keeps its picks as they are made, through the step list and a re
   await p.goto(`/characters/${id}/create/skills`);
   await expect(p.getByRole("heading", { name: "Skills", exact: true })).toBeVisible();
 
-  // While she is being created, the page leads back here, not to Play, and the tabs for play wait.
-  await expect(p.getByRole("link", { name: "Continue creating" })).toBeVisible();
+  // While she is being created, the page has no Play, and the tabs for play wait; in the
+  // wizard, Continue creating would only lead back here (#915).
+  await expect(p.getByRole("link", { name: "Continue creating" })).toHaveCount(0);
   await expect(p.getByRole("link", { name: "Play", exact: true })).toHaveCount(0);
   for (const tab of ["Experience", "Downtime", "Results", "Influence"]) await expect(p.locator("main").getByRole("link", { name: tab, exact: true })).toHaveCount(0);
 
@@ -817,6 +818,47 @@ test("each step keeps its picks as they are made, through the step list and a re
   await expect(p.getByRole("heading", { name: "Experience" })).toBeVisible();
   await expect(p.getByRole("link", { name: "Play", exact: true })).toBeVisible();
   await expect(p.getByRole("link", { name: "Continue creating" })).toHaveCount(0);
+});
+
+test("a character in creation opens on its wizard, and its sheet has one red button, the quick picks folded away (#915)", async ({ browser }) => {
+  const { page: p } = await person(browser, "opens-wizard");
+  const id = await creatingVampire(p, "Perpetua Wick", "Brujah", [], ATTRIBUTES_AND_FOCUSES);
+  // Opening her lands on the wizard, with nothing in its header to lead back to it.
+  await p.goto(`/characters/${id}`);
+  await expect(p).toHaveURL(new RegExp(`/characters/${id}/create$`));
+  await expect(p.getByRole("heading", { name: "Concept" })).toBeVisible();
+  await expect(p.getByRole("link", { name: "Continue creating" })).toHaveCount(0);
+
+  // Her sheet is a tab away: Continue creating is the way back, and the only red button in sight.
+  await characterTab(p, "Sheet");
+  await expect(p).toHaveURL(new RegExp(`/characters/${id}/sheet$`));
+  await expect(p.getByRole("heading", { name: "Character creation" })).toBeVisible();
+  await expect(p.getByRole("link", { name: "Continue creating" })).toBeVisible();
+  await expect(p.getByRole("button", { name: "Open step-by-step creation" })).toHaveCount(0);
+  const red = () =>
+    p.locator("main .bg-blood").evaluateAll((els) =>
+      els.filter((el) => {
+        const box = el.getBoundingClientRect();
+        return box.width > 0 && box.bottom > 0 && box.top < window.innerHeight;
+      }).length,
+    );
+  expect(await red()).toBe(1);
+  await p.screenshot(shots("creation-sheet"));
+
+  // The quick picks wait folded, Finish creation inside them and not red.
+  const quick = p.locator("details").filter({ has: p.getByText("Quick picks (for those who know the rules)") });
+  await expect(quick).not.toHaveAttribute("open");
+  const finish = p.getByRole("button", { name: /^Finish creation \(\d+ picks left\)$/ });
+  await expect(finish).toBeHidden();
+  await p.getByText("Quick picks (for those who know the rules)").click();
+  await expect(p.getByLabel("Pick Backgrounds at 3")).toBeVisible();
+  await finish.scrollIntoViewIfNeeded();
+  await expect(finish).toBeVisible();
+  await expect(finish).not.toHaveClass(/\bbg-blood\b/);
+
+  // Continue creating goes back to the wizard.
+  await p.getByRole("link", { name: "Continue creating" }).click();
+  await expect(p.getByRole("heading", { name: "Concept" })).toBeVisible();
 });
 
 test("a pick moves by choosing it in another slot, swapping with the one there when it fits, its field going with it", async ({ browser }) => {

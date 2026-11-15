@@ -251,7 +251,7 @@ test("a troupe names the Gangrel a pillar clan in Customise, and the Camarilla's
   await expect(pillars).toContainText("Not Embraced into a pillar clan: Banu Haqim, Malkavian, Nosferatu, Toreador, Tremere or Ventrue.");
   // Its tick boxes are folded until asked for (#908).
   await expect(pillars.getByLabel("Brujah", { exact: true })).toBeHidden();
-  await pillars.getByText("Change the clans").click();
+  await pillars.getByText("Edit the clans").click();
   await expect(pillars.getByLabel("Brujah", { exact: true })).not.toBeChecked();
   await pillars.getByLabel("Gangrel", { exact: true }).click();
   await expect(pillars.getByLabel("Gangrel", { exact: true })).toBeChecked();
@@ -265,7 +265,7 @@ test("a troupe names the Gangrel a pillar clan in Customise, and the Camarilla's
 
   // The core book's list, a preset, keeps the Gangrel out and the Brujah in.
   await settingsPart(l, troupeId, "status");
-  await pillars.getByText("Change the clans").click();
+  await pillars.getByText("Edit the clans").click();
   await pillars.getByRole("button", { name: "As the core book (2013)" }).click();
   await expect(pillars.getByLabel("Brujah", { exact: true })).toBeChecked();
   await expect(pillars.getByLabel("Gangrel", { exact: true })).not.toBeChecked();

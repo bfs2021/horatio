@@ -90,7 +90,7 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   const edit = varga.getByRole("form", { name: "Edit: Elder Varga owes Mireille Dauvin" });
   await edit.getByLabel("Kind").selectOption("minor");
   await edit.getByLabel("Why the edit").fill("Typed in wrong");
-  await edit.getByRole("button", { name: "Save the edit" }).click();
+  await edit.getByRole("button", { name: "Save", exact: true }).click();
   const edited = boons.getByRole("listitem", { name: "Elder Varga owes Mireille Dauvin, minor" });
   await expect(edited.getByRole("list", { name: "Log of Elder Varga owes Mireille Dauvin" })).toContainText("Kind: Trivial → Minor");
 
@@ -582,7 +582,7 @@ test("the Harpy keeps the ledger from the Play View as their character, and neve
   await expect(edit.getByLabel("Staff note")).toHaveCount(0);
   await edit.getByLabel("Kind").selectOption("major");
   await edit.getByLabel("Why the edit").fill("Misheard at Elysium");
-  await edit.getByRole("button", { name: "Save the edit" }).click();
+  await edit.getByRole("button", { name: "Save", exact: true }).click();
   const theirs = boons.getByRole("listitem", { name: "Edric Thorne owes Lady Ashgrove, major" });
   const theirLog = theirs.getByRole("list", { name: "Log of Edric Thorne owes Lady Ashgrove" });
   await expect(theirLog).toContainText("Misheard at Elysium");

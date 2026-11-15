@@ -179,7 +179,7 @@ The cart lives on this device: if you leave the page with changes in it, your br
 
 - **+** and **−** beside a rating raise or lower it, into the cart.
 - **Add**, at the top right of a part, opens a list of what you can add to it, with a search and a filter (for example only what the character can take now). Choose a trait, its rating and any detail it needs, then **Add to cart**. The panel says what it costs.
-- **Change**, beside a focus, swaps it for another, for the XP the rules charge.
+- **Swap**, beside a focus, trades it for another, for the XP the rules charge.
 - **×** beside a merit or flaw removes it.
 
 Before a home troupe accepts the character, you can lower or remove anything you bought, for the XP back. After acceptance, only dots bought since come back. The **−** button explains when it can't help: free dots (from creation, or given by another trait) are for storytellers to take away, and so are dots the home troupe accepted.
@@ -383,7 +383,7 @@ A new action asks **What kind of action is it?** first, with each of its **keywo
 
 The Quest action is the form's own **Quest** question. Your troupe may rename these, add its own or retire some, so its list can differ; the troupe's **House rules** tab lists its changes.
 
-- **Changing the keyword.** **Change** beside it offers the others. What you wrote stays; if the new one doesn't ask for something you filled in, such as the territory, it warns you first, and **Keep** leaves it as it was.
+- **Changing the keyword.** **Edit** beside it offers the others. What you wrote stays; if the new one doesn't ask for something you filled in, such as the territory, it warns you first, and **Keep** leaves it as it was.
 - **Ready-made actions.** What the character is learning, such as a discipline dot whose action came off this downtime, shows ready-made at the top of the question: **Confirm** makes it a Learn action, which costs nothing more. A keyword your troupe asks of your character each cycle, such as Eternal Struggle for an elder, shows there too, with **Add it**; the form won't submit without it.
 - **Before submitting,** each action needs its description, and what its keyword asks for, such as who or what an Investigate is aimed at. Until then it saves as a draft as you go.
 - **Old actions,** from before keywords, count as Narrative.
@@ -413,7 +413,7 @@ A project is a count of actions. A goal with things to gather and tests to pass,
 
 > **If your troupe uses this:** the form has a **Player Nominations** section.
 
-Write a line or two praising someone's roleplaying in **New nomination**, choose who it's **About** if you like (a character in the troupe, a storyteller, or no one in particular), and choose **Add nomination**. Add as many as you like; they don't use any actions. Each saves as you add it. Until it's published, **Change** edits it and **Take out** removes it.
+Write a line or two praising someone's roleplaying in **New nomination**, choose who it's **About** if you like (a character in the troupe, a storyteller, or no one in particular), and choose **Add nomination**. Add as many as you like; they don't use any actions. Each saves as you add it. Until it's published, **Edit** opens it to change and **Take out** removes it.
 
 The storytellers read them once you submit your downtime, and may take out any that aren't kind or lightly edit one. Once the cycle is past Due, they publish them to the troupe's players without your name.
 
@@ -643,6 +643,6 @@ The dialog warns you first if it would tell others something they haven't been t
 
 > **If your troupe uses this:** with Remembrances, tick **Ask the storytellers to open remembrances in the next downtime**, and the troupe is asked for memories of the character once they confirm. The retired character's page keeps a **Remembrances** card with what the troupe wrote, newest month first, without names.
 
-A retired character is hidden from everyday lists and out of all downtimes, and its sheet can no longer change, but it's kept with its full history, and stays on your Characters page marked **Retired**. Its page shows why it left; you, or its home troupe's storytellers, can **Change…** that, or whether it's listed, later. There's no way to bring a retired character back into play from the app.
+A retired character is hidden from everyday lists and out of all downtimes, and its sheet can no longer change, but it's kept with its full history, and stays on your Characters page marked **Retired**. Its page shows why it left; you, or its home troupe's storytellers, can **Edit…** that, or whether it's listed, later. There's no way to bring a retired character back into play from the app.
 
 ![The Retire dialog: Off-field chosen, the note box, and the box to list the character under No longer with us](images/players/retire.png)

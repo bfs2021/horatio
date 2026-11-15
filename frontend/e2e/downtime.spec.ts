@@ -146,8 +146,8 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   await p.getByRole("button", { name: "Add to cart" }).click();
   await expect(cart.getByText("Add Influences: The Elite 1 · 1 XP")).toBeVisible();
   // A focus can be changed after creation, for 10 XP.
-  await p.getByRole("listitem").filter({ hasText: "Strength" }).getByRole("button", { name: "Change" }).click();
-  await p.getByLabel("Change Strength to").selectOption("Dexterity");
+  await p.getByRole("listitem").filter({ hasText: "Strength" }).getByRole("button", { name: "Swap" }).click();
+  await p.getByLabel("Swap Strength for").selectOption("Dexterity");
   await p.getByRole("button", { name: "Add to cart · 10 XP" }).click();
   await expect(cart.getByText("Strength → Dexterity · 10 XP")).toBeVisible();
   await expect(p.getByText("after these changes", { exact: true })).toBeVisible();
@@ -181,9 +181,9 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   await portrait.focus();
   for (let i = 0; i < 12; i++) await p.keyboard.press("ArrowUp");
   await p.screenshot(shots("crop"));
-  await p.getByRole("button", { name: "Save picture" }).click();
+  await p.getByRole("dialog", { name: /'s picture$/ }).getByRole("button", { name: "Save", exact: true }).click();
   await expect(p.getByRole("dialog")).toBeHidden();
-  await expect(p.getByRole("button", { name: "Change Agnes's picture" }).locator('img[src*="/pictures/"]')).toBeVisible();
+  await expect(p.getByRole("button", { name: "Edit Agnes's picture" }).locator('img[src*="/pictures/"]')).toBeVisible();
   await p.screenshot(shots("picture"));
   // The character's own log says when, who and what.
   await characterTab(p, "Log");
@@ -304,7 +304,7 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   await lead.page.getByRole("link", { name: "Agnes", exact: true }).click();
   await lead.page.getByRole("button", { name: "Badge", exact: true }).click();
   await lead.page.getByLabel("Also shown on the badge").fill("Smells faintly of brine");
-  await lead.page.getByRole("button", { name: "Save note" }).click();
+  await lead.page.getByRole("dialog", { name: /'s badge$/ }).getByRole("button", { name: "Save", exact: true }).click();
   await expect(lead.page.getByRole("dialog")).toBeHidden();
   await lead.page.goBack();
   await lead.page.getByLabel("Select Agnes").check();
@@ -387,14 +387,14 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   await lead.page.screenshot(shots("rules"));
   // …and set its own price: Generation 1 skills at a flat 1 XP a dot, which Agnes pays.
   await pagePart(lead.page, "Costs");
-  await lead.page.getByRole("button", { name: "Change the price for All Skills, Generation background 1" }).click();
+  await lead.page.getByRole("button", { name: "Edit the price for All Skills, Generation background 1" }).click();
   await lead.page.getByLabel("How it's priced").selectOption({ label: "The same for each dot" });
   await lead.page.getByLabel("XP per dot").fill("1");
   await lead.page.getByLabel("Note for players").fill("Skills come easily here");
   await expect(lead.page.getByRole("row", { name: "As written 1 3 6 10 15" })).toBeVisible();
   await expect(lead.page.getByRole("row", { name: "With the change 1 2 3 4 5" })).toBeVisible();
   await lead.page.screenshot(shots("costs"));
-  await lead.page.getByRole("button", { name: "Save price" }).click();
+  await lead.page.getByRole("region", { name: /^Price for / }).getByRole("button", { name: "Save", exact: true }).click();
   await expect(lead.page.getByText("Replaced here")).toBeVisible();
   // A fixed price for a merit held at one rating is its value here, which the editor says.
   await lead.page.getByRole("button", { name: "Add a price" }).click();
@@ -422,7 +422,7 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   const elite = lead.page.locator("section").filter({ has: lead.page.getByRole("heading", { name: "Influence: Elite", exact: true }) });
   await elite.getByRole("button", { name: "Make our own list" }).click();
   await elite.getByLabel("Influence: Elite, one per line").fill("Police\nFinance");
-  await elite.getByRole("button", { name: "Save our list" }).click();
+  await elite.getByRole("button", { name: "Save", exact: true }).click();
   await expect(elite.getByText("Finance, Police")).toBeVisible();
   await characterTab(p, "Sheet");
   await p.reload(); // to see the list the lead has just set
@@ -548,7 +548,7 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   await lead.page.getByRole("link", { name: "Feeding", exact: true }).click();
   await expect(lead.page.getByText("Already delivered: a change goes out as an update with the next delivery.")).toBeVisible();
   await lead.page.getByRole("button", { name: "Answer", exact: true }).click();
-  await expect(lead.page.getByRole("button", { name: "Change answer" })).toBeVisible();
+  await expect(lead.page.getByRole("button", { name: "Save", exact: true })).toBeVisible();
   await lead.page.getByRole("link", { name: "Delivery", exact: true }).click();
   await expect(lead.page.getByRole("row", { name: /Agnes/ }).getByText("Changed since delivery")).toBeVisible();
   await expect(deliverCard.getByText("Agnes (update)")).toBeVisible();
@@ -612,7 +612,7 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   await uw1.getByRole("button", { name: "Edit" }).click();
   const edit = lead.page.getByRole("form", { name: "Edit UW1" });
   await edit.getByLabel("Times taken").fill("3");
-  await edit.getByRole("button", { name: "Save changes" }).click();
+  await edit.getByRole("button", { name: "Save", exact: true }).click();
   await expect(uw1.getByText("logged 3 times")).toBeVisible();
   await uw1.getByRole("button", { name: "Delete" }).click();
   await lead.page.getByRole("dialog", { name: "Delete UW1 from the influence log?" }).getByRole("button", { name: "Delete" }).click();
@@ -1245,7 +1245,7 @@ test("staff choose the news, announcements and agency channels under Connectors 
   await l.getByRole("menuitem", { name: "Edit…" }).click();
   await expect(l.getByRole("dialog", { name: "Edit The Harbour Crier" }).getByLabel("Discord channel")).toHaveCount(0);
   await l.keyboard.press("Escape");
-  await row.getByRole("link", { name: "Change in Connectors" }).click();
+  await row.getByRole("link", { name: "Edit in Connectors" }).click();
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/connectors$`));
   await expect(l.getByRole("region", { name: "Channels for the whole troupe" }).getByLabel("The Harbour Crier's channel")).toHaveValue("303");
   // A refetch still in a handler as the test ends would fail it when the page closes.
@@ -2311,7 +2311,7 @@ test("a player chooses each action's keyword first: Feed, Investigate, and a Lea
   await actions.getByLabel("Or something else").fill("Her new ghoul");
   await actions.getByRole("textbox", { name: "Downtime action" }).nth(2).fill("Find out where Agnes found her new ghoul.");
   // Changing the keyword keeps what he wrote, after a warning of what goes.
-  await actions.getByRole("button", { name: "Change Investigate to another kind of action" }).click();
+  await actions.getByRole("button", { name: "Edit the kind of action: Investigate" }).click();
   await actions.getByRole("radio", { name: /^Narrative/ }).last().click();
   await expect(actions.getByRole("alert")).toHaveText(/Changing it to Narrative drops what it is aimed at\. What you wrote stays\./);
   await actions.getByRole("button", { name: "Keep Investigate" }).first().click();
@@ -2346,7 +2346,7 @@ test("staff reorder the troupe's keywords, and filter and order the responses by
   await l.getByRole("menuitem", { name: "Edit…" }).click();
   const dialog = l.getByRole("dialog", { name: "Edit Perform" });
   await dialog.getByLabel("Name").fill("Recital");
-  await dialog.getByRole("button", { name: "Save keyword" }).click();
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
   await expect(table.getByText("Changed from Perform")).toBeVisible();
   await l.screenshot(shots("rules-keywords"));
 
@@ -2421,10 +2421,10 @@ test("feeding territories: a holder patrols hers, a poacher is caught there, and
   await expect(bramCard.getByText(/^Poaching in Docks\./)).toBeVisible();
   await bramCard.getByRole("checkbox", { name: "Caught by Agnes (1 action patrolling)" }).check();
   await bramCard.getByRole("button", { name: "Answer" }).click();
-  await expect(bramCard.getByRole("button", { name: "Change answer" })).toBeVisible();
+  await expect(bramCard.getByRole("button", { name: "Save", exact: true })).toBeVisible();
   const agnesCard = l.locator("section").filter({ has: l.getByRole("heading", { name: "Agnes" }) });
   await agnesCard.getByRole("button", { name: "Answer" }).click();
-  await expect(agnesCard.getByRole("button", { name: "Change answer" })).toBeVisible();
+  await expect(agnesCard.getByRole("button", { name: "Save", exact: true })).toBeVisible();
   await l.screenshot(shots("cycle-feeding-territories"));
 
   await send(l, "POST", `/api/cycles/${cycle}/close`, { add_to_ceiling: false });
@@ -2477,7 +2477,7 @@ test("with the Rack, staff lay out the cycle's vessels and a player takes one in
   await expect(card.getByRole("radio", { name: "Full Blood next game" })).toBeChecked();
   await expect(card.getByLabel("Resonance fed on")).not.toHaveValue("");
   await card.getByRole("button", { name: "Answer" }).click();
-  await expect(card.getByRole("button", { name: "Change answer" })).toBeVisible();
+  await expect(card.getByRole("button", { name: "Save", exact: true })).toBeVisible();
   await expect(rack.getByText("1 of 2 left on the Rack.")).toBeVisible();
   await l.screenshot(shots("cycle-feeding-rack"));
 

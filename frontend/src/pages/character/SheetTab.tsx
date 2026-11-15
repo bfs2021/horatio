@@ -927,12 +927,12 @@ function TraitRow({
         {swapping ? (
           <span className="flex items-center gap-1">
             <Select
-              aria-label={`Change ${named(trait.name)} to`}
+              aria-label={`Swap ${named(trait.name)} for`}
               value={to}
               onChange={(e) => setTo(e.target.value)}
               className="h-8 py-0"
             >
-              <option value="">Change to…</option>
+              <option value="">Swap for…</option>
               {swap.others.map((o) => (
                 <option key={o} value={o}>
                   {named(o)}
@@ -952,7 +952,7 @@ function TraitRow({
           </span>
         ) : (
           <Button variant="ghost" onClick={() => setSwapping(true)}>
-            Change
+            Swap
           </Button>
         )}
       </div>

@@ -117,13 +117,13 @@ test("a troupe's own merits: staff only, or taken when building for it, and mark
 
   // Changing one Lune holds asks first, in a dialog over the editor's.
   await actions("Favour of the Crossroads").click();
-  await l.getByRole("menuitem", { name: "Change…" }).click();
-  const editor = l.getByRole("dialog", { name: "Change Favour of the Crossroads", exact: true });
+  await l.getByRole("menuitem", { name: "Edit…" }).click();
+  const editor = l.getByRole("dialog", { name: "Edit Favour of the Crossroads", exact: true });
   await editor.getByLabel("Description").fill("The Prince owes you two.");
   await editor.getByRole("button", { name: "Save", exact: true }).click();
   const asked = l.getByRole("dialog", { name: "Change Favour of the Crossroads for everyone?" });
   await expect(asked).toContainText("Lune");
-  await asked.getByRole("button", { name: "Change it for them" }).click();
+  await asked.getByRole("button", { name: "Save it for them" }).click();
   await expect(editor).toBeHidden();
   await expect(row("Favour of the Crossroads")).toContainText("The Prince owes you two.");
 

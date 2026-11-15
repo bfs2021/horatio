@@ -142,10 +142,10 @@ test("the custodian changes a player's email, and the player confirms it from th
   const change = c.getByRole("dialog", { name: "Change chmail-player's email" });
   await change.getByLabel("New email").fill(custodian.email);
   await change.getByLabel("Reason").fill("Lost access to the old address");
-  await change.getByRole("button", { name: "Change email", exact: true }).click();
+  await change.getByRole("button", { name: /^(Send|Make) the link$/ }).click();
   await expect(change.getByText(`uses ${custodian.email} already. If both accounts are the same person's, merge them instead.`, { exact: false })).toBeVisible();
   await change.getByLabel("New email").fill(newEmail);
-  await change.getByRole("button", { name: "Change email", exact: true }).click();
+  await change.getByRole("button", { name: /^(Send|Make) the link$/ }).click();
 
   // Nothing changes until the link is opened: the custodian sends it on.
   await expect(change.getByText(`Waiting for chmail-player to confirm ${newEmail}`, { exact: false })).toBeVisible();
@@ -543,7 +543,7 @@ test("the custodian sets up a troupe, changes its lead and approves a request, a
   await expect(troupes.getByRole("link", { name: troupeName })).toBeVisible();
 
   // Its lead changes from the Troupes list.
-  await troupes.getByRole("button", { name: `Change lead… for ${troupeName}` }).click();
+  await troupes.getByRole("button", { name: `Appoint a new lead… for ${troupeName}` }).click();
   const dialog = c.getByRole("dialog", { name: `New lead for ${troupeName}` });
   await expect(dialog.getByText("Now: tmgmt-lead")).toBeVisible();
   await dialog.getByLabel("New lead").fill(newLead.handle.slice(0, -2));
@@ -966,7 +966,7 @@ test("the custodian designs Horatio's emails: a header, colours and a footer, pr
   // The design as it is now is in sight; changing it and the preview are folded (#944).
   await expect(card.getByText(/^Now: .* in the header, /)).toBeVisible();
   await expect(card.getByRole("textbox", { name: "Site's name" })).toBeHidden();
-  await card.getByText("Change the design", { exact: true }).click();
+  await card.getByText("Edit the design", { exact: true }).click();
   await expect(card.getByRole("textbox", { name: "Site's name" })).toBeVisible();
   await card.getByText("Preview a sample email", { exact: true }).click();
   const preview = card.frameLocator("iframe[title='Preview of an email in the design']");

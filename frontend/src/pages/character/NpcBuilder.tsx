@@ -524,10 +524,10 @@ function Held({
                 <button
                   type="button"
                   className="text-xs text-mist underline hover:text-parchment"
-                  aria-label={h.detail ? `Change the detail of ${trait.name}: ${h.detail}` : `Add a detail to ${trait.name}`}
+                  aria-label={h.detail ? `Edit the detail of ${trait.name}: ${h.detail}` : `Add a detail to ${trait.name}`}
                   onClick={() => setEditing(h.detail)}
                 >
-                  {h.detail ? "Change" : "Detail"}
+                  {h.detail ? "Edit" : "Detail"}
                 </button>
               )
             }

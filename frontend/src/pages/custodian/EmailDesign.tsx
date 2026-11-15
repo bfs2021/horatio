@@ -70,7 +70,7 @@ function DesignShown({ design }: { design: DesignOut }) {
           </p>
         ))}
         <TestDesign />
-        <SiteFold summary="Change the design">
+        <SiteFold summary="Edit the design">
           <p className="text-mist">
             Each email goes as a formatted email, and as plain text for mail apps that want it. Under your footer, each email still says why it came and how to stop
             it, and that Horatio sent it.
@@ -141,7 +141,7 @@ function DesignFields({ design }: { design: DesignOut }) {
         <Textarea rows={3} maxLength={design.footer_max} value={form.footer} onChange={(e) => set("footer")(e.target.value)} />
       </Field>
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={save.isPending}>
+        <Button type="submit" variant="secondary" disabled={save.isPending}>
           Save the design
         </Button>
         {design.chosen.some((part) => part !== "footer") && (

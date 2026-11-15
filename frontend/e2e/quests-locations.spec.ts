@@ -167,7 +167,7 @@ test("quests: a player asks for one, staff build it Complex 2 and send it, it is
   await expect(p.getByText("The journal is yours.")).toBeVisible();
   await expect(p.getByText(/Completed on .*, by Agnes, Bram\./)).toBeVisible();
   await p.getByLabel("The tale").fill("We went by night, and Bram called in a favour from the gala.");
-  await p.getByRole("button", { name: "Save the tale" }).click();
+  await p.locator("section", { has: p.getByRole("heading", { name: "Telling the Tale" }) }).getByRole("button", { name: "Save", exact: true }).click();
   await expect(p.getByText("Waiting for approval")).toBeVisible();
   await l.reload();
   await expect(l.getByLabel("The tale")).toHaveValue("We went by night, and Bram called in a favour from the gala.");
@@ -262,7 +262,7 @@ test("staff tag a quest with the setting's themes and moods, The setting tab lis
   await tags.getByRole("button", { name: "Revenge" }).click();
   await tags.getByRole("button", { name: "Desperate" }).click();
   await tags.getByRole("button", { name: "Save tags" }).click();
-  await expect(tags.getByRole("button", { name: "Change tags" })).toBeVisible();
+  await expect(tags.getByRole("button", { name: "Edit tags" })).toBeVisible();
   await expect(tags).toContainText("Revenge");
   await expect(tags).toContainText("Desperate");
   await expect(l.getByText("questtag-lead tagged it: Revenge, Desperate")).toBeVisible();
@@ -575,7 +575,7 @@ test("the troupe's locations: a storyteller adds the Grove Arcade, is refused an
   await l.getByRole("button", { name: "Edit" }).click();
   const edit = l.getByRole("form", { name: "Change Grove Arcade" });
   await edit.getByLabel("Add a quality").selectOption("Isolated");
-  await edit.getByRole("button", { name: "Save changes" }).click();
+  await edit.getByRole("button", { name: "Save", exact: true }).click();
   await expect(edit.getByRole("alert")).toHaveText(/A prestige 5 location has at most 10 qualities .*p\. 121.*this one would have 11\./);
 
   // Hunters watch it, kept secret from Agnes's player.
@@ -584,7 +584,7 @@ test("the troupe's locations: a storyteller adds the Grove Arcade, is refused an
   await edit.getByLabel("Negative quality").selectOption("Compromised");
   await edit.getByLabel("Secret from the controller").check();
   await edit.getByLabel("Who is behind Compromised").fill("hunters");
-  await edit.getByRole("button", { name: "Save changes" }).click();
+  await edit.getByRole("button", { name: "Save", exact: true }).click();
   await expect(l.getByText("Compromised ×1", { exact: true })).toBeVisible();
   await expect(l.getByText("Secret", { exact: true })).toBeVisible();
   await expect(l.getByText(/changed Grove Arcade: negatives \+Compromised ×1, secret \(hunters\)/)).toBeVisible();
@@ -604,7 +604,7 @@ test("the troupe's locations: a storyteller adds the Grove Arcade, is refused an
   await l.getByRole("menuitem", { name: "Edit…" }).click();
   const dialog = l.getByRole("dialog", { name: "Change Grove Arcade" });
   await dialog.getByLabel("Locked").check();
-  await dialog.getByRole("button", { name: "Save changes" }).click();
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
   await expect(dialog).toBeHidden();
   await expect(l.getByText("Grove Arcade saved.")).toBeVisible();
   await expect(actions).toBeFocused();

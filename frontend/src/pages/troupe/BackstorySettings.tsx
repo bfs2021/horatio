@@ -424,7 +424,7 @@ function QuestionForm({
       <ErrorText error={error} />
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={saving}>
-          Save the question
+          {start ? "Save" : "Add the question"}
         </Button>
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel

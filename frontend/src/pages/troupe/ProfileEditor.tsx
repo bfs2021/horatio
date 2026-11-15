@@ -258,7 +258,7 @@ export function Pictures({ profile }: { profile: TroupeProfileOut }) {
       <div className="flex flex-wrap items-center gap-4">
         <Avatar name={profile.name} picture={profile.portrait} size="md" />
         <Button type="button" variant="secondary" onClick={() => setOpen(true)}>
-          {profile.portrait ? "Change the portrait" : "Add a portrait"}
+          {profile.portrait ? "Edit the portrait" : "Add a portrait"}
         </Button>
       </div>
       <Dialog title={`${profile.name}'s portrait`} open={open} onClose={() => setOpen(false)}>

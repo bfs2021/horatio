@@ -209,7 +209,7 @@ function AttendanceCard({ night }: { night: GameNight }) {
                 <MenuItem disabled={awarded || checkOut.isPending} onSelect={() => checkOut.mutate({ id: a.character_id, name: a.character_name })}>
                   Check out
                 </MenuItem>
-                {attendeeStatus(a) && a.status_tab && <MenuLink to={statusLink(a)}>{a.status_to_choose ? "Choose status" : "Change status"}</MenuLink>}
+                {attendeeStatus(a) && a.status_tab && <MenuLink to={statusLink(a)}>{a.status_to_choose ? "Choose status" : "Edit status"}</MenuLink>}
               </>
             )}
           />

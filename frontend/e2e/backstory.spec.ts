@@ -61,7 +61,7 @@ test("a troupe asks its questions only: the lead loads the template and rewords 
   await shortForm.getByRole("button", { name: "Edit “Who was your Sire?”" }).click();
   await l.getByLabel("Question", { exact: true }).fill("Who was your Sire, and why did they choose you?");
   await l.getByLabel("Short title").fill("My sire");
-  await l.getByRole("button", { name: "Save the question" }).click();
+  await shortForm.getByRole("button", { name: "Save", exact: true }).click();
   await expect(shortForm.getByText("Who was your Sire, and why did they choose you?")).toBeVisible();
   await expect(shortForm.getByText("Heading: My sire")).toBeVisible();
 

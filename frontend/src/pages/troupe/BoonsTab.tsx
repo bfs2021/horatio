@@ -562,7 +562,7 @@ function EditForm({ troupeId, boon, characters, onDone }: { troupeId: string; bo
         <Input maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
       <ErrorText error={save.error} />
-      <FormButtons pending={save.isPending} ready={Boolean(d && c && madeOn && note.trim())} label="Save the edit" onCancel={onDone} />
+      <FormButtons pending={save.isPending} ready={Boolean(d && c && madeOn && note.trim())} label="Save" onCancel={onDone} />
     </form>
   );
 }

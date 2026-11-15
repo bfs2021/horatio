@@ -469,7 +469,7 @@ function Tale({ characterId, quest: q }: { characterId: string; quest: PlayerQue
           </Field>
           <div>
             <Button type="submit" disabled={save.isPending}>
-              Save the tale
+              Save
             </Button>
           </div>
           <ErrorText error={save.error} />

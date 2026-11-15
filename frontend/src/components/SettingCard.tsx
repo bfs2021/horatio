@@ -30,7 +30,8 @@ export const STORYTELLERS_CHANGE = "The troupe's storytellers change this.";
  *   controls, with `readOnly` giving one line saying who can change it.
  *
  * There is no Change button that swaps a card into a form: a card is live, or a form.
- * A list of rules with a row editor (teacher rules, territories) keeps its per-row Change.
+ * A list of rules with a row editor (teacher rules, territories) keeps a per-row Edit.
+ * The Save is `secondary`: settings cards share their screen (the rules in `ui.tsx`).
  */
 export function SettingCard({
   title,
@@ -187,7 +188,7 @@ export function SettingForm<T>({ form, problem, className, children }: { form: S
         )}
         <ErrorText error={form.error} />
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="submit" disabled={!form.unsaved || !!problem || form.saving} aria-describedby={problem ? `${id}-problem` : undefined}>
+          <Button type="submit" variant="secondary" disabled={!form.unsaved || !!problem || form.saving} aria-describedby={problem ? `${id}-problem` : undefined}>
             Save
           </Button>
           {form.unsaved && <span className="text-sm text-mist">Not saved yet</span>}

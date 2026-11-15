@@ -118,7 +118,7 @@ test("an agency's portrait: a storyteller uploads and crops it, and it shows bes
   await expect(dialog.getByText(/its stories show on Discord beside its name/)).toBeVisible();
   await dialog.getByLabel("Choose a portrait").setInputFiles("e2e/portrait.jpg");
   await expect(dialog.getByRole("slider", { name: /Where the portrait is/ })).toBeVisible();
-  await dialog.getByRole("button", { name: "Save picture" }).click();
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
   await expect(dialog.locator('img[src*="/portraits/"]')).toHaveAttribute("src", /\/api\/agencies\/.+\/portraits\/.+\/512\.webp$/);
   await expect(dialog.getByRole("button", { name: "Move the crop" })).toBeVisible();
   await l.keyboard.press("Escape");

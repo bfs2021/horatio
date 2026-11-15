@@ -643,13 +643,13 @@ test("a dead regnant's bond fades: staff see the day it ends, and the thrall's s
 
   // Staff end it today, as the 30 days running out would: it has faded, but Solene's
   // player isn't told until the next downtime results, so her sheet still shows it.
-  await bond.getByRole("button", { name: "Change the fade" }).click();
+  await bond.getByRole("button", { name: "Edit the fade" }).click();
   const fade = bond.getByRole("form", {
-    name: "Change the fade of Solene Ardoise's bond to Malachai Hale",
+    name: "Edit the fade of Solene Ardoise's bond to Malachai Hale",
   });
   await fade.getByRole("button", { name: "Today" }).click();
   await fade.getByLabel("Reason").fill("The story moves on");
-  await fade.getByRole("button", { name: "Save the fade" }).click();
+  await fade.getByRole("button", { name: "Save", exact: true }).click();
   await expect(bond).toContainText(
     "Ended: Faded: its regnant met Final Death.",
   );

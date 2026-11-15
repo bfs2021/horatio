@@ -62,7 +62,7 @@ function TableCard({ troupeId, table, canEdit }: { troupeId: string; table?: Tab
             <Textarea rows={6} value={entries} onChange={(e) => setEntries(e.target.value)} />
           </Field>
           <Button className="self-start" onClick={() => save.mutate(undefined)} disabled={!name || save.isPending}>
-            Save table
+            Save
           </Button>
         </div>
       ) : (

@@ -47,7 +47,7 @@ export function IdentityPanel({ character, detail }: { character: CharacterOut; 
         data.data.can_edit &&
         detail && (
           <button className="mt-0.5 text-mist underline hover:text-gold" onClick={() => setAccepted(identity.accepted_by)}>
-            {identity.accepted_by ? "Change who Accepts it" : "Accepted by a sect or group?"}
+            {identity.accepted_by ? "Edit who Accepts it" : "Accepted by a sect or group?"}
           </button>
         )
       ) : (

@@ -32,7 +32,7 @@ export function OverviewTab({ troupe, can }: { troupe: TroupeOut; can: ReturnTyp
   const leading = can.lead && !troupe.archived;
   const settings = (
     <Link to={`${base}/settings`} className="text-sm text-mist underline hover:text-parchment">
-      Change in Customise
+      Edit in Customise
     </Link>
   );
   return (

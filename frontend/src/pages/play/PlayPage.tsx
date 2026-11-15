@@ -1086,7 +1086,7 @@ function DetailsLater({ view, entry, onDone, onChange }: { view: Shown; entry: S
         <DetailFields standing={standing} fields={fields} onChange={setFields} />
         <div className="flex gap-2">
           <Button type="submit" className="min-h-12 flex-1" disabled={!fields.action || save.isPending}>
-            Save details
+            Save
           </Button>
           <Button type="button" variant="ghost" className="min-h-12" onClick={onDone}>
             Cancel
@@ -1137,7 +1137,7 @@ export function LogEntries({ log, onDetails }: { log: ShownEntry[]; onDetails?: 
             {e.by_staff && <p className="text-xs text-mist">by {e.actor_name}</p>}
             {e.influence && !e.undone && onDetails && (
               <button type="button" className="text-xs text-mist underline hover:text-parchment" onClick={() => onDetails(e)}>
-                {e.influence.needs_details ? `Add details to ${e.influence.short_id}` : `Change details of ${e.influence.short_id}`}
+                {e.influence.needs_details ? `Add details to ${e.influence.short_id}` : `Edit details of ${e.influence.short_id}`}
               </button>
             )}
           </div>

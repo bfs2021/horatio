@@ -233,10 +233,10 @@ With **NPCs** or **Everyone** shown, choose **New NPC**:
 In the quick build, a trait the NPC holds can carry a detail, as a player's can:
 - **A merit that applies to something:** a merit like Thaumaturgic Expertise needs its choice, here which path it makes in-clan. Until that's made, it shows **Choose what it applies to** under the merit, and the NPC's sheet lists it under **Against the rules**. Choose from its list (the NPC's own paths come first) and choose **Set**.
 - **A field or a name:** a skill taken once per field, such as Crafts, needs its field, and a Retainer needs its name. Each is asked for in the same way.
-- **Any other detail:** **Detail** beside a skill, background, merit or flaw adds one, and **Change** alters one already there.
+- **Any other detail:** **Detail** beside a skill, background, merit or flaw adds one, and **Edit** alters one already there.
 - **What stays:** a changed detail keeps the trait's rating and its creation pick.
 - **More than one:** where a trait can be held more than once, such as Crafts in a second field or another Retainer, use **Add another field** or **Add another Retainer**.
-- **A merit that gives another:** Piece That Remains, Auspicious, Old Habits and Shadows of the Past show what they give under the merit, in the quick build and on the NPC's **Sheet** tab. **Choose** (or **Change**) picks it from what the merit can give. The merit given is free, its own grants apply (Ventrue Royalty's 4, 3 and 2 are fitted onto the NPC's backgrounds), and the NPC's worth follows. Ventrue Royalty's own dots aren't chosen this way: they're placed on the **Creation picks** card.
+- **A merit that gives another:** Piece That Remains, Auspicious, Old Habits and Shadows of the Past show what they give under the merit, in the quick build and on the NPC's **Sheet** tab. **Choose** (or **Edit**) picks it from what the merit can give. The merit given is free, its own grants apply (Ventrue Royalty's 4, 3 and 2 are fitted onto the NPC's backgrounds), and the NPC's worth follows. Ventrue Royalty's own dots aren't chosen this way: they're placed on the **Creation picks** card.
 
 ### Stock NPCs
 
@@ -350,7 +350,7 @@ Each story is one-off: there are no repeating stories. For a regular bulletin, *
 - its **Name**, and a line of **Description** for staff;
 - its **Masthead colour**, shown behind its name, beside its stories and down the side of its Discord posts.
 
-An agency's stories go to the troupe's news channel on Discord, unless it has a channel of its own. Both are chosen under **Customise › Connectors** (see [The news channel on Discord](#the-news-channel-on-discord)). Where an agency has its own channel, the list names it, with **Change in Connectors**.
+An agency's stories go to the troupe's news channel on Discord, unless it has a channel of its own. Both are chosen under **Customise › Connectors** (see [The news channel on Discord](#the-news-channel-on-discord)). Where an agency has its own channel, the list names it, with **Edit in Connectors**.
 
 Its **⋯** has **Edit…**, **Masthead picture…** (a nameplate or logo shown in place of its name), **Portrait…** and **Retire**. A retired agency is no longer offered for new stories; its old stories stay, and **Bring back** returns it.
 
@@ -378,7 +378,7 @@ On the **News** tab, **News desk** opens the desk; **Write a story** starts one.
 - **Publish now** puts it on everyone's News tab at once, with a bell notification, and sends it to Discord within a minute.
 - **Schedule…** asks for a date and time, entered and shown on your own clock (your time zone under Account › Settings, or your device's). It goes out within a minute of then.
 
-The desk's **Scheduled** list shows what goes out next and when. Each story's **⋯** has **Change**, **Publish now** and **Cancel**, which turns it back into a draft.
+The desk's **Scheduled** list shows what goes out next and when. Each story's **⋯** has **Edit**, **Publish now** and **Cancel**, which turns it back into a draft.
 
 ### Editing, unpublishing and duplicating
 
@@ -558,7 +558,7 @@ When you change the document, the troupe's players hear of it in the bell, with 
 
 #### Theme and mood tags
 
-To see which themes and moods the chronicle is actually touching, tag your [scenes](#scenes) and [quests](#quests) with them: **Tag it** (or **Change tags**) under a scene's name, or in a quest's overview, picks from the troupe's themes and moods. Storytellers and assistant storytellers tag; narrators see a quest's tags but don't change them. Players never see tags, and tagging changes nothing in the document they read.
+To see which themes and moods the chronicle is actually touching, tag your [scenes](#scenes) and [quests](#quests) with them: **Tag it** (or **Edit tags**) under a scene's name, or in a quest's overview, picks from the troupe's themes and moods. Storytellers and assistant storytellers tag; narrators see a quest's tags but don't change them. Players never see tags, and tagging changes nothing in the document they read.
 
 Below the document on **The setting**, **Themes and moods touched** lists every theme, then every mood, with how many scenes and quests are tagged with it and links to them. Those nothing is tagged with yet say **Not touched yet**. Removing a theme or mood removes its tags; so does removing a scene.
 
@@ -726,7 +726,7 @@ A new or changed price applies from a character's next purchase. What it has alr
 
 ### Starting points
 
-**Starting points** sets what new characters get free in each category: picks at a rating, or a budget of points. Choose **Change** beside a category to play it differently; going back uses the rule set's again.
+**Starting points** sets what new characters get free in each category: picks at a rating, or a budget of points. Choose **Edit** beside a category to play it differently; going back uses the rule set's again.
 
 Merits and flaws work as the book has it (MET: VTM pp. 85, 106): merits taken in creation are bought with the character's starting XP, and flaws add their points to it. Their budgets here are the most points of merits a new character takes (its clan's rarity and bloodline merits among them), and the most XP its flaws give; flaws past that need your OK and give nothing more. Changing a budget applies at once to characters being built here. Characters finished before Horatio worked this way (November 2026) keep the numbers they had, when merits and flaws came from free budgets and gave and cost no XP.
 
@@ -741,7 +741,7 @@ Starting XP, the XP floor and ceiling, and blood at the start of a game are unde
 
 **Downtime actions** sets how many actions of each kind characters get each cycle, and which traits add or take away actions (once at any rating, for each dot, or for each field held, from a rating). A cycle keeps the allowances it was opened with.
 
-The book's own list includes Computer, each Science field, Soul of the Homunculi and Ay Befriend (Mytherceria 3). Choose **Change** on any of them to replace it with the troupe's own. Science counts **For each field held**: to give one for the first field, a second at 3 dots and a third at 5, set **Rating each field needs** to "1, 3, 5". The character's best Science counts.
+The book's own list includes Computer, each Science field, Soul of the Homunculi and Ay Befriend (Mytherceria 3). Choose **Edit** on any of them to replace it with the troupe's own. Science counts **For each field held**: to give one for the first field, a second at 3 dots and a third at 5, set **Rating each field needs** to "1, 3, 5". The character's best Science counts.
 
 **Rare disciplines**, on the same page, is an optional rule (MET: VtM core p. 113), off until you switch it on: a dot of a rare discipline learned from a teacher, out of clan, takes two downtime actions instead of one. Every discipline but Animalism, Auspex, Celerity, Dominate, Fortitude, Obfuscate, Potence and Presence is rare.
 
@@ -783,7 +783,7 @@ Choose **Add a merit or flaw** (the form opens over the list), then give it a **
 
 Under **What it does**, add effect blocks: free dots, raising a maximum, changing an XP price, an extra in-clan discipline, health levels, requirements, pool bonuses, uses per game, extra downtime actions or a change to feeding. One with no effects does what its description says, for you to rule on at the table. The preview tries it on a sheet.
 
-The **⋯** at the end of a row holds **Change…**, **Archive** (or **Bring back**) and **Delete…**. Changing one changes it for everyone who holds it (Horatio asks first). **Archive** stops anyone new taking it; **Delete…** is only for one nobody holds, and says so when someone does.
+The **⋯** at the end of a row holds **Edit…**, **Archive** (or **Bring back**) and **Delete…**. Changing one changes it for everyone who holds it (Horatio asks first). **Archive** stops anyone new taking it; **Delete…** is only for one nobody holds, and says so when someone does.
 
 ### Written rules
 
@@ -805,7 +805,7 @@ Choose **Add a written rule**, then give it a **Title**, a **Section** (such as 
 
 ### Specialisations
 
-**Customise › Specialisations** holds the troupe's own lists of specialisations, one kind at a time: the areas its influences cover, the notable people Contacts can be, and so on. The kinds are listed as the House rules parts are, under **Skills** and **Backgrounds**. Where a kind has a list, characters choose from it. Choose **Make our own list** (or **Edit our list**), one a line, then **Save our list**.
+**Customise › Specialisations** holds the troupe's own lists of specialisations, one kind at a time: the areas its influences cover, the notable people Contacts can be, and so on. The kinds are listed as the House rules parts are, under **Skills** and **Backgrounds**. Where a kind has a list, characters choose from it. Choose **Make our own list** (or **Edit our list**), one a line, then **Save**.
 
 ### Connectors: Discord and email
 
@@ -1075,7 +1075,7 @@ For characters from before the troupe tracked bonds, **Court › Bonds** shows *
 
 #### When a regnant or a thrall meets Final Death
 
-"If a regnant is killed, the bond will slowly fade over the next month" (MET: VTM p. 296). When a character is retired with **Final Death** (or why it left is changed to Final Death), each bond it's the regnant of starts **fading**. On **Court › Bonds** it says so, with the day it ends, 30 days on. **Change the fade** moves that day, with a reason; choose today to end it now.
+"If a regnant is killed, the bond will slowly fade over the next month" (MET: VTM p. 296). When a character is retired with **Final Death** (or why it left is changed to Final Death), each bond it's the regnant of starts **fading**. On **Court › Bonds** it says so, with the day it ends, 30 days on. **Edit the fade** moves that day, with a reason; choose today to end it now.
 
 The thrall still feels the bond all that month, so nothing their player sees changes: the bond stays on their sheet as it was, with no notification and nothing in their character's log. The fade goes only in the troupe's log. On the day, the bond ends as faded, but the thrall's sheet still shows it until their player is told, with the troupe's next downtime results: "Agnes's bond to Bram has faded", never why. **Court › Bonds** marks a faded bond whose thrall isn't told yet.
 
@@ -1083,7 +1083,7 @@ Retiring a regnant **Off-field** or **Inactive** leaves its bonds alone. If you 
 
 A thrall's Final Death ends its bonds. A regnant has no sense of a thrall's death, so a regnant's player who knew of the bond goes on seeing it as it was; **Stop showing the regnant** clears it when the regnant would know.
 
-Players can still learn of a death in other ways, which are yours to choose: listing the character under **No longer with us** on the Who's Who, opening Remembrances for it, or logging the withdrawal of its dots from a shared background. Hold off on these until its bonds have faded if the thralls shouldn't know yet. The retire dialog, and **Change…** on a retired character, warn of these before you confirm: the bonds it's the regnant of (all of them for staff; to its player, only those known to the regnant) and the shared backgrounds it has dots in with others. A warning never stops you.
+Players can still learn of a death in other ways, which are yours to choose: listing the character under **No longer with us** on the Who's Who, opening Remembrances for it, or logging the withdrawal of its dots from a shared background. Hold off on these until its bonds have faded if the thralls shouldn't know yet. The retire dialog, and **Edit…** on a retired character, warn of these before you confirm: the bonds it's the regnant of (all of them for staff; to its player, only those known to the regnant) and the shared backgrounds it has dots in with others. A warning never stops you.
 
 #### Bonds that fade with time
 
@@ -1181,7 +1181,7 @@ The **Responses** tab holds every response in the cycle, by character. Filter by
 
 Only storytellers and assistant storytellers assign. Everyone writes what is assigned to them, from here or from [My work](#my-work).
 
-What a response gives shows under it, marked **With the results**: it reaches the character when the response is delivered, not before. Until then, **Change** or **Take off** it. Once delivered it's marked **Given**, and it's an item like any other, changed on the Equipment tab. Only storytellers and assistant storytellers give equipment; narrators see what a response gives, but can't add to it.
+What a response gives shows under it, marked **With the results**: it reaches the character when the response is delivered, not before. Until then, **Edit** or **Take off** it. Once delivered it's marked **Given**, and it's an item like any other, changed on the Equipment tab. Only storytellers and assistant storytellers give equipment; narrators see what a response gives, but can't add to it.
 
 ### Actions aimed at characters
 
@@ -1279,7 +1279,7 @@ Check-in closes by itself when the game's XP is awarded.
 
 ### Checking in by hand and absentees
 
-Under **Who came**, a table shows each character checked in, with its player: whether it's home or **Visiting**, how it checked in (**By hand**, or by its player), whether it had a day's rest, and, if your troupe fixes the source of status at check-in, its **Status tonight**. On a phone, each character folds into a card that shows only what's out of the ordinary. Each character's **⋯**, at the end of its row, holds **Check out**, and **Choose status** (or **Change status**), which opens its Play View on the Status tab.
+Under **Who came**, a table shows each character checked in, with its player: whether it's home or **Visiting**, how it checked in (**By hand**, or by its player), whether it had a day's rest, and, if your troupe fixes the source of status at check-in, its **Status tonight**. On a phone, each character folds into a card that shows only what's out of the ordinary. Each character's **⋯**, at the end of its row, holds **Check out**, and **Choose status** (or **Edit status**), which opens its Play View on the Status tab.
 
 To check someone in yourself, choose a character under **Check someone in by hand**, untick **Had a full day's rest** if they didn't (their Willpower then starts where the last game left it), and choose **Check in**. A visitor's XP is awarded by its own home troupe.
 

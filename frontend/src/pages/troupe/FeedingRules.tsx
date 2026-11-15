@@ -258,7 +258,7 @@ export function RestrictionEditor({ cycleId, character: c }: { cycleId: string; 
         </div>
         <span className="flex gap-2">
           <Button variant="secondary" disabled={!endings.length || save.isPending} onClick={() => save.mutate({ mode, endings })}>
-            Save restriction
+            Save
           </Button>
           {c.restriction && (
             <Button variant="ghost" disabled={save.isPending} onClick={() => save.mutate(null)}>

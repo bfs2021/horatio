@@ -90,7 +90,7 @@ export function HouseTraitsSection({ troupeId, canEdit }: { troupeId: string; ca
       </Explainer>
 
       <Dialog
-        title={editing === "new" ? "A new house merit or flaw" : editing ? `Change ${editing.name}` : ""}
+        title={editing === "new" ? "A new house merit or flaw" : editing ? `Edit ${editing.name}` : ""}
         open={editing !== null}
         onClose={() => setEditing(null)}
         wide
@@ -201,7 +201,7 @@ function HouseTraitRow({ trait: h, troupeId, canEdit, onChange }: { trait: House
       {canEdit && (
         <td className="w-px py-1 text-right align-top">
           <ActionMenu label={`Actions for ${h.name}`} variant="ghost">
-            <MenuItem onSelect={onChange}>Change…</MenuItem>
+            <MenuItem onSelect={onChange}>Edit…</MenuItem>
             <MenuItem onSelect={() => archive.mutate(undefined)}>{h.archived ? "Bring back" : "Archive"}</MenuItem>
             {h.holders === 0 ? (
               <MenuItem danger onSelect={() => setDeleting(true)}>
@@ -394,7 +394,7 @@ function HouseTraitEditor({
               save.mutate(undefined);
             }}
           >
-            Change it for {confirming?.length === 1 ? "them" : "everyone"}
+            Save it for {confirming?.length === 1 ? "them" : "everyone"}
           </Button>
           <Button variant="ghost" onClick={() => setConfirming(null)}>
             Cancel

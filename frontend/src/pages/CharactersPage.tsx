@@ -61,9 +61,11 @@ export function CharactersPage() {
     </ActionMenu>
   );
   // On a phone New character is below the list (and any troupes), so this takes you to it.
+  // Secondary: the form's Create is the one red button (#920).
   const toNewCharacter = (
     <LinkButton
       href="#new-character"
+      variant="secondary"
       className="md:hidden"
       onClick={(e) => {
         e.preventDefault();

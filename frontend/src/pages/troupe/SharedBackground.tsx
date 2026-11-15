@@ -321,7 +321,7 @@ function EditForm({ shared, choices, onDone }: { shared: SharedBackgroundOut; ch
       <ErrorText error={save.error} />
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={save.isPending || !name.trim()}>
-          Save changes
+          Save
         </Button>
         <Button type="button" variant="ghost" onClick={onDone}>
           Cancel

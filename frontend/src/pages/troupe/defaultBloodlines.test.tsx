@@ -34,13 +34,13 @@ describe("DefaultBloodlinesCard", () => {
     render(<DefaultBloodlinesCard data={data} canEdit={false} save={async () => null} />);
     expect(screen.getByText("The plain Tzimisce, no bloodline (house rule)")).toBeTruthy();
     expect(screen.getByText("The plain Gangrel, no bloodline")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Change default bloodlines" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit default bloodlines" })).toBeNull();
   });
 
   it("saves the clans chosen, leaving the rest to the book", async () => {
     const saved: Record<string, string>[] = [];
     render(<DefaultBloodlinesCard data={data} canEdit save={async (d) => saved.push(d)} />);
-    fireEvent.click(screen.getByRole("button", { name: "Change default bloodlines" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit default bloodlines" }));
     const tzimisceBox = screen.getByLabelText<HTMLSelectElement>("Tzimisce default bloodline");
     expect(tzimisceBox.value).toBe("Tzimisce");
     expect([...tzimisceBox.options].map((o) => o.text)).toEqual([

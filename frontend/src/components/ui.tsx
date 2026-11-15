@@ -15,6 +15,29 @@ function cx(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
+/*
+ * Buttons: which kind, and which words (#920).
+ *
+ * Kind:
+ * - One `primary` (red) button per screen or dialog: the thing the person came to do.
+ *   Everything else is `secondary`, `ghost`, or `danger` for what destroys. The Play
+ *   View's tracker, with its red − and + for each pool, is the one exception.
+ * - A card's own Save is `primary` only if it is the only form on the screen; otherwise
+ *   `secondary`. A settings card's Save (`SettingForm`) is always `secondary`: settings
+ *   cards share their screen.
+ *
+ * Words, the same for the same act:
+ * - **Save** keeps changes to something that already exists. Never "Save X" unless two
+ *   Saves are in sight at once (Save draft beside Save and resubmit, say).
+ * - **Add …** puts a new line in a list ("Add a theme", "Add a price").
+ * - **Create …** makes a new thing with a page of its own ("Create troupe").
+ * - **Edit** opens a form on something shown read-only. That includes a row of a list
+ *   whose editor opens beneath it (a price, a territory, a teacher rule): the button reads
+ *   "Edit", and its accessible name says which ("Edit the price for Haven").
+ * - **Remove** takes a line out of a list; **Delete** destroys something.
+ * - "Change" is not used on buttons. A menu may still head a group of items "Change".
+ */
+
 export type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 const variants: Record<Variant, string> = {

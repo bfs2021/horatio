@@ -31,7 +31,7 @@ export function CharacterPronouns({ character, onDone }: { character: CharacterO
         <ErrorText error={save.error} />
         <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={save.isPending}>
-            Save pronouns
+            Save
           </Button>
           <Button type="button" variant="ghost" onClick={onDone}>
             Cancel

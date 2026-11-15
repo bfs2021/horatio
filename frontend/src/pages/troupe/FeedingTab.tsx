@@ -255,8 +255,8 @@ function CharacterFeeding({ cycle, character: c, humors, rack }: { cycle: CycleO
             <Input value={reply} onChange={(e) => setReply(e.target.value)} />
           </Field>
           <div className="flex flex-wrap items-center gap-2">
-            <Button type="submit" disabled={answer.isPending || (result === "other" && !reply.trim())}>
-              {c.result ? "Change answer" : "Answer"}
+            <Button type="submit" variant="secondary" disabled={answer.isPending || (result === "other" && !reply.trim())}>
+              {c.result ? "Save" : "Answer"}
             </Button>
             {!!tables.data?.length && (
               <>

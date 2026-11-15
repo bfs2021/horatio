@@ -278,7 +278,7 @@ function KeywordForm({
       </fieldset>
       <ErrorText error={save.error} />
       <Button type="submit" className="self-start" disabled={save.isPending || !draft.name.trim()}>
-        {keyword ? "Save keyword" : "Add keyword"}
+        {keyword ? "Save" : "Add keyword"}
       </Button>
     </form>
   );

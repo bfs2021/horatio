@@ -1,7 +1,8 @@
-import { useId, useState } from "react";
+import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
 import { BOON_PAGE } from "../../boons";
+import { RadioList } from "../../components/RadioList";
 import { useToast } from "../../components/Toast";
 import { Toggle } from "../../components/Toggle";
 import { Card, ErrorText } from "../../components/ui";
@@ -84,7 +85,6 @@ const PLAYERS_SEE: { value: NonNullable<PlayersSee>; label: string; hint: string
  */
 function PlayersSetting({ troupe }: { troupe: TroupeOut }) {
   const toast = useToast();
-  const group = useId();
   // Shown as chosen at once, while it saves.
   const [see, setSee] = useState<NonNullable<PlayersSee>>(troupe.boon_players_see ?? "intake");
   const [settle, setSettle] = useState(troupe.boon_players_settle ?? false);
@@ -103,17 +103,14 @@ function PlayersSetting({ troupe }: { troupe: TroupeOut }) {
     });
   };
   return (
-    <fieldset className="mt-2 flex flex-col gap-2 border-t border-ash/60 pt-3">
-      <legend className="text-mist">In the Play View&apos;s Boons tab, players see</legend>
-      {PLAYERS_SEE.map((p) => (
-        <label key={p.value} className="flex items-start gap-2">
-          <input type="radio" className="mt-1" name={group} checked={see === p.value} disabled={save.isPending} onChange={() => choose({ see: p.value, settle })} />
-          <span>
-            {p.label}
-            <span className="block text-xs text-mist">{p.hint}</span>
-          </span>
-        </label>
-      ))}
+    <div className="mt-2 flex flex-col gap-2 border-t border-ash/60 pt-3">
+      <RadioList
+        label="In the Play View's Boons tab, players see"
+        value={see}
+        options={PLAYERS_SEE.map((p) => ({ value: p.value, label: p.label, hint: p.hint }))}
+        disabled={save.isPending}
+        onChange={(next) => choose({ see: next, settle })}
+      />
       <Toggle
         label="Players mark boons owed to them settled"
         hint={
@@ -128,7 +125,7 @@ function PlayersSetting({ troupe }: { troupe: TroupeOut }) {
       />
       <p className="text-xs text-mist">The Boons tab can also be switched off under Play View tabs.</p>
       <ErrorText error={save.error} />
-    </fieldset>
+    </div>
   );
 }
 
@@ -198,7 +195,6 @@ const AS_THE_COURT_KNOWS =
  */
 function HarpySetting({ troupe }: { troupe: TroupeOut }) {
   const toast = useToast();
-  const group = useId();
   // Shown as chosen at once, while it saves.
   const [access, setAccess] = useState<HarpyAccess>(troupe.boon_harpy ?? "none");
   const [standings, setStandings] = useState(troupe.boon_harpy_standings ?? false);
@@ -211,27 +207,17 @@ function HarpySetting({ troupe }: { troupe: TroupeOut }) {
     toast({ message: next ? "Saved: the Harpy reads the boon standings and statistics." : "Saved: the boon standings and statistics are staff's alone." });
   });
   return (
-    <fieldset className="mt-2 flex flex-col gap-2 border-t border-ash/60 pt-3">
-      <legend className="text-mist">The Harpy&apos;s access to the ledger</legend>
-      {HARPY.map((h) => (
-        <label key={h.value} className="flex items-start gap-2">
-          <input
-            type="radio"
-            className="mt-1"
-            name={group}
-            checked={access === h.value}
-            disabled={save.isPending}
-            onChange={() => {
-              setAccess(h.value);
-              save.mutate(h.value, { onError: () => setAccess(troupe.boon_harpy ?? "none") });
-            }}
-          />
-          <span>
-            {h.label}
-            <span className="block text-xs text-mist">{h.hint}</span>
-          </span>
-        </label>
-      ))}
+    <div className="mt-2 flex flex-col gap-2 border-t border-ash/60 pt-3">
+      <RadioList
+        label="The Harpy's access to the ledger"
+        value={access}
+        options={HARPY.map((h) => ({ value: h.value, label: h.label, hint: h.hint }))}
+        disabled={save.isPending}
+        onChange={(next) => {
+          setAccess(next);
+          save.mutate(next, { onError: () => setAccess(troupe.boon_harpy ?? "none") });
+        }}
+      />
       {access === "full" && (
         <Toggle
           label="The Harpy also reads the boon standings and statistics"
@@ -251,7 +237,7 @@ function HarpySetting({ troupe }: { troupe: TroupeOut }) {
       </p>
       <ErrorText error={save.error} />
       <ErrorText error={saveStandings.error} />
-    </fieldset>
+    </div>
   );
 }
 

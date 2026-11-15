@@ -3,7 +3,8 @@ import { useState } from "react";
 import { Link, Route, Routes, useNavigate, useParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { SharedChoicesOut } from "../../api/types";
-import { Button, Card, Empty, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
+import { Button, Card, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
+import { EmptyState } from "../../components/EmptyState";
 import { BackLink } from "../../components/BackLink";
 import { useAction } from "../../hooks";
 import { RECORD_ONLY, SharedBackgroundView } from "./SharedBackground";
@@ -53,10 +54,11 @@ function List({ troupeId }: { troupeId: string }) {
           {choices.data.most} ({choices.data.page}). The players of the characters sharing one see it and log their uses. {RECORD_ONLY}
         </p>
         {adding && <SetUpForm troupeId={troupeId} choices={choices.data} onDone={() => setAdding(false)} />}
+        {!adding && shared.data.length === 0 && (
+          <EmptyState title="No shared backgrounds yet.">Each one shows here once set up, with who shares it and its log. Start with Set up a shared background, above.</EmptyState>
+        )}
       </Card>
-      {shared.data.length === 0 ? (
-        <Empty>No shared backgrounds yet.</Empty>
-      ) : (
+      {shared.data.length > 0 && (
         <ul className="flex flex-col gap-2">
           {shared.data.map((s) => (
             <li key={s.id} className="rounded-md border border-ash bg-dusk p-3 text-sm">

@@ -146,7 +146,7 @@ function PageCard({ state }: { state: YorickImport }) {
           </span>
         </p>
       ) : (
-        <p className="mb-3 text-sm text-mist">No page uploaded{state.report_kind === "import" ? ": the last one was imported, and deleted" : ""}.</p>
+        <Empty>No page uploaded{state.report_kind === "import" ? ": the last one was imported, and deleted" : ""}.</Empty>
       )}
       <p className="mb-3 text-sm text-mist">
         In Yorick, open the troupe's <strong className="text-parchment">Print Characters</strong> page and save it from the browser as a complete web page. That

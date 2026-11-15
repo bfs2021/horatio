@@ -4,6 +4,7 @@ import { useLocation } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { PlayerOut, Preferences } from "../../api/types";
 import { drawCurtains } from "../../components/Curtains";
+import { Segmented } from "../../components/Segmented";
 import { startSunrise } from "../../components/Sunrise";
 import { useToast } from "../../components/Toast";
 import { Toggle } from "../../components/Toggle";
@@ -52,20 +53,15 @@ export function Choice<K extends Key>({ name, label, choices }: { name: K; label
   const prefs = usePreferences();
   const save = useSaveSetting();
   return (
-    <span role="radiogroup" aria-label={label} className="inline-flex overflow-hidden rounded-md border border-ash">
-      {choices.map(([value, text]) => (
-        <button
-          key={String(value)}
-          type="button"
-          role="radio"
-          aria-checked={prefs[name] === value}
-          onClick={() => save({ [name]: value } as Partial<Preferences>, `${label}: ${text}`)}
-          className={`min-h-9 px-3 text-sm ${prefs[name] === value ? "bg-gold/20 text-gold" : "text-mist hover:text-parchment"} [&+&]:border-l [&+&]:border-ash`}
-        >
-          {text}
-        </button>
-      ))}
-    </span>
+    <Segmented
+      label={label}
+      value={choices.findIndex(([value]) => value === prefs[name])}
+      options={choices.map(([, text], i) => ({ value: i, label: text }))}
+      onChange={(i) => {
+        const [value, text] = choices[i]!;
+        save({ [name]: value } as Partial<Preferences>, `${label}: ${text}`);
+      }}
+    />
   );
 }
 
@@ -121,20 +117,19 @@ function Theme() {
   const dark = () => {
     if (theme !== "dark") save({ theme: "dark" }, "Theme: Dark");
   };
-  const choice = "min-h-9 px-3 text-sm [&+&]:border-l [&+&]:border-ash";
-  const look = (on: boolean) => `${choice} ${on ? "bg-gold/20 text-gold" : "text-mist hover:text-parchment"}`;
+  const choose = { dark, light: dawn, ultragoth: goth };
   return (
-    <span role="radiogroup" aria-label="Theme" className="inline-flex overflow-hidden rounded-md border border-ash">
-      <button type="button" role="radio" aria-checked={theme === "dark"} onClick={dark} className={look(theme === "dark")}>
-        Dark
-      </button>
-      <button type="button" role="radio" aria-checked="false" onClick={dawn} className={look(false)}>
-        Light
-      </button>
-      <button type="button" role="radio" aria-checked={theme === "ultragoth"} onClick={goth} className={look(theme === "ultragoth")}>
-        Ultra goth
-      </button>
-    </span>
+    <Segmented<keyof typeof choose>
+      label="Theme"
+      value={theme}
+      options={[
+        { value: "dark", label: "Dark" },
+        // Never shown as chosen: the sun rises, and whoever is at the screen is signed out.
+        { value: "light", label: "Light" },
+        { value: "ultragoth", label: "Ultra goth" },
+      ]}
+      onChange={(value) => choose[value]()}
+    />
   );
 }
 

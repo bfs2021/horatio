@@ -6,7 +6,7 @@ import type { PlayReference, RosterEntry, SceneOut, TestPool } from "../../api/t
 import { atGameCrumbs, Breadcrumb } from "../../components/Breadcrumb";
 import { LinesVeilsNote } from "../../components/LinesVeils";
 import { useClanName } from "../../components/ClanNames";
-import { Button, ErrorText, Input, Loading } from "../../components/ui";
+import { Button, Empty, ErrorText, Input, Loading } from "../../components/ui";
 import { usePreferences } from "../../hooks";
 import { NotUsed } from "./NotUsed";
 import { LogEntries, ResetGame, SyncStatus } from "./PlayPage";
@@ -283,7 +283,11 @@ function AddToScene({ roster, pinned, onPin, error }: { roster: RosterEntry[] | 
               </div>
             )
           ) : (
-            found.length === 0 && <p className="px-3 py-2 text-sm text-mist">{roster.length === 0 ? "No characters in the troupe yet." : "Nobody else matches."}</p>
+            found.length === 0 && (
+              <div className="px-3">
+                <Empty>{roster.length === 0 ? "No characters in the troupe yet." : "Nobody else matches."}</Empty>
+              </div>
+            )
           )}
         </div>
       )}

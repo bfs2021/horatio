@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { closeContextsAfterEach, run, person, makeCustodian, builtVampire, ATTRIBUTES_AND_FOCUSES, backstoryOptional, shots } from "./support";
+import { closeContextsAfterEach, run, person, makeCustodian, builtVampire, ATTRIBUTES_AND_FOCUSES, backstoryOptional, shots, troupeTab } from "./support";
 
 /** Boons: the troupe's ledger, for its running staff: registering a game's boons at once, settling, editing and trading them, each with its own log; the boon standings; the Play View's Boons tab, where players report boons and see what the troupe lets them (#686); review, where reports wait for staff to accept them (#687); the Harpy keeping the ledger as their character (#688); and Lesser Harpies the Harpy gives access (#689). */
 
@@ -35,8 +35,7 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   await expect(keep).toHaveAttribute("aria-checked", "true");
 
   // Under Court, the Boons screen: register a game's boons at once.
-  await l.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "Court", exact: true }).click();
-  await l.getByRole("link", { name: "Boons", exact: true }).click();
+  await troupeTab(l, "Boons");
   await expect(l.getByText("No open boons yet.")).toBeVisible();
   await l.getByRole("button", { name: "Register boons" }).click();
   const entry = l.getByRole("form", { name: "Register boons" });
@@ -143,8 +142,7 @@ test("staff see the boon standings: each character's net by the troupe's weights
 
   // Under Court › Boons, Standings: Casimir is owed a major and owes a minor.
   await l.goto(`/troupes/${troupe.id}`);
-  await l.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "Court", exact: true }).click();
-  await l.getByRole("link", { name: "Boons", exact: true }).click();
+  await troupeTab(l, "Boons");
   await l.getByRole("navigation", { name: "Boons", exact: true }).getByRole("link", { name: "Standings", exact: true }).click();
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/boons/standings$`));
   const standing = l.getByRole("table", { name: "Standing by character" });
@@ -275,8 +273,7 @@ test("staff see the boon statistics: the ledger over time, who owes whom, betwee
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/boons/statistics$`));
   // Under Court › Boons, Statistics: each of the four charts, every one with its table.
   await l.goto(`/troupes/${troupe.id}`);
-  await l.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "Court", exact: true }).click();
-  await l.getByRole("link", { name: "Boons", exact: true }).click();
+  await troupeTab(l, "Boons");
   await l.getByRole("navigation", { name: "Boons", exact: true }).getByRole("link", { name: "Statistics", exact: true }).click();
   for (const title of ["Boons registered", "Who owes whom", "Debt between clans", "Boons at each game"]) {
     await expect(l.getByRole("figure", { name: title })).toBeVisible();
@@ -706,8 +703,7 @@ test("staff declare a Boonbreaker: their open boons are made void, both ways, an
   });
 
   await l.goto(`/troupes/${troupe.id}`);
-  await l.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "Court", exact: true }).click();
-  await l.getByRole("link", { name: "Boons", exact: true }).click();
+  await troupeTab(l, "Boons");
   await expect(l.getByText("No Boonbreakers.")).toBeVisible();
 
   // Before declaring it, staff see what it makes void.

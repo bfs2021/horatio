@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import { BOND_PAGE, levelName, levelText } from "../../bonds";
 import { InfoButton } from "../../components/InfoButton";
-import { Button, Card } from "../../components/ui";
+import { Button, Card, Empty } from "../../components/ui";
 import { BondReportList, ReportDrinkForm, ReportMeetingForm } from "./BondReports";
 import { useVinculum, VinculumPart } from "./VinculumPart";
 
@@ -87,7 +87,7 @@ export function BondsCard({ characterId, name, mine }: { characterId: string; na
           </ul>
         </div>
       )}
-      {b.bound_to.length === 0 && b.bound_by.length === 0 && <p className="text-sm text-mist">No blood bonds recorded.</p>}
+      {b.bound_to.length === 0 && b.bound_by.length === 0 && <Empty>No blood bonds recorded.</Empty>}
       {reports.length > 0 && (
         <div className="mt-3 border-t border-ash pt-2">
           <p className="mb-1 text-xs tracking-wide text-mist uppercase">Drinks reported</p>

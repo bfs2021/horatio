@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { GameXpSettings } from "../../api/types";
+import { RadioList } from "../../components/RadioList";
 import { useToast } from "../../components/Toast";
 import { Checkbox } from "../../components/Checkbox";
 import { Button, Card, ErrorText, Input } from "../../components/ui";
@@ -278,19 +279,24 @@ function Editor({ troupeId, settings, onClose }: { troupeId: string; settings: G
         </div>
       </section>
 
-      <fieldset className="flex flex-col gap-2 border-t border-ash pt-3">
-        <legend className="pt-3 text-xs tracking-wide text-mist uppercase">Monthly XP</legend>
-        {CAPS.map((c) => (
-          <label key={c.value} className="flex items-start gap-2">
-            <input type="radio" name="monthly-cap" className="mt-1" checked={cap === c.value} onChange={() => setCap(c.value)} />
-            <span>
+      <RadioList
+        label="Monthly XP"
+        labelClassName="pt-3 text-xs tracking-wide text-mist uppercase"
+        className="border-t border-ash pt-3"
+        value={cap}
+        options={CAPS.map((c) => ({
+          value: c.value,
+          label: (
+            <>
               {c.label}
               {c.value === "warn" && <span className="text-mist"> (the default)</span>}
-              <span className="block text-xs text-mist">{c.meaning}</span>
-            </span>
-          </label>
-        ))}
-        <label className="flex items-center gap-2">
+            </>
+          ),
+          hint: c.meaning,
+        }))}
+        onChange={setCap}
+      >
+        <label className="mt-1 flex items-center gap-2">
           <Input
             type="number"
             min={1}
@@ -303,7 +309,7 @@ function Editor({ troupeId, settings, onClose }: { troupeId: string; settings: G
           />
           <span className="text-mist">XP a month (empty for the book's {BOOK_MONTHLY})</span>
         </label>
-      </fieldset>
+      </RadioList>
 
       <fieldset className="flex flex-col gap-2 border-t border-ash pt-3">
         <legend className="pt-3 text-xs tracking-wide text-mist uppercase">Absentee games</legend>

@@ -25,7 +25,7 @@ export type ChoiceProps = {
 };
 
 /**
- * The row a `Checkbox` or `Toggle` makes: the control and its words in one label, so
+ * The row a `Checkbox`, a `Toggle` or a `RadioList` option makes: the control and its words in one label, so
  * the whole row is the tap target, at least 40 px tall. The name is the label alone
  * and the hint is its description, however much the row holds.
  */

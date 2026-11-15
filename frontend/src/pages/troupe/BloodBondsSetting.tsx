@@ -1,6 +1,7 @@
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
 import { BOND_PAGE, BOND_SETTINGS, type BondSetting } from "../../bonds";
+import { RadioList } from "../../components/RadioList";
 import { useToast } from "../../components/Toast";
 import { Card, ErrorText } from "../../components/ui";
 import { useAction } from "../../hooks";
@@ -36,20 +37,18 @@ export function BloodBondsSetting({ troupe, canEdit }: { troupe: TroupeOut; canE
           {chosen.label}. <span className="text-mist">{chosen.meaning}</span>
         </p>
       ) : (
-        <fieldset className="flex flex-col gap-2 text-sm" disabled={save.isPending}>
-          <legend className="sr-only">How Horatio tracks blood bonds</legend>
-          {/* Off is the Features list's switch, the one place it is set. */}
-          {BOND_SETTINGS.filter((s) => s.value !== "off").map((s) => (
-            <label key={s.value} className="flex items-start gap-2">
-              <input type="radio" name="blood-bonds" className="mt-1" checked={now === s.value} onChange={() => save.mutate(s.value)} />
-              <span>
-                {s.label}
-                <span className="block text-xs text-mist">{s.meaning}</span>
-              </span>
-            </label>
-          ))}
+        <div className="flex flex-col gap-2 text-sm">
+          <RadioList
+            label="How Horatio tracks blood bonds"
+            hideLabel
+            value={now}
+            // Off is the Features list's switch, the one place it is set.
+            options={BOND_SETTINGS.filter((s) => s.value !== "off").map((s) => ({ value: s.value, label: s.label, hint: s.meaning }))}
+            disabled={save.isPending}
+            onChange={(setting) => save.mutate(setting)}
+          />
           <ErrorText error={save.error} />
-        </fieldset>
+        </div>
       )}
     </Card>
   );

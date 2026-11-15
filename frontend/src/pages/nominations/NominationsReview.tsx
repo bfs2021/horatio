@@ -5,6 +5,7 @@ import type { CycleNominationsOut, CycleOut, RememberedReviewOut, ReviewedOut } 
 import { ActionMenu, MenuGroup, MenuItem } from "../../components/ActionMenu";
 import { Avatar } from "../../components/Avatar";
 import { Dialog } from "../../components/Dialog";
+import { EmptyState } from "../../components/EmptyState";
 import { useToast } from "../../components/Toast";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Textarea } from "../../components/ui";
 import { useDates } from "../../dates";
@@ -40,7 +41,9 @@ export function NominationsReview({ cycle }: { cycle: CycleOut }) {
         (n.remembrances ?? []).map((r) => <RememberedCard key={r.remembrance_id} cycleId={cycle.id} remembered={r} />)}
       {n.player_nominations &&
         (n.nominations.length === 0 ? (
-          <Empty>No nominations yet. They show here once a player submits their downtime.</Empty>
+          <Card title="Nominations">
+            <EmptyState title="No nominations yet.">They show here once a player submits their downtime.</EmptyState>
+          </Card>
         ) : (
           <Card title="Nominations">
             <Rows label="Player Nominations" heading="Nomination" cycleId={cycle.id} rows={n.nominations} />
@@ -85,7 +88,7 @@ function RememberedCard({ cycleId, remembered: r }: { cycleId: string; remembere
     >
       {r.reason && <p className="mb-2 text-sm text-mist">{r.reason}</p>}
       {r.memories.length === 0 ? (
-        <p className="text-sm text-mist">No memories yet. They show here once a player submits their downtime.</p>
+        <Empty>No memories yet. They show here once a player submits their downtime.</Empty>
       ) : (
         <Rows label={`Memories of ${r.name}`} heading="Memory" cycleId={cycleId} rows={r.memories} />
       )}

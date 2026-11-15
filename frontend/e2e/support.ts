@@ -222,6 +222,32 @@ export async function troupeTab(page: Page, name: string) {
   if (await tab.count()) await tab.click();
 }
 
+/** Below `lg`, where a page's parts are one part picker's button (#906). */
+export const isNarrow = (page: Page) => (page.viewportSize()?.width ?? 1280) < 1024;
+
+/**
+ * Opens a part of a page with a part picker (#906), such as House rules › Costs:
+ * in its list down the side on a wide screen; below `lg`, through its button and
+ * sheet. `nav` names the picker: "House rules", "Specialisations".
+ */
+export async function pagePart(page: Page, name: string, nav = "House rules") {
+  const picker = page.locator("main").getByRole("navigation", { name: nav, exact: true });
+  if (!isNarrow(page)) return picker.getByRole("link", { name, exact: true }).click();
+  await picker.getByRole("button").click();
+  const sheet = page.getByRole("dialog", { name: nav });
+  await sheet.getByRole("link", { name, exact: true }).click();
+  await expect(sheet).toBeHidden();
+}
+
+/** That `name` is the open part of the part picker `nav`: marked in its list on a wide screen, named on its button below `lg`. */
+export async function expectPartOpen(page: Page, name: string, nav = "House rules") {
+  const picker = page.locator("main").getByRole("navigation", { name: nav, exact: true });
+  if (!isNarrow(page)) return expect(picker.getByRole("link", { name, exact: true })).toHaveAttribute("aria-current", "page");
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // After its group's name, if it has one: "Backgrounds, Influence: Elite".
+  await expect(picker.getByRole("button")).toHaveAccessibleName(new RegExp(`(^|\\W)${escaped}$`));
+}
+
 export async function person(browser: Browser, name: string, options: BrowserContextOptions = {}): Promise<{ page: Page; email: string; handle: string }> {
   const page = await (await browser.newContext(options)).newPage();
   const email = `${name}-${run}@example.com`;

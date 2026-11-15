@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { backstoryOptional, characterTab, inSteps, choosePick, choosePicks, closeContextsAfterEach, makeCustodian, openNewTroupe, openSlot, person, pickedAt, run, shots, switchFeature, topBar, troupeTab, expectTabOpen, expectTabCount, isPhone, openSections } from "./support";
+import { backstoryOptional, characterTab, inSteps, choosePick, choosePicks, closeContextsAfterEach, makeCustodian, openNewTroupe, openSlot, person, pickedAt, run, shots, switchFeature, topBar, troupeTab, expectTabOpen, expectTabCount, isPhone, openSections, pagePart } from "./support";
 
 /** Downtime: a troupe's whole month, and feeding in a downtime. */
 
@@ -380,13 +380,13 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   await lead.page.screenshot(shots("log"));
   // The troupe's rules: the lead can play a check differently.
   await troupeTab(lead.page, "House rules");
-  await lead.page.getByRole("link", { name: "Checks", exact: true }).click();
+  await pagePart(lead.page, "Checks");
   await lead.page.getByLabel("Search checks").fill("Calm Heart");
   await lead.page.getByLabel(/Setting for: Brujah cannot take Calm Heart/).selectOption({ label: "Allow, for our review" });
   await expect(lead.page.getByRole("button", { name: "House rules (1)" })).toBeVisible();
   await lead.page.screenshot(shots("rules"));
   // …and set its own price: Generation 1 skills at a flat 1 XP a dot, which Agnes pays.
-  await lead.page.getByRole("link", { name: "Costs", exact: true }).click();
+  await pagePart(lead.page, "Costs");
   await lead.page.getByRole("button", { name: "Change the price for All Skills, Generation background 1" }).click();
   await lead.page.getByLabel("How it's priced").selectOption({ label: "The same for each dot" });
   await lead.page.getByLabel("XP per dot").fill("1");
@@ -416,7 +416,7 @@ test("a troupe's month, from new character to downtime results", async ({ browse
 
   // The troupe lists the areas its Elite influence covers; Agnes picks one.
   await troupeTab(lead.page, "Specialisations");
-  await lead.page.getByRole("navigation", { name: "Backgrounds" }).getByRole("link", { name: "Influence: Elite" }).click();
+  await pagePart(lead.page, "Influence: Elite", "Specialisations");
   await expect(lead.page).toHaveURL(/\/specializations\/influence-elite$/);
   await lead.page.screenshot(shots("troupe-specializations"));
   const elite = lead.page.locator("section").filter({ has: lead.page.getByRole("heading", { name: "Influence: Elite", exact: true }) });

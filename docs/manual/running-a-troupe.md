@@ -675,6 +675,8 @@ Switching feeding off only hides it. What was recorded is kept and comes back if
 
 **Customise › House rules** holds the troupe's changes to the rule set. It opens on **As players read it**: the troupe's **House rules** tab exactly as its players see it, everything the troupe plays differently from the book in one page. After it come the parts, one page each, where storytellers change the rules and assistant storytellers read them: Checks, Costs, Starting points, Downtime actions, Downtime keywords, Languages, House merits and flaws, Written rules and Book traits. Locations, Quests, Retainers, Backstories, Free changes and Teachers set up a feature rather than a rule, so they're behind the **Settings** button of that feature's tab (see [Settings moved from House rules](#settings-moved-from-house-rules)). A house rule applies to characters whose home troupe this is, and those being built for it.
 
+On a wide screen the parts are listed down the left of the page, with the open one beside them. On a phone or a tablet, one button above the page names the open part, such as **Costs**; tap it for them all.
+
 The tab was **Customise › Rules** before; links to its old addresses open the same part of **House rules**, or the tab a moved part now sits on.
 
 Some pages (Costs, Starting points, Downtime actions, Book traits) have a picker for the splat they apply to, such as Vampire or Ghoul.
@@ -803,7 +805,7 @@ Choose **Add a written rule**, then give it a **Title**, a **Section** (such as 
 
 ### Specialisations
 
-**Customise › Specialisations** holds the troupe's own lists of specialisations, one kind at a time: the areas its influences cover, the notable people Contacts can be, and so on. Where a kind has a list, characters choose from it. Choose **Make our own list** (or **Edit our list**), one a line, then **Save our list**.
+**Customise › Specialisations** holds the troupe's own lists of specialisations, one kind at a time: the areas its influences cover, the notable people Contacts can be, and so on. The kinds are listed as the House rules parts are, under **Skills** and **Backgrounds**. Where a kind has a list, characters choose from it. Choose **Make our own list** (or **Edit our list**), one a line, then **Save our list**.
 
 ### Connectors: Discord and email
 

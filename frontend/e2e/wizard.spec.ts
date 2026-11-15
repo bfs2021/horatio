@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { closeContextsAfterEach, shots, person, creatingVampire, tapMid, CAITIFF_THREE, ATTRIBUTES_AND_FOCUSES, choiceIn, choosePick, choosePicks, openSlot, pickedAt, slotsAt } from "./support";
+import { closeContextsAfterEach, shots, person, creatingVampire, tapMid, CAITIFF_THREE, ATTRIBUTES_AND_FOCUSES, choiceIn, choosePick, choosePicks, openSlot, pickedAt, slotsAt, goToStep, inSteps } from "./support";
 
 /** The creation wizard: merits and flaws, and what each step lets a character take. */
 
@@ -152,7 +152,7 @@ test("Stolen Potential takes away the focus in the attribute it names, and the c
   await expect(p.getByRole("heading", { name: "Skills", exact: true })).toBeVisible({ timeout: 15_000 });
 
   // Focuses offers no Mental focus now, and says why; the others are as they were.
-  await p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Focuses/ }).click();
+  await goToStep(p, /Focuses/);
   await expect(mental).toContainText("Taken away");
   await expect(mental).toContainText("Because of Stolen Potential (Merits & flaws).");
   await expect(mental.getByRole("combobox")).toHaveCount(0);
@@ -161,7 +161,7 @@ test("Stolen Potential takes away the focus in the attribute it names, and the c
   await expect(p.locator("details").filter({ hasText: "Optional: focuses from merits and flaws" })).toHaveAttribute("open", "");
   await expect(p.getByRole("region", { name: "From merits and flaws" }).getByRole("switch", { name: /^Stolen Potential/ })).toBeChecked();
 
-  await p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Review/ }).click();
+  await goToStep(p, /Review/);
   await expect(p.getByRole("region", { name: "Still to settle" })).toHaveCount(0);
   await p.getByRole("button", { name: "Finish creation" }).click();
   await p.getByRole("button", { name: "Yes, finish creation" }).click();
@@ -226,7 +226,7 @@ test("Versatile asks for its extra focus on Focuses, and a pick on the focus it 
   await expect(versatile).toBeChecked();
   const notices = p.getByRole("group", { name: "Changed by other steps" });
   await expect(notices).toContainText("Versatile makes Wits free: your pick on Wits can go elsewhere.");
-  await expect(p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Focuses \(needs a look\)/ })).toBeVisible();
+  await inSteps(p, (steps) => expect(steps.getByRole("link", { name: /Focuses \(needs a look\)/ })).toBeVisible());
 
   // Another focus is the extra one: held, with no pick to place on it.
   await versatile.click();
@@ -304,7 +304,7 @@ test("Personal Cult frees a Herd pick, which goes elsewhere, and the character f
   await expect(p.getByRole("group", { name: "Changed by other steps" })).toContainText(message);
   await expect(slotsAt(p, "Backgrounds", 3).getByText(`${message} Clear it and place it on another.`)).toBeVisible();
   await expect.poll(pickedAt(p, "Backgrounds", 3)).toEqual(["Herd"]);
-  await expect(p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Backgrounds \(needs a look\)/ })).toBeVisible();
+  await inSteps(p, (steps) => expect(steps.getByRole("link", { name: /Backgrounds \(needs a look\)/ })).toBeVisible());
 
   // Review lists it too.
   await p.goto(`/characters/${id}/create/review`);
@@ -316,13 +316,13 @@ test("Personal Cult frees a Herd pick, which goes elsewhere, and the character f
   await choosePick(p, "Backgrounds", 3, "Fame");
   await p.getByRole("button", { name: "Save and continue" }).click();
   await expect(p.getByRole("heading", { name: "Disciplines", exact: true })).toBeVisible({ timeout: 15_000 });
-  await p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Backgrounds/ }).click();
+  await goToStep(p, /Backgrounds/);
   await expect(p.getByText("Personal Cult gives you Herd 5 free.")).toBeVisible();
   // Held free, it is not offered for a pick.
   const at3 = await openSlot(p, "Backgrounds", 3);
   await expect(at3.getByRole("option", { name: "Herd", exact: true })).toHaveCount(0);
   await p.keyboard.press("Escape");
-  await expect(p.getByRole("navigation", { name: "Creation steps" }).getByText("(needs a look)")).toHaveCount(0);
+  await inSteps(p, (steps) => expect(steps.getByText("(needs a look)")).toHaveCount(0));
 
   await p.goto(`/characters/${id}/create/review`);
   await expect(p.getByRole("region", { name: "Still to settle" })).toHaveCount(0);
@@ -352,7 +352,7 @@ test("Seasoned Traveler frees a pick on Survival, which goes to another skill", 
   await expect(p.getByRole("heading", { name: "Backgrounds", exact: true })).toBeVisible({ timeout: 15_000 });
   await p.goto(`/characters/${id}/create/skills`);
   await expect(p.getByText("Seasoned Traveler gives you Survival 3 free.")).toBeVisible();
-  await expect(p.getByRole("navigation", { name: "Creation steps" }).getByText("(needs a look)")).toHaveCount(0);
+  await inSteps(p, (steps) => expect(steps.getByText("(needs a look)")).toHaveCount(0));
 });
 
 test("a Tzimisce is offered Blood of the Tzimisce once, by the book's name, on Skills and on Merits & flaws (#811)", async ({ browser }) => {
@@ -532,7 +532,7 @@ test("a Ventrue takes Royalty in the wizard, is sent to Backgrounds, and places 
   await expect(p.getByText("Ventrue Royalty gives you Herd 2 free.")).toBeVisible();
   await expect((await openSlot(p, "Backgrounds", 1)).getByRole("option", { name: "Herd", exact: true })).toHaveCount(0);
   await p.keyboard.press("Escape");
-  await expect(p.getByRole("navigation", { name: "Creation steps" }).getByText("(needs a look)")).toHaveCount(0);
+  await inSteps(p, (steps) => expect(steps.getByText("(needs a look)")).toHaveCount(0));
 
   // Merits shows the same choices, and they change freely until a troupe accepts the character.
   await p.goto(`/characters/${id}/create/merits`);
@@ -700,11 +700,29 @@ test("a new player picks the clan first and sees its disciplines and weakness, a
   if (phone) {
     await reached("Step 2 of 8 · Attributes");
     await expect(steps.getByText("3 locked", { exact: true })).toBeVisible();
+    // The steps before and after are at the line's ends, and nothing scrolls sideways (#916).
+    await expect(steps.getByRole("link", { name: "Previous step: Concept" })).toBeVisible();
+    await steps.getByRole("link", { name: "Next step: Focuses" }).click();
+    await expect(p.getByRole("heading", { name: "Focuses", exact: true })).toBeVisible();
+    await reached("Step 3 of 8 · Focuses");
+    await steps.getByRole("link", { name: "Previous step: Attributes" }).click();
+    await expect(p.getByRole("heading", { name: "Attributes", exact: true })).toBeVisible();
+    expect(await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   }
-  await steps.getByRole("link", { name: /Backgrounds/ }).click();
+  // The list marks the steps done: Concept, with its clan chosen.
+  await inSteps(p, async (list) => {
+    await expect(list.getByRole("link", { name: "1. Concept (done)" })).toBeVisible();
+    await expect(list.getByRole("link", { name: "2. Attributes", exact: true })).toBeVisible();
+    await p.screenshot(shots("creation-steps-list"));
+  });
+  await goToStep(p, /Backgrounds/);
   await expect(p.getByRole("heading", { name: "Backgrounds", exact: true })).toBeVisible();
   await expect(p.getByText(/^Generation is a background too, and a vampire needs at least 1 dot of it to go on\..*\(pp\. 100-101\)\.$/)).toBeVisible();
-  if (phone) await reached("Step 5 of 8 · Backgrounds");
+  if (phone) {
+    await reached("Step 5 of 8 · Backgrounds");
+    // Past Backgrounds is locked until it has Generation.
+    await expect(steps.getByRole("button", { name: "Next step: Disciplines" })).toBeDisabled();
+  }
   await expect(steps.getByText(/^Finish Backgrounds to open the steps after it/)).toBeVisible();
   await p.screenshot(shots("creation-progress"));
 
@@ -757,12 +775,11 @@ test("each step keeps its picks as they are made, through the step list and a re
   for (const tab of ["Experience", "Downtime", "Results", "Influence"]) await expect(p.locator("main").getByRole("link", { name: tab, exact: true })).toHaveCount(0);
 
   // Taps not yet saved go with the player to another step, and are there on coming back.
-  const steps = p.getByRole("navigation", { name: "Creation steps" });
   await choosePick(p, "Skills", 4, "Brawl");
   await choosePick(p, "Skills", 3, "Dodge");
-  await steps.getByRole("link", { name: /Backgrounds/ }).click();
+  await goToStep(p, /Backgrounds/);
   await expect(p.getByRole("heading", { name: "Backgrounds", exact: true })).toBeVisible();
-  await steps.getByRole("link", { name: /Skills/ }).click();
+  await goToStep(p, /Skills/);
   await expect.poll(pickedAt(p, "Skills", 4)).toEqual(["Brawl"]);
   await expect.poll(pickedAt(p, "Skills", 3)).toEqual(["Dodge", ""]);
 
@@ -777,7 +794,7 @@ test("each step keeps its picks as they are made, through the step list and a re
   await expect.poll(pickedAt(p, "Skills", 1)).toContain("Melee");
 
   // Review sums her up before finishing (#372).
-  await steps.getByRole("link", { name: /Review/ }).click();
+  await goToStep(p, /Review/);
   const summary = p.getByRole("region", { name: "Summary" });
   await expect(summary).toContainText("Kept Taps so far");
   await expect(summary).toContainText("Brujah. In-clan: Celerity, Potence and Presence.");
@@ -891,7 +908,7 @@ test("on a phone the picks' slots and choices are big enough to tap, and a locke
   const steps = p.getByRole("navigation", { name: "Creation steps" });
   const why = /^Finish Backgrounds to open the steps after it: A vampire needs at least 1 dot of Generation/;
   await expect(steps.getByText(why)).toBeVisible();
-  await expect(steps.getByText(/Disciplines/)).toHaveAccessibleDescription(why);
+  await inSteps(p, (list) => expect(list.getByText(/Disciplines/)).toHaveAccessibleDescription(why));
   await p.screenshot(shots("creation-locked-why"));
 });
 
@@ -935,7 +952,7 @@ test("Crafts, Performance and Science take a field in the wizard, kept through B
   await next("Backgrounds");
 
   // The fields are kept going Back, and through a reload.
-  await p.getByRole("button", { name: "Back" }).click();
+  await p.getByRole("button", { name: "Back", exact: true }).click();
   await expect(p.getByRole("heading", { name: "Skills", exact: true })).toBeVisible();
   await expect(p.getByLabel("Performance field")).toHaveValue("Singing");
   await expect(p.getByLabel("Performance #2 field")).toHaveValue("Dance");

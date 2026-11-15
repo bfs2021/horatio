@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import { useClanName } from "../../components/ClanNames";
 import { useToast } from "../../components/Toast";
@@ -9,6 +9,7 @@ import { pageRule } from "../../paper";
 import { downloadCard } from "./draw";
 import { JyhadCard } from "./JyhadCard";
 import { useTitle } from "../../title";
+import { BackLink } from "../../components/BackLink";
 
 const TEXT_LENGTH = 300;
 const FLAVOUR_LENGTH = 120;
@@ -69,9 +70,7 @@ export function JyhadCardPage() {
       <style>{SIZING + pageRule(prefs.paper, "12mm")}</style>
       <div className="mx-auto flex max-w-xl flex-col items-center gap-5">
         <div className="flex w-full flex-wrap items-center justify-between gap-3 print:hidden">
-          <Link to={back} className="text-sm text-mist underline hover:text-parchment">
-            ← Back
-          </Link>
+          <BackLink label={troupeId ? "Characters" : c.name} to={back} />
           {!c.missing && (
             <span className="flex gap-2">
               <button type="button" onClick={() => window.print()} className="rounded-md border border-ash bg-dusk px-4 py-1.5 text-sm hover:border-mist">

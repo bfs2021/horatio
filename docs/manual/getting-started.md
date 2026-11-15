@@ -4,7 +4,7 @@ This part is for everyone: players, troupe staff and the custodian. It covers ma
 
 ## Creating an account
 
-1. On the sign-in page, choose **Create an account**.
+1. Choose **Create account** at the top of any page, or **Create an account** on the sign-in page.
 2. Fill in:
    - **Your name**: the name other people see. You can change it later.
    - **Handle**: how others find you, such as `night_owl`, instead of your email. Use letters, numbers, `_` and `-`. Leave it blank and Horatio makes one from your name.
@@ -18,7 +18,7 @@ You're signed in straight away, and land on **Characters**. While you have no ch
 
 ## Signing in
 
-On the sign-in page, give your **Email or handle** and your **Password**, then choose **Sign in**. If you opened a link to a page in Horatio while signed out, you go on to that page once you're in.
+Choose **Sign in** at the top of any page. On the sign-in page, give your **Email or handle** and your **Password**, then choose **Sign in**. If you opened a link to a page in Horatio while signed out, or signed in from the top of a page, you go on to that page once you're in.
 
 Each page names itself in the browser's tab, its bookmarks and its history, the tab you have open first: "Approvals · ‹troupe› · Horatio", "Sheet · ‹character› · Horatio". With several Horatio tabs open, you can tell them apart.
 

@@ -6,6 +6,7 @@ import type { PlayerOut, Preferences } from "../../api/types";
 import { drawCurtains } from "../../components/Curtains";
 import { startSunrise } from "../../components/Sunrise";
 import { useToast } from "../../components/Toast";
+import { Toggle } from "../../components/Toggle";
 import { Card, ErrorText, Input } from "../../components/ui";
 import { deviceZone, useDates } from "../../dates";
 import { usePreferences, useSavingPreferences, useSetPreferences } from "../../hooks";
@@ -137,45 +138,46 @@ function Theme() {
   );
 }
 
-/** An on/off setting. */
-function Toggle({ name, label }: { name: "quick_notes" | "keep_awake"; label: string }) {
+/** An on/off setting as a row of the list: its words, and its switch at the end. The whole row is the tap target. */
+function SwitchSetting({ label, hint, checked, onChange }: { label: string; hint?: ReactNode; checked: boolean; onChange: (on: boolean) => void }) {
+  return (
+    <div className="border-b border-ash/60 py-1 last:border-0">
+      <Toggle label={label} hint={hint} checked={checked} onChange={onChange} end />
+    </div>
+  );
+}
+
+/** An on/off setting kept with the others. */
+function PreferenceSwitch({ name, label, hint }: { name: "quick_notes" | "keep_awake"; label: string; hint?: ReactNode }) {
   const prefs = usePreferences();
   const save = useSaveSetting();
   return (
-    <label className="inline-flex min-h-9 items-center gap-2 text-sm text-mist">
-      <input
-        type="checkbox"
-        className="h-5 w-5 accent-[var(--color-gold)]"
-        checked={prefs[name]}
-        onChange={(e) => {
-          // The Play View's own switch on this device gives way to the setting just chosen.
-          if (name === "keep_awake") saveAwake(null);
-          save({ [name]: e.target.checked }, `${label}: ${e.target.checked ? "on" : "off"}`);
-        }}
-      />
-      <span className="sr-only">{label}</span>
-      {prefs[name] ? "On" : "Off"}
-    </label>
+    <SwitchSetting
+      label={label}
+      hint={hint}
+      checked={prefs[name]}
+      onChange={(on) => {
+        // The Play View's own switch on this device gives way to the setting just chosen.
+        if (name === "keep_awake") saveAwake(null);
+        save({ [name]: on }, `${label}: ${on ? "on" : "off"}`);
+      }}
+    />
   );
 }
 
 /** "Throw by flipping" (#669): kept on this device, not with the other settings, as it depends on the phone. */
-function FlipToggle() {
+function FlipSwitch({ hint }: { hint: ReactNode }) {
   const [on, setOn] = useState(loadFlipping);
   return (
-    <label className="inline-flex min-h-9 items-center gap-2 text-sm text-mist">
-      <input
-        type="checkbox"
-        className="h-5 w-5 accent-[var(--color-gold)]"
-        checked={on}
-        onChange={(e) => {
-          saveFlipping(e.target.checked);
-          setOn(e.target.checked);
-        }}
-      />
-      <span className="sr-only">Throw by flipping</span>
-      {on ? "On" : "Off"}
-    </label>
+    <SwitchSetting
+      label="Throw by flipping"
+      hint={hint}
+      checked={on}
+      onChange={(next) => {
+        saveFlipping(next);
+        setOn(next);
+      }}
+    />
   );
 }
 
@@ -353,23 +355,18 @@ export function SettingsPage({ player }: { player: PlayerOut }) {
         </Card>
 
         <Card title="At game">
-          <Setting label="Quick notes" hint="The Play View asks what each use was for, except Blood, Willpower and healing.">
-            <Toggle name="quick_notes" label="Quick notes" />
-          </Setting>
-          <Setting
+          <PreferenceSwitch name="quick_notes" label="Quick notes" hint="The Play View asks what each use was for, except Blood, Willpower and healing." />
+          <PreferenceSwitch
+            name="keep_awake"
             label="Keep the screen awake"
             hint={
               "wakeLock" in navigator
                 ? "While the Play View is open. Uses more battery. The switch in the Play View changes it for one device."
                 : "While the Play View is open. This browser can't, but your phone's may."
             }
-          >
-            <Toggle name="keep_awake" label="Keep the screen awake" />
-          </Setting>
+          />
           <OpeningTab />
-          <Setting label="Throw by flipping" hint="On the Throws tab, flip your phone face down and back up to throw. On this device, and only on phones with a motion sensor.">
-            <FlipToggle />
-          </Setting>
+          <FlipSwitch hint="On the Throws tab, flip your phone face down and back up to throw. On this device, and only on phones with a motion sensor." />
           <Setting label="Throw pictures" hint="What the Throws tab shows: Horatio's, or the set of a troupe you play in that has made its own. Kept on this device for games with no signal.">
             <ThrowPictures />
           </Setting>

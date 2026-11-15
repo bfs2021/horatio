@@ -6,9 +6,11 @@ import type { CharacterOut, TroupeOut } from "../../api/types";
 import { Avatar } from "../../components/Avatar";
 import { AtHandle } from "../../components/PersonPicker";
 import { Badge, Card } from "../../components/ui";
+import { LinkButton } from "../../components/LinkButton";
 import { newPlayersText } from "./profile";
 
-const BUTTON = "inline-flex min-h-10 items-center justify-center rounded-md px-4 py-2 text-center text-sm font-medium";
+/** A long troupe name wraps the button's words onto a second line. */
+const WRAPS = "py-2 text-center";
 
 /**
  * How to play in a troupe, for someone who doesn't yet: build a new character
@@ -70,9 +72,9 @@ export function PlayHere({ troupe }: { troupe: TroupeOut }) {
           </div>
         )}
         <div>
-          <Link to={`/characters?troupe=${troupe.id}`} className={`${BUTTON} bg-blood text-parchment hover:bg-blood-bright`}>
+          <LinkButton to={`/characters?troupe=${troupe.id}`} className={WRAPS}>
             Build a new character for {troupe.name}
-          </Link>
+          </LinkButton>
           <p className="mt-1 text-xs text-mist">Its house rules apply while you build.</p>
         </div>
         {bring.length > 0 && (
@@ -106,9 +108,9 @@ function Bring({ character: c, troupeId }: { character: CharacterOut; troupeId: 
         </span>
       </span>
       {c.creation_complete ? (
-        <Link to={`/characters/${c.id}/troupes?home=${troupeId}`} className={`${BUTTON} border border-ash bg-dusk text-parchment hover:border-mist`}>
+        <LinkButton variant="secondary" to={`/characters/${c.id}/troupes?home=${troupeId}`} className={WRAPS}>
           Ask to join
-        </Link>
+        </LinkButton>
       ) : (
         <Link to={`/characters/${c.id}/create`} className="text-sm text-gold hover:underline">
           Finish building it first

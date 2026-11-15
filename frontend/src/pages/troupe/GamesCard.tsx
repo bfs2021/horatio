@@ -8,6 +8,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { AtHandle } from "../../components/PersonPicker";
 import { useToast } from "../../components/Toast";
 import { Button, Card, ErrorText, Loading } from "../../components/ui";
+import { LinkButton } from "../../components/LinkButton";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { CheckInForm } from "../CheckInPage";
@@ -291,9 +292,9 @@ function LinkRow({ title, troupeId, personal, link }: { title: string; troupeId:
             <Button type="button" variant="secondary" onClick={() => void copy()}>
               Copy the link
             </Button>
-            <a href={webcal(link.url)} className="inline-flex min-h-10 items-center rounded-md border border-ash px-4 text-sm text-parchment hover:border-mist">
+            <LinkButton variant="secondary" href={webcal(link.url)}>
               Open in your calendar app
-            </a>
+            </LinkButton>
           </div>
           <p className="text-xs text-mist">Keep it to yourself: anyone with it can see these dates.</p>
           {confirming ? (

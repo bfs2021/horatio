@@ -9,6 +9,7 @@ import { Explainer } from "../../components/Explainer";
 import { HouseMark, HouseSummary } from "../../components/HouseMark";
 import { useToast } from "../../components/Toast";
 import { useClanName } from "../../components/ClanNames";
+import { Checkbox } from "../../components/Checkbox";
 import { Badge, Button, Card, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { useAction, useRulesAction } from "../../hooks";
 import { EffectsEditor, HousePreview, useHousePreview } from "./HouseEffects";
@@ -347,10 +348,7 @@ function HouseTraitEditor({
             </label>
           ))}
           {draft.availability === "building" && (
-            <label className="ml-6 flex items-center gap-2">
-              <input type="checkbox" checked={draft.creation_only} onChange={(e) => set("creation_only", e.target.checked)} />
-              Only during character creation
-            </label>
+            <Checkbox label="Only during character creation" checked={draft.creation_only} onChange={(on) => set("creation_only", on)} className="ml-6" />
           )}
         </fieldset>
         <Field label="Description" hint={`What the ${noun} does: players see it wherever it shows.`}>

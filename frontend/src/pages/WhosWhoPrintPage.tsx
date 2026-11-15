@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import { api, unwrap } from "../api/client";
 import { useClanName } from "../components/ClanNames";
 import { usePreferences } from "../hooks";
 import { PAPERS, pageRule } from "../paper";
 import { clanText, sections, type Section } from "./troupe/whosWho";
 import { useTitle } from "../title";
+import { BackLink } from "../components/BackLink";
 
 /**
  * A troupe's Who's Who on paper, for a game-night binder: every section, black on
@@ -27,9 +28,7 @@ export function WhosWhoPrintPage() {
     <div className="min-h-screen bg-neutral-200 py-6 text-black print:min-h-0 print:bg-white print:py-0">
       <style>{pageRule(paper, "0.45in")}</style>
       <div className="mx-auto mb-4 flex items-center justify-between gap-4 px-4 print:hidden" style={width}>
-        <Link to={`/troupes/${troupeId}/whos-who`} className="text-sm underline">
-          ← Back
-        </Link>
+        <BackLink print label="Who’s Who" to={`/troupes/${troupeId}/whos-who`} />
         <span className="flex items-center gap-3">
           <span className="text-sm text-neutral-600">For {PAPERS[paper].name}</span>
           <button onClick={() => window.print()} className="rounded bg-black px-4 py-1.5 text-sm text-white">

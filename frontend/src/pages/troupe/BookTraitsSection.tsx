@@ -7,6 +7,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { Explainer } from "../../components/Explainer";
 import { RowEditor, useRowEditor } from "../../components/RowEditor";
 import { useToast } from "../../components/Toast";
+import { Checkbox } from "../../components/Checkbox";
 import { Badge, Button, Card, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { HouseWording } from "../../components/TroupeChange";
 import { useRulesAction } from "../../hooks";
@@ -308,13 +309,13 @@ function TraitPanel({
       )}
 
       <section className="mt-4 flex flex-col gap-3 border-t border-ash pt-4" aria-label="Ban">
-        <label className="flex min-h-10 items-center gap-3 text-sm">
-          <input type="checkbox" checked={draft.banned} disabled={!canEdit} onChange={(e) => set({ banned: e.target.checked })} className="h-5 w-5" />
-          <span>
-            Banned in this troupe
-            <span className="block text-xs text-mist">Characters can't buy or pick it. Those who hold it keep it, flagged on their sheet.</span>
-          </span>
-        </label>
+        <Checkbox
+          label="Banned in this troupe"
+          hint="Characters can't buy or pick it. Those who hold it keep it, flagged on their sheet."
+          checked={draft.banned}
+          disabled={!canEdit}
+          onChange={(banned) => set({ banned })}
+        />
         {draft.banned && (
           <Field label="Reason (optional)" hint="Players see this beside the trait.">
             <Textarea rows={2} maxLength={500} value={draft.ban_reason} disabled={!canEdit} onChange={(e) => set({ ban_reason: e.target.value })} />

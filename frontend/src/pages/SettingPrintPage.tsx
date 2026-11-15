@@ -3,6 +3,7 @@ import { usePreferences } from "../hooks";
 import { PAPERS, pageRule } from "../paper";
 import { useTitle } from "../title";
 import { SettingDocument, useSetting } from "./troupe/SettingDocument";
+import { BackLink } from "../components/BackLink";
 
 /**
  * A troupe's Setting Style Document, black on white, for the Storyteller table and for
@@ -21,9 +22,7 @@ export function SettingPrintPage() {
     <div className="min-h-screen bg-neutral-200 py-6 text-black print:min-h-0 print:bg-white print:py-0">
       <style>{pageRule(paper, "0.5in")}</style>
       <div className="mx-auto mb-4 flex items-center justify-between gap-4 px-4 print:hidden" style={width}>
-        <button onClick={() => navigate(-1)} className="text-sm underline">
-          ← Back
-        </button>
+        <BackLink print label="Back" onClick={() => navigate(-1)} />
         <button onClick={() => window.print()} className="rounded bg-black px-4 py-1.5 text-sm text-white">
           Print
         </button>

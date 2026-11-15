@@ -3,6 +3,7 @@ import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
 import { BOON_PAGE } from "../../boons";
 import { useToast } from "../../components/Toast";
+import { Toggle } from "../../components/Toggle";
 import { Card, ErrorText } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { TalonsSetting } from "./BoonTalons";
@@ -113,16 +114,18 @@ function PlayersSetting({ troupe }: { troupe: TroupeOut }) {
           </span>
         </label>
       ))}
-      <label className="mt-1 flex items-start gap-2">
-        <input type="checkbox" className="mt-1" checked={settle} disabled={save.isPending} onChange={(e) => choose({ see, settle: e.target.checked })} />
-        <span>
-          Players mark boons owed to them settled
-          <span className="block text-xs text-mist">
+      <Toggle
+        label="Players mark boons owed to them settled"
+        hint={
+          <>
             Only a boon&apos;s creditor&apos;s player, as called in or forgiven, and only where they see what they&apos;re owed
             {see === "owed" ? "." : ": choose “Also what they're owed” for it to take effect."}
-          </span>
-        </span>
-      </label>
+          </>
+        }
+        checked={settle}
+        disabled={save.isPending}
+        onChange={(on) => choose({ see, settle: on })}
+      />
       <p className="text-xs text-mist">The Boons tab can also be switched off under Play View tabs.</p>
       <ErrorText error={save.error} />
     </fieldset>
@@ -144,26 +147,21 @@ function ReviewSetting({ troupe }: { troupe: TroupeOut }) {
   });
   return (
     <div className="mt-2 flex flex-col gap-2 border-t border-ash/60 pt-3">
-      <label className="flex items-start gap-2">
-        <input
-          type="checkbox"
-          className="mt-1"
-          checked={hold}
-          disabled={save.isPending}
-          onChange={(e) => {
-            const next = e.target.checked;
-            setHold(next);
-            save.mutate(next, { onError: () => setHold(troupe.boon_review ?? false) });
-          }}
-        />
-        <span>
-          Boons players report wait for review
-          <span className="block text-xs text-mist">
+      <Toggle
+        label="Boons players report wait for review"
+        hint={
+          <>
             Staff accept each one, after an edit if it needs one, or don&apos;t accept it, with a reason its player sees. Off, they stand at once. Either way,
             Horatio flags names that link to no character, and likely duplicates, under “To review” on the Boons screen.
-          </span>
-        </span>
-      </label>
+          </>
+        }
+        checked={hold}
+        disabled={save.isPending}
+        onChange={(next) => {
+          setHold(next);
+          save.mutate(next, { onError: () => setHold(troupe.boon_review ?? false) });
+        }}
+      />
       <ErrorText error={save.error} />
     </div>
   );
@@ -235,23 +233,16 @@ function HarpySetting({ troupe }: { troupe: TroupeOut }) {
         </label>
       ))}
       {access === "full" && (
-        <label className="flex items-start gap-2">
-          <input
-            type="checkbox"
-            className="mt-1"
-            checked={standings}
-            disabled={saveStandings.isPending || save.isPending}
-            onChange={(e) => {
-              const next = e.target.checked;
-              setStandings(next);
-              saveStandings.mutate(next, { onError: () => setStandings(!next) });
-            }}
-          />
-          <span>
-            The Harpy also reads the boon standings and statistics
-            <span className="block text-xs text-mist">{AS_THE_COURT_KNOWS}</span>
-          </span>
-        </label>
+        <Toggle
+          label="The Harpy also reads the boon standings and statistics"
+          hint={AS_THE_COURT_KNOWS}
+          checked={standings}
+          disabled={saveStandings.isPending || save.isPending}
+          onChange={(next) => {
+            setStandings(next);
+            saveStandings.mutate(next, { onError: () => setStandings(!next) });
+          }}
+        />
       )}
       <p className="text-xs text-mist">
         The Harpy is whoever holds the Harpy title in the troupe; with several, each has it, and it ends when the title does. They work from their Play
@@ -283,27 +274,22 @@ function JudgeBanSetting({ troupe }: { troupe: TroupeOut }) {
   });
   return (
     <div className="mt-2 border-t border-ash/60 pt-3">
-      <label className="flex items-start gap-2">
-        <input
-          type="checkbox"
-          className="mt-1"
-          checked={on}
-          disabled={save.isPending}
-          onChange={(e) => {
-            const next = e.target.checked;
-            setOn(next);
-            save.mutate(next, { onError: () => setOn(troupe.boons_judge_ban ?? false) });
-          }}
-        />
-        <span>
-          Judge &ldquo;No boons registered&rdquo; from the boon ledger
-          <span className="block text-xs text-mist">
+      <Toggle
+        label={<>Judge &ldquo;No boons registered&rdquo; from the boon ledger</>}
+        hint={
+          <>
             The Camarilla&apos;s lesser status ban on no boons registered with the Harpy (MET: VTM p. 403) then applies to any member with no boon in the
             ledger, owed or owed to them. Switch it on once the ledger holds every boon, or the whole court comes under the ban. Off, staff mark that ban by
             hand, and a mark always decides it.
-          </span>
-        </span>
-      </label>
+          </>
+        }
+        checked={on}
+        disabled={save.isPending}
+        onChange={(next) => {
+          setOn(next);
+          save.mutate(next, { onError: () => setOn(troupe.boons_judge_ban ?? false) });
+        }}
+      />
       <ErrorText error={save.error} />
     </div>
   );

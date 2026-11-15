@@ -117,6 +117,42 @@ test("Customise opens on Setup, a setup checklist, the features and the house ru
   await expect(differently.getByRole("link", { name: /^Checks\s*1 of \d+ played differently$/ })).toHaveAttribute("href", `/troupes/${troupeId}/house-rules/checks`);
 });
 
+test("a troupe's or character's tab that isn't there, or isn't open to them, says so with the way back (#907)", async ({ browser }) => {
+  const custodian = await person(browser, "notopen-custodian");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "notopen-lead");
+  const player = await person(browser, "notopen-player");
+  const troupeName = `House of Closed Doors ${run}`;
+  await custodian.page.reload();
+  const made = await custodian.page.request.post("/api/troupes", { headers: { "X-Horatio": "1" }, data: { name: troupeName, lead_handle: lead.handle } });
+  expect(made.status(), await made.text()).toBe(201);
+  const troupeId: string = (await made.json()).id;
+  const notOpen = `This part of ${troupeName} isn't open to you, or doesn't exist.`;
+
+  // Staff, at a tab that doesn't exist.
+  const l = lead.page;
+  await l.goto(`/troupes/${troupeId}/nonsense`);
+  await expect(l.getByText(notOpen)).toBeVisible();
+  await l.getByRole("link", { name: `Back to ${troupeName}` }).click();
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}$`));
+  await expect(l.getByText(notOpen)).toHaveCount(0);
+
+  // Someone not on its staff, at the staff's Settings.
+  const p = player.page;
+  await p.goto(`/troupes/${troupeId}/settings`);
+  await expect(p.getByText(notOpen)).toBeVisible();
+  await p.screenshot(shots("troupe-tab-not-open"));
+
+  // A character's page does the same.
+  const character = await p.request.post("/api/characters", { headers: { "X-Horatio": "1" }, data: { splat: "vampire", name: "Hollis Doorward" } });
+  expect(character.status(), await character.text()).toBe(201);
+  const characterId: string = (await character.json()).id;
+  await p.goto(`/characters/${characterId}/nonsense`);
+  await expect(p.getByText("This part of Hollis Doorward isn't open to you, or doesn't exist.")).toBeVisible();
+  await p.getByRole("link", { name: "Back to Hollis Doorward" }).click();
+  await expect(p).toHaveURL(new RegExp(`/characters/${characterId}$`));
+});
+
 test("Troupe settings open on a Features list: each optional feature on or off, and switching one on brings its tab, its settings folded at the top (#783, #784)", async ({ browser }) => {
   const custodian = await person(browser, "switch-custodian");
   makeCustodian(custodian.email);
@@ -718,8 +754,8 @@ test("players read the whole setting on its tab, in print, on the profile when s
   await expect(visitor.getByRole("heading", { name: troupeName })).toBeVisible();
   await expect(visitor.getByRole("article", { name: "Setting Style Document" })).toHaveCount(0);
   await l.goto(`/troupes/${troupeId}/settings`);
-  await l.getByRole("checkbox", { name: /Show it on the troupe's profile/ }).click();
-  await expect(l.getByRole("checkbox", { name: /Show it on the troupe's profile/ })).toBeChecked();
+  await l.getByRole("switch", { name: /Show it on the troupe's profile/ }).click();
+  await expect(l.getByRole("switch", { name: /Show it on the troupe's profile/ })).toBeChecked();
   await visitor.reload();
   await expect(visitor.getByRole("article", { name: "Setting Style Document" }).getByText("Chaos")).toBeVisible();
   // And on the troupe's Overview, with the rest of its profile (#781).
@@ -2660,7 +2696,7 @@ test("a troupe's public page asks a newcomer to make an account, which brings th
   await visitor.goto(`/t/${troupeId}`);
   await expect(visitor.getByText(/only for people signed in, or there is no such troupe/)).toBeVisible();
   await expect(visitor.getByRole("link", { name: "Create an account to play here" })).toHaveAttribute("href", `/sign-up?next=${next}`);
-  await expect(visitor.getByRole("link", { name: "Sign in", exact: true })).toHaveAttribute("href", `/sign-in?next=${next}`);
+  await expect(visitor.getByRole("main").getByRole("link", { name: "Sign in", exact: true })).toHaveAttribute("href", `/sign-in?next=${next}`);
   await visitor.screenshot(shots("anon-private-troupe"));
 
   // Public, the troupe's name leads, with the same two ways in.
@@ -2669,7 +2705,7 @@ test("a troupe's public page asks a newcomer to make an account, which brings th
   await expect(l.getByRole("switch", { name: "Public" })).toBeChecked();
   await visitor.reload();
   await expect(visitor.getByRole("heading", { name: troupeName })).toBeVisible();
-  await expect(visitor.getByRole("link", { name: "Sign in", exact: true })).toHaveAttribute("href", `/sign-in?next=${next}`);
+  await expect(visitor.getByRole("main").getByRole("link", { name: "Sign in", exact: true })).toHaveAttribute("href", `/sign-in?next=${next}`);
   await visitor.screenshot(shots("anon-public-troupe"));
 
   // They make an account, and land on the troupe's own page.
@@ -2801,7 +2837,7 @@ test("a troupe's Overview switches it public at once, shows its XP range, and Wa
   const viewing = l.getByLabel("Viewing as staff");
   await expect(viewing).toContainText("Viewing as lead storyteller");
   await expect(viewing.getByRole("link", { name: "tidy-player" })).toBeVisible();
-  await viewing.getByRole("link", { name: `back to ${troupeName}` }).click();
+  await viewing.getByRole("link", { name: `← ${troupeName}` }).click();
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/approvals$`));
 
   // The player sees About without the box, and the XP range only to read.

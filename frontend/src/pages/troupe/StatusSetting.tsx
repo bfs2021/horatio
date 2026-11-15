@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
+import { Toggle } from "../../components/Toggle";
 import { Button, Card, ErrorText } from "../../components/ui";
 import { useAction } from "../../hooks";
 
@@ -83,16 +84,13 @@ export function StatusAtCheckinSetting({ troupe, canEdit }: { troupe: TroupeOut;
         <p className="text-sm">{on ? "Chosen at check-in, and fixed for the game." : "Chosen on the Play View as the game begins."}</p>
       ) : (
         <div className="flex flex-col gap-2 text-sm">
-          <label className="flex items-start gap-2">
-            <input type="checkbox" className="mt-1" checked={on} disabled={save.isPending} onChange={(e) => save.mutate(e.target.checked)} />
-            <span>
-              Choose the night's status at check-in
-              <span className="block text-xs text-mist">
-                Players choose the source as they check in, and can't change it on the Play View. Storytellers and assistant storytellers can, with a reason for the game's
-                log. Status given for a single night is held beside it.
-              </span>
-            </span>
-          </label>
+          <Toggle
+            label="Choose the night's status at check-in"
+            hint="Players choose the source as they check in, and can't change it on the Play View. Storytellers and assistant storytellers can, with a reason for the game's log. Status given for a single night is held beside it."
+            checked={on}
+            disabled={save.isPending}
+            onChange={(next) => save.mutate(next)}
+          />
           <ErrorText error={save.error} />
         </div>
       )}

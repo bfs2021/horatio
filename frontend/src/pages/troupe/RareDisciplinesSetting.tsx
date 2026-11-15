@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, unwrap } from "../../api/client";
+import { Toggle } from "../../components/Toggle";
 import { Card, ErrorText } from "../../components/ui";
 import { useRulesAction } from "../../hooks";
 
@@ -20,13 +21,13 @@ export function RareDisciplinesSetting({ troupeId, canEdit }: { troupeId: string
         <p className="text-sm">{on ? "A dot of a rare discipline takes two downtime actions here." : "A dot of a rare discipline takes one downtime action here, as any other."}</p>
       ) : (
         <div className="flex flex-col gap-2 text-sm">
-          <label className="flex items-start gap-2">
-            <input type="checkbox" className="mt-1" checked={on} disabled={save.isPending} onChange={(e) => save.mutate(e.target.checked)} />
-            <span>
-              Rare disciplines take two downtime actions a dot
-              <span className="block text-xs text-mist">For one learned from a teacher, out of clan. Dots already learned keep what they cost.</span>
-            </span>
-          </label>
+          <Toggle
+            label="Rare disciplines take two downtime actions a dot"
+            hint="For one learned from a teacher, out of clan. Dots already learned keep what they cost."
+            checked={on}
+            disabled={save.isPending}
+            onChange={(next) => save.mutate(next)}
+          />
           <ErrorText error={save.error} />
         </div>
       )}

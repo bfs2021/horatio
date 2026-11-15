@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, characterTab, closeContextsAfterEach, makeCustodian, openNewTroupe, openSlot, person, pickedAt, run, shots, slotsAt, topBar } from "./support";
+import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, characterTab, closeContextsAfterEach, makeCustodian, openNewTroupe, openSlot, person, pickedAt, run, shots, slotsAt, topBar, goToStep } from "./support";
 
 /** Ghouls: building, playing and Embracing them. */
 
@@ -100,7 +100,7 @@ test("a player builds a ghoul in the wizard, bound to their own vampire, and lat
   const ghoulId = new URL(p.url()).pathname.split("/")[2]!;
 
   // Review says the domitor is missing, and Finish waits for it.
-  await p.getByRole("link", { name: /Review/ }).click();
+  await goToStep(p, /Review/);
   await expect(p.getByRole("region", { name: "Still to settle" }).getByText(/Choose the domitor/)).toBeVisible();
   await expect(p.getByRole("button", { name: "Finish creation" })).toBeDisabled();
 
@@ -214,13 +214,13 @@ test("a ghoul with Stolen Potential naming Mental takes no Mental focus, and fin
   await expect(p.getByText(/Mental Focus at 1/)).toHaveCount(0);
 
   // Focuses says why there is none, as a vampire's does.
-  await p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Focuses/ }).click();
+  await goToStep(p, /Focuses/);
   const mental = slotsAt(p, "Mental Focus", 1);
   await expect(mental).toContainText("Taken away");
   await expect(mental).toContainText("Because of Stolen Potential (Merits & flaws).");
   await expect(mental.getByRole("combobox")).toHaveCount(0);
 
-  await p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Review/ }).click();
+  await goToStep(p, /Review/);
   await expect(p.getByRole("region", { name: "Still to settle" })).toHaveCount(0);
   await p.getByRole("button", { name: "Finish creation" }).click();
   await p.getByRole("button", { name: "Yes, finish creation" }).click();

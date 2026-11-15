@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api/client";
 import type { BackupXpOut, BundleEntryOut, CharacterOut, CharacterReviewOut } from "../../api/types";
 import { useToast } from "../../components/Toast";
 import { Badge, Button, Card, ErrorText, Loading, Notice, PageTitle } from "../../components/ui";
+import { LinkButton } from "../../components/LinkButton";
 import { useAction } from "../../hooks";
 import { BuildFor } from "./BuildFor";
 import { MAX_BYTES, SECTIONS, STATUS, backupFileName, countsText, isZip, reviewCounts, sectionsQuery, type Section } from "./backup";
@@ -65,13 +66,9 @@ export function ExportBackup({ character, onDone }: { character: CharacterOut; o
       <SectionTicks chosen={chosen} onChange={setChosen} />
       <ErrorText error={download.error} />
       <div className="flex flex-wrap justify-end gap-2">
-        <a
-          href={`/api/characters/${character.id}/backup/sheet`}
-          download
-          className="inline-flex min-h-10 items-center justify-center rounded-md border border-ash px-4 text-sm text-parchment hover:border-mist"
-        >
+        <LinkButton variant="secondary" href={`/api/characters/${character.id}/backup/sheet`} download>
           Printable sheet (.html)
-        </a>
+        </LinkButton>
         <Button disabled={download.isPending} onClick={() => download.mutate(undefined, { onSuccess: onDone })}>
           {download.isPending ? "Exporting…" : "Download backup"}
         </Button>
@@ -126,9 +123,9 @@ export function TroupeExport({ troupeId, selected, canEmail }: { troupeId: strin
         </label>
       )}
       <div className="flex justify-end">
-        <a href={href} download className="inline-flex min-h-10 items-center justify-center rounded-md bg-blood px-5 text-sm font-medium text-parchment hover:bg-blood-bright">
+        <LinkButton href={href} download>
           Download .zip
-        </a>
+        </LinkButton>
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ import { CharactersPage } from "./pages/CharactersPage";
 import { ImportCharacterPage } from "./pages/character/Backup";
 import { ClaimPage } from "./pages/ClaimPage";
 import { ConfirmEmailPage } from "./pages/ConfirmEmailPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 import { ForgotPasswordPage, ResetPasswordPage, SignInPage, SignUpPage } from "./pages/SignIn";
 import { TroupesPage } from "./pages/TroupesPage";
 import { UnsubscribePage } from "./pages/UnsubscribePage";
@@ -154,7 +155,7 @@ export const routes = createRoutesFromElements(
         <Route path="/charts" element={<ChartKitPage />} />
         <Route path="/people" element={<Navigate to="/custodian/people" replace />} />
       </Route>
-      <Route path="*" element={<p className="text-mist">There is nothing here.</p>} />
+      <Route path="*" element={<NotFoundPage />} />
     </Route>
   </Route>,
 );

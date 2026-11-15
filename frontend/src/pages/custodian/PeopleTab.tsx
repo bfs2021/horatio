@@ -132,19 +132,30 @@ function Person({ person }: { person: PlayerSummary }) {
             <Chevron open={expanded} />
           </Button>
         </td>
-        <td className="py-2.5 pr-3 align-top">
+        {/* On a narrow screen this cell takes the row's width and no more, so the handle under the name is cut short rather than widening the table. */}
+        <td className="py-2.5 pr-3 align-top max-lg:w-full max-lg:max-w-0">
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <Link to={`/players/${person.id}`} className="text-parchment hover:text-gold">
               {name}
             </Link>
             <span className="flex flex-wrap gap-1 lg:hidden">{badges}</span>
           </span>
-          <span className="mt-0.5 block text-xs text-mist wrap-anywhere lg:hidden">
-            @{person.handle} · {person.email} · since {since}
+          {/* The email and when they joined are in the opened row, in full. */}
+          <span className="mt-0.5 block truncate text-xs text-mist lg:hidden" title={`@${person.handle}`}>
+            @{person.handle}
           </span>
         </td>
-        <td className={`${WIDE} py-2.5 pr-3 align-top text-mist wrap-anywhere`}>@{person.handle}</td>
-        <td className={`${WIDE} py-2.5 pr-3 align-top text-mist wrap-anywhere`}>{person.email}</td>
+        {/* A handle or an email is cut short, never broken mid-word; the opened row has it in full. */}
+        <td className={`${WIDE} py-2.5 pr-3 align-top text-mist`}>
+          <span className="block max-w-44 truncate" title={`@${person.handle}`}>
+            @{person.handle}
+          </span>
+        </td>
+        <td className={`${WIDE} py-2.5 pr-3 align-top text-mist`}>
+          <span className="block max-w-64 truncate" title={person.email}>
+            {person.email}
+          </span>
+        </td>
         <td className={`${WIDE} py-2.5 pr-3 align-top text-mist`}>{since}</td>
         <td className={`${WIDE} py-2.5 pr-3 align-top`}>
           <span className="flex flex-wrap gap-1">{badges}</span>
@@ -187,6 +198,14 @@ function Person({ person }: { person: PlayerSummary }) {
         <tr id={charactersId}>
           {/* Under the name on a wide screen; the whole width of the card on a phone. */}
           <td colSpan={COLUMNS} className="pb-3 lg:pl-10">
+            <dl className="mb-2 grid gap-x-3 text-xs sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-y-0.5">
+              <dt className="text-mist">Handle</dt>
+              <dd className="wrap-anywhere">@{person.handle}</dd>
+              <dt className="text-mist">Email</dt>
+              <dd className="wrap-anywhere">{person.email}</dd>
+              <dt className="text-mist">Member since</dt>
+              <dd>{since}</dd>
+            </dl>
             <section aria-label={`${name}'s characters`}>
               <PersonCharacters playerId={person.id} />
             </section>

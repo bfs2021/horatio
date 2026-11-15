@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api/client";
 import type { SeenOut } from "../../api/types";
 import { Pronouns } from "../../components/PronounsInput";
 import { Badge, Button, ErrorText, Input, Loader } from "../../components/ui";
+import { BackLink } from "../../components/BackLink";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { endingText } from "../character/status";
@@ -112,9 +113,7 @@ function OtherStatus({ view, otherId, undo, online, onBack }: { view: Shown; oth
   const other = data?.other;
   return (
     <div className="flex flex-col gap-2">
-      <Button variant="ghost" className="self-start" onClick={onBack}>
-        ← Everyone
-      </Button>
+      <BackLink label="Everyone" onClick={onBack} className="self-start" />
       {!online && <p className="text-xs text-mist">Seeing others needs a connection.</p>}
       {shown.isPending && online && (
         <p className="text-sm">

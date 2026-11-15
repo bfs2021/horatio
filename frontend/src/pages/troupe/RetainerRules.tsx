@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
+import { Checkbox } from "../../components/Checkbox";
 import { Button, Card, ErrorText, Input, Loading, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { bodyOf, draftOf, draftProblem, MOST_GROWTH, MOST_UPKEEP, type RulesDraft } from "./retainerRules";
@@ -57,10 +58,7 @@ export function RetainerRules({ troupeId, canEdit }: { troupeId: string; canEdit
           }}
         >
           <fieldset className="flex flex-col gap-2">
-            <label className="flex min-h-10 items-center gap-2">
-              <input type="checkbox" checked={draft.upkeepOn} onChange={(e) => setDraft({ ...draft, upkeepOn: e.target.checked })} />
-              Retainers cost upkeep
-            </label>
+            <Checkbox label="Retainers cost upkeep" checked={draft.upkeepOn} onChange={(upkeepOn) => setDraft({ ...draft, upkeepOn })} />
             {draft.upkeepOn && (
               <div className="ml-6 flex flex-wrap items-end gap-3">
                 <label className="flex flex-col gap-1">
@@ -90,18 +88,12 @@ export function RetainerRules({ troupeId, canEdit }: { troupeId: string; canEdit
                     </Select>
                   </label>
                 )}
-                <label className="flex min-h-10 items-center gap-2">
-                  <input type="checkbox" checked={draft.upkeep.ghouls_only} onChange={(e) => upkeep({ ghouls_only: e.target.checked })} />
-                  Ghoul Retainers only
-                </label>
+                <Checkbox label="Ghoul Retainers only" checked={draft.upkeep.ghouls_only} onChange={(ghouls_only) => upkeep({ ghouls_only })} />
               </div>
             )}
           </fieldset>
           <fieldset className="flex flex-col gap-2">
-            <label className="flex min-h-10 items-center gap-2">
-              <input type="checkbox" checked={draft.growthOn} onChange={(e) => setDraft({ ...draft, growthOn: e.target.checked })} />
-              Retainers gain XP
-            </label>
+            <Checkbox label="Retainers gain XP" checked={draft.growthOn} onChange={(growthOn) => setDraft({ ...draft, growthOn })} />
             {draft.growthOn && (
               <label className="ml-6 flex flex-col gap-1">
                 XP a month for each Retainer, given as a downtime cycle closes

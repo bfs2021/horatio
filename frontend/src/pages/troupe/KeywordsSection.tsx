@@ -6,6 +6,7 @@ import type { KeywordIn, KeywordsOut, TroupeKeywordOut } from "../../api/types";
 import { ActionMenu, MenuGroup, MenuItem } from "../../components/ActionMenu";
 import { Dialog } from "../../components/Dialog";
 import { useToast } from "../../components/Toast";
+import { Checkbox } from "../../components/Checkbox";
 import { Badge, Button, Card, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { manualLink } from "../../manualLink";
@@ -244,36 +245,16 @@ function KeywordForm({
       <fieldset className="flex flex-col gap-1 text-sm">
         <legend className="mb-1 text-mist">It asks for, besides the description</legend>
         {data.fields.map((f) => (
-          <label key={f.key} className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={(draft.fields ?? []).includes(f.key)}
-              onChange={(e) => set({ fields: toggle(draft.fields ?? [], f.key, e.target.checked) })}
-            />
-            {f.label}
-          </label>
+          <Checkbox key={f.key} label={f.label} checked={(draft.fields ?? []).includes(f.key)} onChange={(on) => set({ fields: toggle(draft.fields ?? [], f.key, on) })} />
         ))}
       </fieldset>
       <fieldset className="flex flex-col gap-1 text-sm">
         <legend className="mb-1 text-mist">Spent from</legend>
         {Object.entries(data.action_kinds).map(([k, name]) => (
-          <label key={k} className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={(draft.action_kinds ?? []).includes(k)}
-              onChange={(e) => set({ action_kinds: toggle(draft.action_kinds ?? [], k, e.target.checked) })}
-            />
-            {name}
-          </label>
+          <Checkbox key={k} label={name} checked={(draft.action_kinds ?? []).includes(k)} onChange={(on) => set({ action_kinds: toggle(draft.action_kinds ?? [], k, on) })} />
         ))}
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={!!draft.computers_only} onChange={(e) => set({ computers_only: e.target.checked })} />
-          Only the Computer skill's action, once a cycle
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={!!draft.science} onChange={(e) => set({ science: e.target.checked })} />
-          Fits a Science, so a Science's action can go on it
-        </label>
+        <Checkbox label="Only the Computer skill's action, once a cycle" checked={!!draft.computers_only} onChange={(on) => set({ computers_only: on })} />
+        <Checkbox label="Fits a Science, so a Science's action can go on it" checked={!!draft.science} onChange={(on) => set({ science: on })} />
       </fieldset>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Actions it costs">
@@ -292,14 +273,7 @@ function KeywordForm({
       <fieldset className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
         <legend className="mb-1 text-mist">Required each cycle of</legend>
         {data.ages.map((age) => (
-          <label key={age} className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={(draft.required_for ?? []).includes(age)}
-              onChange={(e) => set({ required_for: toggle(draft.required_for ?? [], age, e.target.checked) })}
-            />
-            {age}s
-          </label>
+          <Checkbox key={age} label={`${age}s`} checked={(draft.required_for ?? []).includes(age)} onChange={(on) => set({ required_for: toggle(draft.required_for ?? [], age, on) })} />
         ))}
       </fieldset>
       <ErrorText error={save.error} />

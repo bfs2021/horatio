@@ -77,7 +77,7 @@ test("a player taps their clan seven times and finds a Jyhad card, and staff ope
   await expect(staffCard.getByText("Beauty is a knife.", { exact: true })).toBeAttached();
   // The text is the player's to write, not staff's.
   await expect(shown.getByLabel("Card text")).toHaveCount(0);
-  await expect(shown.getByRole("link", { name: "← Back" })).toHaveAttribute("href", `/troupes/${troupeId}/characters`);
+  await expect(shown.getByRole("link", { name: "← Characters" })).toHaveAttribute("href", `/troupes/${troupeId}/characters`);
 });
 
 test("a Jyhad card on its clan's crypt card template, which the custodian uploads in Tools (#850)", async ({ browser }) => {

@@ -5,6 +5,7 @@ import { api, unwrap } from "../api/client";
 import type { PrintedSheet, TestPool } from "../api/types";
 import { useClanName } from "../components/ClanNames";
 import { Pips } from "../components/ui";
+import { BackLink } from "../components/BackLink";
 import { useDates } from "../dates";
 import { HEALTH_RULE, healthRows } from "../health";
 import { DEFAULT_PREFERENCES, useMe, usePreferences } from "../hooks";
@@ -52,7 +53,7 @@ export function PrintPage() {
   if (sheet.error) return <p className="p-8 text-black">{sheet.error.message}</p>;
   return (
     <AsPips.Provider value={pips}>
-      <PrintShell back={`/characters/${characterId}`}>
+      <PrintShell back={{ label: sheet.data.character_name, to: `/characters/${characterId}` }}>
         <Sheet sheet={sheet.data} />
       </PrintShell>
     </AsPips.Provider>
@@ -79,7 +80,7 @@ export function BuildPrintPage() {
   if (sheet.error) return <p className="p-8 text-black">{sheet.error.message}</p>;
   return (
     <AsPips.Provider value={pips}>
-      <PrintShell back={`/troupes/${troupeId}/being-built`}>
+      <PrintShell back={{ label: "Being built", to: `/troupes/${troupeId}/being-built` }}>
         <Sheet sheet={sheet.data} />
       </PrintShell>
     </AsPips.Provider>
@@ -105,7 +106,7 @@ export function TroupePrintPage() {
   if (sheets.error) return <p className="p-8 text-black">{sheets.error.message}</p>;
   return (
     <AsPips.Provider value={pips}>
-      <PrintShell back={`/troupes/${troupeId}/characters`} count={sheets.data.length}>
+      <PrintShell back={{ label: "Characters", to: `/troupes/${troupeId}/characters` }} count={sheets.data.length}>
         {sheets.data.map((sheet, i) => (
           <div key={i} className={i > 0 ? "mt-6 break-before-page print:mt-0" : ""}>
             <Sheet sheet={sheet} />
@@ -140,16 +141,14 @@ function useFitScale(paperInches: number): number {
  * through. On a screen narrower than the paper (a phone), the paper is shown
  * whole, scaled down to fit, as it will print; printing isn't scaled. The paper
  * size links to the setting that changes it. */
-function PrintShell({ back, count, children }: { back: string; count?: number; children: ReactNode }) {
+function PrintShell({ back, count, children }: { back: { label: string; to: string }; count?: number; children: ReactNode }) {
   const paper = usePreferences().paper;
   const scale = useFitScale(PAPERS[paper].width);
   return (
     <div className="min-h-screen bg-neutral-200 py-6 text-black print:min-h-0 print:bg-white print:py-0">
       <style>{pageRule(paper, "0.45in")}</style>
       <div className="mx-auto mb-4 flex items-center justify-between gap-4 px-4 print:hidden" style={{ maxWidth: `${PAPERS[paper].width}in` }}>
-        <Link to={back} className="text-sm underline">
-          ← Back
-        </Link>
+        <BackLink print label={back.label} to={back.to} />
         {count !== undefined && <span className="text-sm">{count === 1 ? "1 sheet" : `${count} sheets`}</span>}
         <span className="flex items-center gap-3">
           <Link to="/account/settings" className="text-sm text-neutral-600 underline" title="Change the paper in Settings">

@@ -6,6 +6,7 @@ import type { SharedBackgroundOut, SharedChoicesOut, SharedEntryOut } from "../.
 import { DateInput } from "../../components/DateInput";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { useConfirm } from "../../components/ConfirmDialog";
+import { CardHeading } from "../../components/Headings";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { actionText, dotsText, entryText, sharersText, totalText } from "./sharedBackgrounds";
@@ -86,7 +87,7 @@ export function SharedBackgroundView({ shared, onDeleted }: { shared: SharedBack
         {open === "edit" && (choices.data ? <EditForm shared={shared} choices={choices.data} onDone={done} /> : <ErrorText error={choices.error} />)}
         <ErrorText error={remove.error ?? unlog.error} />
         {confirming}
-        <h3 className="mt-2 text-base text-gold">Log</h3>
+        <CardHeading className="mt-2">Log</CardHeading>
         {shared.entries.length === 0 ? (
           <Empty>Nothing logged yet.</Empty>
         ) : (

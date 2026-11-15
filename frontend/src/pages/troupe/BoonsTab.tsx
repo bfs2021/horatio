@@ -28,6 +28,7 @@ import {
   type SettledHow,
 } from "../../boons";
 import { DateInput } from "../../components/DateInput";
+import { SectionLabel } from "../../components/Headings";
 import { useToast } from "../../components/Toast";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { useDates } from "../../dates";
@@ -402,7 +403,7 @@ function BoonDetail({ troupeId, boonId, characters }: { troupeId: string; boonId
         <NoteForm troupeId={troupeId} boon={b} action={doing} onDone={done} />
       )}
       <div>
-        <h4 className="text-xs tracking-wide text-mist uppercase">Its log</h4>
+        <SectionLabel as="h4">Its log</SectionLabel>
         <ol aria-label={`Log of ${owes(b)}`} className="mt-1 flex flex-col gap-1 text-xs">
           {(b.events ?? []).map((e) => (
             <li key={e.id}>

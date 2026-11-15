@@ -67,6 +67,45 @@ describe("the shared toast", () => {
     expect(screen.queryByText("Spent 1 Blood · 9/10")).toBeNull();
   });
 
+  it("shows in the dialog open on top, as the page under it is dimmed and out of reach (#909)", () => {
+    const show = setup();
+    const dialog = document.body.appendChild(document.createElement("dialog"));
+    dialog.setAttribute("open", "");
+    try {
+      show({ message: "Saved." });
+      expect(dialog.textContent).toContain("Saved.");
+      act(() => vi.advanceTimersByTime(4_100));
+      expect(screen.queryByText("Saved.")).toBeNull();
+    } finally {
+      dialog.remove();
+    }
+  });
+
+  it("goes back to the page when its dialog closes as it comes, as a form's Save closes one", () => {
+    const show = setup();
+    const dialog = document.body.appendChild(document.createElement("dialog"));
+    dialog.setAttribute("open", "");
+    try {
+      act(() => {
+        void show({ message: "Saved the boon." });
+        dialog.removeAttribute("open");
+      });
+      expect(dialog.textContent).not.toContain("Saved the boon.");
+      expect(screen.getByText("Saved the boon.").closest("[aria-live]")).not.toBeNull();
+      // And one shown in it goes back to the page when it is closed later.
+      dialog.setAttribute("open", "");
+      show({ message: "Saved." });
+      expect(dialog.textContent).toContain("Saved.");
+      act(() => {
+        dialog.removeAttribute("open");
+        dialog.dispatchEvent(new Event("close"));
+      });
+      expect(screen.getByText("Saved.").closest("[aria-live]")).not.toBeNull();
+    } finally {
+      dialog.remove();
+    }
+  });
+
   it("does nothing outside a provider", () => {
     function Lone() {
       const toast = useToast();

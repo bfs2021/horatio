@@ -26,7 +26,7 @@ import { useCatalogue } from "../../catalogue";
  * for: the setting players read (#770), who may join, XP, status and titles, Blood and
  * diablerie, feeding, and what a clan is called, under the Features list: every optional
  * feature, on or off (#783). A feature with a tab of its own keeps the rest of its settings
- * folded at the top of that tab (#784). Its storytellers change them; the troupe's other
+ * behind that tab's Settings button (#784, #909). Its storytellers change them; the troupe's other
  * running staff read them (assistant storytellers write the setting too). The troupe's rules
  * for traits are on the House rules tab beside it (#782).
  */

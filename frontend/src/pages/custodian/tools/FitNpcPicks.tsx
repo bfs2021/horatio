@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { api, unwrap } from "../../../api/client";
 import type { components } from "../../../api/schema";
+import { SectionLabel } from "../../../components/Headings";
 import { Badge, Button, Card, Empty, ErrorText, Field, Select } from "../../../components/ui";
 import { useAction } from "../../../hooks";
 import { manualLink } from "../../../manualLink";
@@ -132,7 +133,7 @@ function Outcome({ found, done }: { found: NpcPicksFit; done: boolean }) {
       )}
       {found.skipped.length > 0 && (
         <div>
-          <h3 className="mb-1 text-mist">Left as they are</h3>
+          <SectionLabel className="mb-1">Left as they are</SectionLabel>
           <ul className="divide-y divide-ash/50">
             {found.skipped.map((s) => (
               <li key={s.id} className="py-1.5">

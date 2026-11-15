@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api, unwrap } from "../../../api/client";
 import type { CatalogueOut, CharacterOut, ClanMeritOut } from "../../../api/types";
 import { useClanName } from "../../../components/ClanNames";
+import { SectionLabel } from "../../../components/Headings";
 import { ErrorText, Select } from "../../../components/ui";
 import { useAction } from "../../../hooks";
 import { clanMeritWhy } from "./clanMerits";
@@ -26,7 +27,7 @@ export function ClanMerits({ character, merits, catalogue }: { character: Charac
   if (!merits.length) return null;
   return (
     <section aria-label="From the clan" className="flex flex-col gap-1">
-      <h4 className="text-xs text-mist">From the clan</h4>
+      <SectionLabel as="h4">From the clan</SectionLabel>
       <ul className="flex flex-col gap-1">
         {merits.map((m) => {
           const choices = catalogue.traits.find((t) => t.category === "merits" && t.name === m.name)?.choices;

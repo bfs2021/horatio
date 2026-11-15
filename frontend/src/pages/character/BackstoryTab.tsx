@@ -4,6 +4,7 @@ import { api, unwrap } from "../../api/client";
 import type { AnsweredSetOut, BackstoryOut, CharacterOut } from "../../api/types";
 import { Markdown } from "../../components/Markdown";
 import { EmptyState } from "../../components/EmptyState";
+import { CardHeading } from "../../components/Headings";
 import { Badge, Button, Card, ErrorText, Field, Loading, Notice, Select, Textarea } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
@@ -291,9 +292,9 @@ export function Answers({ sets }: { sets: AnsweredSetOut[] }) {
             <dl className="mt-2 flex flex-col gap-3 text-sm">
               {s.questions.map((q) =>
                 q.kind === "heading" ? (
-                  <h3 key={q.id} className="mt-2 text-base text-gold">
+                  <CardHeading key={q.id} className="mt-2">
                     {q.text}
-                  </h3>
+                  </CardHeading>
                 ) : (
                   <div key={q.id}>
                     <dt className="text-mist">

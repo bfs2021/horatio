@@ -8,7 +8,7 @@ import { ErrorText } from "../../components/ui";
 /**
  * How Horatio tracks the troupe's blood bonds, once they're on: with its running staff
  * recording them; with players reporting drinks for staff to approve; or with players
- * recording them (#661). Folded at the top of the Bonds tab (#784); bonds are switched on
+ * recording them (#661). In the Bonds tab's Settings (#784, #909); bonds are switched on
  * and off in Troupe settings' Features list, which hides every bond and every drink
  * waiting while keeping what was recorded.
  */

@@ -6,7 +6,7 @@ import { Toggle } from "../../components/Toggle";
 import { SettingCard } from "../../components/SettingCard";
 import { Badge, ErrorText } from "../../components/ui";
 import { useRulesAction } from "../../hooks";
-import { features, settingsOnTab, type Feature, type FeatureKey } from "./features";
+import { features, type Feature, type FeatureKey } from "./features";
 
 /** Switches a feature on or off, through the same endpoint as its settings card. */
 async function setFeature(troupe: TroupeOut, key: FeatureKey, on: boolean): Promise<unknown> {
@@ -97,8 +97,8 @@ async function setFeature(troupe: TroupeOut, key: FeatureKey, on: boolean): Prom
 /**
  * Every optional feature of the troupe, at the top of Troupe settings (#783): on or off,
  * what it adds, a switch for its storytellers, and links to its tab and its settings.
- * Each feature is switched on and off here only; the rest of its settings are folded at
- * the top of its own tab (#784), so a feature switched off, with no tab, can still be found.
+ * Each feature is switched on and off here only; the rest of its settings are behind the Settings
+ * button of its own tab (#784, #909), so a feature switched off, with no tab, can still be found.
  */
 export function FeaturesList({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean }) {
   const toast = useToast();
@@ -122,8 +122,6 @@ export function FeaturesList({ troupe, canEdit }: { troupe: TroupeOut; canEdit: 
     >
       <ul aria-label="Features" className="flex flex-col divide-y divide-ash">
         {features(troupe).map((f) => {
-          // A feature's settings on its own tab are folded there for its storytellers only (#784).
-          const settings = f.settings && (canEdit || !settingsOnTab(f.settings)) ? f.settings : undefined;
           return (
             <li key={f.key} aria-label={f.name} className="py-1">
               {canEdit && f.switchable ? (
@@ -140,7 +138,7 @@ export function FeaturesList({ troupe, canEdit }: { troupe: TroupeOut; canEdit: 
                   disabled={save.isPending}
                   onChange={(on) => save.mutate({ feature: f, on })}
                 >
-                  <FeatureLinks feature={f} base={base} settings={settings} />
+                  <FeatureLinks feature={f} base={base} settings={f.settings} />
                 </Toggle>
               ) : (
                 <div className="flex items-start gap-3 py-2">
@@ -151,7 +149,7 @@ export function FeaturesList({ troupe, canEdit }: { troupe: TroupeOut; canEdit: 
                       <Badge tone={f.on ? "gold" : "mist"}>{f.state}</Badge>
                     </p>
                     <p className="text-xs text-mist">{f.adds}</p>
-                    <FeatureLinks feature={f} base={base} settings={settings} />
+                    <FeatureLinks feature={f} base={base} settings={f.settings} />
                   </div>
                 </div>
               )}

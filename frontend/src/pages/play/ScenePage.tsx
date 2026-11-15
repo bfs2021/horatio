@@ -6,6 +6,7 @@ import type { PlayReference, RosterEntry, SceneOut, TestPool } from "../../api/t
 import { atGameCrumbs, Breadcrumb } from "../../components/Breadcrumb";
 import { LinesVeilsNote } from "../../components/LinesVeils";
 import { useClanName } from "../../components/ClanNames";
+import { SectionLabel } from "../../components/Headings";
 import { Button, Empty, ErrorText, Input, Loading } from "../../components/ui";
 import { usePreferences } from "../../hooks";
 import { NotUsed } from "./NotUsed";
@@ -656,7 +657,7 @@ function SceneCard({ characterId, back, onRemove, onRank }: { characterId: strin
           <div className="flex max-h-96 flex-col gap-2 overflow-y-auto">
             {fightFirst(grouped(showing(reference.pools, on))).map(([group, pools]) => (
               <section key={group} aria-label={group}>
-                <h3 className="text-xs tracking-wide text-mist uppercase">{group}</h3>
+                <SectionLabel>{group}</SectionLabel>
                 {group === "Combat" && reference.blood_per_turn > 0 && <p className="text-xs text-mist">{bloodNote(reference.blood_per_turn)}</p>}
                 <ul>
                   {pools.map((p) => (

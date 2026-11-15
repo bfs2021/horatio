@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api, unwrap } from "../../../api/client";
 import type { CatalogueOut, CharacterOut, CreationOut, PoolOut, SheetOut, TraitOut } from "../../../api/types";
+import { CardHeading } from "../../../components/Headings";
 import { Toggle } from "../../../components/Toggle";
 import { Badge, ErrorText } from "../../../components/ui";
 import { useAction, useRefusals } from "../../../hooks";
@@ -44,7 +45,7 @@ export function FromMerits({ character, creation, sheet, catalogue, traits, choi
   const title = categories.every((c) => c === "merits") ? "From merits" : "From merits and flaws";
   return (
     <section aria-label={title} className="flex flex-col gap-2 rounded-md border border-ash p-3">
-      <h3 className="text-sm text-parchment">{title}</h3>
+      <CardHeading>{title}</CardHeading>
       {pools.map((pool) => (
         <FromBudget
           key={pool.category}

@@ -28,6 +28,7 @@ import {
   type SubjectHow,
 } from "./ownChecks";
 import { useCatalogue } from "../../catalogue";
+import { CardHeading } from "../../components/Headings";
 
 const sameCheck = (a: OwnCheckOut | "new", b: OwnCheckOut | "new") => (a === "new" || b === "new" ? a === b : a.id === b.id);
 
@@ -224,7 +225,7 @@ function OwnCheckEditor({ troupeId, editing, onClose }: { troupeId: string; edit
 
   return (
     <section aria-label={editing === "new" ? "A new check" : "Change the check"} className="flex flex-col gap-4 rounded-md border border-gold/40 p-3 sm:p-4">
-      <h3 className="text-gold">{editing === "new" ? "A new check" : "Change the check"}</h3>
+      <CardHeading>{editing === "new" ? "A new check" : "Change the check"}</CardHeading>
       {unreadable && <p className="text-sm text-blood-bright">The form cannot show this check's condition. Build it again, or keep it as it is.</p>}
       {!cat && <Loading />}
       <ErrorText error={catalogue.error} />
@@ -332,7 +333,7 @@ function OwnCheckEditor({ troupeId, editing, onClose }: { troupeId: string; edit
           </Field>
 
           <section aria-label="Preview" className="flex flex-col gap-2 rounded-md border border-gold/40 bg-gold/5 p-3 text-sm">
-            <h4 className="text-gold">In plain words</h4>
+            <CardHeading as="h4">In plain words</CardHeading>
             {problem && <p className="text-blood-bright">{problem}</p>}
             {!problem && text && <p className="text-parchment">{text}</p>}
             <ErrorText error={preview.error} />

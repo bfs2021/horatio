@@ -6,6 +6,7 @@ import { useMemo, useState, type KeyboardEvent } from "react";
 import { api, unwrap } from "../../api/client";
 import type { ChartCycleOut, ChartEntryOut } from "../../api/types";
 import { AxisBottom, AxisLeft, ChartFrame, formatValue, Legend, plotArea, sequential, series, useMarks, useZoom, ZoomControls, type ChartTable } from "../../charts";
+import { CardHeading } from "../../components/Headings";
 import { ErrorText } from "../../components/ui";
 import { useDates } from "../../dates";
 import { TYPE_NAMES } from "../../influence";
@@ -228,9 +229,9 @@ function CellEntries({ cell, label, onClose }: { cell: HeatCell; label: string; 
   return (
     <section aria-label={`Entries for ${label}, ${monthLabel(cell.month)}`} className="rounded-lg border border-ash bg-dusk p-4">
       <header className="mb-2 flex items-start justify-between gap-2">
-        <h3 className="text-base text-gold">
+        <CardHeading>
           {label}, {monthLabel(cell.month)}
-        </h3>
+        </CardHeading>
         <button type="button" onClick={onClose} className="min-h-8 text-sm text-mist underline hover:text-parchment">
           Close
         </button>

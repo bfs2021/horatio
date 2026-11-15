@@ -8648,6 +8648,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/troupes/{troupe_id}/boon-export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Boons
+         * @description For the troupe's storytellers and assistant storytellers: its boon ledger as a
+         *     CSV file or a spreadsheet, newest first. With no view or filters, every boon;
+         *     otherwise those in the view (open, departed, settled, void, pending or all),
+         *     narrowed and sorted as the ledger's list has them (horatio.api.boons.troupe_boons,
+         *     #978): to a character or a name, a search (`q`), some kinds, the nights between
+         *     two dates, the flagged, or a game; by date, debtor, creditor or kind. Every page
+         *     at once. The export goes in the troupe's log.
+         */
+        get: operations["export_boons_api_troupes__troupe_id__boon_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/troupes/{troupe_id}/boon-flags/{flag_id}/clear": {
         parameters: {
             query?: never;
@@ -53786,6 +53812,51 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CharacterChoice-Output"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_boons_api_troupes__troupe_id__boon_export_get: {
+        parameters: {
+            query?: {
+                format?: "csv" | "xlsx";
+                view?: "open" | "departed" | "settled" | "void" | "pending" | "all";
+                character_id?: string | null;
+                name?: string;
+                q?: string;
+                kind?: ("trivial" | "minor" | "major" | "blood" | "life")[] | null;
+                made_from?: string | null;
+                made_to?: string | null;
+                flagged?: boolean;
+                game_id?: string | null;
+                sort?: "date" | "debtor" | "creditor" | "kind";
+                direction?: ("asc" | "desc") | null;
+            };
+            header?: never;
+            path: {
+                troupe_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                    "text/csv; charset=utf-8": string;
                 };
             };
             /** @description Validation Error */

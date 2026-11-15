@@ -146,6 +146,70 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   expect(refused.status()).toBe(403);
 });
 
+test("staff write a passage of story on a side of a boon, cut to a line, and its other side's player reads it as written (#990)", async ({ browser }) => {
+  const custodian = await person(browser, "boonstory-custodian");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "boonstory-lead");
+  const player = await person(browser, "boonstory-player");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Debts in Story ${run}`, lead_handle: lead.handle });
+  await backstoryOptional(custodian.page, troupe.id);
+  const build = { ...ATTRIBUTES_AND_FOCUSES, backgrounds: [["Fame", 3], ["Herd", 2], ["Generation", 1]] as [string, number][], disciplines: [["Celerity", 2], ["Potence", 1], ["Presence", 1]] as [string, number][] };
+  const lisette = await builtVampire(player.page, "Lisette Crane", "Brujah", build);
+  const asked = await send(player.page, "POST", `/api/characters/${lisette}/home-troupe`, { troupe_id: troupe.id });
+  await send(lead.page, "POST", `/api/approvals/${asked.id}/approve`);
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/boon-ledger`, { on: true });
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/boon-players`, { see: "owed", settle: false });
+  // 600 characters of the plot where the debtor's name would be.
+  const story = "The debt was written in silver on the night the river froze, and sealed. ".repeat(9).slice(0, 600).trim();
+
+  // The lead registers it: the picker's last choice is someone not in Horatio, which takes any text.
+  const l = lead.page;
+  await l.goto(`/troupes/${troupe.id}/boons`);
+  await l.getByRole("button", { name: "Register boons" }).click();
+  const entry = l.getByRole("form", { name: "Register boons" });
+  const row = entry.getByRole("listitem", { name: "Boon 1" });
+  await row.getByRole("combobox", { name: "Debtor" }).click();
+  await row.getByRole("listbox", { name: "Characters" }).getByRole("option", { name: "Someone not in Horatio…" }).click();
+  const text = row.getByRole("textbox", { name: "Debtor" });
+  await expect(text).toBeFocused();
+  await expect(text).toHaveAttribute("maxlength", "2000");
+  await expect(row.getByText("Its other side's player sees this as written.")).toBeVisible();
+  await text.fill(story);
+  await row.getByRole("combobox", { name: "Creditor" }).fill("Lisette");
+  await row.getByRole("listbox", { name: "Characters" }).getByRole("option", { name: /Lisette Crane/ }).click();
+  await row.getByLabel("Reason").fill("Passage across the frozen river");
+  await entry.getByRole("button", { name: "Register the boon" }).click();
+  await expect(l.getByText("Registered a boon.")).toBeVisible();
+
+  // In the ledger, one line, in italics as a name only, all of it on hover (#975); its detail has it in full, and
+  // opened to edit, it is there to change.
+  const line = ledgerOf(l).table.getByRole("row", { name: /^The debt was written in silver/ });
+  await expect(line).toHaveCount(1);
+  await expect(line.locator(`[title="${story}"]`).filter({ visible: true }).first()).toHaveCSS("font-style", "italic");
+  await line.click();
+  const detail = l.getByRole("region", { name: /^Boon: The debt was written in silver/ });
+  await expect(detail.getByText(story, { exact: true })).toBeVisible();
+  await detail.getByRole("button", { name: "Edit" }).click();
+  await expect(detail.getByRole("textbox", { name: "Debtor" })).toHaveValue(story);
+  await detail.getByRole("button", { name: "Cancel" }).click();
+
+  // Lisette's player reads it as written: a line of it, and all of it under "more".
+  const p = player.page;
+  await p.goto(`/play/characters/${lisette}?tab=boons`);
+  const owed = p.getByRole("region", { name: "Owed to Lisette Crane" }).getByRole("listitem").filter({ hasText: "Passage across the frozen river" });
+  await expect(owed).toContainText(story.slice(0, 40));
+  const more = owed.getByRole("button", { name: /^Read all of/ });
+  await more.click();
+  await expect(p.locator(`[id="${await more.getAttribute("aria-controls")}"]`)).toHaveText(story);
+});
+
 test("staff see the boon standings: each character's net by the troupe's weights, which they can change", async ({ browser }) => {
   const custodian = await person(browser, "bstand-custodian");
   makeCustodian(custodian.email);

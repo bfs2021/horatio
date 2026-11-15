@@ -16597,7 +16597,8 @@ export interface components {
         };
         /**
          * BoonPartyIn
-         * @description One side of a boon: a character in the troupe, or a name only.
+         * @description One side of a boon: a character in the troupe, or a name only. Only the troupe's
+         *     running staff write a name longer than boons.LONGEST_NAME (`side`).
          */
         BoonPartyIn: {
             /** Character Id */

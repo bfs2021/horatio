@@ -152,6 +152,10 @@ test("no screen is wider than a phone", async ({ browser }) => {
   const pc = await builtVampire(p, "Celestine Marrow", "Toreador", build);
   const asked = await send(p, "POST", `/api/characters/${pc}/home-troupe`, { troupe_id: troupeId });
   await send(l, "POST", `/api/approvals/${asked.id}/approve`, {});
+  // A boon whose debtor is 600 characters of story, not a name (#990), owed to the player's character, who sees it.
+  const story = "The debt was written in silver on the night the river froze, and sealed. ".repeat(9).slice(0, 600).trim();
+  await send(l, "POST", `/api${base}/boons`, { boons: [{ debtor: { name: story }, creditor: { character_id: pc }, kind: "major", made_on: "2026-10-03", reason: "Passage" }], note: "" });
+  await send(l, "PUT", `/api${base}/boon-players`, { see: "owed", settle: false });
   const pc2 = await builtVampire(p, "Ezra Vale", "Brujah", { ...ATTRIBUTES_AND_FOCUSES, backgrounds: [["Fame", 3], ["Herd", 2], ["Generation", 1]], disciplines: [["Celerity", 2], ["Potence", 1], ["Presence", 1]] });
   await send(p, "POST", `/api/characters/${pc2}/home-troupe`, { troupe_id: troupeId });
   const making = await creatingVampire(p, "Wren Halloway", "Brujah", []);
@@ -189,7 +193,7 @@ test("no screen is wider than a phone", async ({ browser }) => {
   // The player: a character in creation opens on Create (#915).
   const mine = [`/characters/${pc}`, `/characters/${making}`, base, "/account", "/help"];
   await crawl(p, "player", ["/characters", ...mine, "/troupes", "/rules", "/check-in", "/characters/import", `/characters/${pc2}`], mine, wide, seen);
-  for (const url of [`/play/characters/${pc}`, `/play/characters/${pc}/ledger`, `/print/characters/${pc}`]) {
+  for (const url of [`/play/characters/${pc}`, `/play/characters/${pc}?tab=boons`, `/play/characters/${pc}/ledger`, `/print/characters/${pc}`]) {
     seen.push(`player ${screen(url)}`);
     await visit(p, "player", url, wide);
   }

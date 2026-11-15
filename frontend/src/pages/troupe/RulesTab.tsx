@@ -8,7 +8,8 @@ import { Explainer } from "../../components/Explainer";
 import { useToast } from "../../components/Toast";
 import { withClanNames } from "../../clanNames";
 import { useClanName } from "../../components/ClanNames";
-import { Badge, Button, ErrorText, Input, Loading, PageTabs, Select } from "../../components/ui";
+import { PartPicker } from "../../components/PartPicker";
+import { Badge, Button, ErrorText, Input, Loading, Select } from "../../components/ui";
 import { useRulesAction } from "../../hooks";
 import { AllowancesSection } from "./AllowancesSection";
 import { BookTraitsSection } from "./BookTraitsSection";
@@ -86,11 +87,10 @@ export function RulesTab({ troupe, canEdit }: { troupe: TroupeOut; canEdit: bool
   const troupeId = troupe.id;
   const base = `/troupes/${troupeId}/house-rules`;
   return (
-    <>
-      <PageTabs
-        label="House rules"
-        tabs={[{ to: base, label: "As players read it", end: true }, ...RULE_SECTIONS.map((s) => ({ to: `${base}/${s.path}`, label: s.label }))]}
-      />
+    <PartPicker
+      label="House rules"
+      parts={[{ to: base, label: "As players read it", end: true }, ...RULE_SECTIONS.map((s) => ({ to: `${base}/${s.path}`, label: s.label }))]}
+    >
       <Routes>
         <Route index element={<HouseRulesTab troupe={troupe} staff />} />
         <Route path="checks" element={<ChecksSection troupeId={troupeId} canEdit={canEdit} />} />
@@ -108,7 +108,7 @@ export function RulesTab({ troupe, canEdit }: { troupe: TroupeOut; canEdit: bool
         {/* A part that isn't one: back to what players read. */}
         <Route path="*" element={<Navigate to={base} replace />} />
       </Routes>
-    </>
+    </PartPicker>
   );
 }
 

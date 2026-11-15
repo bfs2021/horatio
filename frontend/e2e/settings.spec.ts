@@ -463,7 +463,7 @@ test("the Play View opens as the settings say", async ({ browser }) => {
   await expect(page.getByLabel("Quick notes")).toBeChecked();
   const awake = page.getByRole("button", { name: "Keep the screen awake" });
   await expect(awake).toHaveAttribute("aria-pressed", "true");
-  await expect(awake).toHaveAttribute("title", "The screen stays on while the Play View is open.");
+  await expect(awake).toHaveText("☀ Awake");
 
   // Quick notes off, the screen left to dim, opening on Pools.
   await page.goto("/account/settings");

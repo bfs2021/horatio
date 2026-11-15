@@ -1,12 +1,20 @@
 /**
  * The ★ beside a troupe's own merit or flaw, wherever it shows, with its note:
  * "House merit of Night Court". `short` shows only the star, the note being its
- * name for screen readers and on hover. What its effects do (`summary`) shows on
- * hover too.
+ * name for screen readers. What its effects do shows in a `HouseSummary` (or a
+ * `TraitInfo`'s `summary`) beside it, not here: a hover title never shows on a phone.
  */
-export function HouseMark({ label, short = false, summary }: { label: string; short?: boolean; summary?: string | null }) {
+export function HouseMark({
+  label,
+  short = false,
+}: {
+  label: string;
+  short?: boolean;
+  /** Not shown here: a `HouseSummary` beside it shows it. Kept while the sheet and the wizard still pass it. */
+  summary?: string | null;
+}) {
   return (
-    <span className="ml-1 inline-flex items-baseline gap-1 text-xs text-gold" title={summary ? `${label}. What it does: ${summary}` : label}>
+    <span className="ml-1 inline-flex items-baseline gap-1 text-xs text-gold">
       <span aria-hidden>★</span>
       {short ? <span className="sr-only">{label}</span> : <span>{label}</span>}
     </span>

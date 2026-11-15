@@ -503,7 +503,7 @@ function ItemDetails({ item, rules }: { item: EquipmentItemOut; rules: Equipment
         <ul aria-label={`${item.name}'s special effects`} className="flex flex-col gap-0.5">
           {item.effects.map((e) => (
             <li key={e.name}>
-              <span className="text-gold" title={`${item.special_troupe_name}'s own`}>
+              <span className="text-gold">
                 ★ {e.name}
               </span>
               : {e.effect}

@@ -194,13 +194,13 @@ function MadeOn({ view, effect, online, onChange }: { view: PlayView; effect: Ef
         </p>
         <When effect={effect} />
         {end.error && <ErrorText error={end.error} />}
+        {!online && <p className="text-xs text-mist">Ending it needs a connection.</p>}
       </div>
       <Button
         type="button"
         variant="ghost"
         className="min-h-10 shrink-0 px-3"
         disabled={!online || end.isPending}
-        title={online ? undefined : "Ending it needs a connection"}
         aria-label={`End ${effect.name} on ${effect.character_name}`}
         onClick={() => end.mutate(undefined)}
       >

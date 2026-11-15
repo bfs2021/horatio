@@ -147,14 +147,15 @@ function Person({ person }: { person: PlayerSummary }) {
             @{person.handle}
           </span>
         </td>
-        {/* A handle or an email is cut short, never broken mid-word; the opened row has it in full. */}
+        {/* A handle or an email is cut short, never broken mid-word; the opened row has it in full.
+            The page is wider from xl (#913), so the columns are too: most show in full. */}
         <td className={`${WIDE} py-2.5 pr-3 align-top text-mist`}>
-          <span className="block max-w-44 truncate" title={`@${person.handle}`}>
+          <span className="block max-w-44 truncate xl:max-w-60" title={`@${person.handle}`}>
             @{person.handle}
           </span>
         </td>
         <td className={`${WIDE} py-2.5 pr-3 align-top text-mist`}>
-          <span className="block max-w-64 truncate" title={person.email}>
+          <span className="block max-w-64 truncate xl:max-w-96" title={person.email}>
             {person.email}
           </span>
         </td>

@@ -251,16 +251,20 @@ test("People is wider on a wide screen, so no handle or email wraps, while Site 
   await expect(row).toBeVisible();
 
   const width = async () => (await c.locator("main").boundingBox())!.width;
-  // Lines of text in a cell: the distinct tops of its line boxes.
-  const lines = (cell: Locator) =>
-    cell.evaluate((el) => {
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      return new Set(Array.from(range.getClientRects(), (r) => Math.round(r.top))).size;
-    });
+  // Shown in full: on one line (the distinct tops of its text's boxes) and not cut short.
+  const inFull = (text: string) =>
+    row
+      .getByText(text, { exact: true })
+      .filter({ visible: true })
+      .evaluate((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const lines = new Set(Array.from(range.getClientRects(), (r) => Math.round(r.top))).size;
+        return lines === 1 && el.scrollWidth <= el.clientWidth;
+      });
   expect(await width()).toBe(1280);
-  expect(await lines(row.getByRole("cell", { name: custodian.email, exact: true }))).toBe(1);
-  expect(await lines(row.getByRole("cell", { name: `@${custodian.handle}`, exact: true }))).toBe(1);
+  expect(await inFull(custodian.email)).toBe(true);
+  expect(await inFull(`@${custodian.handle}`)).toBe(true);
   // The header lines up with the page under it.
   expect((await c.locator("header > div").first().boundingBox())!.x).toBe((await c.locator("main").boundingBox())!.x);
   await c.screenshot(shots("people-wide"));

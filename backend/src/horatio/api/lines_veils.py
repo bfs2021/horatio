@@ -1,6 +1,6 @@
 """A player's lines and veils (horatio.lines_veils): the player keeps their own, and
 a troupe's staff see everyone's on one list. Where else they show (a profile, the
-Who's Who, the Characters tab, the Play View), the route asks
+Who's Who, the Roster tab, the Play View), the route asks
 horatio.permissions who may see them."""
 
 import uuid

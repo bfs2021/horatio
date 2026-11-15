@@ -36,7 +36,7 @@ export function TitlesTab({ troupeId }: { troupeId: string }) {
       {flagged.length > 0 && (
         <Card title="Held out of sect">
           <p className="mb-2 text-sm text-mist">
-            Given before titles had sects, or since the character changed sect. Each is kept until you take it on the Characters tab.
+            Given before titles had sects, or since the character changed sect. Each is kept until you take it on the Roster tab.
           </p>
           <ul className="flex flex-col gap-1 text-sm">
             {flagged.map(({ title, holder }) => (
@@ -52,7 +52,7 @@ export function TitlesTab({ troupeId }: { troupeId: string }) {
       )}
       <Card title="Held titles">
         {held.length === 0 ? (
-          <EmptyState title="No one holds a title yet.">Give titles to characters on the Characters tab.</EmptyState>
+          <EmptyState title="No one holds a title yet.">Give titles to characters on the Roster tab.</EmptyState>
         ) : (
           <TitleTable label="Held titles" troupeId={troupeId} titles={held} data={titles.data} held />
         )}
@@ -103,7 +103,7 @@ export function TitlesTab({ troupeId }: { troupeId: string }) {
         />
         <ErrorText error={add.error} />
         <p className="mt-3 text-xs text-mist">
-          Give titles to characters on the Characters tab; players choose their own on their character's Status & Titles tab, unless the troupe keeps titles to
+          Give titles to characters on the Roster tab; players choose their own on their character's Status & Titles tab, unless the troupe keeps titles to
           staff. A title of a sect goes only to characters of that sect, and a title means nothing outside this troupe. Of a character's titles, only the
           active one gives status. Several characters may hold a title unless you switch on One holder at a time for it; then, while someone holds it,
           players can't choose it, though staff can still give it. What each status does is on the{" "}
@@ -347,13 +347,13 @@ function OneHolderSwitch({ title, pending, onChange, worded = false }: { title: 
   );
 }
 
-/** The troupe's characters, with the titles each holds here: the Characters tab's list. */
+/** The troupe's characters, with the titles each holds here: the Roster tab's list. */
 const rosterQuery = (troupeId: string) => ({
   queryKey: ["roster", troupeId],
   queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/characters", { params: { path: { troupe_id: troupeId } } })),
 });
 
-/** Give a character in the troupe exactly these titles, as the Characters tab does. */
+/** Give a character in the troupe exactly these titles, as the Roster tab does. */
 const setTitles = (troupeId: string, characterId: string, titles: string[]) =>
   unwrap(api.PUT("/api/troupes/{troupe_id}/characters/{character_id}/titles", { params: { path: { troupe_id: troupeId, character_id: characterId } }, body: { titles } }));
 

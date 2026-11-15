@@ -3,7 +3,7 @@ troupe's staff), and a player's own, on their profile. Both are optional free te
 such as "she/her", "they/them" or "any"; the app suggests the usual ones. An empty
 field shows nothing.
 
-A character's pronouns show on its page, the troupe's Characters tab and Who's Who,
+A character's pronouns show on its page, the troupe's Roster tab and Who's Who,
 and the Play View's Others at this game; a troupe's badges print them if it chooses
 (Troupe.badge_pronouns). A player's show beside their name wherever other players
 see it, in every troupe, and are never printed on a badge.

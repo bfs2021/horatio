@@ -1,5 +1,5 @@
 """A bell notice to a troupe's players when its Setting Style Document changes (issue
-#881): it says what changed and links to the Setting tab, a burst of changes makes
+#881): it says what changed and links to The setting tab, a burst of changes makes
 one notice, and only the player-facing document counts."""
 
 import uuid

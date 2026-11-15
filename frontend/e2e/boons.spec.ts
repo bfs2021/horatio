@@ -600,8 +600,8 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
   await h.goto(`/play/characters/${morwen}/ledger`);
   await h.getByLabel("Make a Lesser Harpy").selectOption({ label: "Wren Ashby" });
   const may = h.getByRole("group", { name: "What they may do" });
-  await expect(may.getByLabel("Add boons")).toBeChecked();
-  await expect(may.getByLabel("Edit boons")).not.toBeChecked();
+  await expect(may.getByRole("checkbox", { name: "Add boons" })).toBeChecked();
+  await expect(may.getByRole("checkbox", { name: "Edit boons" })).not.toBeChecked();
   await h.getByRole("button", { name: "Give access" }).click();
   await expect(h.getByText("Wren Ashby has access to the ledger.")).toBeVisible();
   await expect(h.getByRole("list", { name: "Lesser Harpies" })).toContainText("Wren Ashby sees the ledger and adds boons");

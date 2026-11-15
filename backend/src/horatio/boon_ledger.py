@@ -10,6 +10,9 @@ views then ask only whether a boon names one of them.
 
 The views (horatio.boons.VIEWS): open, standing with both parties still in play;
 departed, standing but naming someone gone; settled; void; pending; or all.
+
+Beside the page come its views' counts with the filters, and the whole ledger's
+`totals` without them (#977), for the strip above the list.
 """
 
 import uuid
@@ -156,6 +159,35 @@ def counts(
             found[state] += every
         found["all"] += every
     return found
+
+
+def open_by_kind(
+    db: Session, where: list[ColumnElement[bool]], left: frozenset[uuid.UUID]
+) -> dict[str, int]:
+    """How many of the boons are open (standing, both parties in play) of each kind:
+    every kind, lightest first."""
+    found: dict[str, int] = dict.fromkeys(boons.KINDS, 0)
+    rows = db.execute(
+        select(Boon.kind, func.count()).where(*where, in_view("open", left)).group_by(Boon.kind)
+    )
+    for kind, every in rows:
+        found[kind] = every
+    return found
+
+
+@dataclass(frozen=True)
+class Totals:
+    """The whole ledger at a glance (#977), whatever narrows the list: how many boons
+    are in each view, and how many open ones of each kind."""
+
+    views: dict[str, int]
+    open_by_kind: dict[str, int]
+
+
+def totals(db: Session, troupe_id: uuid.UUID, left: frozenset[uuid.UUID]) -> Totals:
+    """The troupe's whole ledger counted, given who is `gone`."""
+    where = narrowing(troupe_id, Filters())
+    return Totals(counts(db, where, left), open_by_kind(db, where, left))
 
 
 def ordered(query: Select[Boon], sort: str, direction: str) -> Select[Boon]:

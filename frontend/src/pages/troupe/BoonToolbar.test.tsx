@@ -33,11 +33,15 @@ function Toolbar({ start = "", toReview = null }: { start?: string; toReview?: n
 const shown = () => JSON.parse(screen.getByRole("status").textContent!) as LedgerSearch;
 
 describe("BoonToolbar (#976)", () => {
-  it("offers the views with their counts, Pending only when there are any, and To review while it holds boons", () => {
+  it("offers the views, Pending only when there are any, and To review while it holds boons", () => {
     render(<Toolbar toReview={3} />);
     const views = screen.getByRole("radiogroup", { name: "Ledger views" });
-    const names = [...views.querySelectorAll("[role=radio]")].map((r) => r.textContent);
-    expect(names).toEqual(["Open (1,234)", "Departed (1)", "Settled (2)", "Void (0)", "All (1,237)", "To review (3)"]);
+    const names = () => [...views.querySelectorAll("[role=radio]")].map((r) => r.textContent);
+    // The totals strip above counts the whole ledger (#977): the views count only within a search.
+    expect(names()).toEqual(["Open", "Departed", "Settled", "Void", "All", "To review"]);
+    fireEvent.click(screen.getByRole("button", { name: "Major" }));
+    expect(names()).toEqual(["Open (1,234)", "Departed (1)", "Settled (2)", "Void (0)", "All (1,237)", "To review"]);
+    expect([...screen.getByRole("combobox", { name: "Ledger views" }).querySelectorAll("option")][0]!.textContent).toBe("Open (1,234)");
     fireEvent.click(screen.getByRole("radio", { name: /^Settled/ }));
     expect(shown().view).toBe("settled");
     // The phone's select has the same views.
@@ -81,6 +85,19 @@ describe("BoonToolbar (#976)", () => {
     expect(screen.queryByRole("button", { name: "Show every boon" })).toBeNull();
     expect((screen.getByRole("searchbox") as HTMLInputElement).value).toBe("");
     expect(screen.getByRole("button", { name: "More filters" })).toBeTruthy();
+  });
+
+  it("follows a search set elsewhere, such as the totals strip (#977): the boxes show it", () => {
+    const toolbar = (start: string) => (
+      <QueryClientProvider client={new QueryClient()}>
+        <BoonToolbar search={readLedger(new URLSearchParams(start))} update={() => {}} counts={{}} toReview={null} characters={characters} games={[]} />
+      </QueryClientProvider>
+    );
+    const { rerender } = render(toolbar("q=elysium&character=c1"));
+    expect((screen.getByRole("combobox", { name: "Character or name" }) as HTMLInputElement).value).toBe("Agnes Thorne");
+    rerender(toolbar("kind=major"));
+    expect((screen.getByRole("searchbox") as HTMLInputElement).value).toBe("");
+    expect((screen.getByRole("combobox", { name: "Character or name" }) as HTMLInputElement).value).toBe("");
   });
 
   it("leaves At a game out where the troupe has no games", () => {

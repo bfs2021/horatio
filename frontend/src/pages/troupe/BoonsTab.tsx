@@ -45,6 +45,7 @@ import { Boonbreakers } from "./Boonbreakers";
 import { BoonReviewQueue, ReviewPanel } from "./BoonReview";
 import { ledgerQuery, narrowed, readLedger, sortBy, writeLedger, type LedgerSearch, type LedgerSort } from "./boonSearch";
 import { BoonToolbar } from "./BoonToolbar";
+import { BoonTotals } from "./BoonTotals";
 import { WhoPicker } from "./WhoPicker";
 
 /**
@@ -192,7 +193,7 @@ function Ledger({ troupeId }: { troupeId: string }) {
   if (ledger.isPending || choices.isPending) return <Loading />;
   if (ledger.error) return <ErrorText error={ledger.error} />;
   if (choices.error) return <ErrorText error={choices.error} />;
-  const { boons, counts } = ledger.data;
+  const { boons, counts, totals } = ledger.data;
   const characters = choices.data;
   const sorting = (label: string, by: LedgerSort): Pick<Column<BoonOut>, "header" | "label" | "sort"> => {
     const way = search.sort === by ? (search.direction === "asc" ? "ascending" : "descending") : undefined;
@@ -230,6 +231,7 @@ function Ledger({ troupeId }: { troupeId: string }) {
       {(!harpy || harpy.role === "harpy") && <Boonbreakers troupeId={troupeId} characters={characters} />}
 
       <div ref={top} className="flex scroll-mt-4 flex-col gap-3">
+        <BoonTotals totals={totals} toReview={reviews ? toReview : null} search={search} show={update} />
         <BoonToolbar
           search={search}
           update={update}

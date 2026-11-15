@@ -25,11 +25,16 @@ const VIEW_NAMES = { open: "Open", departed: "Departed", settled: "Settled", voi
 type LedgerView = keyof typeof VIEW_NAMES;
 const onPhone = () => test.info().project.name === "phone";
 
-/** A view of the ledger, which holds its count: "Open (4)". */
+/** A view of the ledger, which holds its count while a search narrows it: "Open (4)". */
 function viewOf(page: Page, view: LedgerView) {
   return onPhone()
     ? page.getByRole("combobox", { name: "Ledger views" }).locator(`option[value="${view}"]`)
-    : page.getByRole("radiogroup", { name: "Ledger views" }).getByRole("radio", { name: new RegExp(`^${VIEW_NAMES[view]} \\(`) });
+    : page.getByRole("radiogroup", { name: "Ledger views" }).getByRole("radio", { name: new RegExp(`^${VIEW_NAMES[view]}( \\(|$)`) });
+}
+
+/** A number in the totals strip above the toolbar (#977), the whole ledger's, named "Open 4" or "Minor 2". */
+function totalOf(page: Page, label: string) {
+  return page.getByRole("group", { name: "The whole ledger" }).getByRole("button", { name: new RegExp(`^${label} [\\d,]+$`) });
 }
 
 async function showView(page: Page, view: LedgerView) {
@@ -93,7 +98,7 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
 
   const boons = ledgerOf(l);
   await expect(boons.row("Mireille Dauvin owes Anselm Roque, minor")).toHaveCount(3);
-  await expect(viewOf(l, "open")).toContainText("(4)");
+  await expect(totalOf(l, "Open")).toHaveAccessibleName("Open 4");
   // One line each (#975): a name only, someone not in Horatio, in italics.
   const vargaRow = boons.row("Elder Varga owes Mireille Dauvin, trivial");
   // (A phone's first line repeats the creditor, and its fold the state, so each is looked for where it shows.)
@@ -113,7 +118,8 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   await settle.getByLabel(/^Called in/).check();
   await settle.getByLabel("Note (optional)").fill("Called in for a favour at court");
   await settle.getByRole("button", { name: "Settle it" }).click();
-  await expect(viewOf(l, "open")).toContainText("(3)");
+  await expect(totalOf(l, "Open")).toHaveAccessibleName("Open 3");
+  await expect(totalOf(l, "Settled")).toHaveAccessibleName("Settled 1");
   await showView(l, "settled");
   await expect(boons.rows).toHaveCount(1);
   await expect(boons.row("Mireille Dauvin owes Anselm Roque, minor")).toContainText("Settled: called in");
@@ -228,7 +234,7 @@ test("the ledger shows a hundred boons a page, with Previous and Next, and the p
   await expect(l).toHaveURL(/[?&]page=2\b/);
 });
 
-test("the ledger's toolbar searches the reason and conditions, picks kinds, filters by night and sorts, all kept in the URL (#976)", async ({ browser }) => {
+test("the ledger's toolbar searches the reason and conditions, picks kinds, filters by night and sorts, all kept in the URL (#976), and the totals strip shows a view or a kind (#977)", async ({ browser }) => {
   const custodian = await person(browser, "toolbar-custodian");
   makeCustodian(custodian.email);
   const lead = await person(browser, "toolbar-lead");
@@ -263,7 +269,11 @@ test("the ledger's toolbar searches the reason and conditions, picks kinds, filt
   await l.goto(`/troupes/${troupe.id}/boons`);
   const boons = ledgerOf(l);
   await expect(boons.rows).toHaveCount(4);
-  await expect(viewOf(l, "open")).toContainText("(4)");
+  // The totals strip counts the whole ledger (#977); the views count only within a search.
+  await expect(totalOf(l, "Open")).toHaveAccessibleName("Open 4");
+  await expect(totalOf(l, "Minor")).toHaveAccessibleName("Minor 1");
+  await expect(totalOf(l, "Blood")).toHaveAccessibleName("Blood 0");
+  await expect(viewOf(l, "open")).not.toContainText("(");
   // Newest first, as it starts.
   await expect(boons.rows.first()).toHaveAccessibleName("Details: Rhea Solberg owes Quintus Hale, trivial");
 
@@ -273,6 +283,7 @@ test("the ledger's toolbar searches the reason and conditions, picks kinds, filt
   await expect(boons.rows).toHaveCount(1);
   await expect(boons.row("Orsolya Venk owes Piet Marlowe, minor")).toHaveCount(1);
   await expect(viewOf(l, "open")).toContainText("(1)");
+  await expect(totalOf(l, "Open")).toHaveAccessibleName("Open 4");
   await expect(l).toHaveURL(/[?&]q=MASQ\b/);
   await l.reload();
   await expect(searchBox).toHaveValue("MASQ");
@@ -325,6 +336,27 @@ test("the ledger's toolbar searches the reason and conditions, picks kinds, filt
   if (onPhone()) await expect(l.getByRole("combobox", { name: "Ledger views" })).toHaveValue("all");
   else await expect(viewOf(l, "all")).toHaveAttribute("aria-checked", "true");
   await l.screenshot(shots("boon-ledger-toolbar"));
+
+  // A number in the totals strip shows just its boons (#977): the open majors, the search and filters cleared, the order kept.
+  await searchBox.fill("solb");
+  await expect(boons.rows).toHaveCount(1);
+  await totalOf(l, "Major").click();
+  await expect(boons.rows).toHaveCount(1);
+  await expect(boons.row("Quintus Hale owes Orsolya Venk, major")).toHaveCount(1);
+  await expect(searchBox).toHaveValue("");
+  await expect(kinds.getByRole("button", { name: "Major" })).toHaveAttribute("aria-pressed", "true");
+  await expect(totalOf(l, "Major")).toHaveAttribute("aria-current", "true");
+  await expect(l).toHaveURL(/[?&]kind=major\b/);
+  await expect(l).toHaveURL(/[?&]sort=debtor\b/);
+  await expect(l).not.toHaveURL(/view=|q=/);
+  await totalOf(l, "Open").click();
+  await expect(boons.rows).toHaveCount(4);
+  await totalOf(l, "Settled").click();
+  await expect(l.getByText("None here.")).toBeVisible();
+  // To review, for staff, who review: the names only wait there, flagged.
+  await totalOf(l, "To review").click();
+  await expect(l).toHaveURL(/[?&]view=review\b/);
+  await expect(l.getByRole("list", { name: "Boons to review" })).toBeVisible();
 });
 
 test("staff write a passage of story on a side of a boon, cut to a line, and its other side's player reads it as written (#990)", async ({ browser }) => {
@@ -1015,10 +1047,13 @@ test("the Harpy keeps the ledger from the Play View as their character, and neve
   await l.reload();
   await showView(l, "departed");
   await expect(ledgerOf(l).row("Edric Thorne owes Lady Ashgrove, major").getByText("Dead", { exact: true }).filter({ visible: true })).toBeVisible();
+  await expect(totalOf(l, "Departed")).not.toHaveAccessibleName("Departed 0");
   await h.reload();
   const atCourt = ledgerOf(h).row("Edric Thorne owes Lady Ashgrove, major");
   await expect(atCourt).toBeVisible();
   await expect(atCourt.getByText("Dead", { exact: true })).toHaveCount(0);
+  // Its totals strip too (#977): the boon is still open as the court knows it.
+  await expect(totalOf(h, "Departed")).toHaveAccessibleName("Departed 0");
 });
 
 test("the Harpy gives a Lesser Harpy add-only access: they register a boon as their character but can't edit it, then may settle but not correct it, and the Harpy, kept from it, doesn't see who did (#689, #984, #992)", async ({ browser }) => {
@@ -1094,6 +1129,9 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
   await row.getByLabel("Reason").fill("A word at court");
   await entry.getByRole("button", { name: "Register the boon" }).click();
   await expect(t.getByText("Registered a boon.")).toBeVisible();
+  // She doesn't review, so the totals strip has no To review (#977).
+  await expect(totalOf(t, "Open")).toBeVisible();
+  await expect(totalOf(t, "To review")).toHaveCount(0);
 
   // She can open it, but not edit, settle or void it.
   await ledgerOf(t).row("Wren Ashby owes Lady Morrow, minor").click();
@@ -1167,7 +1205,7 @@ test("staff declare a Boonbreaker: their open boons are made void, both ways, an
   const mark = l.getByRole("list", { name: "Boonbreakers" }).getByRole("listitem", { name: "Ottavia Sterne, Boonbreaker" });
   await expect(mark).toContainText("2 boons made void · holds Disgraced for it");
   await expect(mark).toContainText("Refused: Ottavia Sterne owes Lucan Mireaux, major");
-  await expect(viewOf(l, "open")).toContainText("(0)");
+  await expect(totalOf(l, "Open")).toHaveAccessibleName("Open 0");
   await showView(l, "void");
   const voided = ledgerOf(l).row("Ottavia Sterne owes Lucan Mireaux, major");
   await expect(voided).toContainText("Boonbreaker");

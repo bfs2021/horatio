@@ -187,6 +187,7 @@ def test_a_whole_games_boons_at_once_each_row_as_many_times_as_its_count(ledger:
         None,
         None,
     )
+    assert named_only["left"] is None
     assert ledger.get(made.json()[0]).json()["events"][0]["note"] == "Elysium, 3 October"
     assert "storyteller registered 3 minor boons: Agnes owes Vidal (Elysium, 3 October)." in (
         ledger.messages()
@@ -436,6 +437,8 @@ def test_the_ledger_shows_open_departed_settled_and_void_boons(ledger: Ledger) -
     assert [b["id"] for b in gone] == [with_bram["id"]]
     assert gone[0]["departed"] is True
     assert gone[0]["debtor"]["standing"] == "final_death"
+    # Beside the name, as the sheet's Debtor Status column has it (#975).
+    assert (gone[0]["debtor"]["left"], gone[0]["creditor"]["left"]) == ("dead", None)
     assert [b["id"] for b in ledger.ledger("settled")["boons"]] == [settled["id"]]
     assert [b["id"] for b in ledger.ledger("void")["boons"]] == [voided["id"]]
     # Newest first.

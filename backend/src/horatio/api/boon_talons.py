@@ -10,7 +10,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
-from horatio import boon_talons, boons
+from horatio import boon_harpy, boon_talons, boons
 from horatio.api.downtimes import staff_troupe
 from horatio.api.troupes import TroupeOut, troupe_out
 from horatio.auth.deps import CurrentUser, DbSession
@@ -27,11 +27,16 @@ class BoonTalonsSettingIn(BaseModel):
     on: bool
     # What the troupe calls them.
     word: TalonWord = "Lesser Harpies"
+    # The Harpy sees, in a boon's log, what they change (#992); left out, unchanged.
+    harpy_sees: bool | None = None
 
 
 class TalonIn(BaseModel):
     can_add: bool = False
+    # Correct boons: edit what one says, and link a name to a character.
     can_edit: bool = False
+    # Settle and move boons, and review what players report (#984).
+    can_settle: bool = False
     can_audit: bool = False
 
 
@@ -40,6 +45,7 @@ class TalonOut(BaseModel):
     name: str
     can_add: bool
     can_edit: bool
+    can_settle: bool
     can_audit: bool
     # The Harpy who gave it, by their character's name; empty when staff did.
     given_by: str
@@ -99,6 +105,7 @@ def talons_out(db: DbSession, troupe: Troupe, harpy: Character | None) -> BoonTa
                 name=t.character.name,
                 can_add=t.talon.can_add,
                 can_edit=t.talon.can_edit,
+                can_settle=t.talon.can_settle,
                 can_audit=t.talon.can_audit,
                 given_by=t.given_by,
                 given_at=t.talon.created_at,
@@ -120,9 +127,12 @@ def set_boon_talons(
     troupe_id: uuid.UUID, body: BoonTalonsSettingIn, db: DbSession, user: CurrentUser
 ) -> TroupeOut:
     """Whether the troupe's Harpy may give others access to its boon ledger (#689),
-    and what it calls them. Only used while the Harpy has the full ledger."""
+    and what it calls them; and whether the Harpy sees, in a boon's log, what they
+    change (#992). Only used while the Harpy has the full ledger."""
     troupe = staff_troupe(db, user, troupe_id, TroupeAction.MANAGE_HOUSE_RULES)
     boon_talons.set_setting(db, user, troupe, body.on, body.word)
+    if body.harpy_sees is not None:
+        boon_harpy.set_sees_talons(db, user, troupe, body.harpy_sees)
     db.commit()
     return troupe_out(db, user, troupe)
 
@@ -157,6 +167,7 @@ def give_talon(
         character,
         add=body.can_add,
         edit=body.can_edit,
+        settle=body.can_settle,
         audits=body.can_audit,
         by=harpy,
     )

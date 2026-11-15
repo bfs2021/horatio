@@ -50,6 +50,11 @@ export function BoonLedgerSetting({ troupe, canEdit }: { troupe: TroupeOut; canE
       {!canEdit && on && troupe.boon_talons && troupe.boon_harpy === "full" && (
         <p className="mt-1 text-sm">The Harpy may give others access to the ledger, as {troupe.boon_talon_word ?? "Lesser Harpies"}.</p>
       )}
+      {!canEdit && on && troupe.boon_talons && troupe.boon_harpy === "full" && (
+        <p className="mt-1 text-sm">
+          {troupe.boon_harpy_sees_talons === false ? "What talons change is kept from the Harpy." : "The Harpy sees what their talons change."}
+        </p>
+      )}
     </SettingCard>
   );
 }
@@ -179,7 +184,7 @@ const HARPY: { value: HarpyAccess; label: string; hint: string; summary: string 
   {
     value: "full",
     label: "The full ledger",
-    hint: "The Harpy registers, edits, trades, passes on and settles boons, and reviews what players report.",
+    hint: "This is how the Harpy edits boons: they register, correct, trade, pass on and settle them, and review what players report, from their Play View. Lesser Harpies are set below.",
     summary: "The Harpy keeps the full ledger, and reviews the boons players report.",
   },
 ];

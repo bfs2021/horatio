@@ -8835,7 +8835,8 @@ export interface paths {
         /**
          * Set Boon Talons
          * @description Whether the troupe's Harpy may give others access to its boon ledger (#689),
-         *     and what it calls them. Only used while the Harpy has the full ledger.
+         *     and what it calls them; and whether the Harpy sees, in a boon's log, what they
+         *     change (#992). Only used while the Harpy has the full ledger.
          */
         put: operations["set_boon_talons_api_troupes__troupe_id__boon_talons_setting_put"];
         post?: never;
@@ -16539,6 +16540,11 @@ export interface components {
             departed: boolean;
             /** Events */
             events?: components["schemas"]["BoonEventOut"][] | null;
+            /**
+             * Flagged
+             * @default false
+             */
+            flagged: boolean;
             /** Flags */
             flags?: components["schemas"]["BoonFlagOut"][] | null;
             gallant?: components["schemas"]["GallantOut"] | null;
@@ -16614,6 +16620,8 @@ export interface components {
             character_id: string | null;
             /** Kind */
             kind: string | null;
+            /** Left */
+            left?: ("dead" | "off_field") | null;
             /** Name */
             name: string;
             /** Standing */
@@ -16842,6 +16850,8 @@ export interface components {
         };
         /** BoonTalonsSettingIn */
         BoonTalonsSettingIn: {
+            /** Harpy Sees */
+            harpy_sees?: boolean | null;
             /** On */
             on: boolean;
             /**
@@ -22535,6 +22545,11 @@ export interface components {
              * @default true
              */
             can_review: boolean;
+            /**
+             * Can Settle
+             * @default true
+             */
+            can_settle: boolean;
             /**
              * Gives Access
              * @default false
@@ -34204,6 +34219,11 @@ export interface components {
              * @default false
              */
             can_edit: boolean;
+            /**
+             * Can Settle
+             * @default false
+             */
+            can_settle: boolean;
         };
         /** TalonOut */
         TalonOut: {
@@ -34213,6 +34233,8 @@ export interface components {
             can_audit: boolean;
             /** Can Edit */
             can_edit: boolean;
+            /** Can Settle */
+            can_settle: boolean;
             /**
              * Character Id
              * Format: uuid
@@ -35450,6 +35472,11 @@ export interface components {
              * @enum {string}
              */
             boon_harpy: "none" | "submissions" | "full";
+            /**
+             * Boon Harpy Sees Talons
+             * @default true
+             */
+            boon_harpy_sees_talons: boolean;
             /**
              * Boon Harpy Standings
              * @default false

@@ -151,6 +151,8 @@ class TroupeOut(BaseModel):
     # them.
     boon_talons: bool = False
     boon_talon_word: Literal["Lesser Harpies", "Talons"] = "Lesser Harpies"
+    # The Harpy sees, in a boon's log, what their Lesser Harpies change (#992).
+    boon_harpy_sees_talons: bool = True
     # The court over time (horatio.title_history): whether its players see it.
     court_history_players: bool = False
     # The chronicle timeline (horatio.chronicle): whether its players see it.
@@ -411,6 +413,7 @@ def one_out(
         boon_harpy_standings=troupe.boon_harpy_standings,
         boon_talons=troupe.boon_talons,
         boon_talon_word=troupe.boon_talon_word,  # type: ignore[arg-type]  # checked by the database
+        boon_harpy_sees_talons=troupe.boon_harpy_sees_talons,
         court_history_players=troupe.court_history_players,
         chronicle_players=troupe.chronicle_players,
         whos_who=whos_who,

@@ -7457,6 +7457,11 @@
             ],
             "title": "Events"
           },
+          "flagged": {
+            "default": false,
+            "title": "Flagged",
+            "type": "boolean"
+          },
           "flags": {
             "anyOf": [
               {
@@ -7671,6 +7676,21 @@
               }
             ],
             "title": "Kind"
+          },
+          "left": {
+            "anyOf": [
+              {
+                "enum": [
+                  "dead",
+                  "off_field"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Left"
           },
           "name": {
             "title": "Name",
@@ -8346,6 +8366,17 @@
       },
       "BoonTalonsSettingIn": {
         "properties": {
+          "harpy_sees": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Harpy Sees"
+          },
           "on": {
             "title": "On",
             "type": "boolean"
@@ -23490,6 +23521,11 @@
           "can_review": {
             "default": true,
             "title": "Can Review",
+            "type": "boolean"
+          },
+          "can_settle": {
+            "default": true,
+            "title": "Can Settle",
             "type": "boolean"
           },
           "gives_access": {
@@ -52902,6 +52938,11 @@
             "default": false,
             "title": "Can Edit",
             "type": "boolean"
+          },
+          "can_settle": {
+            "default": false,
+            "title": "Can Settle",
+            "type": "boolean"
           }
         },
         "title": "TalonIn",
@@ -52919,6 +52960,10 @@
           },
           "can_edit": {
             "title": "Can Edit",
+            "type": "boolean"
+          },
+          "can_settle": {
+            "title": "Can Settle",
             "type": "boolean"
           },
           "character_id": {
@@ -52949,6 +52994,7 @@
           "name",
           "can_add",
           "can_edit",
+          "can_settle",
           "can_audit",
           "given_by",
           "given_at",
@@ -56248,6 +56294,11 @@
             ],
             "title": "Boon Harpy",
             "type": "string"
+          },
+          "boon_harpy_sees_talons": {
+            "default": true,
+            "title": "Boon Harpy Sees Talons",
+            "type": "boolean"
           },
           "boon_harpy_standings": {
             "default": false,
@@ -86315,7 +86366,7 @@
     },
     "/api/troupes/{troupe_id}/boon-talons-setting": {
       "put": {
-        "description": "Whether the troupe's Harpy may give others access to its boon ledger (#689),\nand what it calls them. Only used while the Harpy has the full ledger.",
+        "description": "Whether the troupe's Harpy may give others access to its boon ledger (#689),\nand what it calls them; and whether the Harpy sees, in a boon's log, what they\nchange (#992). Only used while the Harpy has the full ledger.",
         "operationId": "set_boon_talons_api_troupes__troupe_id__boon_talons_setting_put",
         "parameters": [
           {

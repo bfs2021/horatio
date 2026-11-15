@@ -82,8 +82,9 @@ class BoonEvent(Record):
     Gallant given for repaying it or not (#693),
     with who did it, when, and their note. `changes`
     says what it changed: for an edit, each field before and after, which only the
-    troupe's storytellers and assistant storytellers see (anyone else who sees the
-    boon sees that it was edited, when, and the note); for the rest, what it did."""
+    troupe's storytellers and assistant storytellers see; for the rest, what it did. A
+    Harpy or a Lesser Harpy sees only the lines in their sight (#992,
+    horatio.boon_harpy.in_sight); a player, none."""
 
     __tablename__ = "boon_events"
     __table_args__ = (
@@ -93,6 +94,7 @@ class BoonEvent(Record):
             " 'linked', 'gallant_given', 'gallant_declined')",
             name="kind",
         ),
+        CheckConstraint("role in ('staff', 'harpy', 'talon', 'player')", name="role"),
     )
 
     boon_id: Mapped[uuid.UUID] = mapped_column(
@@ -106,3 +108,7 @@ class BoonEvent(Record):
     # The character it was done as, for a Harpy or a Lesser Harpy (#688, #689); none
     # for staff.
     as_character_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("characters.id"))
+    # Who it was done as (#992): "staff", "harpy", "talon" (a Lesser Harpy), or "player"
+    # (in the Play View). Which lines a Harpy or a Lesser Harpy sees goes by it
+    # (horatio.boon_harpy.in_sight).
+    role: Mapped[str] = mapped_column(default="staff", server_default="staff")

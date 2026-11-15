@@ -5,6 +5,21 @@ import { closeContextsAfterEach, run, person, makeCustodian, builtVampire, ATTRI
 
 closeContextsAfterEach();
 
+/**
+ * The boon ledger's table (#975): a row for each boon, named "Agnes owes Bram, minor",
+ * opened by a click on it into its detail, a region named "Boon: Agnes owes Bram, minor".
+ */
+function ledgerOf(page: Page) {
+  const table = page.getByRole("table", { name: "Boons" });
+  return {
+    table,
+    row: (name: string) => table.getByRole("row", { name, exact: true }),
+    // One chevron for each boon: the rows without the headings and the opened details.
+    rows: table.getByRole("button", { name: /^Details: / }),
+    detail: (name: string) => page.getByRole("region", { name: `Boon: ${name}`, exact: true }),
+  };
+}
+
 test("staff keep the boon ledger: a game's boons at once, then a settling, an edit and a trade, each in its log", async ({ browser }) => {
   const custodian = await person(browser, "boons-custodian");
   makeCustodian(custodian.email);
@@ -59,13 +74,23 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   await entry.getByRole("button", { name: "Register 4 boons" }).click();
   await expect(l.getByText("Registered 4 boons.")).toBeVisible();
 
-  const boons = l.getByRole("list", { name: "Boons" });
-  await expect(boons.getByRole("listitem", { name: "Mireille Dauvin owes Anselm Roque, minor" })).toHaveCount(3);
+  const boons = ledgerOf(l);
+  await expect(boons.row("Mireille Dauvin owes Anselm Roque, minor")).toHaveCount(3);
   await expect(l.getByRole("tab", { name: /^Open/ })).toContainText("(4)");
+  // One line each (#975): a name only, someone not in Horatio, in italics.
+  const vargaRow = boons.row("Elder Varga owes Mireille Dauvin, trivial");
+  // (A phone's first line repeats the creditor, and its fold the state, so each is looked for where it shows.)
+  const shown = (text: string) => vargaRow.getByText(text, { exact: true }).filter({ visible: true });
+  await expect(shown("Elder Varga")).toHaveCSS("font-style", "italic");
+  await expect(shown("Mireille Dauvin")).toHaveCSS("font-style", "normal");
+  await expect(vargaRow).toContainText("Introduction");
+  // A name that links to no character is flagged for review (#687), and the row says so.
+  await expect(shown("Flagged")).toBeVisible();
 
-  // One of the three is called in: it leaves the open boons for the settled.
-  const owed = boons.getByRole("listitem", { name: "Mireille Dauvin owes Anselm Roque, minor" }).first();
-  await owed.getByRole("button", { name: "Open" }).click();
+  // One of the three is called in: it leaves the open boons for the settled. A click on its row opens it.
+  await boons.row("Mireille Dauvin owes Anselm Roque, minor").first().click();
+  const owed = boons.detail("Mireille Dauvin owes Anselm Roque, minor");
+  await expect(owed).toContainText("Secret");
   await owed.getByRole("button", { name: "Settle" }).click();
   const settle = owed.getByRole("form", { name: "Settle: Mireille Dauvin owes Anselm Roque" });
   await settle.getByLabel(/^Called in/).check();
@@ -73,36 +98,36 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   await settle.getByRole("button", { name: "Settle it" }).click();
   await expect(l.getByRole("tab", { name: /^Open/ })).toContainText("(3)");
   await l.getByRole("tab", { name: /^Settled/ }).click();
-  await expect(boons.getByRole("listitem")).toHaveCount(1);
-  const settled = boons.getByRole("listitem", { name: "Mireille Dauvin owes Anselm Roque, minor" });
-  await expect(settled).toContainText("Settled: called in");
-  await settled.getByRole("button", { name: "Open" }).click();
-  const settledLog = settled.getByRole("list", { name: "Log of Mireille Dauvin owes Anselm Roque" });
+  await expect(boons.rows).toHaveCount(1);
+  await expect(boons.row("Mireille Dauvin owes Anselm Roque, minor")).toContainText("Settled: called in");
+  // The chevron opens it too, from the keyboard.
+  await boons.row("Mireille Dauvin owes Anselm Roque, minor").getByRole("button", { name: "Details: Mireille Dauvin owes Anselm Roque, minor" }).click();
+  const settledLog = boons.detail("Mireille Dauvin owes Anselm Roque, minor").getByRole("list", { name: "Log of Mireille Dauvin owes Anselm Roque" });
   await expect(settledLog).toContainText("Elysium, 3 October");
   await expect(settledLog).toContainText("Called in for a favour at court");
 
   // The trivial boon was typed in wrong: an edit, with why, keeps what changed in its log.
   await l.getByRole("tab", { name: /^Open/ }).click();
-  await expect(boons.getByRole("listitem")).toHaveCount(3);
-  const varga = boons.getByRole("listitem", { name: "Elder Varga owes Mireille Dauvin, trivial" });
-  await varga.getByRole("button", { name: "Open" }).click();
+  await expect(boons.rows).toHaveCount(3);
+  await boons.row("Elder Varga owes Mireille Dauvin, trivial").click();
+  const varga = boons.detail("Elder Varga owes Mireille Dauvin, trivial");
   await varga.getByRole("button", { name: "Edit" }).click();
   const edit = varga.getByRole("form", { name: "Edit: Elder Varga owes Mireille Dauvin" });
   await edit.getByLabel("Kind").selectOption("minor");
   await edit.getByLabel("Why the edit").fill("Typed in wrong");
   await edit.getByRole("button", { name: "Save", exact: true }).click();
-  const edited = boons.getByRole("listitem", { name: "Elder Varga owes Mireille Dauvin, minor" });
+  const edited = boons.detail("Elder Varga owes Mireille Dauvin, minor");
   await expect(edited.getByRole("list", { name: "Log of Elder Varga owes Mireille Dauvin" })).toContainText("Kind: Trivial → Minor");
 
   // Anselm trades one of his to Elder Varga: the boon keeps its history.
-  const held = boons.getByRole("listitem", { name: "Mireille Dauvin owes Anselm Roque, minor" }).first();
-  await held.getByRole("button", { name: "Open" }).click();
+  await boons.row("Mireille Dauvin owes Anselm Roque, minor").first().click();
+  const held = boons.detail("Mireille Dauvin owes Anselm Roque, minor");
   await held.getByRole("button", { name: "Trade" }).click();
   const trade = held.getByRole("form", { name: "Trade: Mireille Dauvin owes Anselm Roque" });
   await trade.getByRole("combobox", { name: "Traded to" }).fill("Elder Varga");
   await trade.getByRole("listbox", { name: "Characters" }).getByRole("option", { name: /name only/ }).click();
   await trade.getByRole("button", { name: "Record the trade" }).click();
-  const traded = boons.getByRole("listitem", { name: "Mireille Dauvin owes Elder Varga, minor" });
+  const traded = boons.detail("Mireille Dauvin owes Elder Varga, minor");
   await expect(traded.getByRole("list", { name: "Log of Mireille Dauvin owes Elder Varga" })).toContainText("Creditor: Anselm Roque → Elder Varga");
 
   // On Mireille's sheet, staff see what she owes and is owed, with a way into the ledger.
@@ -111,7 +136,7 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   await expect(card).toContainText("Owes: 2 minor");
   await expect(card).toContainText("Is owed: 1 minor");
   await card.getByRole("link", { name: "In the boon ledger" }).click();
-  await expect(l.getByRole("list", { name: "Boons" }).getByRole("listitem")).toHaveCount(3);
+  await expect(ledgerOf(l).rows).toHaveCount(3);
 
   // Her player isn't shown her boons (that comes with #686), and can't open the ledger.
   const p = player.page;
@@ -163,13 +188,17 @@ test("staff write a passage of story on a side of a boon, cut to a line, and its
   await entry.getByRole("button", { name: "Register the boon" }).click();
   await expect(l.getByText("Registered a boon.")).toBeVisible();
 
-  // In the ledger; opened to edit, the text is there in full to change.
-  const boon = l.getByRole("list", { name: "Boons" }).getByRole("listitem").filter({ hasText: "Passage across the frozen river" });
-  await expect(boon).toContainText(story.slice(0, 40));
-  await boon.getByRole("button", { name: "Open" }).click();
-  await boon.getByRole("button", { name: "Edit" }).click();
-  await expect(boon.getByRole("textbox", { name: "Debtor" })).toHaveValue(story);
-  await boon.getByRole("button", { name: "Cancel" }).click();
+  // In the ledger, one line, in italics as a name only, all of it on hover (#975); its detail has it in full, and
+  // opened to edit, it is there to change.
+  const line = ledgerOf(l).table.getByRole("row", { name: /^The debt was written in silver/ });
+  await expect(line).toHaveCount(1);
+  await expect(line.locator(`[title="${story}"]`).filter({ visible: true }).first()).toHaveCSS("font-style", "italic");
+  await line.click();
+  const detail = l.getByRole("region", { name: /^Boon: The debt was written in silver/ });
+  await expect(detail.getByText(story, { exact: true })).toBeVisible();
+  await detail.getByRole("button", { name: "Edit" }).click();
+  await expect(detail.getByRole("textbox", { name: "Debtor" })).toHaveValue(story);
+  await detail.getByRole("button", { name: "Cancel" }).click();
 
   // Lisette's player reads it as written: a line of it, and all of it under "more".
   const p = player.page;
@@ -292,10 +321,10 @@ test("a Disgraced creditor's boons need not be repaid, and staff register the bo
 
   // The ledger says Maelis's boon to Corvin need not be repaid while he is Disgraced.
   await l.goto(`/troupes/${troupe.id}/boons`);
-  const boons = l.getByRole("list", { name: "Boons" });
-  await expect(boons.getByRole("listitem", { name: "Maelis Thorne owes Corvin Ashgrave, minor" })).toContainText(
-    "Need not be repaid while Corvin Ashgrave is Disgraced (p. 316).",
-  );
+  const boons = ledgerOf(l);
+  await expect(boons.row("Maelis Thorne owes Corvin Ashgrave, minor")).toContainText("Disgraced");
+  await boons.row("Maelis Thorne owes Corvin Ashgrave, minor").click();
+  await expect(boons.detail("Maelis Thorne owes Corvin Ashgrave, minor")).toContainText("Need not be repaid while Corvin Ashgrave is Disgraced (p. 316).");
 
   // On Corvin's status, staff register the major boon his apology owes the Prince.
   await l.goto(`/characters/${corvin}/status`);
@@ -306,7 +335,7 @@ test("a Disgraced creditor's boons need not be repaid, and staff register the bo
   await form.getByRole("button", { name: "Register a major boon" }).click();
   await expect(l.getByText("Registered a major boon owed by Corvin Ashgrave.")).toBeVisible();
   await l.goto(`/troupes/${troupe.id}/boons`);
-  await expect(boons.getByRole("listitem", { name: "Corvin Ashgrave owes Prince Aurelian, major" })).toContainText("An apology for a slip while Disgraced");
+  await expect(boons.row("Corvin Ashgrave owes Prince Aurelian, major")).toContainText("An apology for a slip while Disgraced");
 });
 
 test("staff see the boon statistics: the ledger over time, who owes whom, between clans and at each game", async ({ browser }) => {
@@ -432,9 +461,8 @@ test("in the Play View's Boons tab a player reports a boon, sees what the troupe
   // In the ledger, staff see it was done as Isolde.
   await l.goto(`/troupes/${troupe.id}/boons`);
   await l.getByRole("tab", { name: /^Settled/ }).click();
-  const row = l.getByRole("list", { name: "Boons" }).getByRole("listitem", { name: "Tobiah Venn owes Isolde Marrow, major" });
-  await row.getByRole("button", { name: "Open" }).click();
-  const log = row.getByRole("list", { name: "Log of Tobiah Venn owes Isolde Marrow" });
+  await ledgerOf(l).row("Tobiah Venn owes Isolde Marrow, major").click();
+  const log = ledgerOf(l).detail("Tobiah Venn owes Isolde Marrow, major").getByRole("list", { name: "Log of Tobiah Venn owes Isolde Marrow" });
   await expect(log).toContainText("as Isolde Marrow");
   await expect(log).toContainText("For old times");
 });
@@ -503,9 +531,8 @@ test("a creditor with Social Nobility, repaid a boon, gives its debtor Gallant f
   const l = lead.page;
   await l.goto(`/troupes/${troupe.id}/boons`);
   await l.getByRole("tab", { name: /^Settled/ }).click();
-  const row = l.getByRole("list", { name: "Boons" }).getByRole("listitem", { name: "Hesk Arlow owes Lady Corvane, minor" });
-  await row.getByRole("button", { name: "Open" }).click();
-  const log = row.getByRole("list", { name: "Log of Hesk Arlow owes Lady Corvane" });
+  await ledgerOf(l).row("Hesk Arlow owes Lady Corvane, minor").click();
+  const log = ledgerOf(l).detail("Hesk Arlow owes Lady Corvane, minor").getByRole("list", { name: "Log of Hesk Arlow owes Lady Corvane" });
   await expect(log).toContainText("Gallant given");
   await expect(log).toContainText("as Lady Corvane");
 });
@@ -569,9 +596,8 @@ test("held for review, a player's report waits, flagged for its unlinked name, u
 
   // It stands in the ledger, with its review in its log; and the report is gone from the player's tab.
   await l.getByRole("tab", { name: /^Open/ }).click();
-  const standing = l.getByRole("list", { name: "Boons" }).getByRole("listitem", { name: "Mysterious Stranger owes Corvin Ashby, minor" });
-  await standing.getByRole("button", { name: "Open" }).click();
-  const log = standing.getByRole("list", { name: "Log of Mysterious Stranger owes Corvin Ashby" });
+  await ledgerOf(l).row("Mysterious Stranger owes Corvin Ashby, minor").click();
+  const log = ledgerOf(l).detail("Mysterious Stranger owes Corvin Ashby, minor").getByRole("list", { name: "Log of Mysterious Stranger owes Corvin Ashby" });
   await expect(log).toContainText("Reported for review");
   await expect(log).toContainText("Accepted");
   await expect(log).toContainText("Confirmed with the Harpy");
@@ -604,7 +630,7 @@ test("the Harpy keeps the ledger from the Play View as their character, and neve
     return id;
   };
   const philippa = await home(harpy.page, "Philippa Quill");
-  await home(player.page, "Edric Thorne");
+  const edric = await home(player.page, "Edric Thorne");
   await send(lead.page, "PUT", `/api/troupes/${troupe.id}/boon-ledger`, { on: true });
   await send(lead.page, "PUT", `/api/troupes/${troupe.id}/characters/${philippa}/titles`, { titles: ["Harpy"] });
 
@@ -637,16 +663,16 @@ test("the Harpy keeps the ledger from the Play View as their character, and neve
   await expect(h.getByText("Registered a boon.")).toBeVisible();
 
   // She corrects it, with a note: her log shows the edit as hers, not what it changed.
-  const boons = h.getByRole("list", { name: "Boons" });
-  const debt = boons.getByRole("listitem", { name: "Edric Thorne owes Lady Ashgrove, minor" });
-  await debt.getByRole("button", { name: "Open" }).click();
+  const boons = ledgerOf(h);
+  await boons.row("Edric Thorne owes Lady Ashgrove, minor").click();
+  const debt = boons.detail("Edric Thorne owes Lady Ashgrove, minor");
   await debt.getByRole("button", { name: "Edit" }).click();
   const edit = debt.getByRole("form", { name: "Edit: Edric Thorne owes Lady Ashgrove" });
   await expect(edit.getByLabel("Staff note")).toHaveCount(0);
   await edit.getByLabel("Kind").selectOption("major");
   await edit.getByLabel("Why the edit").fill("Misheard at Elysium");
   await edit.getByRole("button", { name: "Save", exact: true }).click();
-  const theirs = boons.getByRole("listitem", { name: "Edric Thorne owes Lady Ashgrove, major" });
+  const theirs = boons.detail("Edric Thorne owes Lady Ashgrove, major");
   const theirLog = theirs.getByRole("list", { name: "Log of Edric Thorne owes Lady Ashgrove" });
   await expect(theirLog).toContainText("Misheard at Elysium");
   await expect(theirLog).toContainText("Philippa Quill");
@@ -655,14 +681,24 @@ test("the Harpy keeps the ledger from the Play View as their character, and neve
 
   // The lead sees the same edit, what it changed, and that Philippa made it.
   await l.goto(`/troupes/${troupe.id}/boons`);
-  const staffRow = l.getByRole("list", { name: "Boons" }).getByRole("listitem", { name: "Edric Thorne owes Lady Ashgrove, major" });
-  await staffRow.getByRole("button", { name: "Open" }).click();
-  const staffLog = staffRow.getByRole("list", { name: "Log of Edric Thorne owes Lady Ashgrove" });
+  await ledgerOf(l).row("Edric Thorne owes Lady Ashgrove, major").click();
+  const staffLog = ledgerOf(l).detail("Edric Thorne owes Lady Ashgrove, major").getByRole("list", { name: "Log of Edric Thorne owes Lady Ashgrove" });
   await expect(staffLog).toContainText("Kind: Minor → Major");
   await expect(staffLog).toContainText("as Philippa Quill");
+
+  // Edric meets Final Death, and his player keeps him off the Who's Who (#975): staff see "Dead" beside his
+  // name; the Harpy goes by what the court knows, and the court hasn't heard.
+  await send(player.page, "POST", `/api/characters/${edric}/retire`, { reason: "final_death", note: "", listed: false });
+  await l.reload();
+  await l.getByRole("tab", { name: /^Departed/ }).click();
+  await expect(ledgerOf(l).row("Edric Thorne owes Lady Ashgrove, major").getByText("Dead", { exact: true }).filter({ visible: true })).toBeVisible();
+  await h.reload();
+  const atCourt = ledgerOf(h).row("Edric Thorne owes Lady Ashgrove, major");
+  await expect(atCourt).toBeVisible();
+  await expect(atCourt.getByText("Dead", { exact: true })).toHaveCount(0);
 });
 
-test("the Harpy gives a Lesser Harpy add-only access: they register a boon as their character but can't edit it (#689)", async ({ browser }) => {
+test("the Harpy gives a Lesser Harpy add-only access: they register a boon as their character but can't edit it, then may settle but not correct it, and the Harpy, kept from it, doesn't see who did (#689, #984, #992)", async ({ browser }) => {
   const custodian = await person(browser, "btalon-custodian");
   makeCustodian(custodian.email);
   const lead = await person(browser, "btalon-lead");
@@ -697,6 +733,12 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
   const lets = (await tabSettings(l, "Boons")).getByRole("checkbox", { name: /^The Harpy may give others access to the ledger/ });
   await lets.check();
   await expect(l.getByText("Saved: the Harpy may give others access to the ledger, as Lesser Harpies.")).toBeVisible();
+  // And keeps what Lesser Harpies change from the Harpy (#992).
+  const sees = (await tabSettings(l, "Boons")).getByRole("switch", { name: /^The Harpy sees what their talons change/ });
+  await expect(sees).toBeChecked();
+  await sees.click();
+  await expect(l.getByText("Saved: what talons change is kept from the Harpy.")).toBeVisible();
+  await expect(sees).not.toBeChecked();
 
   // Morwen's player makes Wren a Lesser Harpy who may add boons, nothing more.
   const h = harpy.page;
@@ -704,7 +746,8 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
   await h.getByLabel("Make a Lesser Harpy").selectOption({ label: "Wren Ashby" });
   const may = h.getByRole("group", { name: "What they may do" });
   await expect(may.getByRole("checkbox", { name: "Add boons" })).toBeChecked();
-  await expect(may.getByRole("checkbox", { name: "Edit boons" })).not.toBeChecked();
+  await expect(may.getByRole("checkbox", { name: "Correct boons" })).not.toBeChecked();
+  await expect(may.getByRole("checkbox", { name: "Settle and move boons" })).not.toBeChecked();
   await h.getByRole("button", { name: "Give access" }).click();
   await expect(h.getByText("Wren Ashby has access to the ledger.")).toBeVisible();
   await expect(h.getByRole("list", { name: "Lesser Harpies" })).toContainText("Wren Ashby sees the ledger and adds boons");
@@ -728,12 +771,30 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
   await expect(t.getByText("Registered a boon.")).toBeVisible();
 
   // She can open it, but not edit, settle or void it.
-  const debt = t.getByRole("list", { name: "Boons" }).getByRole("listitem", { name: "Wren Ashby owes Lady Morrow, minor" });
-  await debt.getByRole("button", { name: "Open" }).click();
+  await ledgerOf(t).row("Wren Ashby owes Lady Morrow, minor").click();
+  const debt = ledgerOf(t).detail("Wren Ashby owes Lady Morrow, minor");
   await expect(debt.getByRole("list", { name: "Log of Wren Ashby owes Lady Morrow" })).toContainText("Wren Ashby");
   await expect(debt.getByRole("button", { name: "Edit" })).toHaveCount(0);
   await expect(debt.getByRole("button", { name: "Settle" })).toHaveCount(0);
   await t.screenshot(shots("talon-ledger"));
+
+  // The Harpy sees the boon, but not that Wren registered it (#992).
+  const ledger = await (await h.request.get(`/api/troupes/${troupe.id}/boons`, { params: { view: "all" } })).json();
+  const [registered] = ledger.boons;
+  const opened = await (await h.request.get(`/api/troupes/${troupe.id}/boons/${registered.id}`)).json();
+  expect(opened.events.map((e: { kind: string; as_character: string | null }) => [e.kind, e.as_character])).toEqual([["registered", null]]);
+
+  // Morwen's player lets her settle and move boons too, but still not correct them (#984).
+  await h
+    .getByRole("group", { name: "What Wren Ashby may do" })
+    .getByRole("checkbox", { name: "Settle and move boons" })
+    .check();
+  await expect(h.getByRole("list", { name: "Lesser Harpies" })).toContainText("Wren Ashby sees the ledger, adds boons and settles them");
+  await t.reload();
+  await ledgerOf(t).row("Wren Ashby owes Lady Morrow, minor").click();
+  await expect(debt.getByRole("button", { name: "Settle" })).toBeVisible();
+  await expect(debt.getByRole("button", { name: "Trade" })).toBeVisible();
+  await expect(debt.getByRole("button", { name: "Edit" })).toHaveCount(0);
 });
 
 test("staff declare a Boonbreaker: their open boons are made void, both ways, and they hold Disgraced while the mark stands (#717)", async ({ browser }) => {
@@ -783,7 +844,7 @@ test("staff declare a Boonbreaker: their open boons are made void, both ways, an
   await expect(mark).toContainText("Refused: Ottavia Sterne owes Lucan Mireaux, major");
   await expect(l.getByRole("tab", { name: /^Open/ })).toContainText("(0)");
   await l.getByRole("tab", { name: /^Void/ }).click();
-  const voided = l.getByRole("list", { name: "Boons" }).getByRole("listitem", { name: "Ottavia Sterne owes Lucan Mireaux, major" });
+  const voided = ledgerOf(l).row("Ottavia Sterne owes Lucan Mireaux, major");
   await expect(voided).toContainText("Boonbreaker");
   await expect(voided).toContainText("Void");
   await l.screenshot(shots("boonbreaker-declared"));

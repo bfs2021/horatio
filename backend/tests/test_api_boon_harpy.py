@@ -171,6 +171,7 @@ def test_the_play_view_shows_the_harpy_their_ledger(court: Court) -> None:
             "talon_word": "Lesser Harpy",
             "can_add": True,
             "can_edit": True,
+            "can_settle": True,
             "can_review": True,
             "can_audit": True,
             "gives_access": False,

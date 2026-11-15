@@ -65,6 +65,9 @@ EventKind = Literal[
 ]
 FlagKind = Literal["unmatched", "duplicate", "hand"]
 Side = Literal["debtor", "creditor"]
+Left = Literal["dead", "off_field"]
+# What the ledger shows beside a name for how it left play (#975), from its standing.
+LEFT: dict[str, Left] = {"final_death": "dead", "off_field": "off_field"}
 
 Text = Field(default="", max_length=boons.LONGEST_TEXT)
 
@@ -151,6 +154,10 @@ class BoonPartyOut(BaseModel):
     standing: Standing | None
     # Marked a Boonbreaker in this ledger now (#717): public at court.
     boonbreaker: bool = False
+    # Gone from play with a reason the ledger shows beside the name (#975), as the
+    # sheet's Debtor and Creditor Status columns do: dead (Final Death) or off-field.
+    # For a Harpy, only as the court knows it; None for anyone else, a name only too.
+    left: Left | None = None
 
 
 class BoonChangeOut(BaseModel):
@@ -226,6 +233,8 @@ class BoonOut(BaseModel):
     # Its flags still raised for review (#687): only on a single boon and in the
     # review queue, not in the ledger's list.
     flags: list[BoonFlagOut] | None = None
+    # A flag is still raised on it (#975): in the ledger's list and on a single boon.
+    flagged: bool = False
     # A great boon its debtor formally ignored costs them status (#717, p. 395): due
     # until staff or the Harpy say they took it, or won't.
     status_loss: StatusLoss | None = None
@@ -292,6 +301,7 @@ def party_out(
         name=character.name,
         kind=character.kind,
         standing=found,  # type: ignore[arg-type]  # one of boons.STANDINGS
+        left=LEFT.get(found or ""),
     )
 
 
@@ -343,18 +353,20 @@ def event_out(
     names: Mapping[uuid.UUID, str],
     diffs: bool,
     harpy: bool = False,
+    named: bool = True,
 ) -> BoonEventOut:
     """A line of the boon's log. Only those who see what edits changed get an edit's
     changes; a Harpy (#688) sees the character a line was done as, never who did it
-    out of game."""
+    out of game. Not `named`, a line outside a Harpy's sight shown all the same (#992,
+    horatio.boon_harpy.log_for) says neither who did it nor its note."""
     shown = diffs or line.kind != "edited"
     return BoonEventOut(
         id=line.id,
         kind=line.kind,  # type: ignore[arg-type]  # checked by the database
-        note=line.note,
+        note=line.note if named else "",
         at=line.created_at,
         by=users.get(line.actor_id) if line.actor_id and not harpy else None,
-        as_character=names.get(line.as_character_id) if line.as_character_id else None,
+        as_character=names.get(line.as_character_id) if line.as_character_id and named else None,
         changes=[BoonChangeOut(field=f, before=b, after=a) for f, (b, a) in line.changes.items()]
         if shown
         else None,
@@ -378,9 +390,11 @@ def full_out(
     db: DbSession, user: User, troupe: Troupe, boon: Boon, keeper: Keeper | None = None
 ) -> BoonOut:
     """The boon with its log and its flags, its changes shown as far as `user` may see
-    them, as `keeper` sees it (staff by default)."""
+    them, as `keeper` sees it (staff by default): a Harpy or a Lesser Harpy reads only
+    the lines in their sight (#992), and never who raised a flag."""
     harpy = keeper is not None and not keeper.staff
     lines = boons.events_of(db, boon)
+    shown = boon_harpy.log_for(keeper, lines) if keeper is not None else [(e, True) for e in lines]
     flags = boon_reviews.raised(db, [boon.id])
     users = users_of(
         db, [boon.submitted_by, *(e.actor_id for e in lines), *(f.raised_by for f in flags)]
@@ -400,8 +414,9 @@ def full_out(
         marked=boonbreakers.marked(db, troupe.id),
     )
     diffs = boons.sees_changes(db, user, troupe)
-    out.events = [event_out(e, users, names, diffs, harpy) for e in lines]
-    out.flags = [flag_out(f, users) for f in flags]
+    out.events = [event_out(e, users, names, diffs, harpy, named) for e, named in shown]
+    out.flags = [flag_out(f, {} if harpy else users) for f in flags]
+    out.flagged = bool(flags)
     found = boon_gallant.offer(db, boon)
     if found is not None and boon_gallant.keeper_answers(keeper):
         out.gallant = gallant_out(found)
@@ -624,10 +639,12 @@ def troupe_boons(
     users = users_of(db, (b.submitted_by for b in shown))
     disgraced = standing_disgraced(db, shown)
     marks = boonbreakers.marked(db, troupe.id)
+    flagged = {f.boon_id for f in boon_reviews.raised(db, (b.id for b in shown))}
+    out = [boon_out(b, characters, users, disgraced, keeper=keeper, marked=marks) for b in shown]
+    for row in out:
+        row.flagged = row.id in flagged
     return TroupeBoonsOut(
-        boons=[
-            boon_out(b, characters, users, disgraced, keeper=keeper, marked=marks) for b in shown
-        ],
+        boons=out,
         counts=boons.counts(narrowed, characters, court),
         characters=choices_for(db, troupe, keeper),
     )
@@ -741,7 +758,7 @@ def trade(
 ) -> BoonOut:
     """Its creditor traded it: another holds it now. If its conditions ask, its
     debtor's player is told."""
-    troupe, keeper = ledger_troupe(db, user, troupe_id, "edit")
+    troupe, keeper = ledger_troupe(db, user, troupe_id, "settle")
     boon = troupe_boon(db, troupe, boon_id)
     to = side(db, troupe, body.creditor, "creditor", keeper)
     boons.trade(db, user, boon, to, body.note, keeper.character)
@@ -755,7 +772,7 @@ def pass_on(
 ) -> BoonOut:
     """Move the debtor's or the creditor's side of a standing boon to another, such
     as a broodmate after a death."""
-    troupe, keeper = ledger_troupe(db, user, troupe_id, "edit")
+    troupe, keeper = ledger_troupe(db, user, troupe_id, "settle")
     boon = troupe_boon(db, troupe, boon_id)
     to = side(db, troupe, body.to, body.side, keeper)
     boons.pass_on(db, user, boon, body.side, to, body.note, keeper.character)
@@ -768,7 +785,7 @@ def settle(
     troupe_id: uuid.UUID, boon_id: uuid.UUID, body: BoonSettleIn, db: DbSession, user: CurrentUser
 ) -> BoonOut:
     """The boon is settled: called in, forgiven, or formally ignored (p. 397)."""
-    troupe, keeper = ledger_troupe(db, user, troupe_id, "edit")
+    troupe, keeper = ledger_troupe(db, user, troupe_id, "settle")
     boon = troupe_boon(db, troupe, boon_id)
     boons.settle(db, user, boon, body.how, body.note, as_character=keeper.character)
     db.commit()
@@ -780,7 +797,7 @@ def void(
     troupe_id: uuid.UUID, boon_id: uuid.UUID, body: BoonNoteIn, db: DbSession, user: CurrentUser
 ) -> BoonOut:
     """The boon never stood, or no longer counts, with a note: entered by mistake, say."""
-    troupe, keeper = ledger_troupe(db, user, troupe_id, "edit")
+    troupe, keeper = ledger_troupe(db, user, troupe_id, "settle")
     boon = troupe_boon(db, troupe, boon_id)
     boons.void(db, user, boon, body.note, keeper.character)
     db.commit()
@@ -792,7 +809,7 @@ def reopen(
     troupe_id: uuid.UUID, boon_id: uuid.UUID, body: BoonNoteIn, db: DbSession, user: CurrentUser
 ) -> BoonOut:
     """A settled or void boon stands again, with a note."""
-    troupe, keeper = ledger_troupe(db, user, troupe_id, "edit")
+    troupe, keeper = ledger_troupe(db, user, troupe_id, "settle")
     boon = troupe_boon(db, troupe, boon_id)
     boons.reopen(db, user, boon, body.note, keeper.character)
     db.commit()
@@ -954,7 +971,10 @@ class HarpyLedgerOut(BaseModel):
     # What the troupe calls one of its Lesser Harpies: "Lesser Harpy" or "Talon".
     talon_word: str = "Lesser Harpy"
     can_add: bool = True
+    # Correct boons: edit what one says, and link a name to a character.
     can_edit: bool = True
+    # Settle and move boons: trade, pass on, settle, void and reopen them (#984).
+    can_settle: bool = True
     can_review: bool = True
     can_audit: bool = True
     # The Harpy may give others access to the ledger now (#689).
@@ -1181,6 +1201,7 @@ def harpy_ledgers(db: DbSession, user: User, character: Character) -> list[Harpy
             talon_word=boon_talons.ONE[t.boon_talon_word],
             can_add=t.boon_harpy == "full",
             can_edit=t.boon_harpy == "full",
+            can_settle=t.boon_harpy == "full",
             can_audit=t.boon_harpy == "full",
             gives_access=boon_talons.enabled(t),
             sees_standings=boon_harpy.reads_standings(t),
@@ -1196,12 +1217,13 @@ def harpy_ledgers(db: DbSession, user: User, character: Character) -> list[Harpy
                 troupe_id=t.id,
                 troupe_name=t.name,
                 access="full",
-                to_review=len(boon_reviews.queue(db, t)) if talon.can_edit else 0,
+                to_review=len(boon_reviews.queue(db, t)) if talon.can_settle else 0,
                 role="talon",
                 talon_word=boon_talons.ONE[t.boon_talon_word],
                 can_add=talon.can_add,
                 can_edit=talon.can_edit,
-                can_review=talon.can_edit,
+                can_settle=talon.can_settle,
+                can_review=talon.can_settle,
                 can_audit=talon.can_audit,
                 sees_standings=boon_harpy.reads_standings(t),
             )

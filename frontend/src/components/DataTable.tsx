@@ -50,7 +50,9 @@ const AT: Record<Breakpoint, { head: string; wide: string; narrow: string; title
  * `detail` columns left out. The headings stay, for screen readers only.
  *
  * With `expand`, a chevron at the start of each row opens a row under it, across
- * the table, with `expand.render`; more than one can be open.
+ * the table, with `expand.render`; more than one can be open. With `expand.wholeRow`,
+ * a click anywhere on the row opens it too; the chevron stays the way in from the
+ * keyboard and for screen readers.
  */
 export function DataTable<T>({
   label,
@@ -77,6 +79,8 @@ export function DataTable<T>({
     /** The chevron's name, such as "Ada's characters"; the opened row is a region of that name only if `render` makes one. */
     label: (row: T) => string;
     render: (row: T) => ReactNode;
+    /** A click anywhere on the row opens it, not just on the chevron (#975). */
+    wholeRow?: boolean;
   };
   /** Added to the block of "label: value" under the title, such as to line it up past a picture. */
   foldClassName?: string;
@@ -149,13 +153,18 @@ export function DataTable<T>({
           const openedId = `${id}-${key}`;
           return (
             <Fragment key={key}>
-              <tr aria-label={rowLabel?.(row)} className={open ? "border-b-0" : undefined}>
+              <tr
+                aria-label={rowLabel?.(row)}
+                className={`${open ? "border-b-0" : ""} ${expand?.wholeRow ? "cursor-pointer hover:bg-ash/30" : ""}`}
+                onClick={expand?.wholeRow ? (e) => !ownClick(e.target) && toggle(key) : undefined}
+              >
+                {/* Dense, the chevron is no taller than a line of text, so a row stays one line high. */}
                 {expand && (
-                  <td className="w-px py-1 pr-1 align-top">
+                  <td className={`w-px pr-1 align-top ${dense ? "py-0" : "py-1"}`}>
                     <Button
                       type="button"
                       variant="ghost"
-                      className="min-h-8 px-1.5"
+                      className={`px-1.5 ${dense ? "min-h-8!" : "min-h-8"}`}
                       aria-label={expand.label(row)}
                       aria-expanded={open}
                       aria-controls={open ? openedId : undefined}
@@ -192,4 +201,13 @@ export function DataTable<T>({
       </tbody>
     </table>
   );
+}
+
+/**
+ * A click a row leaves alone: on something of its own (the chevron, a link, a
+ * button), or that ends a selection, so copying a name doesn't open the row.
+ */
+function ownClick(target: EventTarget) {
+  if (target instanceof Element && target.closest("a, button, input, select, textarea, label, summary")) return true;
+  return Boolean(window.getSelection()?.toString());
 }

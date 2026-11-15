@@ -2,41 +2,50 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { BoonTalonsOut, TalonOut, TroupeOut } from "../../api/types";
-import { InfoButton } from "../../components/InfoButton";
+import { Checkbox } from "../../components/Checkbox";
 import { useToast } from "../../components/Toast";
+import { Toggle } from "../../components/Toggle";
 import { Button, Card, Empty, ErrorText, Field, Loading, Select } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 
 type Word = NonNullable<TroupeOut["boon_talon_word"]>;
-type Can = { can_add: boolean; can_edit: boolean; can_audit: boolean };
+type Can = { can_add: boolean; can_edit: boolean; can_settle: boolean; can_audit: boolean };
 
 /** One of them, as "a Lesser Harpy". */
 export function oneOf(word: string) {
   return word === "Talons" ? "Talon" : "Lesser Harpy";
 }
 
-const NONE: Can = { can_add: false, can_edit: false, can_audit: false };
+/** On the setting that keeps what talons change from the Harpy (#992). */
+const HARPY_SEES_HINT =
+  "Off, a talon's edits, trades and settlements don't show in the log the Harpy reads, so a talon can alter the ledger behind the Harpy's back. Staff always see everything.";
 
-const ABILITIES: { key: keyof Can; label: string; hint: string }[] = [
-  { key: "can_add", label: "Add boons", hint: "Register boons in the ledger." },
+const NONE: Can = { can_add: false, can_edit: false, can_settle: false, can_audit: false };
+
+/** What the Harpy may let each do (#984), as the API's `describe()` says it. */
+const ABILITIES: { key: keyof Can; label: string; hint: string; verb: string }[] = [
+  { key: "can_add", label: "Add boons", hint: "Register boons in the ledger.", verb: "adds" },
   {
     key: "can_edit",
-    label: "Edit boons",
-    hint: "Edit, trade, pass on, settle, void and reopen boons, and review what players report.",
+    label: "Correct boons",
+    hint: "Edit a boon's debtor, creditor, kind, date, reason and conditions, and link a name to a character.",
+    verb: "corrects",
   },
   {
-    key: "can_audit",
-    label: "Perform audits",
-    hint: "Audit a character's boons.",
+    key: "can_settle",
+    label: "Settle and move boons",
+    hint: "Trade, pass on, settle, make void and reopen boons, and review what players report.",
+    verb: "settles",
   },
 ];
 
-/** What a Lesser Harpy may do, in words. */
+const AUDITS = { key: "can_audit", label: "Perform audits", hint: "Audit a character's boons, and give the audit to a character." } as const;
+
+/** What a Lesser Harpy may do, in words: "sees the ledger, adds boons and corrects them". */
 function what(t: Can) {
   const parts = ["sees the ledger"];
-  if (t.can_add) parts.push("adds boons");
-  if (t.can_edit) parts.push(t.can_add ? "edits them" : "edits boons");
+  for (const a of ABILITIES) if (t[a.key]) parts.push(`${a.verb} ${parts.length > 1 ? "them" : "boons"}`);
   if (t.can_audit) parts.push("performs audits");
   return parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
 }
@@ -56,17 +65,23 @@ function useTalons(troupeId: string) {
 /**
  * Whether the Harpy may give others access to the ledger (#689), and what the troupe
  * calls them: Lesser Harpies or Talons. Only while the Harpy has the full ledger. With
- * it on, staff see who has what, and may take it away.
+ * it on, staff see who has what, and may take it away, and say whether the Harpy sees,
+ * in a boon's log, what they change (#992).
  */
 export function TalonsSetting({ troupe }: { troupe: TroupeOut }) {
   const toast = useToast();
   // Shown as chosen at once, while it saves.
   const [on, setOn] = useState(troupe.boon_talons ?? false);
   const [word, setWord] = useState<Word>(troupe.boon_talon_word ?? "Lesser Harpies");
+  const [harpySees, setHarpySees] = useState(troupe.boon_harpy_sees_talons ?? true);
   const full = troupe.boon_harpy === "full";
   const save = useAction(async (next: { on: boolean; word: Word }) => {
     await unwrap(api.PUT("/api/troupes/{troupe_id}/boon-talons-setting", { params: { path: { troupe_id: troupe.id } }, body: next }));
     toast({ message: next.on ? `Saved: the Harpy may give others access to the ledger, as ${next.word}.` : "Saved: the Harpy gives no one access." });
+  });
+  const saveSees = useAction(async (next: boolean) => {
+    await unwrap(api.PUT("/api/troupes/{troupe_id}/boon-talons-setting", { params: { path: { troupe_id: troupe.id } }, body: { on, word, harpy_sees: next } }));
+    toast({ message: next ? "Saved: the Harpy sees what their talons change." : "Saved: what talons change is kept from the Harpy." });
   });
   const choose = (next: { on: boolean; word: Word }) => {
     setOn(next.on);
@@ -87,7 +102,7 @@ export function TalonsSetting({ troupe }: { troupe: TroupeOut }) {
           The Harpy may give others access to the ledger
           <span className="block text-xs text-mist">
             {full
-              ? "The Harpy chooses who, from the troupe's player characters, and whether each may add boons, edit them and perform audits. They work from their Play View, as their character, and see what the Harpy sees."
+              ? "The Harpy chooses who, from the troupe's player characters, and whether each may add boons, correct them, settle and move them, and perform audits. They work from their Play View, as their character, and see what the Harpy sees."
               : "Only while the Harpy has the full ledger."}
           </span>
         </span>
@@ -100,7 +115,20 @@ export function TalonsSetting({ troupe }: { troupe: TroupeOut }) {
           </Select>
         </Field>
       )}
+      {on && full && (
+        <Toggle
+          label="The Harpy sees what their talons change"
+          hint={HARPY_SEES_HINT}
+          checked={harpySees}
+          disabled={saveSees.isPending || save.isPending}
+          onChange={(next) => {
+            setHarpySees(next);
+            saveSees.mutate(next, { onError: () => setHarpySees(!next) });
+          }}
+        />
+      )}
       <ErrorText error={save.error} />
+      <ErrorText error={saveSees.error} />
       {on && full && <StaffTalons troupeId={troupe.id} />}
     </fieldset>
   );
@@ -123,11 +151,23 @@ function StaffTalons({ troupeId }: { troupeId: string }) {
   );
 }
 
+/** What a Lesser Harpy may do, a tick for each with a line saying what it allows. */
+function Rights({ label, can, disabled, onChange }: { label: string; can: Can; disabled?: boolean; onChange: (next: Can) => void }) {
+  return (
+    <div role="group" aria-label={label} className="mt-1 flex flex-col">
+      {[...ABILITIES, AUDITS].map((a) => (
+        <Checkbox key={a.key} label={a.label} hint={a.hint} checked={can[a.key]} disabled={disabled} onChange={(on) => onChange({ ...can, [a.key]: on })} />
+      ))}
+    </div>
+  );
+}
+
 function TalonRow({ troupeId, talon, word, manage }: { troupeId: string; talon: TalonOut; word: string; manage: boolean }) {
   const dates = useDates();
   const [can, setCan] = useState<Can>({
     can_add: talon.can_add,
     can_edit: talon.can_edit,
+    can_settle: talon.can_settle,
     can_audit: talon.can_audit,
   });
   const path = {
@@ -167,26 +207,15 @@ function TalonRow({ troupeId, talon, word, manage }: { troupeId: string; talon: 
         </Button>
       </div>
       {manage && (
-        <div role="group" aria-label={`What ${talon.name} may do`} className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-          {ABILITIES.map((a) => (
-            <span key={a.key} className="flex items-center gap-1">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={can[a.key]}
-                  disabled={change.isPending}
-                  onChange={(e) => {
-                    const next = { ...can, [a.key]: e.target.checked };
-                    setCan(next);
-                    change.mutate(next, { onError: () => setCan(can) });
-                  }}
-                />
-                {a.label}
-              </label>
-              <InfoButton label={`About ${a.label}`}>{a.hint}</InfoButton>
-            </span>
-          ))}
-        </div>
+        <Rights
+          label={`What ${talon.name} may do`}
+          can={can}
+          disabled={change.isPending}
+          onChange={(next) => {
+            setCan(next);
+            change.mutate(next, { onError: () => setCan(can) });
+          }}
+        />
       )}
       <ErrorText error={change.error ?? remove.error} />
     </li>
@@ -223,8 +252,8 @@ export function TalonsCard({ troupeId }: { troupeId: string }) {
   return (
     <Card title={word}>
       <p className="mb-3 text-sm text-mist">
-        Give others access to the ledger as {word}: each sees it as you do, and may add boons, edit them and perform audits, as you choose. They work from their
-        Play View, as their character. Staff see who has what.
+        Give others access to the ledger as {word}: each sees it as you do, and may add boons, correct them, settle and move them, and perform audits, as you
+        choose. They work from their Play View, as their character. Staff see who has what.
       </p>
       {list.length === 0 ? (
         <Empty>No one yet.</Empty>
@@ -254,17 +283,7 @@ export function TalonsCard({ troupeId }: { troupeId: string }) {
               ))}
             </Select>
           </Field>
-          <div role="group" aria-label="What they may do" className="flex flex-wrap gap-x-4 gap-y-1">
-            {ABILITIES.map((a) => (
-              <span key={a.key} className="flex items-center gap-1">
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={can[a.key]} onChange={(e) => setCan({ ...can, [a.key]: e.target.checked })} />
-                  {a.label}
-                </label>
-                <InfoButton label={`About ${a.label}`}>{a.hint}</InfoButton>
-              </span>
-            ))}
-          </div>
+          <Rights label="What they may do" can={can} onChange={setCan} />
           <div>
             <Button type="submit" disabled={!who || give.isPending}>
               Give access

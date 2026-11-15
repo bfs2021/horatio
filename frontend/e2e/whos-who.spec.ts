@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { closeContextsAfterEach, run, shots, person, makeCustodian, backstoryOptional, characterTab } from "./support";
+import { closeContextsAfterEach, run, shots, person, makeCustodian, backstoryOptional, characterTab, troupeTab, expectTabOpen } from "./support";
 
 /** The Who's Who, and what a player says about their character and themselves. */
 
@@ -226,7 +226,7 @@ test("the Who's Who: a player sees the court in rank order, their clan and Other
   // Ana opens it from the troupe's page.
   const p = ana.page;
   await p.goto(`/troupes/${troupeId}`);
-  await p.getByRole("link", { name: "Who's Who" }).click();
+  await troupeTab(p, "Who's Who");
   const section = (name: string) => p.getByRole("region", { name, exact: true });
   const named = (name: string) => section(name).getByRole("article").evaluateAll((cards) => cards.map((c) => c.getAttribute("aria-label")));
   await expect(section("Court").getByRole("article")).toHaveCount(2);
@@ -270,7 +270,7 @@ test("the Who's Who: a player sees the court in rank order, their clan and Other
   // Someone with no character in the troupe sees no Who's Who, and the API refuses them.
   const o = outsider.page;
   await o.goto(`/troupes/${troupeId}`);
-  await expect(o.getByRole("link", { name: "Overview", exact: true })).toBeVisible();
+  await expectTabOpen(o, "Troupe", "Overview");
   await expect(o.getByRole("link", { name: "Who's Who" })).toHaveCount(0);
   const refused = await o.request.get(`/api/troupes/${troupeId}/whos-who`, { headers });
   expect(refused.status()).toBe(403);
@@ -413,7 +413,7 @@ test("lines and veils: a player adds them, staff see them, another player only o
   await atGame.getByRole("link", { name: "Lines and veils" }).click();
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/lines-veils$`));
   await l.goto(`/troupes/${troupeId}/players`);
-  await l.getByRole("link", { name: "Lines and veils" }).click();
+  await troupeTab(l, "Lines and veils");
   await expect(l.getByRole("list", { name: "Lines" })).toContainText("Spiders in the dark");
   await expect(l.getByRole("list", { name: "Veils" })).toContainText("Needles");
   // Not shared, so the list doesn't say whose they are; the lead opens Ana for that.

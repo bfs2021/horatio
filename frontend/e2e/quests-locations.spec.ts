@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { closeContextsAfterEach, run, shots, person, makeCustodian, builtVampire, ATTRIBUTES_AND_FOCUSES, backstoryOptional, characterTab } from "./support";
+import { closeContextsAfterEach, run, shots, person, makeCustodian, builtVampire, ATTRIBUTES_AND_FOCUSES, backstoryOptional, characterTab, troupeTab, expectTabCount } from "./support";
 
 /** Quests, the troupe's locations, and shared backgrounds. */
 
@@ -75,7 +75,7 @@ test("quests: a player asks for one, staff build it Complex 2 and send it, it is
   await l.getByRole("button", { name: /Agnes asks for a quest: Find Miles' journal/ }).click();
   const card = l.getByRole("listitem", { name: "Request from Agnes" });
   await expect(card.getByText("New")).toBeVisible();
-  await expect(l.getByRole("link", { name: /Quests/ }).getByLabel("1 waiting")).toBeVisible();
+  await expectTabCount(l, "Quests", "1 waiting");
   await card.getByLabel("Assign Agnes's request to").selectOption({ label: "quest-lead" });
   await expect(card.getByText("Assigned to quest-lead")).toBeVisible();
   await p.reload();
@@ -454,8 +454,7 @@ test("a coterie's shared Haven: staff set it up, a player logs a use, and the ot
   // The lead sets up the coterie's Haven: Agnes puts in 2 dots, Bram 1.
   const l = lead.page;
   await l.goto(`/troupes/${troupe.id}`);
-  await l.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "World", exact: true }).click();
-  await l.getByRole("link", { name: "Shared backgrounds" }).click();
+  await troupeTab(l, "Shared backgrounds");
   await l.getByRole("button", { name: "Set up a shared background" }).click();
   const setUp = l.getByRole("form", { name: "Set up a shared background" });
   await setUp.getByLabel("Name").fill("The coterie's Haven");
@@ -474,7 +473,7 @@ test("a coterie's shared Haven: staff set it up, a player logs a use, and the ot
   // Agnes's player finds it on her page, and logs drawing on it.
   const a = first.page;
   await a.goto(`/characters/${agnes}`);
-  await a.locator("main").getByRole("link", { name: "Shared backgrounds" }).click();
+  await characterTab(a, "Shared backgrounds");
   await expect(a.getByRole("heading", { name: "The coterie's Haven" })).toBeVisible();
   await expect(a.getByRole("button", { name: "Log dots" })).toHaveCount(0);
   await a.getByRole("button", { name: "Log a use" }).click();
@@ -546,8 +545,7 @@ test("the troupe's locations: a storyteller adds the Grove Arcade, is refused an
   // The lead adds the Grove Arcade: prestige 5, with ten qualities.
   const l = lead.page;
   await l.goto(`/troupes/${troupe.id}`);
-  await l.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "World", exact: true }).click();
-  await l.getByRole("link", { name: "Locations", exact: true }).click();
+  await troupeTab(l, "Locations");
   // Nothing to filter yet: what goes here and how to start, and no filters.
   await expect(l.getByText("No locations yet.")).toBeVisible();
   await expect(l.getByText(/Start with Add a location/)).toBeVisible();

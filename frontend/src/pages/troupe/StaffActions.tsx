@@ -5,7 +5,7 @@ import type { RosterEntry } from "../../api/types";
 import { ActionMenu, MenuGroup, MenuItem, MenuLink } from "../../components/ActionMenu";
 import { Dialog } from "../../components/Dialog";
 import { useToast } from "../../components/Toast";
-import { Button, ErrorText, Input, Loading } from "../../components/ui";
+import { Button, Empty, ErrorText, Input, Loading } from "../../components/ui";
 import { useAction, useMe } from "../../hooks";
 import { BadgeNote } from "../character/Badge";
 import { StatusCard } from "../character/StatusCard";
@@ -265,7 +265,7 @@ function Titles({ troupeId, entry }: { troupeId: string; entry: RosterEntry }) {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-mist">No titles here yet.</p>
+          <Empty>No titles here yet.</Empty>
         )}
         <ErrorText error={save.error} />
       </section>

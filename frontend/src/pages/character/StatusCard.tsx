@@ -10,7 +10,7 @@ import { InfoButton } from "../../components/InfoButton";
 import { PatronPicker } from "../../components/PatronPicker";
 import { useToast } from "../../components/Toast";
 import { pageLabel } from "../../components/TraitInfo";
-import { Badge, Button, Card, ErrorText, Field, Input, Select, Textarea } from "../../components/ui";
+import { Badge, Button, Card, Empty, ErrorText, Field, Input, Select, Textarea } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { WhoPicker } from "../troupe/WhoPicker";
@@ -609,7 +609,7 @@ export function StatusCard({ character }: { character: StatusCharacter }) {
             <Unresolved key={name} character={character} status={s} name={name} />
           ))}
         </ul>
-        {counted && !fleeting.length && <p className="text-xs text-mist">No fleeting status held.</p>}
+        {counted && !fleeting.length && <Empty>No fleeting status held.</Empty>}
         {s.staff &&
           counted &&
           (suppressing ? (

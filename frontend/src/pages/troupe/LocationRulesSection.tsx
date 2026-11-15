@@ -3,6 +3,7 @@ import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { LocationCatalogueOut, LocationQualityOut, OwnLocationQualityOut } from "../../api/types";
 import { Checkbox } from "../../components/Checkbox";
+import { EmptyState } from "../../components/EmptyState";
 import { RadioList } from "../../components/RadioList";
 import { SettingCard, useSaveOnChange } from "../../components/SettingCard";
 import { Toggle } from "../../components/Toggle";
@@ -129,7 +130,9 @@ function OwnQualities({ troupeId, catalogue, canEdit }: { troupeId: string; cata
       }
     >
       {editing === "new" && <OwnForm troupeId={troupeId} quality={null} onDone={() => setEditing(null)} />}
-      {catalogue.own.length === 0 && editing !== "new" && <p className="text-sm text-mist">None yet.</p>}
+      {catalogue.own.length === 0 && editing !== "new" && (
+        <EmptyState title="None yet.">{canEdit ? "Make one with Add a quality, above." : "The storytellers make them."}</EmptyState>
+      )}
       <ul className="divide-y divide-ash">
         {catalogue.own.map((q) => (
           <li key={q.id} className="py-2.5 text-sm">

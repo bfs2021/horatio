@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, closeContextsAfterEach, makeCustodian, openNewTroupe, openScene, person, run, shots, topBar } from "./support";
+import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, closeContextsAfterEach, makeCustodian, openNewTroupe, openScene, person, run, shots, topBar, troupeTab } from "./support";
 
 /** Scenes: storytellers pinning NPCs and tapping for them. */
 
@@ -40,8 +40,7 @@ test("a storyteller pins three NPCs in a Scene view, taps for two, and each full
   const state = async (name: string) => (await p.request.get(`/api/characters/${npcs[name]}/play`)).json();
 
   // From the At game tab, through the troupe's scenes, to a new empty one.
-  await p.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "Games", exact: true }).click();
-  await p.getByRole("link", { name: "At game" }).click();
+  await troupeTab(p, "At game");
   // Health is counted as the Scene cards count it: the levels marked.
   await expect(p.getByText(/^Health 0\/\d+ marked$/)).toHaveCount(3);
   await p.getByRole("link", { name: "Open the scenes" }).click();

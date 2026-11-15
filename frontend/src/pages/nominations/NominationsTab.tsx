@@ -2,9 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { api, unwrap } from "../../api/client";
 import type { EntryOut, MonthOut, RememberedOut } from "../../api/types";
 import { Avatar } from "../../components/Avatar";
+import { EmptyState } from "../../components/EmptyState";
 import { Button, Card, Empty, ErrorText, Loading } from "../../components/ui";
 import { useAction } from "../../hooks";
-import { monthOrder } from "./nominations";
+import { monthOrder, publishedWhat } from "./nominations";
 
 /**
  * The troupe's Player Nominations (#470) and Remembrances (#471), as it uses them,
@@ -39,7 +40,11 @@ export function NominationsTab({
         {nominations && " ★ marks the nominations starred for the foot of the troupe’s pages."}
       </p>
       {months.data.length === 0 ? (
-        <Empty>Nothing is published yet.</Empty>
+        <Card>
+          <EmptyState title="Nothing is published yet.">
+            {publishedWhat(nominations, remembrances).title} show here, a month at a time, once the storytellers publish them from a downtime.
+          </EmptyState>
+        </Card>
       ) : (
         months.data.map((m) => <Month key={m.cycle_id} month={m} canStar={canStar} nominations={nominations} />)
       )}
@@ -61,7 +66,7 @@ function Month({ month, canStar, nominations }: { month: MonthOut; canStar: bool
       )}
       {nominations &&
         (month.nominations.length === 0 ? (
-          <p className="text-sm text-mist">No nominations this month.</p>
+          <Empty>No nominations this month.</Empty>
         ) : (
           <>
             {remembered.length > 0 && <h3 className="text-sm tracking-wide text-mist uppercase">Player Nominations</h3>}

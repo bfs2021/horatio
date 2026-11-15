@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { closeContextsAfterEach, run, shots, person, makeCustodian, backstoryOptional, characterTab, builtVampire, ATTRIBUTES_AND_FOCUSES, switchFeature } from "./support";
+import { closeContextsAfterEach, run, shots, person, makeCustodian, backstoryOptional, characterTab, builtVampire, ATTRIBUTES_AND_FOCUSES, switchFeature, troupeTab } from "./support";
 
 /** Status and titles, on the sheet, on badges and at a game. */
 
@@ -51,7 +51,7 @@ test("a player keeps their own sect status, naming its patron from the home trou
 
   // On the character's Status & Titles tab: Accepted, and no fleeting status yet.
   await p.goto(`/characters/${id}`);
-  await p.getByRole("link", { name: "Status & Titles", exact: true }).click();
+  await characterTab(p, "Status & Titles");
   const card = p.locator("section").filter({ has: p.getByRole("heading", { name: "Status", exact: true }) });
   await expect(card.getByRole("listitem", { name: "Acknowledged" })).toContainText("by the Camarilla");
   await expect(card.getByText("Fleeting: 0 of 3")).toBeVisible();
@@ -371,7 +371,7 @@ test("Status & Titles: a Camarilla player sees the status held with its sources,
   // from; the titles are a sidebar beside it, listing the troupe's Camarilla titles,
   // each with the status it gives.
   await p.goto(`/characters/${id}`);
-  await p.getByRole("link", { name: "Status & Titles", exact: true }).click();
+  await characterTab(p, "Status & Titles");
   const titles = p.getByRole("complementary", { name: "Titles" });
   const choices = titles.getByRole("region", { name: "Titles to choose" });
   const held = titles.getByRole("region", { name: "Titles held" });
@@ -998,7 +998,7 @@ test("titles by sect: a Camarilla troupe gives Camarilla titles only to its own,
   await expect(p.getByRole("table", { name: "Camarilla titles" }).getByRole("row", { name: "Master of Elysium" })).toBeVisible();
 
   // The picker offers each character the titles of its sect and of any sect.
-  await p.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "Characters", exact: true }).click();
+  await troupeTab(p, "Roster");
   await p.locator("main").getByRole("radio", { name: "NPCs" }).click();
   const titlesFor = async (name: string) => {
     await p.getByRole("button", { name: `Actions for ${name}` }).click();
@@ -1089,7 +1089,7 @@ test("the court over time: staff give a Prince and take it away, and see one fin
 
   // Court › Court over time: the Prince's row, with one bar, ended.
   await p.goto(`/troupes/${troupeId}/titles`);
-  await p.getByRole("navigation", { name: "Court", exact: true }).getByRole("link", { name: "Court over time", exact: true }).click();
+  await troupeTab(p, "Court over time");
   const chart = p.getByRole("figure", { name: "Who held each title" });
   await expect(chart).toBeVisible();
   const bar = chart.getByRole("img", { name: /^Prince: Aurelio Vance: from / });
@@ -1171,7 +1171,7 @@ test("the chronicle: staff see an Embrace and a diablerie on the troupe's timeli
   // Court › Chronicle: both, at their in-game dates.
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/titles`);
-  await l.getByRole("navigation", { name: "Court", exact: true }).getByRole("link", { name: "Chronicle", exact: true }).click();
+  await troupeTab(l, "Chronicle");
   const chart = l.getByRole("figure", { name: "The chronicle" });
   await expect(chart).toBeVisible();
   await expect(chart.getByRole("checkbox", { name: "In-game dates" })).toBeChecked();

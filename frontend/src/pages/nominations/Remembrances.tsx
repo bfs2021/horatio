@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, ApiError, unwrap } from "../../api/client";
 import type { CharacterOut, CharacterRemembrancesOut } from "../../api/types";
-import { Button, Card, ErrorText, Loading } from "../../components/ui";
+import { Button, Card, Empty, ErrorText, Loading } from "../../components/ui";
 import { useAction } from "../../hooks";
 
 /** A character's remembrances, or null for someone who can't read them. */
@@ -47,7 +47,7 @@ export function RemembrancesPanel({ characterId, name }: { characterId: string; 
   if (found.isPending) return <Loading />;
   if (found.error) return <ErrorText error={found.error} />;
   const r = found.data;
-  if (!shownAt(r)) return <p className="text-sm text-mist">No remembrances of {name}.</p>;
+  if (!shownAt(r)) return <Empty>No remembrances of {name}.</Empty>;
   return (
     <div className="flex flex-col gap-3">
       {r!.on && (r!.state !== "none" || r!.can_open) && <p className="text-sm text-mist">{asking(r!, name)}</p>}
@@ -60,7 +60,7 @@ export function RemembrancesPanel({ characterId, name }: { characterId: string; 
         </div>
       )}
       {r!.months.length === 0
-        ? r!.state === "open" && <p className="text-sm text-mist">None published yet.</p>
+        ? r!.state === "open" && <Empty>None published yet.</Empty>
         : r!.months.map((m) => (
             <section key={m.cycle_id} aria-label={`Remembrances of ${name}, ${m.month}`}>
               <h3 className="text-sm text-gold">{m.month}</h3>

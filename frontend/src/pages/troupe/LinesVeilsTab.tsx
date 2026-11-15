@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { TroupeLinesVeils } from "../../api/types";
+import { EmptyState } from "../../components/EmptyState";
 import { AtHandle } from "../../components/PersonPicker";
 import { Card, Empty, ErrorText, Loading } from "../../components/ui";
 
@@ -28,7 +29,11 @@ export function LinesVeilsTab({ troupeId }: { troupeId: string }) {
         player shares theirs with other players.
       </p>
       {data.players.length === 0 ? (
-        <Empty>No player here has given any yet.</Empty>
+        <Card>
+          <EmptyState title="No player here has given any yet.">
+            Players give theirs under Account › Lines and veils. Those of every player with a character here, home or visiting, show on this tab.
+          </EmptyState>
+        </Card>
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2">

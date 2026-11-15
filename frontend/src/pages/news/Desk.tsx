@@ -7,6 +7,7 @@ import { DateInput } from "../../components/DateInput";
 import { Dialog } from "../../components/Dialog";
 import { useToast } from "../../components/Toast";
 import { Badge, Button, Card, Empty, ErrorText, Field, Loading } from "../../components/ui";
+import { EmptyState } from "../../components/EmptyState";
 import { LinkButton } from "../../components/LinkButton";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
@@ -42,7 +43,7 @@ export function Desk({ troupeId, kind, writes }: { troupeId: string; kind: Kind;
       {!writes && <p className="text-sm text-mist">Your proposals wait here for a storyteller or assistant storyteller to publish or decline. You can change one until then.</p>}
       {sections.length === 0 && !writes && (
         <Card>
-          <Empty>No proposals waiting.</Empty>
+          <EmptyState title="No proposals waiting.">Send one to the storytellers with Propose {words.one}, above.</EmptyState>
         </Card>
       )}
       {sections.map((s) => (

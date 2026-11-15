@@ -306,7 +306,7 @@ function ApprovalCard({ approval }: { approval: QueuedApproval }) {
       )}
       {joining && (
         <div className="mb-3 flex flex-col gap-2">
-          {approval.reconciliation.length === 0 && <p className="text-sm text-mist">Nothing to reconcile.</p>}
+          {approval.reconciliation.length === 0 && <Empty>Nothing to reconcile.</Empty>}
           {approval.reconciliation.map((r) => (
             <Field
               key={r.id}

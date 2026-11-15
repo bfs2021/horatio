@@ -3,7 +3,8 @@ import { useState, type ReactNode } from "react";
 import { api, unwrap } from "../../api/client";
 import type { AnsweredSetOut, BackstoryOut, CharacterOut } from "../../api/types";
 import { Markdown } from "../../components/Markdown";
-import { Badge, Button, Card, Empty, ErrorText, Field, Loading, Notice, Select, Textarea } from "../../components/ui";
+import { EmptyState } from "../../components/EmptyState";
+import { Badge, Button, Card, ErrorText, Field, Loading, Notice, Select, Textarea } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { headings } from "../../markdown";
@@ -163,7 +164,15 @@ export function BackstoryText({
           {b.changed_by_name ? ` by ${b.changed_by_name}` : ""}
         </p>
       )}
-      {b.written ? <Markdown text={b.text} /> : <Empty>Nothing written yet.</Empty>}
+      {b.written ? (
+        <Markdown text={b.text} />
+      ) : (
+        <EmptyState title="Nothing written yet.">
+          {actions
+            ? `The character's story, for the storytellers to read. Start with ${drafted ? "Carry on writing" : "Write the backstory"}, above.`
+            : "It shows here once the character's player writes it."}
+        </EmptyState>
+      )}
     </Card>
   );
 }

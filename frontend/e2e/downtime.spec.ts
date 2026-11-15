@@ -274,7 +274,7 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   await expect(sections.getByRole("link", { name: "Games", exact: true })).toBeVisible();
   await expect(sections.getByRole("link", { name: "Players", exact: true })).toHaveCount(0);
   const characterTabs = lead.page.getByRole("navigation", { name: "Characters", exact: true });
-  for (const tab of ["Approvals", "Characters", "Players"]) await expect(characterTabs.getByRole("link", { name: tab, exact: true })).toBeVisible();
+  for (const tab of ["Approvals", "Roster", "Players"]) await expect(characterTabs.getByRole("link", { name: tab, exact: true })).toBeVisible();
   for (const tab of ["NPCs", "At game", "Award XP"]) await expect(characterTabs.getByRole("link", { name: tab })).toHaveCount(0);
   await characterTabs.getByRole("link", { name: "Players", exact: true }).click();
   const playerRow = lead.page.getByRole("listitem").filter({ has: lead.page.getByRole("link", { name: /^player @/ }) }).first();

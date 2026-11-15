@@ -194,12 +194,12 @@ test("screenshots for Running a troupe", async ({ browser }) => {
   await expect(l.getByText("Oren Pike")).toBeVisible();
   await shot(l, "staff", undefined, 900);
 
-  // Customise › Overview.
+  // Customise › Setup.
   await l.goto(`${base}/customise`);
   await expect(l.getByRole("list", { name: "Setting up" })).toBeVisible();
   await shot(l, "customise-overview", undefined, 1750);
 
-  // The Characters list, with the print choices open.
+  // Characters › Roster, with the print choices open.
   await l.goto(`${base}/characters`);
   await expect(l.getByRole("link", { name: "Celestine Marrow" })).toBeVisible();
   await l.getByLabel("Select Celestine Marrow").check();

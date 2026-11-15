@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { repeatedLabels } from "../character/characterTabs";
 import { abilities } from "./roles";
 import { troupeTabGroups, type TroupeTabsTroupe } from "./troupeTabs";
 
@@ -16,6 +17,18 @@ const troupe: TroupeTabsTroupe = {
   quests_enabled: true,
 };
 
+const roles = ["lead_storyteller", "storyteller", "assistant_storyteller", "narrator", null] as const;
+const flags = ["archived", "whos_who", "nominations", "player_nominations", "court_history_players", "chronicle_players", "boons", "quests_enabled"] as const;
+
+/** Every combination of the troupe's switches, with blood bonds off and on. */
+function everyTroupe(): TroupeTabsTroupe[] {
+  return Array.from({ length: 1 << (flags.length + 1) }, (_, n) => {
+    const t: TroupeTabsTroupe = { ...troupe, blood_bonds: n & (1 << flags.length) ? "staff" : "off" };
+    flags.forEach((f, i) => (t[f] = !!(n & (1 << i))));
+    return t;
+  });
+}
+
 /** Each shown group with its tabs' labels. */
 function layout(can: ReturnType<typeof abilities>, t: TroupeTabsTroupe = troupe) {
   return Object.fromEntries(
@@ -26,18 +39,31 @@ function layout(can: ReturnType<typeof abilities>, t: TroupeTabsTroupe = troupe)
 }
 
 const storytellerLayout = {
-  Troupe: ["Overview", "Setting", "Story bible", "Who's Who", "News", "Announcements", "Nominations", "Staff", "Log"],
-  Characters: ["Approvals", "Being built", "Characters", "Players", "Lines and veils"],
+  Troupe: ["Overview", "The setting", "Story bible", "Who's Who", "News", "Announcements", "Nominations", "Staff", "Log"],
+  Characters: ["Approvals", "Being built", "Roster", "Players", "Lines and veils"],
   Games: ["At game", "Scenes", "Award XP"],
-  Court: ["Titles", "Court", "Chronicle", "Boons", "Bonds", "Web of obligation"],
+  Court: ["Titles", "Court over time", "Chronicle", "Boons", "Bonds", "Web of obligation"],
   Downtimes: ["Cycles", "My work", "Fill tables", "Influence log", "Quests"],
   World: ["Locations", "Equipment", "Shared backgrounds"],
-  Customise: ["Overview", "Troupe settings", "House rules", "Specialisations", "News agencies", "Connectors", "Share settings"],
+  Customise: ["Setup", "Troupe settings", "House rules", "Specialisations", "News agencies", "Connectors", "Export and import"],
 };
 
 describe("troupeTabGroups (#779)", () => {
   it("groups a lead storyteller's tabs by job", () => {
     expect(layout(abilities("lead_storyteller", false))).toEqual(storytellerLayout);
+  });
+
+  it("never shows two tabs with one label, nor a tab named as its group (#905)", () => {
+    for (const t of everyTroupe()) {
+      for (const role of roles) {
+        for (const custodian of [false, true]) {
+          const groups = troupeTabGroups(t, abilities(role, custodian));
+          const why = JSON.stringify({ role, custodian, ...t });
+          expect(repeatedLabels(groups), why).toEqual([]);
+          expect(groups.flatMap((g) => g.tabs.filter((tab) => tab.label === g.label).map((tab) => `${g.label} › ${tab.label}`)), why).toEqual([]);
+        }
+      }
+    }
   });
 
   it("gives a storyteller and an assistant storyteller the same groups as the lead", () => {
@@ -47,17 +73,17 @@ describe("troupeTabGroups (#779)", () => {
 
   it("gives a narrator the troupe, lines and veils, and their downtime work", () => {
     expect(layout(abilities("narrator", false))).toEqual({
-      Troupe: ["Overview", "Setting", "Who's Who", "News", "Announcements", "Nominations", "House rules", "Staff"],
+      Troupe: ["Overview", "The setting", "Who's Who", "News", "Announcements", "Nominations", "House rules", "Staff"],
       Characters: ["Lines and veils"],
-      Court: ["Court", "Chronicle"],
+      Court: ["Court over time", "Chronicle"],
       Downtimes: ["My work", "Fill tables", "Quests"],
     });
   });
 
   it("puts Court and Chronicle under Court for a player, as for staff", () => {
     expect(layout(abilities(null, false))).toEqual({
-      Troupe: ["Overview", "Setting", "Who's Who", "News", "Announcements", "Nominations", "House rules"],
-      Court: ["Court", "Chronicle"],
+      Troupe: ["Overview", "The setting", "Who's Who", "News", "Announcements", "Nominations", "House rules"],
+      Court: ["Court over time", "Chronicle"],
     });
   });
 

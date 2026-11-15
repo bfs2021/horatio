@@ -236,7 +236,7 @@ test("a character's quests for staff: the lead storyteller opens Morgan, sees th
   await expect(l.getByRole("button", { name: "Send scenario 1's result" })).toBeVisible();
 });
 
-test("staff tag a quest with the setting's themes and moods, the Setting tab lists it under each, and removing a theme takes its tag off (#880)", async ({ browser }) => {
+test("staff tag a quest with the setting's themes and moods, The setting tab lists it under each, and removing a theme takes its tag off (#880)", async ({ browser }) => {
   const custodian = await person(browser, "questtag-custodian");
   makeCustodian(custodian.email);
   const lead = await person(browser, "questtag-lead");
@@ -267,7 +267,7 @@ test("staff tag a quest with the setting's themes and moods, the Setting tab lis
   await expect(tags).toContainText("Desperate");
   await expect(l.getByText("questtag-lead tagged it: Revenge, Desperate")).toBeVisible();
 
-  // The Setting tab lists it under each, as a link back to it.
+  // The setting tab lists it under each, as a link back to it.
   await l.goto(`/troupes/${troupeId}/setting`);
   const touched = l.getByRole("list", { name: "Themes and moods touched" });
   await expect(touched.getByRole("listitem", { name: "Revenge" })).toContainText("1 quest");

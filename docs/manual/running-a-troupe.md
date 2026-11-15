@@ -20,7 +20,7 @@ Every troupe has exactly one **lead storyteller**, and as many **storytellers**,
 | Tag scenes and quests with the setting's themes and moods, and see which are touched | Yes | Yes | Yes | No |
 | Set up connectors (Discord, email) and choose the Discord channels for news, announcements and news agencies | Yes | Yes | No (can read them) | No |
 | Edit the troupe's profile, add games to the schedule | Yes | Yes | No | No |
-| See character sheets, the Characters list and the Players list | Yes | Yes | Yes | No |
+| See character sheets, the Roster and the Players list | Yes | Yes | Yes | No |
 | Decide approvals, give exceptions, read backstories | Yes | Yes | Yes | No |
 | Award XP, correct it, run check-in at a game | Yes | Yes | Yes | No |
 | Run downtime cycles: open, assign, deliver, close | Yes | Yes | Yes | No |
@@ -93,17 +93,17 @@ Only the lead storyteller (and the custodian) can do these, at the foot of the t
 
 ## Finding your way around a troupe
 
-A troupe's page has its tabs in groups, one for each job. Which tabs you see depends on your role, but a tab is always in the same group: players who may read the troupe's Court and Chronicle find them under **Court** too. The one exception is **House rules**, the same page read and changed: players and narrators find it under **Troupe**, storytellers and assistant storytellers under **Customise**, where they change it.
+A troupe's page has its tabs in groups, one for each job. Which tabs you see depends on your role, but a tab is always in the same group: players who may read the troupe's Court over time and Chronicle find them under **Court** too. The one exception is **House rules**, the same page read and changed: players and narrators find it under **Troupe**, storytellers and assistant storytellers under **Customise**, where they change it.
 
 | Group | Tabs |
 | --- | --- |
-| Troupe | Overview, Setting, Story bible (storytellers and assistant storytellers), Who's Who, News, Announcements, Nominations, House rules (players and narrators), Staff, Log |
-| Characters | Approvals, Being built, Characters, Players, Lines and veils |
+| Troupe | Overview, The setting, Story bible (storytellers and assistant storytellers), Who's Who, News, Announcements, Nominations, House rules (players and narrators), Staff, Log |
+| Characters | Approvals, Being built, Roster, Players, Lines and veils |
 | Games | At game, Scenes, Award XP |
-| Court | Titles, Court, Chronicle, Boons, Bonds, Web of obligation |
+| Court | Titles, Court over time, Chronicle, Boons, Bonds, Web of obligation |
 | Downtimes | Cycles, My work, Fill tables, Influence log, Quests |
 | World | Locations, Equipment, Shared backgrounds |
-| Customise | Overview, Troupe settings, House rules, Specialisations, News agencies, Connectors, Share settings |
+| Customise | Setup, Troupe settings, House rules, Specialisations, News agencies, Connectors, Export and import |
 
 A number on a tab is how much waits on you there, such as approvals to decide.
 
@@ -133,11 +133,11 @@ Members see any pinned announcements first, as banners (see [Announcements](#ann
 
 Narrators see the player's answer and the question, never the character's sheet. For a random result, the tab links to the troupe's **Fill tables**, which belong to the whole troupe rather than one cycle.
 
-## The Characters list
+## The roster
 
-![The Characters list with two characters ticked and the Print choices open.](images/running-a-troupe/characters.png)
+![Characters › Roster with two characters ticked and the Print choices open.](images/running-a-troupe/characters.png)
 
-**Characters › Characters** lists the troupe's characters, those whose home it is first, for storytellers and assistant storytellers. Choose what it shows at the top:
+**Characters › Roster** lists the troupe's characters, those whose home it is first, for storytellers and assistant storytellers. Choose what it shows at the top:
 
 - **Player characters**, which it opens on;
 - **NPCs**, the troupe's own characters (see [NPCs](#npcs));
@@ -211,9 +211,9 @@ Each character's **⋯**, at the end of its row, holds what you can do for it, p
 
 ## NPCs
 
-NPCs belong to the troupe, need no approval and take no part in downtimes. Choose **NPCs** on the [Characters list](#the-characters-list) to see them; the old **NPCs** tab's address opens it there. Each row shows the NPC's kind, its form (sheeted or stock), a Stock NPC's rating, and whether it is listed on the Who's Who; choose a heading to sort by it. On a phone these fold in under the name. Filter the NPCs by kind and by form, or open an NPC by its name. The search, the filter, printing and each NPC's [**⋯**](#each-characters-actions) work as for player characters.
+NPCs belong to the troupe, need no approval and take no part in downtimes. Choose **NPCs** on the [Roster](#the-roster) to see them; the old **NPCs** tab's address opens it there. Each row shows the NPC's kind, its form (sheeted or stock), a Stock NPC's rating, and whether it is listed on the Who's Who; choose a heading to sort by it. On a phone these fold in under the name. Filter the NPCs by kind and by form, or open an NPC by its name. The search, the filter, printing and each NPC's [**⋯**](#each-characters-actions) work as for player characters.
 
-![The Characters list showing NPCs, with the New NPC form open.](images/running-a-troupe/npcs.png)
+![The Roster showing NPCs, with the New NPC form open.](images/running-a-troupe/npcs.png)
 
 ### Making an NPC
 
@@ -251,7 +251,7 @@ Giving it makes it the player's character, at home in your troupe and already ac
 
 To give it to someone who has signed up:
 
-1. Choose **⋯ › Give to a player…** on its row of the Characters list, or **⋯ › Give to a player…** on its own page.
+1. Choose **⋯ › Give to a player…** on its row of the Roster, or **⋯ › Give to a player…** on its own page.
 2. Pick the **Player**, and fill in any **Unspent XP to carry over** and **Why**.
 3. Choose **Continue** to see what will happen, then **Give *name* to @handle**.
 
@@ -267,7 +267,7 @@ A character given to the wrong person is put right by the custodian [moving it t
 
 ### Making an NPC of a retired character
 
-When a player's character turns villain, or its player can no longer run it, staff can take a copy of it to play as an NPC. Only a retired character can be copied, however it left: Final Death too, as a character believed dead may not be. Its home troupe's storytellers and assistant storytellers can do it, from **⋯ › Make an NPC…** on its row of the Characters list (take off the **Is active** filter to see retired characters) or on its own page.
+When a player's character turns villain, or its player can no longer run it, staff can take a copy of it to play as an NPC. Only a retired character can be copied, however it left: Final Death too, as a character believed dead may not be. Its home troupe's storytellers and assistant storytellers can do it, from **⋯ › Make an NPC…** on its row of the Roster (take off the **Is active** filter to see retired characters) or on its own page.
 
 - The troupe gets a new sheeted NPC named **[NPC] *name***, so it doesn't collide with the original. It has the original's sheet as it stands (clan, sect, disciplines, merits and flaws, backgrounds, Humanity or Path), its sire, backstory and picture.
 - The original stays as it is, retired, in its player's characters. Changing one never changes the other.
@@ -299,7 +299,7 @@ The NPC's **IC chat** tab lists its recent messages, newest first, with when eac
 - **Court order of our titles** sets where the troupe's own titles come in the Who's Who's court, after the rule set's.
 - **Seats at court** chooses which clans have a seat. Until you choose, the clans whose Primogen is held here have one. Characters of other clans are listed under Other on the Who's Who, each with who represents them.
 
-You can also give a title from **Titles…** on a character's ⋯ on the [Characters list](#each-characters-actions), or from the character's Status & Titles tab. Whether players choose their own titles, and keep their own status, is set under [Troupe settings](#customise-troupe-settings).
+You can also give a title from **Titles…** on a character's ⋯ on the [Roster](#each-characters-actions), or from the character's Status & Titles tab. Whether players choose their own titles, and keep their own status, is set under [Troupe settings](#customise-troupe-settings).
 
 What each status does is in the **Rulebook**, under **Status**, with the troupe chosen under **As played in**: every status of the sects the troupe takes, what it does and where it comes from here. Anyone can read it, and there is nothing to set there. **Rulebook's Status** under Court › Titles and **How status works here** on a character's Status & Titles tab open it with the troupe chosen; old links to the troupe's Status tab lead there too.
 
@@ -434,7 +434,7 @@ Publishing, editing a published announcement, pinning and unpinning, unpublishin
 - The list is a table: each item, who holds it, its kind, qualities and grade, and when and by whom it was given. On a phone, each item folds into a card. Choose an item's name to read what it does.
 - Each item's **⋯**, at the end of its row, holds **History** (an item given from a downtime response says so there, linking to the response), and, while it's held, **Change…**, **Move…** (to another home character), **Discard…** and **Take back…** (with a reason; its player is told). A discarded item's **⋯** offers **Restore to** its last holder instead.
 - **Find items** searches by words, holder, kind, quality, grade, who gave it and when, held or discarded.
-- **Export CSV** downloads the list; **Find these characters** opens the Characters list on the holders.
+- **Export CSV** downloads the list; **Find these characters** opens the Roster on the holders.
 
 > **If your troupe uses this:** with **Items that expire** switched on in the Features list of Troupe settings, you can give an item an expiry: on a day, after a number of the holder's games, or at the end of the downtime cycle. An expired item is taken back, and its history kept.
 
@@ -493,20 +493,20 @@ How far back lookups look is set under [Downtime actions](#downtime-actions).
 
 The **Log** tab in the Troupe group shows what has happened in the troupe, newest first, for storytellers and assistant storytellers. Changes to house rules, approvals, awards and much else go in it.
 
-## Customise: the overview
+## Customise: setup
 
-![Customise › Overview: the Setting up checklist, the troupe's features and the house rules that differ from the book.](images/running-a-troupe/customise-overview.png)
+![Customise › Setup: the Setting up checklist, the troupe's features and the house rules that differ from the book.](images/running-a-troupe/customise-overview.png)
 
 Everything under **Customise** can stay as the book has it. Storytellers and the lead change it; assistant storytellers can read it all. Each change saves straight away.
 
-**Customise › Overview** starts with **Setting up**, the four things a new troupe does first, each ticked when done and linked to where you do it:
+**Customise › Setup** starts with **Setting up**, the four things a new troupe does first, each ticked when done and linked to where you do it:
 
 1. **Name and profile**.
 2. **House rules**.
 3. **Staff**.
 4. **First cycle**.
 
-Below it, nothing is changed: the Overview points to where things are.
+Below it, nothing is changed: Setup points to where things are.
 
 - **Features** lists the troupe's features, each on or off, as in the [Features list](#customise-troupe-settings). A feature with a tab links to it; **Switch them in Troupe settings** goes to the list where they're switched. Who may join, XP, status and titles and the setting are on Troupe settings too.
 - **House rules** names each part of the rules the troupe plays differently from the book (checks, costs, starting points, downtime actions, house merits and flaws, and other house rules), each linked to where it's set. While there are none, it says everything plays as the book has it. **Read them as players do** opens the troupe's **House rules** tab.
@@ -545,19 +545,19 @@ The rest of the document is built from the troupe's own settings, so it's never 
 - **Cost modifications**: your prices, your own merits and flaws that characters can take, and the book traits you ban or class differently.
 - **Setting-specific mechanics**: what a new character starts with, your changes to starting points, the checks that limit creation (your own and the book's you play differently), the game XP chart and monthly cap, and your other house rules. **Graduated XP cap** says **Yes** when the game XP chart gives less as a character earns more (p. 349).
 
-Every member reads the whole document on the troupe's **Setting** tab, beside **Overview**; running staff see an edit link beside each built part. **Print it** opens it black on white for the Storyteller table. Under **Where players read it**, storytellers can tick **Show it on the troupe's profile**, as written rules can be; a public profile then shows it to anyone. A character built to the troupe's rules shows its themes, moods and teaser on the wizard's Concept step, with a link to the whole document.
+Every member reads the whole document on **Troupe › The setting**, beside **Overview**; running staff see an edit link beside each built part. **Print it** opens it black on white for the Storyteller table. Under **Where players read it**, storytellers can tick **Show it on the troupe's profile**, as written rules can be; a public profile then shows it to anyone. A character built to the troupe's rules shows its themes, moods and teaser on the wizard's Concept step, with a link to the whole document.
 
-When you change the document, the troupe's players hear of it in the bell, with what changed ("The setting changed: the theme Betrayal added; the teaser rewritten."), and the notice opens the **Setting** tab. A sitting's changes make one notice: each change within half an hour of the last joins the player's unread notice rather than making another. The parts you write count, as do the chronicle's name and city on the profile, the sects that may join, clan rarity and the New Character Incentive. Prices, house merits, checks and the other house rules don't: players read those on the **House rules** tab. Whoever makes a change isn't told of it, and showing the document on the profile tells no one.
+When you change the document, the troupe's players hear of it in the bell, with what changed ("The setting changed: the theme Betrayal added; the teaser rewritten."), and the notice opens **The setting**. A sitting's changes make one notice: each change within half an hour of the last joins the player's unread notice rather than making another. The parts you write count, as do the chronicle's name and city on the profile, the sects that may join, clan rarity and the New Character Incentive. Prices, house merits, checks and the other house rules don't: players read those on the **House rules** tab. Whoever makes a change isn't told of it, and showing the document on the profile tells no one.
 
 #### Theme and mood tags
 
 To see which themes and moods the chronicle is actually touching, tag your [scenes](#scenes) and [quests](#quests) with them: **Tag it** (or **Change tags**) under a scene's name, or in a quest's overview, picks from the troupe's themes and moods. Storytellers and assistant storytellers tag; narrators see a quest's tags but don't change them. Players never see tags, and tagging changes nothing in the document they read.
 
-Below the document on the **Setting** tab, **Themes and moods touched** lists every theme, then every mood, with how many scenes and quests are tagged with it and links to them. Those nothing is tagged with yet say **Not touched yet**. Removing a theme or mood removes its tags; so does removing a scene.
+Below the document on **The setting**, **Themes and moods touched** lists every theme, then every mood, with how many scenes and quests are tagged with it and links to them. Those nothing is tagged with yet say **Not touched yet**. Removing a theme or mood removes its tags; so does removing a scene.
 
 #### The story bible
 
-The **Story bible** tab, beside **Setting**, is its staff-only companion (MET: VTM p. 336). Storytellers and assistant storytellers read and keep it; players and narrators never see it, and it's never on the Setting tab, the profile, the wizard or the setting's print. It gathers what Horatio already holds, so nothing is typed twice:
+The **Story bible** tab, beside **The setting**, is its staff-only companion (MET: VTM p. 336). Storytellers and assistant storytellers read and keep it; players and narrators never see it, and it's never on **The setting**, the profile, the wizard or the setting's print. It gathers what Horatio already holds, so nothing is typed twice:
 
 - **Staff notes**: the one part you write here, each with a title and Markdown: plots, secrets, what the players don't know. **Add a note**, **Edit**, **Remove**, and ↑ ↓ to put them in order. Each change goes in the troupe log, and nobody is told of it.
 - **Chronology**: the events of the chronicle timeline (**Court › Chronicle**), in in-game order where they have an in-game date, then the rest as Horatio recorded them.
@@ -599,7 +599,7 @@ Quests are switched on in the [Features list](#features). While they're off, pla
 
 > **If your troupe uses this:** both rules are off unless switched on.
 
-**Characters › Characters** has **Retainers** in its Settings, which sets house rules the book doesn't have: **Upkeep**, in Blood or Willpower, each game or each month; and **Growth**, XP a month for each Retainer.
+**Characters › Roster** has **Retainers** in its Settings, which sets house rules the book doesn't have: **Upkeep**, in Blood or Willpower, each game or each month; and **Growth**, XP a month for each Retainer.
 
 #### Backstories
 
@@ -932,9 +932,9 @@ Before the first real delivery, tick **Send downtime results through Discord** a
 
 For **email**, set where **Replies go to** (the storytellers' address) and a **Test address**. Each result goes to the player's account address, one email per character.
 
-## Customise: share settings
+## Customise: export and import
 
-**Customise › Share settings** carries a troupe's customisation to another troupe: to start a new chronicle from rules you already have, or to give your rules to another storyteller, even one on another Horatio server.
+**Customise › Export and import** carries a troupe's customisation to another troupe: to start a new chronicle from rules you already have, or to give your rules to another storyteller, even one on another Horatio server.
 
 ### Exporting
 
@@ -1332,7 +1332,7 @@ There are three ways:
 
 - **A game's XP**, from its night after check-in (see [Awarding a game's XP](#awarding-a-games-xp)).
 - **Games › Award XP**, for the whole troupe at once without check-in: set what **Everyone gets**, raise or lower it per character with the arrows (0 for someone who missed it), write the **Note everyone gets**, and choose **Award…**. Tick **Also add to floor and ceiling** to raise them by the amount everyone gets.
-- **Award XP…** on one character's ⋯ on the [Characters list](#each-characters-actions).
+- **Award XP…** on one character's ⋯ on the [Roster](#each-characters-actions).
 
 Completing a downtime gives the cycle's completion XP by itself, as the character submits.
 

@@ -13,7 +13,7 @@ export function SettingPrintPage() {
   const navigate = useNavigate();
   const paper = usePreferences().paper;
   const setting = useSetting(troupeId);
-  useTitle(setting.data ? `Print · Setting · ${setting.data.troupe}` : "Print");
+  useTitle(setting.data ? `Print · The setting · ${setting.data.troupe}` : "Print");
   if (setting.isPending) return <p className="p-8 text-black">Loading…</p>;
   if (setting.error) return <p className="p-8 text-black">{setting.error.message}</p>;
   const width = { maxWidth: `${PAPERS[paper].width}in` };

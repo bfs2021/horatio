@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ATTRIBUTES_AND_FOCUSES, builtVampire, closeContextsAfterEach, makeCustodian, person, run, shots, characterTab } from "./support";
+import { ATTRIBUTES_AND_FOCUSES, builtVampire, closeContextsAfterEach, makeCustodian, person, run, shots, characterTab, tabSettings } from "./support";
 
 /** A character's backstory: written in the editor or built from the troupe's questions, and approved as part of accepting the character. */
 
@@ -46,8 +46,9 @@ test("a troupe asks its questions only: the lead loads the template and rewords 
 
   // The lead chooses the questions only, and loads the template.
   const l = lead.page;
-  // Backstories are set in the Settings at the top of Approvals, where they're approved (#785).
+  // Backstories are set in Approvals' Settings, where they're approved (#785, #909).
   await l.goto(`/troupes/${troupe.id}/approvals#settings-backstories`);
+  await tabSettings(l, "Approvals");
   await l.getByRole("radio", { name: /The questions only/ }).click();
   await expect(l.getByText("Saved.", { exact: true })).toBeVisible();
   await expect(l.getByRole("radio", { name: /The questions only/ })).toBeChecked();

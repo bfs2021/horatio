@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, characterTab, chooseDots, choosePick, closeContextsAfterEach, makeCustodian, openNewTroupe, PASSWORD, person, run, shots, tapMid, topBar, troupeTab, expectTabOpen, expectTabCount, isPhone, shutSections, groupTabs } from "./support";
+import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, characterTab, chooseDots, choosePick, closeContextsAfterEach, makeCustodian, openNewTroupe, PASSWORD, person, run, shots, tapMid, topBar, troupeTab, expectTabOpen, expectTabCount, isPhone, shutSections, groupTabs, tabSettings, closeTabSettings } from "./support";
 
 /** A troupe's setup: its rules, XP range, staff, profile and archiving, and asking for one. */
 
@@ -153,7 +153,7 @@ test("a troupe's or character's tab that isn't there, or isn't open to them, say
   await expect(p).toHaveURL(new RegExp(`/characters/${characterId}/create$`));
 });
 
-test("Troupe settings open on a Features list: each optional feature on or off, and switching one on brings its tab, its settings folded at the top (#783, #784)", async ({ browser }) => {
+test("Troupe settings open on a Features list: each optional feature on or off, and switching one on brings its tab, its settings behind its Settings button (#783, #784, #909)", async ({ browser }) => {
   const custodian = await person(browser, "switch-custodian");
   makeCustodian(custodian.email);
   const lead = await person(browser, "switch-lead");
@@ -186,21 +186,27 @@ test("Troupe settings open on a Features list: each optional feature on or off, 
   await expect(boons.getByRole("switch", { name: "Boons" })).toHaveAttribute("aria-checked", "true");
   await expect(l.getByRole("checkbox", { name: /^Keep a boon ledger/ })).toHaveCount(0);
   await expect(l.getByRole("heading", { name: "Boons", exact: true })).toHaveCount(0);
-  // Its Settings link lands on its tab, under Court, with its settings folded open at the top.
+  // Its Settings link lands on its tab, under Court, with its Settings dialog open (#909).
   await boons.getByRole("link", { name: "Settings for Boons" }).click();
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/boons#settings$`));
+  let settings = await tabSettings(l, "Boons");
+  await expect(settings.getByRole("radio", { name: /^Also what they're owed/ })).toBeVisible();
+  // Closed, the ledger is there, and the address no longer opens them.
+  await closeTabSettings(settings);
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/boons$`));
   court = await groupTabs(l, "Court");
   await expect(court.getByRole("link", { name: "Boons", exact: true })).toBeVisible();
   await shutSections(l);
-  await expect(l.getByRole("radio", { name: /^Also what they're owed/ })).toBeVisible();
   await expect(l.getByRole("button", { name: "Register boons" })).toBeVisible();
-  // Opened from the list, the tab has them folded away.
+  // Opened from the list, the tab has them behind its Settings button, nothing folded above the ledger.
   await l.goto(`/troupes/${troupeId}/settings`);
   await boons.getByRole("link", { name: "Open Boons" }).click();
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/boons$`));
-  await expect(l.getByRole("radio", { name: /^Also what they're owed/ })).toBeHidden();
-  await l.locator("#settings > summary").click();
-  await expect(l.getByRole("radio", { name: /^Also what they're owed/ })).toBeVisible();
+  await expect(l.getByRole("radio", { name: /^Also what they're owed/ })).toHaveCount(0);
+  await expect(l.locator("summary", { hasText: "Settings" })).toHaveCount(0);
+  settings = await tabSettings(l, "Boons");
+  await expect(settings.getByRole("radio", { name: /^Also what they're owed/ })).toBeVisible();
+  await closeTabSettings(settings);
 
   // Quests: switched on, a Quests tab under Downtimes; switched off again, it goes.
   await l.goto(`/troupes/${troupeId}/settings`);
@@ -220,6 +226,53 @@ test("Troupe settings open on a Features list: each optional feature on or off, 
   downtimes = await groupTabs(l, "Downtimes");
   await expect(downtimes.getByRole("link", { name: "Cycles", exact: true })).toBeVisible();
   await expect(downtimes.getByRole("link", { name: "Quests", exact: true })).toHaveCount(0);
+});
+
+test("a tab's own settings are behind one Settings button, not folded above its content, and an assistant storyteller reads them there (#909)", async ({ browser }) => {
+  const custodian = await person(browser, "cogs-custodian");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "cogs-lead");
+  const assistant = await person(browser, "cogs-assistant");
+  await custodian.page.reload();
+  const headers = { "X-Horatio": "1" };
+  const made = await custodian.page.request.post("/api/troupes", { headers, data: { name: `Court of Cogs ${run}`, lead_handle: lead.handle } });
+  expect(made.status(), await made.text()).toBe(201);
+  const troupeId: string = (await made.json()).id;
+  for (const [url, data] of [
+    [`/api/troupes/${troupeId}/staff`, { handle: assistant.handle, role: "assistant_storyteller" }],
+    [`/api/troupes/${troupeId}/boon-ledger`, { on: true }],
+  ] as const) {
+    const done = await lead.page.request.put(url, { headers, data });
+    expect(done.status(), await done.text()).toBeLessThan(300);
+  }
+
+  // Approvals opens on what waits: no folded box above it, and the button at the right.
+  const a = assistant.page;
+  await a.goto(`/troupes/${troupeId}/approvals`);
+  const button = a.locator("main").getByRole("button", { name: "Settings", exact: true });
+  await expect(button).toBeVisible();
+  await expect(a.locator("summary", { hasText: "Settings" })).toHaveCount(0);
+  await expect(a.getByRole("region", { name: "Teachers" })).toHaveCount(0);
+  const main = (await a.locator("main").boundingBox())!;
+  const at = (await button.boundingBox())!;
+  expect(main.x + main.width - (at.x + at.width)).toBeLessThan(40);
+
+  // The assistant reads them, read-only, in a dialog named after the tab: the whole screen on a phone.
+  const settings = await tabSettings(a, "Approvals");
+  const teachers = settings.getByRole("region", { name: "Teachers" });
+  await expect(teachers).toContainText("The troupe's storytellers change this.");
+  await expect(teachers.getByRole("button", { name: "Add a rule" })).toHaveCount(0);
+  if (isPhone(a)) expect((await settings.boundingBox())!.width).toBe(a.viewportSize()!.width);
+  await closeTabSettings(settings);
+  await expect(button).toBeFocused();
+
+  // The Features list links them to a feature's settings too, which open on its tab, read-only.
+  await a.goto(`/troupes/${troupeId}/settings`);
+  await a.getByRole("list", { name: "Features" }).getByRole("link", { name: "Settings for Boons" }).click();
+  await expect(a).toHaveURL(new RegExp(`/troupes/${troupeId}/boons#settings$`));
+  const boons = await tabSettings(a, "Boons");
+  await expect(boons.getByRole("region", { name: "Boons" })).toContainText("The troupe's storytellers change this.");
+  await expect(boons.getByRole("radio")).toHaveCount(0);
 });
 
 test("the lead builds a check of the troupe's own from blocks, and it refuses a purchase (#432)", async ({ browser }) => {
@@ -282,11 +335,11 @@ test("a teacher rule asks for a teacher, and a Lore specialisation is bought fro
   await backstoryOptional(lead.page, troupeId);
 
   // The lead adds the first example: Lore specialisations after creation, with a downtime action.
-  // Teachers moved from House rules to the Settings at the top of Approvals (#785): the old address opens them there.
+  // Teachers moved from House rules to Approvals' Settings (#785, #909): the old address opens them there.
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/house-rules/teachers`);
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/approvals#settings-teachers$`));
-  await expect(l.getByText("No teacher rules.")).toBeVisible();
+  await expect((await tabSettings(l, "Approvals")).getByText("No teacher rules.")).toBeVisible();
   await l.getByRole("button", { name: "Add a rule" }).click();
   const form = l.getByRole("region", { name: "A new teacher rule" });
   await form.getByLabel("Start from an example (optional)").selectOption({ label: "Lore specialisations after creation, with a downtime action" });
@@ -2664,12 +2717,12 @@ test("with Retainer upkeep on, checking in starts the night with the upkeep as i
   const asked = await send(p, "POST", `/api/characters/${perpetua}/home-troupe`, { troupe_id: troupeId });
   await send(lead.page, "POST", `/api/approvals/${asked.id}/approve`);
 
-  // The lead switches upkeep on in the Settings at the top of Characters: 1 Blood a game. The
-  // Rules tab's old address for Retainers opens them there (#782, #785).
+  // The lead switches upkeep on in the Roster's Settings: 1 Blood a game. The
+  // Rules tab's old address for Retainers opens them there (#782, #785, #909).
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/rules/retainers`);
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/characters#settings-retainers$`));
-  const retainers = l.getByRole("region", { name: "Retainers", exact: true });
+  const retainers = (await tabSettings(l, "Roster")).getByRole("region", { name: "Retainers", exact: true });
   await expect(retainers.getByLabel("Retainers cost upkeep")).not.toBeChecked();
   await retainers.getByLabel("Retainers cost upkeep").check();
   await expect(retainers.getByText("Not saved yet")).toBeVisible();

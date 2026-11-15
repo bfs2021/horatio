@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "react-router";
 
 /**
@@ -14,7 +15,8 @@ import { useLocation } from "react-router";
  * clear of the bars fixed there (the Play View's drawer button, the cart), and
  * above any element marked `data-toast-clear` (a sheet open from the foot of
  * the screen) as it appears. Screen readers read it out politely. Changing page clears it, as its
- * button would act on the page that is gone.
+ * button would act on the page that is gone. While a modal dialog is open (a tab's Settings,
+ * #909), it shows in that dialog: the page under it is dimmed, covered on a phone, and out of reach.
  */
 
 export type ToastAction = { label: string; onClick: () => void };
@@ -25,7 +27,13 @@ export type ToastIn = {
   duration?: number;
 };
 
-type Shown = ToastIn & { id: number; lift: number };
+type Shown = ToastIn & { id: number; lift: number; host: HTMLDialogElement | null };
+
+/** The dialog open on top, if any, for a toast to show in: Horatio's dialogs are all modal. */
+function openDialog(): HTMLDialogElement | null {
+  const open = document.querySelectorAll<HTMLDialogElement>("dialog[open]");
+  return open[open.length - 1] ?? null;
+}
 
 /** How far up the screen the tops of elements marked `data-toast-clear` reach, in px. */
 function clearance(): number {
@@ -51,9 +59,18 @@ export function useToast(): (toast: ToastIn) => void {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<Shown | null>(null);
   const next = useRef(0);
-  const show = useCallback((t: ToastIn) => setToast({ ...t, id: ++next.current, lift: clearance() }), []);
+  const show = useCallback((t: ToastIn) => setToast({ ...t, id: ++next.current, lift: clearance(), host: openDialog() }), []);
   const { pathname } = useLocation();
   useEffect(() => setToast(null), [pathname]);
+  // A dialog that closes as the toast comes (a form's Save) or while it shows hands it back to the page.
+  const host = toast?.host;
+  useEffect(() => {
+    if (!host) return;
+    const back = () => setToast((now) => (now?.host === host ? { ...now, host: null } : now));
+    if (!host.open) back();
+    host.addEventListener("close", back);
+    return () => host.removeEventListener("close", back);
+  }, [host]);
   return (
     <ToastContext.Provider value={show}>
       {children}
@@ -64,8 +81,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         className="pointer-events-none fixed inset-x-0 z-40 flex justify-center px-4"
         style={{ bottom: `calc(max(5.5rem, ${(toast?.lift ?? 0) + 8}px) + env(safe-area-inset-bottom, 0px))` }}
       >
-        {toast && <ToastCard key={toast.id} toast={toast} onDone={() => setToast((now) => (now?.id === toast.id ? null : now))} />}
+        {toast && !toast.host && <ToastCard key={toast.id} toast={toast} onDone={() => setToast((now) => (now?.id === toast.id ? null : now))} />}
       </div>
+      {toast?.host &&
+        createPortal(
+          <div role="status" className="pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] z-40 flex justify-center px-4">
+            <ToastCard key={toast.id} toast={toast} onDone={() => setToast((now) => (now?.id === toast.id ? null : now))} />
+          </div>,
+          toast.host,
+        )}
     </ToastContext.Provider>
   );
 }

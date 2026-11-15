@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import { Avatar } from "../../components/Avatar";
+import { NotOpenHere } from "../../components/NotOpenHere";
 import { Badge, ErrorText, GroupedTabs, Loading, PageTitle } from "../../components/ui";
 import { useMe } from "../../hooks";
 import { ApprovalsTab } from "./ApprovalsTab";
@@ -294,6 +295,8 @@ export function TroupePage() {
             }
           />
         )}
+        {/* A tab not open to them, or no such tab (#907). */}
+        <Route path="*" element={<NotOpenHere name={t.name} to={base} />} />
       </Routes>
       {/* Every starred nomination, for the troupe's players and staff (#470). */}
       {t.nominations && t.player_nominations && <NominationsFooter troupeId={t.id} />}

@@ -3,6 +3,7 @@ import { useState, type ReactNode } from "react";
 import { Link, Route, Routes, useMatch, useParams, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { CharacterOut } from "../../api/types";
+import { NotOpenHere } from "../../components/NotOpenHere";
 import { Badge, ErrorText, GroupedTabs, Loading, PageTitle, Tabs } from "../../components/ui";
 import { useMe } from "../../hooks";
 import { BackstoryTab, useBackstoryStanding } from "./BackstoryTab";
@@ -187,6 +188,8 @@ export function CharacterPage() {
           <Route path="ic-chat" element={<InCharacterTab character={c} />} />
           <Route path="log" element={<CharacterLogTab characterId={c.id} />} />
           {!c.creation_complete && <Route path="create/:step?" element={<CreationWizard character={c} />} />}
+          {/* A tab not open to them, or no such tab (#907); not before Backstory is known. */}
+          <Route path="*" element={backstory.isLoading ? <Loading /> : <NotOpenHere name={c.name} to={base} />} />
         </Routes>
       </>
     );
@@ -288,6 +291,8 @@ export function CharacterPage() {
             <Route path="results" element={<ResultsTab characterId={c.id} />} />
           </>
         )}
+        {/* A tab not open to them, or no such tab (#907); not before the tabs that wait on an answer are known. */}
+        <Route path="*" element={backstory.isLoading || quests.isLoading || home.isLoading ? <Loading /> : <NotOpenHere name={c.name} to={base} />} />
       </Routes>
     </>
   );

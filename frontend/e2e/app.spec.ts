@@ -22,7 +22,9 @@ test("Help opens the user manual from the top menu, signed out or in, with links
   // Signed out, from the sign-in page's menu.
   const page = await (await browser.newContext()).newPage();
   await page.goto("/sign-in");
-  await page.getByRole("banner").getByRole("link", { name: "Help", exact: true }).click();
+  // On a narrow phone it waits in the footer, to keep the header to one line (#907).
+  const narrow = (page.viewportSize()?.width ?? 1280) < 416;
+  await page.getByRole(narrow ? "contentinfo" : "banner").getByRole("link", { name: "Help", exact: true }).click();
   await expect(page).toHaveURL(/\/help$/);
   await expect(page.getByRole("heading", { name: "Help", level: 1 })).toBeVisible();
   // The part for them is marked: signed out, the players'.
@@ -66,6 +68,33 @@ test("Help opens the user manual from the top menu, signed out or in, with links
   // Back goes to the results as they were.
   await p.goBack();
   await expect(p.getByRole("searchbox", { name: "Search the manual" })).toHaveValue("calendar link");
+});
+
+test("signed out, the header offers Sign in and Create account, and an address that leads nowhere says so with ways on (#907)", async ({ browser }) => {
+  const page = await (await browser.newContext()).newPage();
+  await page.goto("/about");
+  const banner = page.getByRole("banner");
+  // Both ways in come back to the page they were on.
+  await expect(banner.getByRole("link", { name: "Sign in", exact: true })).toHaveAttribute("href", `/sign-in?next=${encodeURIComponent("/about")}`);
+  await expect(banner.getByRole("link", { name: "Create account", exact: true })).toHaveAttribute("href", `/sign-up?next=${encodeURIComponent("/about")}`);
+  // One line, on a phone too.
+  expect((await banner.boundingBox())!.height).toBeLessThan(70);
+
+  await page.goto("/nonsense");
+  await expect(page.getByRole("heading", { name: "Nothing here", level: 1 })).toBeVisible();
+  const waysOn = page.getByRole("navigation", { name: "Ways on" });
+  await expect(waysOn.getByRole("link")).toHaveText(["Sign in", "Help"]);
+  await page.screenshot(shots("not-found-signed-out"));
+  await banner.getByRole("link", { name: "Create account", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
+
+  // Signed in, the ways on are their characters and troupes.
+  const { page: p } = await person(browser, "notfound-player");
+  await p.goto("/nonsense");
+  await expect(p.getByRole("heading", { name: "Nothing here", level: 1 })).toBeVisible();
+  await expect(p.getByRole("navigation", { name: "Ways on" }).getByRole("link")).toHaveText(["Characters", "Troupes", "Help"]);
+  await p.getByRole("navigation", { name: "Ways on" }).getByRole("link", { name: "Troupes" }).click();
+  await expect(p).toHaveURL(/\/troupes$/);
 });
 
 test("the top bar is one line, on a phone too: the bell and a menu that holds the links (#746)", async ({ browser }) => {

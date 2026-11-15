@@ -202,6 +202,9 @@ class Troupe(Imported, Record):
     boon_talon_word: Mapped[str] = mapped_column(
         default="Lesser Harpies", server_default="Lesser Harpies"
     )
+    # The Harpy sees, in a boon's log, what their Lesser Harpies changed (#992). Off, a
+    # Lesser Harpy's lines are kept from the Harpy as an earlier Harpy's are.
+    boon_harpy_sees_talons: Mapped[bool] = mapped_column(default=True, server_default="true")
     # The court over time (horatio.title_history, #712): whether its players see who
     # held each title and when. Its staff always do.
     court_history_players: Mapped[bool] = mapped_column(default=False, server_default="false")

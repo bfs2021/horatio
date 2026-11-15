@@ -634,7 +634,7 @@ test("the Harpy keeps the ledger from the Play View as their character, and neve
   await expect(atCourt.getByText("Dead", { exact: true })).toHaveCount(0);
 });
 
-test("the Harpy gives a Lesser Harpy add-only access: they register a boon as their character but can't edit it, then may settle but not correct it (#689, #984)", async ({ browser }) => {
+test("the Harpy gives a Lesser Harpy add-only access: they register a boon as their character but can't edit it, then may settle but not correct it, and the Harpy, kept from it, doesn't see who did (#689, #984, #992)", async ({ browser }) => {
   const custodian = await person(browser, "btalon-custodian");
   makeCustodian(custodian.email);
   const lead = await person(browser, "btalon-lead");
@@ -669,6 +669,12 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
   const lets = (await tabSettings(l, "Boons")).getByRole("checkbox", { name: /^The Harpy may give others access to the ledger/ });
   await lets.check();
   await expect(l.getByText("Saved: the Harpy may give others access to the ledger, as Lesser Harpies.")).toBeVisible();
+  // And keeps what Lesser Harpies change from the Harpy (#992).
+  const sees = (await tabSettings(l, "Boons")).getByRole("switch", { name: /^The Harpy sees what their talons change/ });
+  await expect(sees).toBeChecked();
+  await sees.click();
+  await expect(l.getByText("Saved: what talons change is kept from the Harpy.")).toBeVisible();
+  await expect(sees).not.toBeChecked();
 
   // Morwen's player makes Wren a Lesser Harpy who may add boons, nothing more.
   const h = harpy.page;
@@ -707,6 +713,12 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
   await expect(debt.getByRole("button", { name: "Edit" })).toHaveCount(0);
   await expect(debt.getByRole("button", { name: "Settle" })).toHaveCount(0);
   await t.screenshot(shots("talon-ledger"));
+
+  // The Harpy sees the boon, but not that Wren registered it (#992).
+  const ledger = await (await h.request.get(`/api/troupes/${troupe.id}/boons`, { params: { view: "all" } })).json();
+  const [registered] = ledger.boons;
+  const opened = await (await h.request.get(`/api/troupes/${troupe.id}/boons/${registered.id}`)).json();
+  expect(opened.events.map((e: { kind: string; as_character: string | null }) => [e.kind, e.as_character])).toEqual([["registered", null]]);
 
   // Morwen's player lets her settle and move boons too, but still not correct them (#984).
   await h

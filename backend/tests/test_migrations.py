@@ -888,3 +888,102 @@ def test_the_setting_migration_makes_each_tone_a_mood_and_back(
                 )
                 connection.execute(text("delete from troupes where id = :id"), {"id": troupe})
             connection.execute(text("delete from users where id = :id"), {"id": user})
+
+
+def test_the_boon_log_migration_sorts_who_each_line_was_done_as(
+    engine: Engine, alembic_config: Config
+) -> None:
+    """Migration 0231 (#992): a line done as no character was staff's; as a character
+    holding the Harpy title then, the Harpy's; as one the Harpy gave access, a Lesser
+    Harpy's; as anyone else (or the Harpy before they held it), a player's."""
+    command.downgrade(alembic_config, "0230")
+    user, troupe, boon = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    harpy, talon, player = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    lines = {name: uuid.uuid4() for name in ("staff", "harpy", "early", "talon", "player")}
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "insert into users (id, email, display_name, handle)"
+                    " values (:id, 'ledger@example.com', 'Ledger', 'ledger-992')"
+                ),
+                {"id": user},
+            )
+            connection.execute(
+                text("insert into troupes (id, name, lead_user_id) values (:id, 'Debts', :lead)"),
+                {"id": troupe, "lead": user},
+            )
+            for character, name in ((harpy, "Hestia"), (talon, "Iris"), (player, "Agnes")):
+                connection.execute(
+                    text(
+                        "insert into characters (id, player_id, splat, name, home_troupe_id)"
+                        " values (:id, :player, 'vampire', :name, :troupe)"
+                    ),
+                    {"id": character, "player": user, "name": name, "troupe": troupe},
+                )
+            connection.execute(
+                text(
+                    "insert into title_holdings (troupe_id, character_id, character_name, name,"
+                    " began_at, began_how) values (:troupe, :character, 'Hestia', 'Master Harpy',"
+                    " '2026-10-01', 'given')"
+                ),
+                {"troupe": troupe, "character": harpy},
+            )
+            connection.execute(
+                text("insert into boon_talons (troupe_id, character_id) values (:t, :c)"),
+                {"t": troupe, "c": talon},
+            )
+            connection.execute(
+                text(
+                    "insert into boons (id, troupe_id, debtor_name, creditor_name, kind, made_on)"
+                    " values (:id, :troupe, 'Grove', 'Lady Ash', 'minor', '2026-09-01')"
+                ),
+                {"id": boon, "troupe": troupe},
+            )
+            for name, character, at in (
+                ("staff", None, "2026-09-01"),
+                ("early", harpy, "2026-09-15"),
+                ("harpy", harpy, "2026-10-05"),
+                ("talon", talon, "2026-10-06"),
+                ("player", player, "2026-10-07"),
+            ):
+                connection.execute(
+                    text(
+                        "insert into boon_events (id, boon_id, kind, as_character_id, created_at)"
+                        " values (:id, :boon, 'edited', :character, :at)"
+                    ),
+                    {"id": lines[name], "boon": boon, "character": character, "at": at},
+                )
+
+        command.upgrade(alembic_config, "head")
+
+        with engine.connect() as connection:
+            roles = dict(
+                connection.execute(
+                    text("select id, role from boon_events where boon_id = :id"), {"id": boon}
+                ).all()
+            )
+            sees = connection.execute(
+                text("select boon_harpy_sees_talons from troupes where id = :id"), {"id": troupe}
+            ).scalar()
+        assert {name: roles[line] for name, line in lines.items()} == {
+            "staff": "staff",
+            "harpy": "harpy",
+            "early": "player",
+            "talon": "talon",
+            "player": "player",
+        }
+        assert sees is True
+    finally:
+        command.upgrade(alembic_config, "head")
+        with engine.begin() as connection:
+            for table, column, value in (
+                ("boon_events", "boon_id", boon),
+                ("boons", "id", boon),
+                ("boon_talons", "troupe_id", troupe),
+                ("title_holdings", "troupe_id", troupe),
+                ("characters", "home_troupe_id", troupe),
+                ("troupes", "id", troupe),
+                ("users", "id", user),
+            ):
+                connection.execute(text(f"delete from {table} where {column} = :id"), {"id": value})

@@ -8366,6 +8366,17 @@
       },
       "BoonTalonsSettingIn": {
         "properties": {
+          "harpy_sees": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Harpy Sees"
+          },
           "on": {
             "title": "On",
             "type": "boolean"
@@ -56284,6 +56295,11 @@
             "title": "Boon Harpy",
             "type": "string"
           },
+          "boon_harpy_sees_talons": {
+            "default": true,
+            "title": "Boon Harpy Sees Talons",
+            "type": "boolean"
+          },
           "boon_harpy_standings": {
             "default": false,
             "title": "Boon Harpy Standings",
@@ -86350,7 +86366,7 @@
     },
     "/api/troupes/{troupe_id}/boon-talons-setting": {
       "put": {
-        "description": "Whether the troupe's Harpy may give others access to its boon ledger (#689),\nand what it calls them. Only used while the Harpy has the full ledger.",
+        "description": "Whether the troupe's Harpy may give others access to its boon ledger (#689),\nand what it calls them; and whether the Harpy sees, in a boon's log, what they\nchange (#992). Only used while the Harpy has the full ledger.",
         "operationId": "set_boon_talons_api_troupes__troupe_id__boon_talons_setting_put",
         "parameters": [
           {

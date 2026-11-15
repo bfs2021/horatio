@@ -10,7 +10,7 @@ import { type Dates, useDates } from "../../dates";
 import { useAction } from "../../hooks";
 
 type Word = NonNullable<TroupeOut["boon_talon_word"]>;
-type Can = { can_add: boolean; can_edit: boolean; can_settle: boolean; can_audit: boolean };
+type Can = { can_add: boolean; can_edit: boolean; can_settle: boolean; can_audit: boolean; can_export: boolean };
 
 /** One of them, as "a Lesser Harpy". */
 export function oneOf(word: string) {
@@ -26,7 +26,7 @@ export function givenText(talon: Pick<TalonOut, "given_by" | "given_at">, dates:
   return `${talon.given_by ? `Given by ${talon.given_by}` : "Given"}, ${dates.date(talon.given_at)}`;
 }
 
-const NONE: Can = { can_add: false, can_edit: false, can_settle: false, can_audit: false };
+const NONE: Can = { can_add: false, can_edit: false, can_settle: false, can_audit: false, can_export: false };
 
 /** What the Harpy may let each do (#984), as the API's `describe()` says it. */
 const ABILITIES: { key: keyof Can; label: string; hint: string; verb: string }[] = [
@@ -47,11 +47,22 @@ const ABILITIES: { key: keyof Can; label: string; hint: string; verb: string }[]
 
 const AUDITS = { key: "can_audit", label: "Perform audits", hint: "Audit a character's boons, and give the audit to a character." } as const;
 
-/** What a Lesser Harpy may do, in words: "sees the ledger, adds boons and corrects them". */
-function what(t: Can) {
+/** Offered only while the troupe lets the Harpy export the ledger (#987). */
+const EXPORT = {
+  key: "can_export",
+  label: "Export the ledger",
+  hint: "Download it as a CSV file or a spreadsheet, holding only what they see on it, as you do.",
+} as const;
+
+/**
+ * What a Lesser Harpy may do, in words: "sees the ledger, adds boons and corrects
+ * them". Exporting counts only while the troupe lets the Harpy export (`exports`).
+ */
+export function what(t: Can, exports: boolean) {
   const parts = ["sees the ledger"];
   for (const a of ABILITIES) if (t[a.key]) parts.push(`${a.verb} ${parts.length > 1 ? "them" : "boons"}`);
   if (t.can_audit) parts.push("performs audits");
+  if (t.can_export && exports) parts.push("exports the ledger");
   return parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
 }
 
@@ -144,36 +155,40 @@ function StaffTalons({ troupeId }: { troupeId: string }) {
   const talons = useTalons(troupeId);
   if (talons.isPending) return <Loading compact />;
   if (talons.error) return <ErrorText error={talons.error} />;
-  const { talons: list, word } = talons.data;
+  const { talons: list, word, exports = false } = talons.data;
   return list.length === 0 ? (
     <p className="text-xs text-mist">The Harpy hasn&apos;t given anyone access yet.</p>
   ) : (
     <ul aria-label={word} className="flex flex-col gap-1">
       {list.map((t) => (
-        <TalonRow key={t.character_id} troupeId={troupeId} talon={t} word={word} manage={false} />
+        <TalonRow key={t.character_id} troupeId={troupeId} talon={t} word={word} exports={exports} manage={false} />
       ))}
     </ul>
   );
 }
 
-/** What a Lesser Harpy may do, a tick for each with a line saying what it allows. */
-function Rights({ label, can, disabled, onChange }: { label: string; can: Can; disabled?: boolean; onChange: (next: Can) => void }) {
+/**
+ * What a Lesser Harpy may do, a tick for each with a line saying what it allows;
+ * exporting only while the troupe lets the Harpy export (`exports`, #987).
+ */
+function Rights({ label, can, exports, disabled, onChange }: { label: string; can: Can; exports: boolean; disabled?: boolean; onChange: (next: Can) => void }) {
   return (
     <div role="group" aria-label={label} className="mt-1 flex flex-col">
-      {[...ABILITIES, AUDITS].map((a) => (
+      {[...ABILITIES, AUDITS, ...(exports ? [EXPORT] : [])].map((a) => (
         <Checkbox key={a.key} label={a.label} hint={a.hint} checked={can[a.key]} disabled={disabled} onChange={(on) => onChange({ ...can, [a.key]: on })} />
       ))}
     </div>
   );
 }
 
-function TalonRow({ troupeId, talon, word, manage }: { troupeId: string; talon: TalonOut; word: string; manage: boolean }) {
+function TalonRow({ troupeId, talon, word, exports, manage }: { troupeId: string; talon: TalonOut; word: string; exports: boolean; manage: boolean }) {
   const dates = useDates();
   const [can, setCan] = useState<Can>({
     can_add: talon.can_add,
     can_edit: talon.can_edit,
     can_settle: talon.can_settle,
     can_audit: talon.can_audit,
+    can_export: talon.can_export ?? false,
   });
   const path = {
     params: { path: { troupe_id: troupeId, character_id: talon.character_id } },
@@ -195,7 +210,7 @@ function TalonRow({ troupeId, talon, word, manage }: { troupeId: string; talon: 
         <div className="min-w-0">
           <p>
             <span className="text-parchment">{talon.name}</span>
-            <span className="text-mist"> {what(talon)}</span>
+            <span className="text-mist"> {what({ ...talon, can_export: talon.can_export ?? false }, exports)}</span>
           </p>
           <p className="text-xs text-mist">
             {givenText(talon, dates)}
@@ -215,6 +230,7 @@ function TalonRow({ troupeId, talon, word, manage }: { troupeId: string; talon: 
         <Rights
           label={`What ${talon.name} may do`}
           can={can}
+          exports={exports}
           disabled={change.isPending}
           onChange={(next) => {
             setCan(next);
@@ -251,21 +267,21 @@ export function TalonsCard({ troupeId }: { troupeId: string }) {
   });
   if (talons.isPending) return <Loading compact />;
   if (talons.error) return <ErrorText error={talons.error} />;
-  const { talons: list, choices, word } = talons.data;
+  const { talons: list, choices, word, exports = false } = talons.data;
   const given = new Set(list.map((t) => t.character_id));
   const open = choices.filter((c) => !given.has(c.id));
   return (
     <Card title={word}>
       <p className="mb-3 text-sm text-mist">
-        Give others access to the ledger as {word}: each sees it as you do, and may add boons, correct them, settle and move them, and perform audits, as you
-        choose. They work from their Play View, as their character. Staff see who has what.
+        Give others access to the ledger as {word}: each sees it as you do, and may add boons, correct them, settle and move them,{" "}
+        {exports ? "perform audits and export it" : "and perform audits"}, as you choose. They work from their Play View, as their character. Staff see who has what.
       </p>
       {list.length === 0 ? (
         <Empty>No one yet.</Empty>
       ) : (
         <ul aria-label={word} className="mb-3 flex flex-col gap-2">
           {list.map((t) => (
-            <TalonRow key={t.character_id} troupeId={troupeId} talon={t} word={word} manage />
+            <TalonRow key={t.character_id} troupeId={troupeId} talon={t} word={word} exports={exports} manage />
           ))}
         </ul>
       )}
@@ -288,7 +304,7 @@ export function TalonsCard({ troupeId }: { troupeId: string }) {
               ))}
             </Select>
           </Field>
-          <Rights label="What they may do" can={can} onChange={setCan} />
+          <Rights label="What they may do" can={can} exports={exports} onChange={setCan} />
           <div>
             <Button type="submit" disabled={!who || give.isPending}>
               Give access

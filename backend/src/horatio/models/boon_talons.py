@@ -28,6 +28,8 @@ class BoonTalon(Record):
     can_settle: Mapped[bool] = mapped_column(default=False, server_default="false")
     # Audit a character's boons (#690).
     can_audit: Mapped[bool] = mapped_column(default=False, server_default="false")
+    # Export the ledger as they see it, while the troupe lets the Harpy (#987).
+    can_export: Mapped[bool] = mapped_column(default=False, server_default="false")
     # The Harpy who gave it, as their character; none when staff did, or once deleted.
     given_by_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("characters.id", ondelete="SET NULL")

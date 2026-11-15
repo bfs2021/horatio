@@ -174,6 +174,8 @@ def test_the_play_view_shows_the_harpy_their_ledger(court: Court) -> None:
             "can_settle": True,
             "can_review": True,
             "can_audit": True,
+            # Only where the troupe lets the Harpy export (#987).
+            "can_export": False,
             "gives_access": False,
             "sees_standings": False,
         }

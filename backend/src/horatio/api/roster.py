@@ -940,7 +940,7 @@ MESSAGES: dict[str, str] = {
     "house.boons_judge_ban": "{actor} switched judging the ban on no boons registered from"
     " the boon ledger {setting}.",
     "boon.weights": "{actor} set what boons weigh in the standings: {changed}.",
-    "boon.exported": "{actor} exported {what} as {format} ({shown}).",
+    "boon.exported": "{actor}{acting} exported {what} as {format} ({shown}).",
     "boon.registered": "{actor} registered {what}: {debtor} owes {creditor}{because}.",
     "boon.edited": "{actor} edited {debtor}'s {kind} boon to {creditor}{because}.",
     "boon.traded": "{actor} recorded {debtor}'s {kind} boon traded by {before} to {creditor}"
@@ -953,6 +953,7 @@ MESSAGES: dict[str, str] = {
     "house.boon_review": "{actor} set boons players report to {setting}.",
     "house.boon_harpy": "{actor} gave the Harpy {setting}.",
     "house.boon_harpy_standings": "{actor} {setting} the boon standings and statistics.",
+    "house.boon_harpy_export": "{actor} {setting} the boon ledger.",
     "house.boon_talons": "{actor} set the Harpy {setting}.",
     "house.boon_harpy_sees_talons": "{actor} set the Harpy {setting} what their {word} change.",
     "boon.talon_given": "{actor}{acting} made {character_name} a {word}, to {can}.",
@@ -1104,6 +1105,8 @@ def message(
     values["and_visiting"] = ", and it started visiting" if data.get("joined") else ""
     # Entries from before the troupe's name was kept with them.
     values.setdefault("troupe", "this troupe")
+    # Entries from before the character it was done as was kept with them (#987).
+    values.setdefault("acting", "")
     # Given at a Play View game: " at game 3".
     values["at_game"] = f" at game {data['game']}" if data.get("game") else ""
     if isinstance(values.get("picks"), dict):

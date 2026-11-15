@@ -47,6 +47,9 @@ export function BoonLedgerSetting({ troupe, canEdit }: { troupe: TroupeOut; canE
       {!canEdit && on && troupe.boon_harpy === "full" && troupe.boon_harpy_standings && (
         <p className="mt-1 text-sm">The Harpy also reads the boon standings and statistics, with who has left as the court knows it.</p>
       )}
+      {!canEdit && on && troupe.boon_harpy === "full" && troupe.boon_harpy_export && (
+        <p className="mt-1 text-sm">The Harpy may export the ledger, as they see it.</p>
+      )}
       {!canEdit && on && troupe.boon_talons && troupe.boon_harpy === "full" && (
         <p className="mt-1 text-sm">The Harpy may give others access to the ledger, as {troupe.boon_talon_word ?? "Lesser Harpies"}.</p>
       )}
@@ -193,17 +196,23 @@ const HARPY: { value: HarpyAccess; label: string; hint: string; summary: string 
 const AS_THE_COURT_KNOWS =
   "They see who has left only as the court knows it: a character the Who's Who lists under No longer with us, and why only when that is Final Death or Off-field. A player stopping (Inactive) is never shown, and a departure the Who's Who doesn't list stays at court. Lesser Harpies who see the ledger follow it. Weights stay yours to set.";
 
+/** What the Harpy's export holds (#987), on the setting that lets them export. */
+const EXPORT_HINT =
+  "From the ledger's ⋯ menu, as a CSV file or a spreadsheet, as their character. It holds only what they see on the ledger: no staff notes, no one who entered a boon, no edit history, and who has left only as the court knows it. Each export is logged. They may let a Lesser Harpy export it too.";
+
 /**
  * The Harpy's access to the ledger (#688): whoever holds the Harpy title in the troupe
  * works it from their Play View, as their character. They never see what an edit
  * changed, nor a boon's staff note; access ends with the title. With the full ledger,
- * the troupe can let them read its boon standings and statistics too (#749).
+ * the troupe can let them read its boon standings and statistics too (#749), and
+ * export the ledger as they see it (#987).
  */
 function HarpySetting({ troupe }: { troupe: TroupeOut }) {
   const toast = useToast();
   // Shown as chosen at once, while it saves.
   const [access, setAccess] = useState<HarpyAccess>(troupe.boon_harpy ?? "none");
   const [standings, setStandings] = useState(troupe.boon_harpy_standings ?? false);
+  const [exports, setExports] = useState(troupe.boon_harpy_export ?? false);
   const save = useAction(async (next: HarpyAccess) => {
     await unwrap(api.PUT("/api/troupes/{troupe_id}/boon-harpy", { params: { path: { troupe_id: troupe.id } }, body: { access: next } }));
     toast({ message: `Saved: ${HARPY.find((h) => h.value === next)?.summary}` });
@@ -211,6 +220,10 @@ function HarpySetting({ troupe }: { troupe: TroupeOut }) {
   const saveStandings = useAction(async (next: boolean) => {
     await unwrap(api.PUT("/api/troupes/{troupe_id}/boon-harpy", { params: { path: { troupe_id: troupe.id } }, body: { access, standings: next } }));
     toast({ message: next ? "Saved: the Harpy reads the boon standings and statistics." : "Saved: the boon standings and statistics are staff's alone." });
+  });
+  const saveExports = useAction(async (next: boolean) => {
+    await unwrap(api.PUT("/api/troupes/{troupe_id}/boon-harpy", { params: { path: { troupe_id: troupe.id } }, body: { access, export: next } }));
+    toast({ message: next ? "Saved: the Harpy may export the ledger." : "Saved: only staff export the ledger." });
   });
   return (
     <div className="mt-2 flex flex-col gap-2 border-t border-ash/60 pt-3">
@@ -236,6 +249,18 @@ function HarpySetting({ troupe }: { troupe: TroupeOut }) {
           }}
         />
       )}
+      {access === "full" && (
+        <Toggle
+          label="The Harpy may export the ledger"
+          hint={EXPORT_HINT}
+          checked={exports}
+          disabled={saveExports.isPending || save.isPending}
+          onChange={(next) => {
+            setExports(next);
+            saveExports.mutate(next, { onError: () => setExports(!next) });
+          }}
+        />
+      )}
       <p className="text-xs text-mist">
         The Harpy is whoever holds the Harpy title in the troupe; with several, each has it, and it ends when the title does. They work from their Play
         View&apos;s Boons tab, as their character, and never see what an edit changed or a boon&apos;s staff note; who has left, they see only as the court
@@ -243,6 +268,7 @@ function HarpySetting({ troupe }: { troupe: TroupeOut }) {
       </p>
       <ErrorText error={save.error} />
       <ErrorText error={saveStandings.error} />
+      <ErrorText error={saveExports.error} />
     </div>
   );
 }

@@ -25,9 +25,11 @@ function download(href: string) {
 }
 
 /**
- * For staff (#986): the quiet ⋯ at the end of the ledger's toolbar, to export the
- * ledger as a CSV file or a spreadsheet: the view and filters showing (`query`;
- * none while the review queue shows), or the whole ledger.
+ * For staff (#986), and the Harpy where the troupe lets them (#987): the quiet ⋯ at
+ * the end of the ledger's toolbar, to export the ledger as a CSV file or a
+ * spreadsheet: the view and filters showing (`query`; none while the review queue
+ * shows), or the whole ledger. The Harpy's file holds only what their ledger shows
+ * them; the API leaves out the rest.
  */
 export function BoonExportMenu({ troupeId, query }: { troupeId: string; query: LedgerQuery | null }) {
   return (

@@ -1,5 +1,6 @@
 """Exporting the boon ledger (#986): its boons as a CSV file or a spreadsheet, one row
-each, for the troupe's running staff.
+each, for the troupe's running staff, and for the Harpy where the troupe lets them
+(#987).
 
 The columns are named as the troupe's own boon sheet names them, so the export reads
 the same: who owes whom, the kind, the night, the reason and stipulation, where it
@@ -7,6 +8,12 @@ stands, how and when it was settled, its flags, how each side stands in play, th
 it was registered at, and its id. Staff's export adds the staff note, who entered it
 (their display name, never an email) and whether each side is a character or a name
 only (`staff`).
+
+A Harpy's or a Lesser Harpy's export holds only what their ledger shows them: none of
+staff's columns, nor the game (staff alone see games), and each side's status as the
+court knows it. Its rows are made from the boons as the ledger's list gives them to the
+one exporting (horatio.api.boons.boon_out, with their `Keeper`), so the two can't
+drift apart: see horatio.api.boon_export.row.
 
 Reasons and notes are written by players, so a cell that a spreadsheet would read as a
 formula is kept as text: in a CSV, behind a `'`; in a spreadsheet, as a text cell.
@@ -28,8 +35,7 @@ from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 from sqlalchemy.orm import Session
 
-from horatio import boon_reviews, boons
-from horatio.models import Boon, Character
+from horatio import boon_reviews
 
 # As the troupe's sheet names them.
 COLUMNS = (
@@ -52,8 +58,9 @@ COLUMNS = (
     "Registered",
     "ID",
 )
-# Staff's export only.
+# Staff's export only: these after the sheet's, and the game among them.
 STAFF_COLUMNS = ("Staff Note", "Entered By", "Linked Debtor", "Linked Creditor")
+STAFF_ONLY = frozenset({"Game", *STAFF_COLUMNS})
 FORMATS = {
     "csv": ("csv", "text/csv; charset=utf-8"),
     "xlsx": ("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
@@ -70,11 +77,8 @@ Cell = str | date
 
 @dataclass(frozen=True)
 class Known:
-    """What the rows need besides the boons themselves."""
+    """What the rows need besides the boons as the ledger shows them."""
 
-    characters: Mapping[uuid.UUID, Character] = field(default_factory=dict)
-    # Who entered each boon, by display name.
-    users: Mapping[uuid.UUID, str] = field(default_factory=dict)
     # The flags still raised on each boon, in words.
     flags: Mapping[uuid.UUID, Sequence[str]] = field(default_factory=dict)
     # When each game the boons were registered at started.
@@ -91,58 +95,11 @@ def flags_of(db: Session, found: Iterable[uuid.UUID]) -> dict[uuid.UUID, list[st
 
 
 def header(staff: bool) -> list[str]:
-    return [*COLUMNS, *(STAFF_COLUMNS if staff else ())]
+    return [c for c in (*COLUMNS, *STAFF_COLUMNS) if staff or c not in STAFF_ONLY]
 
 
 def yes(on: bool) -> str:
     return "Yes" if on else "No"
-
-
-def row(boon: Boon, known: Known, staff: bool) -> list[Cell]:
-    """The boon as one row, in the order of `header`."""
-
-    def day(at: datetime | None) -> Cell:
-        return at.astimezone(known.zone).date() if at is not None else ""
-
-    def name(character_id: uuid.UUID | None, written: str) -> str:
-        character = known.characters.get(character_id) if character_id else None
-        return character.name if character is not None else written
-
-    def status(character_id: uuid.UUID | None) -> str:
-        character = known.characters.get(character_id) if character_id else None
-        found = boons.standing(character)
-        return boons.STANDINGS.get(found, "") if found else ""
-
-    settled = boon.state == "settled"
-    how = boons.SETTLED.get(boon.settled_how or "", "")
-    cells: list[Cell] = [
-        name(boon.debtor_id, boon.debtor_name),
-        name(boon.creditor_id, boon.creditor_name),
-        boons.KINDS.get(boon.kind, boon.kind),
-        boon.made_on,
-        boon.reason,
-        boon.conditions,
-        boons.STATES.get(boon.state, boon.state),
-        yes(settled),
-        how[:1].upper() + how[1:],
-        day(boon.closed_at),
-        boon.closed_note,
-        "; ".join(known.flags.get(boon.id, ())),
-        status(boon.debtor_id),
-        status(boon.creditor_id),
-        yes(boon.notify_on_trade),
-        day(known.games.get(boon.game_id)) if boon.game_id else "",
-        day(boon.created_at),
-        str(boon.id),
-    ]
-    if staff:
-        cells += [
-            boon.staff_note,
-            known.users.get(boon.submitted_by, "") if boon.submitted_by else "",
-            yes(boon.debtor_id is not None),
-            yes(boon.creditor_id is not None),
-        ]
-    return cells
 
 
 def guarded(text: str) -> str:

@@ -1,10 +1,13 @@
 """Exporting the boon ledger (#986): its columns, named as the troupe's sheet names them,
 with staff's own; a CSV file with the UTF-8 mark and no formulas; a spreadsheet; the
 ledger's view and filters; only the troupe's storytellers and assistant storytellers;
-and each export in the troupe's log."""
+and each export in the troupe's log. The Harpy (#987) exports only where the troupe
+lets them, a Lesser Harpy only if the Harpy lets them too, and either's export holds
+only what their ledger shows them."""
 
 import csv
 import io
+import json
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
@@ -16,10 +19,14 @@ from sqlalchemy.orm import Session
 
 from horatio.boon_export import COLUMNS, STAFF_COLUMNS
 from tests.api_helpers import Person, Troupe
-from tests.test_api_boon_harpy import Court
+from tests.test_api_boon_harpy import Court, ok
+from tests.test_api_boon_harpy_standings import Gone
+from tests.test_api_boon_talons import Talons
 from tests.test_api_boons import Ledger, named, row
 
 HEADER = [*COLUMNS, *STAFF_COLUMNS]
+# A Harpy's: no staff's columns, nor the game (staff alone see games).
+HARPY_HEADER = [c for c in COLUMNS if c != "Game"]
 
 
 @pytest.fixture
@@ -38,13 +45,23 @@ def export(ledger: Ledger, by: Person | None = None, **query: Any) -> Any:
     )
 
 
-def rows(response: Any) -> list[dict[str, str]]:
+@pytest.fixture
+def gone(client_for: Callable[[], TestClient], session: Session) -> Gone:
+    return Gone(Troupe(client_for, session))
+
+
+@pytest.fixture
+def talons(client_for: Callable[[], TestClient], session: Session) -> Talons:
+    return Talons(Troupe(client_for, session))
+
+
+def rows(response: Any, header: list[str] = HEADER) -> list[dict[str, str]]:
     """The CSV file's rows by column, after checking it starts with the UTF-8 mark."""
     assert response.status_code == 200, response.text
     text = response.content.decode("utf-8")
     assert text.startswith("﻿")
     lines = list(csv.reader(io.StringIO(text[1:])))
-    assert lines[0] == HEADER
+    assert lines[0] == header
     return [dict(zip(lines[0], line, strict=True)) for line in lines[1:]]
 
 
@@ -199,7 +216,8 @@ def test_only_storytellers_and_assistant_storytellers_export(court: Court) -> No
     ok = court.access("full")
     assert ok.status_code == 200, ok.text
     court.one(court.agnes, court.bram)
-    # The Harpy with the full ledger reads it, but doesn't export it (#987 may let them).
+    # The Harpy with the full ledger reads it, but doesn't export it unless the troupe
+    # lets them (#987).
     assert court.harpy_player.client.get(court.path).status_code == 200
 
     for person in (court.harpy_player, court.troupe.player, court.troupe.narrator):
@@ -214,3 +232,145 @@ def test_no_ledger_no_export(ledger: Ledger) -> None:
     assert ledger.switch(False).status_code == 200
 
     assert export(ledger).status_code == 404
+
+
+# --- the Harpy (#987) ---------------------------------------------------------------------
+
+
+def harpy_export(court: Court, on: bool, access: str = "full", by: Person | None = None) -> Any:
+    return (by or court.troupe.storyteller).client.put(
+        f"/troupes/{court.troupe.id}/boon-harpy", json={"access": access, "export": on}
+    )
+
+
+def test_the_harpy_exports_only_where_the_troupe_lets_them(gone: Gone) -> None:
+    harpy = gone.harpy_player
+    ok(gone.access("full"))
+    ledgers = f"/characters/{gone.hestia}/harpy-ledgers"
+    # Off by default.
+    shown = ok(gone.troupe.storyteller.client.get(f"/troupes/{gone.troupe.id}"))
+    assert shown["boon_harpy_export"] is False
+    assert export(gone, by=harpy).status_code == 403
+    assert ok(harpy.client.get(ledgers))[0]["can_export"] is False
+    for person in (gone.troupe.assistant, gone.troupe.player, harpy):
+        assert harpy_export(gone, True, by=person).status_code == 403
+
+    changed = ok(harpy_export(gone, True))
+
+    assert changed["boon_harpy_export"] is True
+    assert "storyteller let the Harpy export the boon ledger." in gone.messages()
+    assert ok(harpy.client.get(ledgers))[0]["can_export"] is True
+    assert len(rows(export(gone, by=harpy), HARPY_HEADER)) == 3
+    assert "harpy-688 as Hestia exported the whole boon ledger as a CSV file (3 boons)." in (
+        gone.messages()
+    )
+    # Players and narrators still can't.
+    for person in (gone.troupe.player, gone.troupe.narrator):
+        assert export(gone, by=person).status_code == 403
+    shared = ok(gone.troupe.lead.client.get(f"/troupes/{gone.troupe.id}/settings-share"))
+    assert "boon_harpy_export" in json.dumps(shared["document"])
+    # Only with the full ledger, and off again when staff say so.
+    ok(gone.access("submissions"))
+    assert export(gone, by=harpy).status_code == 403
+    ok(harpy_export(gone, False))
+    assert "storyteller stopped the Harpy exporting the boon ledger." in gone.messages()
+    assert export(gone, by=harpy).status_code == 403
+
+
+def test_the_harpy_s_export_holds_only_what_their_ledger_shows(gone: Gone) -> None:
+    """Exported as staff and as the Harpy from the same boons: every field the Harpy
+    doesn't see is missing from theirs, and their rows read as their ledger does."""
+    ok(harpy_export(gone, True))
+    noted = gone.one(
+        gone.agnes,
+        named("Lucien of Paris"),
+        kind="major",
+        reason="Safe passage",
+        staff_note="Lucien's player is the Prince's",
+    )
+    edited = gone.edit(noted, reason="Safe passage home", note="Typo in the reason")
+    assert edited.status_code == 200, edited.text
+    gone.leave_three_ways()
+    harpy = gone.harpy_player
+
+    staff_response = export(gone)
+    harpy_response = export(gone, by=harpy)
+    staff = {r["ID"]: r for r in rows(staff_response)}
+    theirs = {r["ID"]: r for r in rows(harpy_response, HARPY_HEADER)}
+
+    assert staff.keys() == theirs.keys()
+    text = harpy_response.content.decode("utf-8")
+    # No staff note, no one who entered a boon out of game, no edit and its note.
+    assert "Lucien's player is the Prince's" in staff_response.content.decode("utf-8")
+    assert "Lucien's player is the Prince's" not in text
+    assert "storyteller" not in text
+    assert "Typo in the reason" not in text
+    assert "Safe passage home" in text
+    # Each side's status as the court knows it, never why someone really left: Bram's
+    # player stopped (listed), Cosima's Final Death isn't known, Dario's off-field is.
+    statuses = {r["Owed By"]: r["Debtor Status"] for r in theirs.values()}
+    assert statuses == {
+        "Agnes": "Active",
+        "Bram": "Retired",
+        "Cosima": "Active",
+        "Dario": "Off-field",
+    }
+    assert {r["Owed By"]: r["Debtor Status"] for r in staff.values()} == {
+        **statuses,
+        "Bram": "Inactive",
+        "Cosima": "Final Death",
+    }
+    assert "Inactive" not in text
+    assert "Final Death" not in text
+    # A name staff haven't linked shows as its name.
+    lucien = theirs[noted["id"]]
+    assert (lucien["Owed To"], lucien["Creditor Status"]) == ("Lucien of Paris", "")
+    # Everything else as staff have it.
+    same = [c for c in HARPY_HEADER if "Status" not in c]
+    for found, mine in theirs.items():
+        assert [staff[found][c] for c in same] == [mine[c] for c in same]
+    # And as their ledger shows it, from the same reading of each boon.
+    listed = {b["id"]: b for b in gone.ledger("all", by=harpy)["boons"]}
+    assert {i: (b["debtor"]["name"], b["creditor"]["name"]) for i, b in listed.items()} == {
+        i: (r["Owed By"], r["Owed To"]) for i, r in theirs.items()
+    }
+    # The ledger's views go by what the court knows too: Cosima stands at court.
+    departed = rows(export(gone, by=harpy, view="departed"), HARPY_HEADER)
+    assert sorted(r["Owed By"] for r in departed) == ["Bram", "Dario"]
+    # The spreadsheet has the same columns.
+    book = openpyxl.load_workbook(io.BytesIO(export(gone, by=harpy, format="xlsx").content))
+    assert [c.value for c in book.worksheets[0][1]] == HARPY_HEADER
+
+
+def test_a_lesser_harpy_exports_only_if_the_harpy_lets_them(talons: Talons) -> None:
+    ok(talons.setting(True))
+    ok(harpy_export(talons, True))
+    talons.one(talons.agnes, talons.bram, staff_note="Staff only")
+    iris = talons.iris_player
+    listed = ok(talons.harpy_player.client.get(talons.talons))
+    assert listed["exports"] is True
+
+    ok(talons.give(talons.iris, can_add=True))
+
+    assert export(talons, by=iris).status_code == 403
+    assert talons.ledgers(talons.iris, iris)[0]["can_export"] is False
+
+    given = ok(talons.give(talons.iris, can_add=True, can_export=True))
+
+    assert given["talons"][0]["can_export"] is True
+    assert (
+        "harpy-688 as Hestia let Iris, a Lesser Harpy, see the ledger, add boons and export"
+        " the ledger." in talons.messages()
+    )
+    assert talons.ledgers(talons.iris, iris)[0]["can_export"] is True
+    found = rows(export(talons, by=iris), HARPY_HEADER)
+    assert [r["Owed By"] for r in found] == ["Agnes"]
+    assert "Staff only" not in export(talons, by=iris).content.decode("utf-8")
+    assert "talon-689 as Iris exported the whole boon ledger as a CSV file (1 boon)." in (
+        talons.messages()
+    )
+    # Only while the troupe lets the Harpy export.
+    ok(harpy_export(talons, False))
+    assert export(talons, by=iris).status_code == 403
+    assert talons.ledgers(talons.iris, iris)[0]["can_export"] is False
+    assert ok(talons.harpy_player.client.get(talons.talons))["exports"] is False

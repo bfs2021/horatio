@@ -38,6 +38,8 @@ class TalonIn(BaseModel):
     # Settle and move boons, and review what players report (#984).
     can_settle: bool = False
     can_audit: bool = False
+    # Export the ledger as they see it, while the troupe lets the Harpy (#987).
+    can_export: bool = False
 
 
 class TalonOut(BaseModel):
@@ -47,6 +49,7 @@ class TalonOut(BaseModel):
     can_edit: bool
     can_settle: bool
     can_audit: bool
+    can_export: bool = False
     # The Harpy who gave it, by their character's name; empty when staff did.
     given_by: str
     given_at: datetime
@@ -68,6 +71,8 @@ class BoonTalonsOut(BaseModel):
     enabled: bool
     # What the troupe calls them: "Lesser Harpies" or "Talons".
     word: TalonWord
+    # The troupe lets the Harpy export the ledger, so the Harpy may let them too (#987).
+    exports: bool = False
     # "harpy" (gives, changes and takes away access) or "staff" (sees, takes away).
     role: Literal["harpy", "staff"]
     talons: list[TalonOut]
@@ -98,6 +103,7 @@ def talons_out(db: DbSession, troupe: Troupe, harpy: Character | None) -> BoonTa
         troupe_id=troupe.id,
         enabled=boon_talons.enabled(troupe),
         word=troupe.boon_talon_word,  # type: ignore[arg-type]  # checked by the database
+        exports=boon_harpy.exports(troupe),
         role="staff" if harpy is None else "harpy",
         talons=[
             TalonOut(
@@ -107,6 +113,7 @@ def talons_out(db: DbSession, troupe: Troupe, harpy: Character | None) -> BoonTa
                 can_edit=t.talon.can_edit,
                 can_settle=t.talon.can_settle,
                 can_audit=t.talon.can_audit,
+                can_export=t.talon.can_export,
                 given_by=t.given_by,
                 given_at=t.talon.created_at,
                 in_play=t.in_play,
@@ -170,6 +177,7 @@ def give_talon(
         settle=body.can_settle,
         audits=body.can_audit,
         by=harpy,
+        export=body.can_export,
     )
     db.commit()
     return talons_out(db, troupe, harpy)

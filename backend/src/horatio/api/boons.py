@@ -566,6 +566,8 @@ class BoonHarpyIn(BaseModel):
     # Whether the Harpy with the full ledger also reads its standings and statistics
     # (#749); left out, unchanged.
     standings: bool | None = None
+    # Whether the Harpy with the full ledger may export it (#987); left out, unchanged.
+    export: bool | None = None
 
 
 @router.put("/troupes/{troupe_id}/boon-harpy")
@@ -574,11 +576,14 @@ def set_boon_harpy(
 ) -> TroupeOut:
     """How far the troupe's Harpy reaches into its boon ledger (#688): not at all, the
     review queue and word of each boon players report, or the full ledger; and whether,
-    with the full ledger, the Harpy also reads its standings and statistics (#749)."""
+    with the full ledger, the Harpy also reads its standings and statistics (#749), and
+    may export it (#987)."""
     troupe = staff_troupe(db, user, troupe_id, TroupeAction.MANAGE_HOUSE_RULES)
     boon_harpy.set_access(db, user, troupe, body.access)
     if body.standings is not None:
         boon_harpy.set_standings(db, user, troupe, body.standings)
+    if body.export is not None:
+        boon_harpy.set_export(db, user, troupe, body.export)
     db.commit()
     return troupe_out(db, user, troupe)
 
@@ -992,6 +997,9 @@ class HarpyLedgerOut(BaseModel):
     can_settle: bool = True
     can_review: bool = True
     can_audit: bool = True
+    # Export the ledger as they see it (#987): the troupe lets the Harpy, and a Lesser
+    # Harpy only if the Harpy lets them too.
+    can_export: bool = False
     # The Harpy may give others access to the ledger now (#689).
     gives_access: bool = False
     # The troupe lets its Harpy, and the Lesser Harpies who see the ledger, read its
@@ -1218,6 +1226,7 @@ def harpy_ledgers(db: DbSession, user: User, character: Character) -> list[Harpy
             can_edit=t.boon_harpy == "full",
             can_settle=t.boon_harpy == "full",
             can_audit=t.boon_harpy == "full",
+            can_export=boon_harpy.exports(t),
             gives_access=boon_talons.enabled(t),
             sees_standings=boon_harpy.reads_standings(t),
         )
@@ -1240,6 +1249,7 @@ def harpy_ledgers(db: DbSession, user: User, character: Character) -> list[Harpy
                 can_settle=talon.can_settle,
                 can_review=talon.can_settle,
                 can_audit=talon.can_audit,
+                can_export=talon.can_export and boon_harpy.exports(t),
                 sees_standings=boon_harpy.reads_standings(t),
             )
         )

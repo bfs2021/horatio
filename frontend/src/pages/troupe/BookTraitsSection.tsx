@@ -16,6 +16,7 @@ import { pageText } from "./bookPage";
 import { bookTraits, changeSummary, findTraits, kindChoices, requirementNote, SHOWN } from "./bookTraits";
 import { useHouseSplat } from "./HouseSplat";
 import { useCatalogue } from "../../catalogue";
+import { CardHeading } from "../../components/Headings";
 
 /** The trait whose panel is open, and the row it opened from: a change listed, or a trait found. */
 type Picked = { splat: string; category: string; name: string; from: "changed" | "found" };
@@ -290,9 +291,9 @@ function TraitPanel({
   return (
     <section aria-labelledby={titleId} className="rounded-md border border-gold/50 bg-night/30 p-3 sm:p-4">
       <header className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <h3 id={titleId} className="text-gold">
+        <CardHeading id={titleId}>
           {trait.name}
-        </h3>
+        </CardHeading>
         <Button variant="ghost" className="min-h-8 px-2" onClick={onClose}>
           Close
         </Button>

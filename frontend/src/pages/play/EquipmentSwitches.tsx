@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { PlayItem, TestPool } from "../../api/types";
+import { SectionLabel } from "../../components/Headings";
 import { combatFirst } from "../troupe/equipment";
 import { displaced, equipKey, equipmentModifiers, LIMITS } from "./equipped";
 import { describe } from "./pools";
@@ -32,7 +33,7 @@ export function EquipmentSwitches({ items, equipped, pools, tap }: { items: Play
   };
   return (
     <div className="border-t border-ash pt-2" role="group" aria-label="Equipment">
-      <h3 className="text-xs tracking-wide text-mist uppercase">Equipment</h3>
+      <SectionLabel>Equipment</SectionLabel>
       <p aria-live="polite" className="mt-1 text-sm text-gold empty:hidden">
         {moved}
       </p>

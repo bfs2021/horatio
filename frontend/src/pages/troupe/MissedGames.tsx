@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, unwrap } from "../../api/client";
+import { SectionLabel } from "../../components/Headings";
 import { useToast } from "../../components/Toast";
 import { ErrorText } from "../../components/ui";
 import { useDates } from "../../dates";
@@ -31,9 +32,9 @@ export function MissedGames({ troupeId }: { troupeId: string }) {
   if (!missed.data?.length) return null;
   return (
     <section aria-labelledby="missed-games" className="mt-4 border-t border-ash pt-3">
-      <h3 id="missed-games" className="text-sm text-mist">
+      <SectionLabel id="missed-games">
         Missed a game?
-      </h3>
+      </SectionLabel>
       <p className="text-xs text-mist">Mark a character absentee for a game it missed, until the game's XP is awarded. {PAYMENTS_NOTE}</p>
       <ul aria-label="Games you can mark absentee" className="mt-2 flex flex-col gap-2 text-sm">
         {missed.data.map((g) => (

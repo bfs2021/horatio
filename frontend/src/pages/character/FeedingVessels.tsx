@@ -1,5 +1,6 @@
 import type { FeedingCardOut, FeedingIn, MyDowntime, MyFeedingOut } from "../../api/types";
 import { api, unwrap } from "../../api/client";
+import { SectionLabel } from "../../components/Headings";
 import { Button, ErrorText, Field, Input, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
 
@@ -77,7 +78,7 @@ export function RackFeeding({ feeding, characterId, onDowntime }: { feeding: MyF
       {!locked &&
         groups.map((g) => (
           <section key={g.title} aria-label={g.title} className="border-t border-ash pt-2">
-            <h3 className="text-xs tracking-wide text-mist uppercase">{g.title}</h3>
+            <SectionLabel>{g.title}</SectionLabel>
             {g.note && <p className="text-xs text-mist">{g.note}</p>}
             <ul className="mt-1 flex flex-col divide-y divide-ash">
               {g.cards.map((c) => (

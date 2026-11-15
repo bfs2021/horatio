@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { SettingEntryOut, SettingOut } from "../../api/types";
 import { useClanName } from "../../components/ClanNames";
+import { CardHeading } from "../../components/Headings";
 import { Markdown } from "../../components/Markdown";
 import { ErrorText, Loading } from "../../components/ui";
 import { initialXpText, rarityTiers, settingText } from "./settingDocument";
@@ -192,10 +193,10 @@ export function SettingSummary({ troupeId }: { troupeId: string }) {
   const names = (entries: SettingEntryOut[]) => entries.map((e) => e.name).join(" / ");
   return (
     <section aria-label="The setting you're building for" className="flex flex-col gap-2 rounded-md border border-ash p-3 text-sm">
-      <h3 className="text-base text-gold">
+      <CardHeading>
         {s.chronicle || s.troupe}
         {s.subtitle && <span className="text-mist">: {s.subtitle}</span>}
-      </h3>
+      </CardHeading>
       {s.themes.length > 0 && (
         <p>
           <span className="text-mist">{s.themes.length > 1 ? "Themes" : "Theme"}: </span>

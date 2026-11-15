@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api/client";
 import type { ClanName } from "../../clanNames";
 import { ClanNames } from "../../components/ClanNames";
 import type { CycleOut, QuestionIn } from "../../api/types";
+import { SectionLabel } from "../../components/Headings";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Notice, PageTabs, Select, Textarea } from "../../components/ui";
 import { LinkButton } from "../../components/LinkButton";
 import { useDates } from "../../dates";
@@ -272,13 +273,13 @@ function Overview({ cycle }: { cycle: CycleOut }) {
           )}
           {Object.keys(p.by_assignee).length > 0 && (
             <>
-              <h3 className="mt-4 mb-1 font-sans text-xs text-mist uppercase">By who</h3>
+              <SectionLabel className="mt-4 mb-1">By who</SectionLabel>
               <ProgressRows rows={p.by_assignee} />
             </>
           )}
           {Object.keys(p.by_action_kind).length > 0 && (
             <>
-              <h3 className="mt-4 mb-1 font-sans text-xs text-mist uppercase">By kind</h3>
+              <SectionLabel className="mt-4 mb-1">By kind</SectionLabel>
               <ProgressRows rows={p.by_action_kind} labels={kindLabels(Object.keys(p.by_action_kind), cycle.action_kinds ?? {})} />
             </>
           )}

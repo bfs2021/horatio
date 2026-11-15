@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { openTab } from "../title";
 import { Dialog } from "./Dialog";
+import { SectionLabel } from "./Headings";
 import { CountBubble, type Tab } from "./ui";
 
 type Group = { label: string; tabs: Tab[] };
@@ -71,7 +72,7 @@ export function SectionPicker({ label, groups, className }: { label: string; gro
         <div className="space-y-5">
           {shown.map((g) => (
             <section key={g.label}>
-              <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">{g.label}</h3>
+              <SectionLabel className="mb-1">{g.label}</SectionLabel>
               <ul aria-label={g.label}>
                 {g.tabs.map((t) => {
                   const isOpen = t === at?.tab;

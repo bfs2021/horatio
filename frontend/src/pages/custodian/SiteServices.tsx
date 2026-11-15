@@ -3,6 +3,7 @@ import { useEffect, useId, useState, type FormEvent, type ReactNode } from "reac
 import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { components } from "../../api/schema";
+import { CardHeading } from "../../components/Headings";
 import { Badge, Button, Card, ErrorText, Field, Input, Loaded } from "../../components/ui";
 import { useToast } from "../../components/Toast";
 import { useDates } from "../../dates";
@@ -101,7 +102,7 @@ function SenderForm({ mail }: { mail: MailOut }) {
   const server = mail.server_from ?? "the server's HORATIO_MAIL_FROM";
   return (
     <form onSubmit={submit} className="flex flex-col gap-3 border-t border-ash pt-4">
-      <h3 className="text-parchment">Who emails come from</h3>
+      <CardHeading>Who emails come from</CardHeading>
       <p className="text-xs text-mist">
         Blank uses the server's: {server}. The From address must be one your mail provider lets Horatio send from, or emails will be refused.
       </p>
@@ -183,7 +184,7 @@ function DiscordShown({ discord }: { discord: DiscordOut }) {
           </dl>
           <Secrets where={discord.where} names="The client ID, client secret and bot token" />
           <div className="flex flex-col gap-3 border-t border-ash pt-4">
-            <h3 className="text-parchment">For Discord's developer portal</h3>
+            <CardHeading>For Discord's developer portal</CardHeading>
             <Copyable label="OAuth2 redirect" hint="Add it under OAuth2 › Redirects, exactly as it is." value={discord.redirect} />
             {discord.invite && (
               <Copyable
@@ -265,7 +266,7 @@ function ConnectedTroupes({ troupes }: { troupes: DiscordOut["troupes"] }) {
   if (troupes.length === 0) return null;
   return (
     <div className="flex flex-col gap-2 border-t border-ash pt-4">
-      <h3 className="text-parchment">Troupes connected</h3>
+      <CardHeading>Troupes connected</CardHeading>
       <ul className="flex flex-col gap-2">
         {troupes.map((t) => (
           <li key={t.troupe_id} className="flex flex-col">
@@ -300,7 +301,7 @@ function Failures({ title, none, failures, queryKey }: { title: string; none: st
   if (failures.length === 0) return <p className="text-mist">{none}</p>;
   return (
     <div className="flex flex-col gap-2 border-t border-ash pt-4">
-      <h3 className="text-parchment">{title}</h3>
+      <CardHeading>{title}</CardHeading>
       <ul className="flex flex-col gap-3" aria-label={title}>
         {failures.map((f) => (
           <li key={f.id} className="flex flex-wrap items-start justify-between gap-2">

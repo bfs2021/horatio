@@ -1,5 +1,6 @@
 import { useId, useState, type ReactNode } from "react";
 import type { PlayReference } from "../../api/types";
+import { CardHeading } from "../../components/Headings";
 import { frenzyNumbers } from "./frenzy";
 import { FRENZY_TRIGGERS } from "./warnings";
 
@@ -107,9 +108,9 @@ export function Frenzy({
 function Part({ title, page, children }: { title: string; page: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <h3 className="font-medium text-parchment">
+      <CardHeading>
         {title} <span className="text-xs font-normal text-mist">MET: VtM {page}</span>
-      </h3>
+      </CardHeading>
       {children}
     </div>
   );

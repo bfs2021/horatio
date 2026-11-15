@@ -18,6 +18,7 @@ import { rulesTroupe } from "./rules";
 import { CUSTOM_ARCHETYPE, identityChoices } from "./creation/logic";
 import { MORALITY, heldMorality, moralityLabel, moralityOptions, moveMorality, willpowerAndHealth } from "./morality";
 import { useCatalogue } from "../../catalogue";
+import { SectionLabel } from "../../components/Headings";
 
 type Change = { category: string; name: string; detail?: string; rating: number | null };
 /** A held trait's detail changed in place: a merit's choice, a skill's field (#570). */
@@ -332,7 +333,7 @@ function Section({
           .filter((h) => groups.has(h))
           .map((heading) => (
             <div key={heading}>
-              {(groups.size > 1 || split) && <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">{heading}</h3>}
+              {(groups.size > 1 || split) && <SectionLabel className="mb-1">{heading}</SectionLabel>}
               <ul>
                 {groups.get(heading)!.map((t) => (
                   <Held

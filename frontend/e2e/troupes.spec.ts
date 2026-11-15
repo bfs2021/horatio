@@ -464,6 +464,55 @@ test("on a touch screen the page tabs, info buttons, ⋯ menus and feature links
   expect((await box(desk.getByRole("navigation", { name: "House rules" }).getByRole("link", { name: "Checks", exact: true }))).height).toBeLessThan(30);
 });
 
+test("at 700 px a troupe's tab row that scrolls shows a chevron at the edge with more, and pressing it brings the rest into view (#921)", async ({ browser }) => {
+  const custodian = await person(browser, "chevron-custodian");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "chevron-lead", { viewport: { width: 700, height: 900 } });
+  const made = await custodian.page.request.post("/api/troupes", { headers: { "X-Horatio": "1" }, data: { name: `Chevron Row ${run}`, lead_handle: lead.handle } });
+  expect(made.status(), await made.text()).toBe(201);
+  const troupeId: string = (await made.json()).id;
+
+  const l = lead.page;
+  await l.goto(`/troupes/${troupeId}`);
+  const main = l.locator("main");
+  // The group row fits at 700 px, Customise and all, so it has no chevron.
+  const groups = main.getByRole("navigation", { name: "Troupe sections" });
+  await expect(groups.getByRole("link", { name: "Customise", exact: true })).toBeInViewport({ ratio: 1 });
+  await expect(groups.getByTestId(/^row-chevron/)).toHaveCount(0);
+
+  // The Troupe group's tabs run on past the right edge: a chevron there, and none at the left.
+  const pills = main.getByRole("navigation", { name: "Troupe", exact: true });
+  const first = pills.getByRole("link").first();
+  const last = pills.getByRole("link").last();
+  await expect(first).toBeInViewport({ ratio: 1 });
+  await expect(last).not.toBeInViewport({ ratio: 1 });
+  const end = pills.getByTestId("row-chevron-end");
+  await expect(end).toBeVisible();
+  await expect(pills.getByTestId("row-chevron-start")).toHaveCount(0);
+  const row = (await pills.boundingBox())!;
+  const chevron = (await end.boundingBox())!;
+  expect(Math.round(chevron.x + chevron.width)).toBe(Math.round(row.x + row.width));
+  expect(chevron.width).toBe(40);
+  expect(chevron.height).toBe(40);
+  await l.screenshot(shots("troupe-tabs-chevron"));
+
+  // Pressing it scrolls the row, and only that: the last tab comes into view, and the chevron moves to the left.
+  await end.click();
+  await expect(last).toBeInViewport({ ratio: 1 });
+  await expect(end).toHaveCount(0);
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}$`));
+  const start = pills.getByTestId("row-chevron-start");
+  await expect(start).toBeVisible();
+  await start.click();
+  await expect(first).toBeInViewport({ ratio: 1 });
+  await expect(start).toHaveCount(0);
+
+  // On a wide screen the row fits, with no chevron.
+  await l.setViewportSize({ width: 1280, height: 900 });
+  await expect(last).toBeInViewport({ ratio: 1 });
+  await expect(pills.getByTestId(/^row-chevron/)).toHaveCount(0);
+});
+
 test("a lead prices skills at 1× for Generation background 2, and a Generation ●● character pays that in the cart (#522)", async ({ browser }) => {
   const custodian = await person(browser, "genprice-custodian");
   makeCustodian(custodian.email);

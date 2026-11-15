@@ -121,6 +121,7 @@ test("storytellers log influence for PCs, NPCs and names only, and a player read
   await form.getByLabel("Specialisation").selectOption("Finance");
   await form.getByLabel("Action").selectOption({ label: "2: Gossip and Insider Trading" });
   await form.getByLabel("Purpose").fill("To hear who is buying the docks");
+  await expect(form.getByText("Add another logs this one and starts the next with the same date, cycle and who.")).toBeVisible();
   await form.getByRole("button", { name: "Add another" }).click();
   await expect(form.getByText("Logged E2.")).toBeVisible();
   // The date, cycle and who stay; the rest starts again.

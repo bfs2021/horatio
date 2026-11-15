@@ -5,14 +5,14 @@ import { useToast } from "../../components/Toast";
 import { useSetPreferences } from "../../hooks";
 import { setName, THROW_IMAGES, useThrowImages } from "../play/chosenThrows";
 import { HORATIO_IMAGES } from "../play/throwImages";
-import { THROW_NAMES, THROWS } from "../play/throws";
+import { THROWS } from "../play/throws";
 
 /** Three small pictures side by side, to tell the sets apart. */
 function Previews({ picture }: { picture: (which: (typeof THROWS)[number]) => ReactNode }) {
   return (
     <span aria-hidden="true" className="flex shrink-0 gap-1">
       {THROWS.map((which) => (
-        <span key={which} title={THROW_NAMES[which]} className="block size-9 text-parchment">
+        <span key={which} className="block size-9 text-parchment">
           {picture(which)}
         </span>
       ))}

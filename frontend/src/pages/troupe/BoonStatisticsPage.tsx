@@ -796,7 +796,7 @@ export function BoonStatisticsPage({ troupeId, harpy = false }: { troupeId: stri
         <fieldset className="flex flex-wrap items-center gap-2 text-sm">
           <legend className="sr-only">Who is counted</legend>
           {SCOPES.map((o) => (
-            <label key={o.value} className="flex items-center gap-1" title={o.meaning}>
+            <label key={o.value} className="flex items-center gap-1">
               <input type="radio" name="boon-statistics-scope" checked={scope === o.value} onChange={() => setScope(o.value)} />
               {o.label}
             </label>

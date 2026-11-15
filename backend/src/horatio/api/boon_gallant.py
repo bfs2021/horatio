@@ -51,7 +51,7 @@ def answer_gallant(
 ) -> BoonOut:
     """Staff, or a Harpy with the full ledger, give the repaid boon's debtor Gallant,
     or decline to (pp. 402, 405)."""
-    troupe, keeper = ledger_troupe(db, user, troupe_id, "edit")
+    troupe, keeper = ledger_troupe(db, user, troupe_id, "settle")
     boon = troupe_boon(db, troupe, boon_id)
     found = open_offer(db, boon)
     if body.give:

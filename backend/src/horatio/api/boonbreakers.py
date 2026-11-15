@@ -232,7 +232,7 @@ def answer_status_loss(
 ) -> BoonOut:
     """For a great boon its debtor formally ignored (p. 395): staff or the Harpy took
     the status they lost, with the status tools, or won't."""
-    troupe, keeper = ledger_troupe(db, user, troupe_id, "edit")
+    troupe, keeper = ledger_troupe(db, user, troupe_id, "settle")
     boon = troupe_boon(db, troupe, boon_id)
     boonbreakers.answer_loss(db, user, boon, body.taken, body.note, keeper)
     db.commit()

@@ -72,15 +72,31 @@ type Doing = "accept" | "reject" | "flag" | null;
 /**
  * A boon's review, in its detail (#687): accept or reject it while it waits for
  * review (an edit first, from its own buttons); its flags still raised, each to clear,
- * and a name to link to a character; and a flag to raise by hand for a ruling.
+ * and a name to link to a character; and a flag to raise by hand for a ruling. A
+ * Lesser Harpy who may correct boons but not review them (#984) sees only the names
+ * to link (`review` false); one who may review but not correct, no linking (`link`
+ * false).
  */
-export function ReviewPanel({ troupeId, boon, characters }: { troupeId: string; boon: BoonOut; characters: CharacterChoice[] }) {
+export function ReviewPanel({
+  troupeId,
+  boon,
+  characters,
+  review = true,
+  link = true,
+}: {
+  troupeId: string;
+  boon: BoonOut;
+  characters: CharacterChoice[];
+  review?: boolean;
+  link?: boolean;
+}) {
   const [doing, setDoing] = useState<Doing>(null);
-  const flags = boon.flags ?? [];
+  const flags = (boon.flags ?? []).filter((f) => review || (link && f.kind === "unmatched"));
   const done = () => setDoing(null);
+  if (!review && flags.length === 0) return null;
   return (
     <div className="flex flex-col gap-2" role="group" aria-label="Review">
-      {boon.state === "pending" && (
+      {review && boon.state === "pending" && (
         <p className="text-sm">
           <Badge tone="mist">Waits for review</Badge> <span className="text-mist">Reported by a player. Accept it to make it stand, after an edit if it needs one.</span>
         </p>
@@ -88,11 +104,11 @@ export function ReviewPanel({ troupeId, boon, characters }: { troupeId: string; 
       {flags.length > 0 && (
         <ul aria-label="Flags" className="flex flex-col gap-2">
           {flags.map((f) => (
-            <FlagRow key={f.id} troupeId={troupeId} boon={boon} flag={f} characters={characters} />
+            <FlagRow key={f.id} troupeId={troupeId} boon={boon} flag={f} characters={characters} clears={review} links={link} />
           ))}
         </ul>
       )}
-      {doing === null ? (
+      {!review ? null : doing === null ? (
         <div className="flex flex-wrap gap-2">
           {boon.state === "pending" && (
             <>
@@ -167,7 +183,21 @@ function NoteAction({ troupeId, boon, doing, onDone }: { troupeId: string; boon:
 }
 
 /** A flag still raised: what it says, a way to clear it, and, for a name, a way to link it to a character. */
-function FlagRow({ troupeId, boon, flag, characters }: { troupeId: string; boon: BoonOut; flag: BoonFlag; characters: CharacterChoice[] }) {
+function FlagRow({
+  troupeId,
+  boon,
+  flag,
+  characters,
+  clears,
+  links,
+}: {
+  troupeId: string;
+  boon: BoonOut;
+  flag: BoonFlag;
+  characters: CharacterChoice[];
+  clears: boolean;
+  links: boolean;
+}) {
   const toast = useToast();
   const [linking, setLinking] = useState(false);
   const [clearing, setClearing] = useState(false);
@@ -202,14 +232,16 @@ function FlagRow({ troupeId, boon, flag, characters }: { troupeId: string; boon:
       </p>
       {!linking && !clearing && (
         <div className="mt-2 flex flex-wrap gap-2">
-          {flag.kind === "unmatched" && (
+          {links && flag.kind === "unmatched" && (
             <Button variant="secondary" onClick={() => setLinking(true)}>
               Link to a character
             </Button>
           )}
-          <Button variant="ghost" onClick={() => setClearing(true)}>
-            Clear the flag
-          </Button>
+          {clears && (
+            <Button variant="ghost" onClick={() => setClearing(true)}>
+              Clear the flag
+            </Button>
+          )}
         </div>
       )}
       {linking && (

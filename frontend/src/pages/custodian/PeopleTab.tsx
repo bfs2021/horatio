@@ -18,6 +18,7 @@ import { PersonCharacters } from "./MoveCharacter";
 import { ResetPassword, useCancelReset } from "./ResetPassword";
 import { SuspendedPeople, SuspendPerson } from "./Suspension";
 import { ViewAs } from "./ViewAs";
+import { SectionLabel } from "../../components/Headings";
 
 /** Every account, for the custodian: find someone by name, handle or email, or by the troupe an active character
  * of theirs is home in, open their profile, see all their characters under the
@@ -212,7 +213,7 @@ function PasswordResets() {
       ) : resets.data ? (
         <div className="flex flex-col gap-4">
           <section>
-            <h3 className="mb-1 text-sm text-mist">Links that work now</h3>
+            <SectionLabel className="mb-1">Links that work now</SectionLabel>
             {resets.data.live.length ? (
               <ul className="divide-y divide-ash/50 text-sm">
                 {resets.data.live.map((r) => (
@@ -224,7 +225,7 @@ function PasswordResets() {
             )}
           </section>
           <section>
-            <h3 className="mb-1 text-sm text-mist">Recently</h3>
+            <SectionLabel className="mb-1">Recently</SectionLabel>
             {resets.data.log.length ? (
               <LogList entries={resets.data.log} linkTo={(e) => (typeof e.data.user_id === "string" ? `/players/${e.data.user_id}` : null)} />
             ) : (

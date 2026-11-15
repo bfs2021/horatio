@@ -5,6 +5,7 @@ import { RadioList } from "../../components/RadioList";
 import { SettingCard, SettingForm, useSettingForm } from "../../components/SettingCard";
 import { Button, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useCatalogue } from "../../catalogue";
+import { SectionLabel } from "../../components/Headings";
 
 type Kind = "none" | "date" | "games";
 type Excluded = { category: string; name: string };
@@ -117,7 +118,7 @@ function NeverRefunded({ draft, onChange }: { draft: Draft; onChange: (draft: Dr
 
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="font-sans text-xs text-mist uppercase">Never refunded</h3>
+      <SectionLabel>Never refunded</SectionLabel>
       <p className="text-xs text-mist">Traits that follow the normal rules even while free changes are open, such as Efficient Learner or Arcane.</p>
       {draft.excluded.length > 0 && (
         <ul className="flex flex-wrap gap-2" aria-label="Never refunded">

@@ -75,6 +75,7 @@ import { useHasDomitor } from "./splats";
 import { pointsText, xpText } from "./creation/logic";
 import { xpTotal } from "./xpTotals";
 import { useCatalogue } from "../../catalogue";
+import { SectionLabel } from "../../components/Headings";
 
 function useSheet(characterId: string) {
   return useQuery({
@@ -509,7 +510,7 @@ export function SheetTab({
                       {/* Morality's one row names the path (Humanity, Path of Caine), so "Path of Enlightenment/Humanity" over it only confuses. */}
                       {category.toLowerCase() !== group.toLowerCase() && traits[0]!.category !== "paths" && (
                         <div className="mb-1 flex items-center gap-1.5">
-                          <h3 className="font-sans text-xs tracking-wide text-mist uppercase">{category}</h3>
+                          <SectionLabel>{category}</SectionLabel>
                           <CategoryInfo category={traits[0]!.category} name={category} catalogue={catalogue.data} />
                         </div>
                       )}
@@ -1273,9 +1274,7 @@ function CreationPanel({
         <div className="grid gap-3 sm:grid-cols-2">
           {[...byCategory].map(([category, pools]) => (
             <div key={category}>
-              <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">
-                {category}
-              </h3>
+              <SectionLabel className="mb-1">{category}</SectionLabel>
               <ul className="flex flex-col gap-1 text-sm">
                 {pools.map((p) => {
                   const n = used(p);

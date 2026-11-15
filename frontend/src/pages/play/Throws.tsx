@@ -6,6 +6,7 @@ import { useFlip, type Flipping } from "./useFlip";
 import { expecting } from "./challenge";
 import { HORATIO_IMAGES, ThrowFace, type ThrowImages } from "./throwImages";
 import { COUNT_IN_STEP_MS, countIn, fairThrow, readThrows, remember, THROW_NAMES, type Throw, type Thrown } from "./throws";
+import { SectionLabel } from "../../components/Headings";
 
 /** Where this browser tab keeps its last throws, so switching tabs or reloading keeps them. */
 const KEY = "horatio.throws";
@@ -174,9 +175,9 @@ function ThrowsBody({ images = HORATIO_IMAGES, challenging, willpower, spendWill
       {c && update && <ChallengeTests c={c} update={update} images={images} willpower={willpower} spendWillpower={spendWillpower} />}
       {past.length > 0 && (
         <section aria-labelledby="throws-past" className="w-full max-w-sm">
-          <h2 id="throws-past" className="text-sm text-mist">
+          <SectionLabel as="h2" id="throws-past">
             Last throws
-          </h2>
+          </SectionLabel>
           <ol className="mt-1 divide-y divide-ash rounded-lg border border-ash bg-dusk">
             {past.map((t, i) => (
               <li key={`${i}-${t.at}`} className="flex items-center gap-3 px-3 py-1.5">

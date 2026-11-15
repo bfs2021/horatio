@@ -10,6 +10,7 @@ import { useToast } from "../../components/Toast";
 import { Button, Card, Empty, ErrorText, Field, Input, Loading } from "../../components/ui";
 import { useWidePage } from "../../components/widePage";
 import { useAction } from "../../hooks";
+import { SectionLabel } from "../../components/Headings";
 
 type Standings = BoonStandingsOut;
 type Party = Standings["characters"][number]["who"];
@@ -316,7 +317,7 @@ function Characters({ standings }: { standings: Standings }) {
 function Tallies({ label, tallies }: { label: string; tallies: Tally[] }) {
   return (
     <div>
-      <h4 className="text-xs text-mist">{label}</h4>
+      <SectionLabel as="h4">{label}</SectionLabel>
       {tallies.length === 0 ? (
         <p className="text-xs text-mist">Nobody.</p>
       ) : (
@@ -432,7 +433,7 @@ function Settling({ standings }: { standings: Standings }) {
       />
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
         <div>
-          <h3 className="text-xs text-mist">Settled by the debtor&apos;s clan</h3>
+          <SectionLabel>Settled by the debtor&apos;s clan</SectionLabel>
           <ul className="text-sm">
             {s.by_clan.map((b) => (
               <li key={b.label} className="flex justify-between gap-2">
@@ -445,7 +446,7 @@ function Settling({ standings }: { standings: Standings }) {
           </ul>
         </div>
         <div>
-          <h3 className="text-xs text-mist">Call their boons in</h3>
+          <SectionLabel>Call their boons in</SectionLabel>
           <ul className="text-sm">
             {s.calls_in.map((c) => (
               <li key={c.who.key}>
@@ -461,7 +462,7 @@ function Settling({ standings }: { standings: Standings }) {
           </ul>
         </div>
         <div>
-          <h3 className="text-xs text-mist">Leave them standing</h3>
+          <SectionLabel>Leave them standing</SectionLabel>
           <ul className="text-sm">
             {s.leaves.map((c) => (
               <li key={c.who.key} className="flex justify-between gap-2">

@@ -1,4 +1,4 @@
-import { Fragment, useId, useState, type ReactNode, type TdHTMLAttributes } from "react";
+import { Fragment, useEffect, useId, useRef, useState, type ReactNode, type TdHTMLAttributes } from "react";
 import { Chevron } from "./TraitInfo";
 import { Button } from "./ui";
 
@@ -53,6 +53,10 @@ const AT: Record<Breakpoint, { head: string; wide: string; narrow: string; title
  * the table, with `expand.render`; more than one can be open. With `expand.wholeRow`,
  * a click anywhere on the row opens it too; the chevron stays the way in from the
  * keyboard and for screen readers.
+ *
+ * With `select` instead, a click on a row, or its chevron, picks it, to show it
+ * elsewhere (a side panel, #979): the picked row is marked, and when it is let go its
+ * chevron has the focus again.
  */
 export function DataTable<T>({
   label,
@@ -66,6 +70,7 @@ export function DataTable<T>({
   className = "",
   busy,
   dense = false,
+  select,
 }: {
   /** The table's name, for screen readers. */
   label: string;
@@ -82,6 +87,14 @@ export function DataTable<T>({
     /** A click anywhere on the row opens it, not just on the chevron (#975). */
     wholeRow?: boolean;
   };
+  /** Rows picked to be shown elsewhere, not opened under themselves (#979). */
+  select?: {
+    /** The chevron's name, such as "Details: Agnes owes Bram, minor". */
+    label: (row: T) => string;
+    onSelect: (row: T) => void;
+    /** The key of the row picked, if any. */
+    selected: string | null;
+  };
   /** Added to the block of "label: value" under the title, such as to line it up past a picture. */
   foldClassName?: string;
   className?: string;
@@ -94,7 +107,20 @@ export function DataTable<T>({
   const id = useId();
   const [opened, setOpened] = useState<Set<string>>(new Set());
   const shown = columns.filter((c) => c.phone === "shown");
-  const span = columns.length + (expand ? 1 : 0);
+  const lead = Boolean(expand || select);
+  const span = columns.length + (lead ? 1 : 0);
+  // Each row's chevron, so a row let go has the focus back.
+  const chevrons = useRef(new Map<string, HTMLButtonElement>());
+  const picked = select?.selected ?? null;
+  const lastPicked = useRef(picked);
+  useEffect(() => {
+    const was = lastPicked.current;
+    lastPicked.current = picked;
+    if (!was || picked) return;
+    // After the frame, so a dialog closing doesn't take the focus back elsewhere.
+    const frame = requestAnimationFrame(() => chevrons.current.get(was)?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [picked]);
   const toggle = (key: string) => {
     const next = new Set(opened);
     if (!next.delete(key)) next.add(key);
@@ -130,7 +156,7 @@ export function DataTable<T>({
     <table aria-label={label} aria-busy={busy || undefined} className={`w-full text-sm ${className}`}>
       <thead className={at.head}>
         <tr className="border-b border-ash text-left text-xs text-mist">
-          {expand && (
+          {lead && (
             <th className="w-px py-2 pr-1 font-normal">
               <span className="sr-only">Open</span>
             </th>
@@ -151,12 +177,14 @@ export function DataTable<T>({
           const key = rowKey(row);
           const open = opened.has(key);
           const openedId = `${id}-${key}`;
+          const isPicked = picked === key;
+          const onRow = select ? () => select.onSelect(row) : expand?.wholeRow ? () => toggle(key) : undefined;
           return (
             <Fragment key={key}>
               <tr
                 aria-label={rowLabel?.(row)}
-                className={`${open ? "border-b-0" : ""} ${expand?.wholeRow ? "cursor-pointer hover:bg-ash/30" : ""}`}
-                onClick={expand?.wholeRow ? (e) => !ownClick(e.target) && toggle(key) : undefined}
+                className={`${open ? "border-b-0" : ""} ${onRow ? "cursor-pointer hover:bg-ash/30" : ""} ${isPicked ? "bg-ash/40" : ""}`}
+                onClick={onRow ? (e) => !ownClick(e.target) && onRow() : undefined}
               >
                 {/* Dense, the chevron is no taller than a line of text, so a row stays one line high. */}
                 {expand && (
@@ -171,6 +199,24 @@ export function DataTable<T>({
                       onClick={() => toggle(key)}
                     >
                       <Chevron open={open} />
+                    </Button>
+                  </td>
+                )}
+                {select && (
+                  <td className={`w-px pr-1 align-top ${dense ? "py-0" : "py-1"}`}>
+                    <Button
+                      ref={(button) => {
+                        if (button) chevrons.current.set(key, button);
+                        else chevrons.current.delete(key);
+                      }}
+                      type="button"
+                      variant="ghost"
+                      className={`px-1.5 ${dense ? "min-h-8!" : "min-h-8"} ${isPicked ? "text-gold" : ""}`}
+                      aria-label={select.label(row)}
+                      aria-current={isPicked || undefined}
+                      onClick={() => select.onSelect(row)}
+                    >
+                      <Chevron open={false} />
                     </Button>
                   </td>
                 )}

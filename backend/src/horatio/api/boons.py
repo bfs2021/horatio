@@ -177,8 +177,8 @@ class BoonEventOut(BaseModel):
     by: str | None
     # The character it was done as (a Harpy, #688); None for staff.
     as_character: str | None
-    # What it changed. For an edit, only the troupe's storytellers and assistant
-    # storytellers get these; anyone else gets None, and sees only that it was edited.
+    # What it changed, field by field. Only the troupe's storytellers and assistant
+    # storytellers get these (#979); anyone else gets None, and sees only what was done.
     changes: list[BoonChangeOut] | None
 
 
@@ -370,11 +370,10 @@ def event_out(
     harpy: bool = False,
     named: bool = True,
 ) -> BoonEventOut:
-    """A line of the boon's log. Only those who see what edits changed get an edit's
-    changes; a Harpy (#688) sees the character a line was done as, never who did it
+    """A line of the boon's log. Only those who see what lines changed get its changes,
+    whatever it was (#979); a Harpy (#688) sees the character a line was done as, never who did it
     out of game. Not `named`, a line outside a Harpy's sight shown all the same (#992,
     horatio.boon_harpy.log_for) says neither who did it nor its note."""
-    shown = diffs or line.kind != "edited"
     return BoonEventOut(
         id=line.id,
         kind=line.kind,  # type: ignore[arg-type]  # checked by the database
@@ -383,7 +382,7 @@ def event_out(
         by=users.get(line.actor_id) if line.actor_id and not harpy else None,
         as_character=names.get(line.as_character_id) if line.as_character_id and named else None,
         changes=[BoonChangeOut(field=f, before=b, after=a) for f, (b, a) in line.changes.items()]
-        if shown
+        if diffs
         else None,
     )
 

@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { useContext, useState } from "react";
+import { useContext, useState, type ReactNode } from "react";
 import { api, unwrap } from "../../api/client";
-import type { BoonOut, CharacterChoice } from "../../api/types";
+import type { BoonEventOut, BoonOut, CharacterChoice } from "../../api/types";
 import { partyIn } from "../../bonds";
 import { disgracedText } from "../../boonStatus";
 import {
   actionsFor,
-  changeText,
   eventName,
+  fieldName,
   gallantText,
   KINDS,
   kindName,
@@ -20,6 +20,7 @@ import {
   type BoonKind,
   type SettledHow,
 } from "../../boons";
+import { ActionMenu, MenuGroup, MenuItem } from "../../components/ActionMenu";
 import { DateInput } from "../../components/DateInput";
 import { SectionLabel } from "../../components/Headings";
 import { Badge, Button, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
@@ -63,7 +64,41 @@ const ACTION_LABELS: Record<Doing, string> = {
   reopen: "Reopen",
 };
 
-export function BoonDetail({ troupeId, boonId, characters }: { troupeId: string; boonId: string; characters: CharacterChoice[] }) {
+// Set apart at the foot of the Actions menu.
+const ENDS: Doing[] = ["void", "reopen"];
+
+/**
+ * How a boon's detail is laid out around it: its title ("Agnes owes Bram"), its
+ * Actions menu (null when there is nothing its keeper may do), and the rest. A side
+ * panel puts the first two in its header (#979).
+ */
+export type DetailFrame = (title: string, actions: ReactNode, body: ReactNode) => ReactNode;
+
+/** In a list, such as the review queue: the menu above the rest, which its row names. */
+const inline: DetailFrame = (_title, actions, body) => (
+  <div className="mt-3 flex flex-col gap-3 border-t border-ash pt-3">
+    {actions && <div className="flex justify-end">{actions}</div>}
+    {body}
+  </div>
+);
+
+/**
+ * A boon in full (#979): what it is, where it stands and who registered it, then what
+ * waits on a decision (its review, a status loss, Gallant), then its log. What its
+ * keeper may do with it is in one Actions menu; choosing one shows its form at the
+ * top. A Lesser Harpy sees only what the Harpy let them do, and none, no menu.
+ */
+export function BoonDetail({
+  troupeId,
+  boonId,
+  characters,
+  frame = inline,
+}: {
+  troupeId: string;
+  boonId: string;
+  characters: CharacterChoice[];
+  frame?: DetailFrame;
+}) {
   const harpy = useContext(HarpyMode);
   const dates = useDates();
   const [doing, setDoing] = useState<Doing | null>(null);
@@ -76,18 +111,55 @@ export function BoonDetail({ troupeId, boonId, characters }: { troupeId: string;
         }),
       ),
   });
-  if (boon.isPending) return <Loading />;
-  if (boon.error) return <ErrorText error={boon.error} />;
+  if (boon.isPending) return frame("Boon", null, <Loading />);
+  if (boon.error) return frame("Boon", null, <ErrorText error={boon.error} />);
   const b = boon.data;
   const done = () => setDoing(null);
   // A Lesser Harpy sees only what the Harpy let them do (#984).
   const actions = actionsFor(b.state).filter((a) => !harpy || (a === "edit" ? harpy.edit : harpy.settle));
-  return (
-    <div className="mt-3 flex flex-col gap-3 border-t border-ash pt-3">
-      {b.creditor_disgraced && <p className="text-sm text-blood-bright">{disgracedText(partyName(b.creditor))}</p>}
+  const menu =
+    actions.length === 0 ? null : (
+      <ActionMenu label={`Actions: ${boonLabel(b)}`} trigger="Actions" menuClassName="w-44">
+        <MenuGroup label="Change it">
+          {actions
+            .filter((a) => !ENDS.includes(a))
+            .map((a) => (
+              <MenuItem key={a} onSelect={() => setDoing(a)}>
+                {ACTION_LABELS[a]}
+              </MenuItem>
+            ))}
+        </MenuGroup>
+        <MenuGroup label="Close or reopen it">
+          {actions
+            .filter((a) => ENDS.includes(a))
+            .map((a) => (
+              <MenuItem key={a} danger={a === "void"} onSelect={() => setDoing(a)}>
+                {ACTION_LABELS[a]}
+              </MenuItem>
+            ))}
+        </MenuGroup>
+      </ActionMenu>
+    );
+  const sides = (["debtor", "creditor"] as const).map((side) => ({ side, party: b[side] }));
+  const notes = sides.flatMap(({ side, party }) => sideNotes(party, side));
+  const body = (
+    <section aria-label={`Boon: ${boonLabel(b)}`} className="flex flex-col gap-4 text-sm">
+      {doing === null ? null : doing === "edit" ? (
+        <EditForm troupeId={troupeId} boon={b} characters={characters} onDone={done} />
+      ) : doing === "trade" || doing === "pass" ? (
+        <MoveForm troupeId={troupeId} boon={b} characters={characters} pass={doing === "pass"} onDone={done} />
+      ) : doing === "settle" ? (
+        <SettleForm troupeId={troupeId} boon={b} onDone={done} />
+      ) : (
+        <NoteForm troupeId={troupeId} boon={b} action={doing} onDone={done} />
+      )}
+      <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="text-gold">{kindName(b.kind)}</span>
+        <span>{dates.day(b.made_on)}</span>
+        <BoonMarks boon={b} />
+      </p>
       <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
-        {(["debtor", "creditor"] as const).map((side) => {
-          const party = b[side];
+        {sides.map(({ side, party }) => {
           // A side written as text, in full where elsewhere it is cut to a line (#990).
           if (party.character_id || shortName(party.name) === party.name) return null;
           return (
@@ -109,11 +181,32 @@ export function BoonDetail({ troupeId, boonId, characters }: { troupeId: string;
             <dd className="wrap-anywhere whitespace-pre-line">{b.conditions}</dd>
           </>
         )}
+      </dl>
+      {(notes.length > 0 || b.creditor_disgraced) && (
+        <ul className="flex flex-col gap-1">
+          {notes.map((n) => (
+            <li key={n.key} className={n.blood ? "text-blood-bright" : "text-mist"}>
+              {n.text}
+            </li>
+          ))}
+          {b.creditor_disgraced && <li className="text-blood-bright">{disgracedText(partyName(b.creditor))}</li>}
+        </ul>
+      )}
+      <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
         <dt className="text-mist">Registered</dt>
         <dd>
           {dates.dateTime(b.submitted_at)}
           {b.submitted_by && <span className="text-mist"> by {b.submitted_by}</span>}
         </dd>
+        {b.closed_at && (
+          <>
+            <dt className="text-mist">{b.state === "void" ? "Made void" : "Settled"}</dt>
+            <dd>
+              {dates.dateTime(b.closed_at)}
+              {b.closed_note && <span className="text-mist"> · {b.closed_note}</span>}
+            </dd>
+          </>
+        )}
         {b.notify_on_trade && (
           <>
             <dt className="text-mist">If traded</dt>
@@ -124,15 +217,6 @@ export function BoonDetail({ troupeId, boonId, characters }: { troupeId: string;
           <>
             <dt className="text-mist">Staff note</dt>
             <dd className="whitespace-pre-line">{b.staff_note}</dd>
-          </>
-        )}
-        {b.closed_at && (
-          <>
-            <dt className="text-mist">{b.state === "void" ? "Made void" : "Settled"}</dt>
-            <dd>
-              {dates.dateTime(b.closed_at)}
-              {b.closed_note && <span className="text-mist"> · {b.closed_note}</span>}
-            </dd>
           </>
         )}
       </dl>
@@ -147,46 +231,78 @@ export function BoonDetail({ troupeId, boonId, characters }: { troupeId: string;
       )}
       {b.status_loss && (!harpy || harpy.settle) && <StatusLoss troupeId={troupeId} boon={b} />}
       {b.gallant && (!harpy || harpy.settle) && <GallantOffer troupeId={troupeId} boon={b} offer={b.gallant} />}
-      {actions.length === 0 ? null : doing === null ? (
-        <div role="group" aria-label="What to do with it" className="flex flex-wrap gap-2">
-          {actions.map((a) => (
-            <Button key={a} variant={a === "void" ? "ghost" : "secondary"} onClick={() => setDoing(a)}>
-              {ACTION_LABELS[a]}
-            </Button>
-          ))}
-        </div>
-      ) : doing === "edit" ? (
-        <EditForm troupeId={troupeId} boon={b} characters={characters} onDone={done} />
-      ) : doing === "trade" || doing === "pass" ? (
-        <MoveForm troupeId={troupeId} boon={b} characters={characters} pass={doing === "pass"} onDone={done} />
-      ) : doing === "settle" ? (
-        <SettleForm troupeId={troupeId} boon={b} onDone={done} />
-      ) : (
-        <NoteForm troupeId={troupeId} boon={b} action={doing} onDone={done} />
-      )}
       <div>
-        <SectionLabel as="h4">Its log</SectionLabel>
-        <ol aria-label={`Log of ${owes(b)}`} className="mt-1 flex flex-col gap-1 text-xs wrap-anywhere">
-          {(b.events ?? []).map((e) => (
-            <li key={e.id}>
-              <span className="text-parchment">{eventName(e.kind)}</span>
-              <span className="text-mist">
-                {" "}
-                · {dates.dateTime(e.at)}
-                {e.by ? ` · ${e.by}${e.as_character ? ` as ${e.as_character}` : ""}` : e.as_character ? ` · ${e.as_character}` : ""}
-              </span>
-              {e.note && <span> · {e.note}</span>}
-              {e.changes && e.changes.length > 0 && (
-                <ul className="ml-3 text-mist">
-                  {e.changes.map((c) => (
-                    <li key={c.field}>{changeText(c)}</li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ol>
+        <SectionLabel as="h3">Its log</SectionLabel>
+        <BoonLog boon={b} />
       </div>
+    </section>
+  );
+  return frame(owes(b), menu, body);
+}
+
+/** What the detail notes about a side: that they have left, as far as it is known, or are a Boonbreaker (#717). */
+function sideNotes(party: BoonOut["debtor"], side: "debtor" | "creditor"): { key: string; text: string; blood: boolean }[] {
+  const who = `${shortName(party.name)}, the ${side},`;
+  const notes = [];
+  if (party.left) notes.push({ key: `${side}-left`, text: `${who} ${party.left === "dead" ? "is dead" : "is off-field"}.`, blood: false });
+  if (party.boonbreaker) notes.push({ key: `${side}-boonbreaker`, text: `${who} is a Boonbreaker.`, blood: true });
+  return notes;
+}
+
+/**
+ * A boon's log, oldest first, as a timeline: what was done, when, by whom (as their
+ * character, for a Harpy, a Lesser Harpy or a player), and the note. What each line
+ * changed comes only to storytellers and assistant storytellers (the API leaves it
+ * out for anyone else), as a before and after, marked as theirs alone.
+ */
+function BoonLog({ boon }: { boon: BoonOut }) {
+  const dates = useDates();
+  return (
+    <ol aria-label={`Log of ${owes(boon)}`} className="mt-2 ml-1 flex flex-col gap-3 border-l border-ash pl-4 text-xs wrap-anywhere">
+      {(boon.events ?? []).map((e) => (
+        <li key={e.id} className="relative">
+          <span aria-hidden className="absolute top-1 -left-[calc(1rem+4.5px)] size-2 rounded-full border border-ash bg-dusk" />
+          <span className="text-parchment">{eventName(e.kind)}</span>
+          <span className="text-mist">
+            {" "}
+            · {dates.dateTime(e.at)}
+            {e.by ? ` · ${e.by}${e.as_character ? ` as ${e.as_character}` : ""}` : e.as_character ? ` · ${e.as_character}` : ""}
+          </span>
+          {e.note && <span> · {e.note}</span>}
+          {e.changes && e.changes.length > 0 && <Changes changes={e.changes} />}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/**
+ * What a line of the log changed, field by field: the old value struck through, the
+ * new one beside it, or under it on a phone. Long text wraps.
+ */
+function Changes({ changes }: { changes: NonNullable<BoonEventOut["changes"]> }) {
+  return (
+    <div className="mt-1.5 flex flex-col gap-1.5 rounded-md border border-ash p-2">
+      <Badge className="self-start">Staff only</Badge>
+      <dl className="grid gap-x-3 gap-y-0.5 sm:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)]">
+        {changes.map((c) => (
+          <div key={c.field} className="contents">
+            <dt className="text-mist max-sm:mt-1 max-sm:first:mt-0">
+              {fieldName(c.field)}
+              <span className="sr-only">: </span>
+            </dt>
+            <dd className="whitespace-pre-line">
+              <del className="text-mist">{c.before || "(none)"}</del>
+            </dd>
+            <dd className="whitespace-pre-line">
+              <span aria-hidden className="text-mist">
+                {" → "}
+              </span>
+              <ins className="no-underline">{c.after || "(none)"}</ins>
+            </dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }

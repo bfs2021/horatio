@@ -6,13 +6,15 @@ const PHONE_FULL = "max-sm:m-0 max-sm:h-dvh max-sm:max-h-none max-sm:w-screen ma
 /** A modal dialog over the page: Escape, the × or a click outside closes it.
  * Its content mounts only while open, so forms inside start fresh each time.
  * A wide one has room for a form of several columns; a `phoneFull` one fills a
- * phone's screen, with a Close button across its foot in place of the ×. */
+ * phone's screen, with a Close button across its foot in place of the ×.
+ * `actions` go in its header, beside the title (a menu, say). */
 export function Dialog({
   title,
   open,
   onClose,
   wide = false,
   phoneFull = false,
+  actions,
   children,
 }: {
   title: string;
@@ -20,6 +22,7 @@ export function Dialog({
   onClose: () => void;
   wide?: boolean;
   phoneFull?: boolean;
+  actions?: ReactNode;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -46,9 +49,10 @@ export function Dialog({
       className={`m-auto text-left ${wide ? "w-[min(48rem,calc(100vw-2rem))]" : "w-[min(28rem,calc(100vw-2rem))]"} rounded-lg border border-ash bg-dusk p-0 text-parchment shadow-xl backdrop:bg-black/60 ${phoneFull ? PHONE_FULL : ""}`}
     >
       <div className="flex items-center justify-between gap-3 border-b border-ash px-4 py-3">
-        <h2 id={titleId} className="font-display text-gold">
+        <h2 id={titleId} className="min-w-0 font-display text-gold wrap-anywhere">
           {title}
         </h2>
+        {actions && <div className="ml-auto shrink-0">{open && actions}</div>}
         <button type="button" aria-label="Close" className={`text-xl leading-none text-mist hover:text-parchment ${phoneFull ? "max-sm:hidden" : ""}`} onClick={onClose}>
           ×
         </button>

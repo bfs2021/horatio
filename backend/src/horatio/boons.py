@@ -16,12 +16,13 @@ the ledger as "departed", out of the open boons.
 
 Each boon keeps its own log (BoonEvent): its registering, every edit, trade,
 passing on, settling, voiding and reopening, with who did it, when and a note.
-An edit keeps what it changed, field by field, which only the troupe's
-storytellers and assistant storytellers see (`sees_changes`). A Harpy (#688) or a
-Lesser Harpy (#689) reads only the lines within their own sight (#992,
+Each line keeps what it changed, field by field (an edit's fields, a trade's old and
+new creditor, a settling's state before and after...), which only the troupe's
+storytellers and assistant storytellers see (`sees_changes`, #979): anyone else
+reads only what was done, when, by whom and the note. A Harpy (#688) or a Lesser
+Harpy (#689) reads only the lines within their own sight (#992,
 horatio.boon_harpy.in_sight): theirs, not an earlier Harpy's, and never staff's
-edits. A trade, a passing on, a settling or a reopening says what it did to anyone
-who sees the line.
+edits.
 Each change also goes in the troupe's log, which is for its running staff; never
 in a character's own, which its player reads.
 
@@ -156,8 +157,9 @@ def can_manage(db: Session, user: User, troupe: Troupe) -> bool:
 
 
 def sees_changes(db: Session, user: User, troupe: Troupe) -> bool:
-    """Whether `user` sees what each edit changed: the troupe's storytellers and
-    assistant storytellers only (and the custodian), never the Harpy or a player."""
+    """Whether `user` sees what each line of a boon's log changed (#979): the troupe's
+    storytellers and assistant storytellers only (and the custodian), never the Harpy,
+    a Lesser Harpy, a narrator or a player."""
     return allows(
         troupe_role(db, user, troupe), TroupeAction.MANAGE_BOONS, is_custodian=user.is_custodian
     )

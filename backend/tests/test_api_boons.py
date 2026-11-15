@@ -1,18 +1,18 @@
 """Boons (#685): the troupe's setting, staff registering boons (several at once), each
-boon's own log with its edits' changes for storytellers and assistant storytellers
+boon's own log with what each line changed for storytellers and assistant storytellers
 only, trading, passing on, settling, voiding and reopening, the ledger's views, and
 the staff summary on a sheet (MET: VTM pp. 395-397)."""
 
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, get_args
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from horatio.api.boons import event_out
+from horatio.api.boons import EventKind, event_out
 from horatio.models import BoonEvent
 from tests.api_helpers import Person, Troupe, new_character, sign_up
 from tests.test_api_downtimes import member_character
@@ -293,23 +293,21 @@ def test_an_edit_needs_a_note_and_its_log_keeps_each_change(ledger: Ledger) -> N
     assert seen is not None
 
 
-def test_only_an_edits_changes_are_kept_from_those_who_dont_read_them(ledger: Ledger) -> None:
-    """The Harpy (#688) will see a boon's log without its edits' changes: an edit says
-    only that it was edited, when, and the note; a trade still says what it did."""
+def test_what_any_line_changed_is_kept_from_those_who_dont_read_it(ledger: Ledger) -> None:
+    """Whatever a line of the log is, only those who read changes (storytellers and
+    assistant storytellers) get what it changed (#979): anyone else gets what was done,
+    when, and the note."""
     at = datetime.now(UTC)
-    edited = BoonEvent(
-        id=uuid.uuid4(), kind="edited", note="Typo", changes={"reason": ["a", "b"]}, created_at=at
-    )
-    traded = BoonEvent(
-        id=uuid.uuid4(), kind="traded", note="", changes={"creditor": ["A", "B"]}, created_at=at
-    )
+    for kind in get_args(EventKind):
+        line = BoonEvent(
+            id=uuid.uuid4(), kind=kind, note="Why", changes={"state": ["A", "B"]}, created_at=at
+        )
 
-    hidden = event_out(edited, {}, {}, diffs=False)
-    assert (hidden.kind, hidden.note, hidden.changes) == ("edited", "Typo", None)
-    assert event_out(edited, {}, {}, diffs=True).changes is not None
-    trade = event_out(traded, {}, {}, diffs=False).changes
-    assert trade is not None
-    assert [(c.field, c.before, c.after) for c in trade] == [("creditor", "A", "B")]
+        hidden = event_out(line, {}, {}, diffs=False)
+        assert (hidden.kind, hidden.note, hidden.changes) == (kind, "Why", None)
+        shown = event_out(line, {}, {}, diffs=True).changes
+        assert shown is not None
+        assert [(c.field, c.before, c.after) for c in shown] == [("state", "A", "B")]
 
 
 # --- trading and passing on ---------------------------------------------------------------

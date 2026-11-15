@@ -2,10 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useContext, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
-import type { BoonOut, CharacterChoice } from "../../api/types";
+import type { BoonOut } from "../../api/types";
 import { BOON_PAGE, kindName, stateText } from "../../boons";
 import { DataTable, type Column } from "../../components/DataTable";
 import { Pager } from "../../components/Pager";
+import { SidePanel, useSideBySide } from "../../components/SidePanel";
 import { SortHeading } from "../../components/SortHeading";
 import { useWidePage } from "../../components/widePage";
 import { Badge, Button, Card, Empty, ErrorText, Loading } from "../../components/ui";
@@ -84,6 +85,22 @@ function Ledger({ troupeId }: { troupeId: string }) {
   const search = readLedger(params);
   const update = (change: Partial<LedgerSearch>) => setParams((now) => writeLedger(now, { ...readLedger(now), ...change }), { replace: true });
   const reviewing = search.view === "review";
+  // The boon open in the side panel, in the URL as ?boon= so it can be linked, and Back
+  // closes it (#979). A search or a page leaves it open.
+  const opened = params.get("boon");
+  const open = (boonId: string | null) =>
+    setParams(
+      (now) => {
+        const next = new URLSearchParams(now);
+        if (boonId) next.set("boon", boonId);
+        else next.delete("boon");
+        return next;
+      },
+      { replace: !boonId },
+    );
+  // Beside the table from lg up; a dialog on a phone, and in the Play View's narrow
+  // page for a Harpy (#985 looks at that page).
+  const docked = useSideBySide() && !harpy;
   // The top of the list, brought back into sight when paging from its foot.
   const top = useRef<HTMLDivElement>(null);
   const [adding, setAdding] = useState(false);
@@ -151,7 +168,7 @@ function Ledger({ troupeId }: { troupeId: string }) {
         }
       >
         <p className="text-sm text-mist">
-          The debts characters owe each other, registered with the Harpy ({BOON_PAGE}). Each boon keeps its own log; an edit&apos;s changes show only to
+          The debts characters owe each other, registered with the Harpy ({BOON_PAGE}). Each boon keeps its own log; what each entry changed shows only to
           storytellers and assistant storytellers. A boon made off the record isn&apos;t tracked here.
           {harpy?.role === "harpy" && " You keep it as the troupe's Harpy: what you do is logged as your character. An NPC you can't pick is named by name, for staff to link."}
           {harpy?.role === "talon" &&
@@ -176,16 +193,33 @@ function Ledger({ troupeId }: { troupeId: string }) {
         />
       </div>
 
-      {reviewing ? (
-        <BoonReviewQueue troupeId={troupeId} detail={(boonId) => <BoonDetail troupeId={troupeId} boonId={boonId} characters={characters} />} />
-      ) : total === 0 ? (
-        <Empty>{narrowed(search) ? "No boons match." : search.view === "open" ? "No open boons yet." : "None here."}</Empty>
-      ) : (
-        <>
-          <BoonTable key={search.view} troupeId={troupeId} boons={boons} characters={characters} busy={ledger.isPlaceholderData} sorting={sorting} />
-          <Pager label="Pages of boons" page={page} size={PAGE} shown={boons.length} total={total} onPage={turn} />
-        </>
-      )}
+      <div className={docked && opened ? "grid grid-cols-[minmax(0,1fr)_20rem] items-start gap-4 xl:grid-cols-[minmax(0,1fr)_26rem]" : ""}>
+        <div className="flex min-w-0 flex-col gap-4">
+          {reviewing ? (
+            <BoonReviewQueue troupeId={troupeId} detail={(boonId) => <BoonDetail troupeId={troupeId} boonId={boonId} characters={characters} />} />
+          ) : total === 0 ? (
+            <Empty>{narrowed(search) ? "No boons match." : search.view === "open" ? "No open boons yet." : "None here."}</Empty>
+          ) : (
+            <>
+              <BoonTable key={search.view} boons={boons} busy={ledger.isPlaceholderData} sorting={sorting} opened={opened} onOpen={open} />
+              <Pager label="Pages of boons" page={page} size={PAGE} shown={boons.length} total={total} onPage={turn} />
+            </>
+          )}
+        </div>
+        {opened && (
+          <BoonDetail
+            key={opened}
+            troupeId={troupeId}
+            boonId={opened}
+            characters={characters}
+            frame={(title, actions, body) => (
+              <SidePanel title={title} actions={actions} docked={docked} onClose={() => open(null)}>
+                {body}
+              </SidePanel>
+            )}
+          />
+        )}
+      </div>
 
       {(!harpy || harpy.audit) && <AuditsCard troupeId={troupeId} inPlay={!!harpy} />}
     </div>
@@ -195,22 +229,23 @@ function Ledger({ troupeId }: { troupeId: string }) {
 /**
  * The ledger's boons, one line each (#975), as the troupe's old sheet has them: who
  * owes whom, the kind, the night, the reason, and where it stands. A click on a row
- * opens its detail under it. On a phone each row folds to "Debtor owes Creditor",
- * then its kind, night and reason.
+ * opens it in the side panel (#979), and marks it. On a phone each row folds to
+ * "Debtor owes Creditor", then its kind, night and reason.
  */
 function BoonTable({
-  troupeId,
   boons,
-  characters,
   busy,
   sorting,
+  opened,
+  onOpen,
 }: {
-  troupeId: string;
   boons: BoonOut[];
-  characters: CharacterChoice[];
   busy: boolean;
   // A column's heading, which sorts by it (#976).
   sorting: (label: string, by: LedgerSort) => Pick<Column<BoonOut>, "header" | "label" | "sort">;
+  // The boon open in the side panel, and opening one.
+  opened: string | null;
+  onOpen: (boonId: string) => void;
 }) {
   const dates = useDates();
   const columns: Column<BoonOut>[] = [
@@ -278,15 +313,7 @@ function BoonTable({
       dense
       busy={busy}
       className={busy ? "opacity-60" : ""}
-      expand={{
-        label: (b) => `Details: ${boonLabel(b)}`,
-        wholeRow: true,
-        render: (b) => (
-          <section aria-label={`Boon: ${boonLabel(b)}`}>
-            <BoonDetail troupeId={troupeId} boonId={b.id} characters={characters} />
-          </section>
-        ),
-      }}
+      select={{ label: (b) => `Details: ${boonLabel(b)}`, onSelect: (b) => onOpen(b.id), selected: opened }}
     />
   );
 }

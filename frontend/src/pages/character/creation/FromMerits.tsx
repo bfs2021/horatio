@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api, unwrap } from "../../../api/client";
 import type { CatalogueOut, CharacterOut, CreationOut, PoolOut, SheetOut, TraitOut } from "../../../api/types";
+import { Toggle } from "../../../components/Toggle";
 import { Badge, ErrorText } from "../../../components/ui";
 import { useAction, useRefusals } from "../../../hooks";
 import { FreeChoicesStep } from "./FreeChoicesStep";
@@ -131,26 +132,11 @@ function FromBudget({
           // Flaws can go past their budget, with the Storyteller's OK (p. 85).
           const short = !mine && !pool.past_budget && points > pool.remaining;
           const unchosen = !mine && !!t.choices?.length && !choices[t.name];
-          const id = `from-${pool.category}-${t.name}`.replace(/\W+/g, "-");
           return (
             <li key={t.name} className="flex flex-col gap-1 text-sm">
-              <div className="flex items-start gap-2">
-                <input
-                  id={id}
-                  type="checkbox"
-                  role="switch"
-                  className="mt-1"
-                  checked={tapped?.name === t.name ? tapped.on : !!mine}
-                  disabled={change.isPending || (!mine && (!!refused || short || unchosen))}
-                  onChange={(e) => {
-                    setTapped({ name: t.name, on: e.target.checked });
-                    change.mutate({ trait: t, on: e.target.checked }, { onSettled: () => setTapped(null) });
-                  }}
-                  aria-describedby={t.description ? `${id}-about` : undefined}
-                />
-                <div className="min-w-0">
-                  {/* Named by the merit alone: its description is read as its description. */}
-                  <label htmlFor={id}>
+              <Toggle
+                label={
+                  <>
                     <span className="text-parchment">{t.name}</span>{" "}
                     <span className="text-gold">
                       ({points}-point {kind}
@@ -158,17 +144,20 @@ function FromBudget({
                     </span>
                     {mine?.detail && <span className="text-parchment">: {mine.detail}</span>}
                     <CategoryMark change={t.changed} />
-                  </label>
-                  {t.description && (
-                    <p id={`${id}-about`} className="mt-0.5 text-xs text-mist">
-                      {bookSummary(t.description, t.changed) ?? ""}
-                    </p>
-                  )}
-                  <HouseWording change={t.changed} className="mt-1 text-xs" />
-                </div>
-              </div>
+                  </>
+                }
+                hint={t.description ? (bookSummary(t.description, t.changed) ?? "") : undefined}
+                checked={tapped?.name === t.name ? tapped.on : !!mine}
+                disabled={change.isPending || (!mine && (!!refused || short || unchosen))}
+                onChange={(on) => {
+                  setTapped({ name: t.name, on });
+                  change.mutate({ trait: t, on }, { onSettled: () => setTapped(null) });
+                }}
+              >
+                <HouseWording change={t.changed} className="text-xs" />
+              </Toggle>
               {!mine && !!t.choices?.length && (
-                <span className="ml-6 block">
+                <span className="ml-14 block">
                   <ChoiceSelect
                     label={`${t.name}: which?`}
                     placeholder="Which?"
@@ -181,14 +170,14 @@ function FromBudget({
                 </span>
               )}
               {refused && (
-                <p className="ml-6 text-xs text-blood-bright">
+                <p className="ml-14 text-xs text-blood-bright">
                   {refused}
                   {steps && step && <Because characterId={character.id} refs={refusal!.because} steps={steps} step={step} />}
                 </p>
               )}
               {mine && <FreeChoicesHere character={character} sheet={sheet} category={pool.category} name={t.name} />}
               {!refused && short && (
-                <p className="ml-6 text-xs text-mist">
+                <p className="ml-14 text-xs text-mist">
                   Needs {points} points; {pool.remaining} left.
                 </p>
               )}

@@ -668,8 +668,8 @@ test("players read the whole setting on its tab, in print, on the profile when s
   await expect(visitor.getByRole("heading", { name: troupeName })).toBeVisible();
   await expect(visitor.getByRole("article", { name: "Setting Style Document" })).toHaveCount(0);
   await l.goto(`/troupes/${troupeId}/settings`);
-  await l.getByRole("checkbox", { name: /Show it on the troupe's profile/ }).click();
-  await expect(l.getByRole("checkbox", { name: /Show it on the troupe's profile/ })).toBeChecked();
+  await l.getByRole("switch", { name: /Show it on the troupe's profile/ }).click();
+  await expect(l.getByRole("switch", { name: /Show it on the troupe's profile/ })).toBeChecked();
   await visitor.reload();
   await expect(visitor.getByRole("article", { name: "Setting Style Document" }).getByText("Chaos")).toBeVisible();
   // And on the troupe's Overview, with the rest of its profile (#781).

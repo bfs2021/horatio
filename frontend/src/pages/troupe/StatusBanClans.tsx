@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api, unwrap } from "../../api/client";
 import type { ClanBansOut } from "../../api/types";
 import { useClanName } from "../../components/ClanNames";
+import { Checkbox } from "../../components/Checkbox";
 import { Badge, Button, Card, ErrorText } from "../../components/ui";
 import { useRulesAction } from "../../hooks";
 
@@ -105,10 +106,7 @@ function BanClans({
             )}
             <div className="grid grid-cols-2 gap-x-3 gap-y-1">
               {allClans.map((clan) => (
-                <label key={clan} className="flex items-center gap-2">
-                  <input type="checkbox" checked={ban.clans.includes(clan)} onChange={(e) => onSave(toggled(ban.clans, clan, e.target.checked))} />
-                  {named(clan)}
-                </label>
+                <Checkbox key={clan} label={named(clan)} checked={ban.clans.includes(clan)} onChange={(on) => onSave(toggled(ban.clans, clan, on))} />
               ))}
             </div>
           </fieldset>

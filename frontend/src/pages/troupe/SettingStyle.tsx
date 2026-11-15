@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api/client";
 import type { SettingEntryOut, SettingOut, SettingPresetOut } from "../../api/types";
 import { Dialog } from "../../components/Dialog";
 import { Markdown } from "../../components/Markdown";
+import { Toggle } from "../../components/Toggle";
 import { Button, Card, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { moved, type Kind } from "./settingStyle";
@@ -65,13 +66,14 @@ function ShowCard({ troupeId, setting }: { troupeId: string; setting: SettingOut
         moods and teaser as it is made.
       </p>
       {setting.can_publish ? (
-        <label className="mt-3 flex items-start gap-2 text-sm">
-          <input type="checkbox" className="mt-1" checked={setting.public} disabled={show.isPending} onChange={(e) => show.mutate(e.target.checked)} />
-          <span>
-            Show it on the troupe's profile
-            <span className="block text-xs text-mist">A public profile shows it to anyone at all.</span>
-          </span>
-        </label>
+        <Toggle
+          label="Show it on the troupe's profile"
+          hint="A public profile shows it to anyone at all."
+          checked={setting.public}
+          disabled={show.isPending}
+          onChange={(on) => show.mutate(on)}
+          className="mt-3"
+        />
       ) : (
         <p className="mt-3 text-sm">{setting.public ? "The troupe's profile shows it." : "The troupe's profile doesn't show it."}</p>
       )}

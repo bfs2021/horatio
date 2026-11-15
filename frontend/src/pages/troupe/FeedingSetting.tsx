@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
 import { useToast } from "../../components/Toast";
+import { Toggle } from "../../components/Toggle";
 import { Card, ErrorText } from "../../components/ui";
 import { useRulesAction } from "../../hooks";
 
@@ -81,13 +82,15 @@ export function FeedingSetting({ troupeId, canEdit }: { troupeId: string; canEdi
             {RULES.map((r) => {
               const blocked = r.key === "rack" && !now.resonance;
               return (
-                <label key={r.key} className={`flex items-start gap-2 ${off || blocked ? "opacity-60" : ""}`}>
-                  <input type="checkbox" className="mt-1" checked={now[r.key]} disabled={blocked} onChange={(e) => toggle(r.key, e.target.checked)} />
-                  <span>
-                    {r.label}
-                    <span className="block text-xs text-mist">{r.meaning}</span>
-                  </span>
-                </label>
+                <Toggle
+                  key={r.key}
+                  label={r.label}
+                  hint={r.meaning}
+                  checked={now[r.key]}
+                  disabled={blocked || off || save.isPending}
+                  onChange={(on) => toggle(r.key, on)}
+                  className={off || blocked ? "opacity-60" : undefined}
+                />
               );
             })}
           </fieldset>

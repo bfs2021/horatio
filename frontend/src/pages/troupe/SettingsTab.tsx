@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
+import { Checkbox } from "../../components/Checkbox";
 import { Card, ErrorText, Loading } from "../../components/ui";
 import { useAction, useRulesAction } from "../../hooks";
 import { ClanNamesSetting } from "./ClanNamesSetting";
@@ -140,15 +141,13 @@ function SectsCard({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean })
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-2 text-sm text-mist">Which sects may player characters join from? Leave all unticked to take any sect. NPCs are not limited.</legend>
           {sects.map((sect) => (
-            <label key={sect} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={allowed.includes(sect)}
-                disabled={save.isPending}
-                onChange={(e) => save.mutate(e.target.checked ? [...allowed, sect] : allowed.filter((s) => s !== sect))}
-              />
-              {sect}
-            </label>
+            <Checkbox
+              key={sect}
+              label={sect}
+              checked={allowed.includes(sect)}
+              disabled={save.isPending}
+              onChange={(on) => save.mutate(on ? [...allowed, sect] : allowed.filter((s) => s !== sect))}
+            />
           ))}
           <ErrorText error={save.error ?? catalogue.error} />
         </fieldset>
@@ -176,15 +175,13 @@ function SplatsCard({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean }
           </legend>
           {splats.isPending && <Loading compact />}
           {(splats.data ?? []).map(({ splat, label }) => (
-            <label key={splat} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={allowed.includes(splat)}
-                disabled={save.isPending || (allowed.length === 1 && allowed.includes(splat))}
-                onChange={(e) => save.mutate(e.target.checked ? [...allowed, splat] : allowed.filter((s) => s !== splat))}
-              />
-              {label}
-            </label>
+            <Checkbox
+              key={splat}
+              label={label}
+              checked={allowed.includes(splat)}
+              disabled={save.isPending || (allowed.length === 1 && allowed.includes(splat))}
+              onChange={(on) => save.mutate(on ? [...allowed, splat] : allowed.filter((s) => s !== splat))}
+            />
           ))}
           <ErrorText error={save.error ?? splats.error} />
         </fieldset>

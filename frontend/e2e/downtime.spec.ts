@@ -1308,12 +1308,23 @@ test("staff share out a cycle's responses by character, and assign several in on
     await send(player.page, "POST", `/api/characters/${ids[i]}/downtime/submit`);
   }
 
+  // A long staff name and a long fill table name, which the choices of who has a response
+  // and of a table to roll on carry: on a phone they keep to the screen (#945).
+  await send(lead.page, "PUT", "/api/profile", { display_name: "Bartholomew Featherstonehaugh-Smythe of Port Halden", links: [] });
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/random-tables`, { name: "What the harbour whispers after midnight, by the old docks", entries: ["Nothing"] });
+
   // The responses come by character, each with how many are written; one folds away.
   const l = lead.page;
+  const phone = test.info().project.name === "phone";
+  const sideways = () => l.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  if (phone) await l.setViewportSize({ width: 375, height: 800 });
   await l.goto(`/troupes/${troupe.id}/downtimes/${cycle.id}/responses`);
   const clementine = l.getByRole("region", { name: "Clementine" });
   const barnaby = l.getByRole("region", { name: "Barnaby" });
   await expect(clementine.getByRole("button", { name: "Clementine 0 of 2 responses written" })).toBeVisible();
+  await expect(l.getByLabel("Fill table").first().locator("option", { hasText: "What the harbour whispers" })).toHaveCount(1);
+  await expect(l.getByLabel("Who has it").locator("option", { hasText: "Bartholomew Featherstonehaugh" })).toHaveCount(1);
+  if (phone) expect(await sideways()).toBe(0);
   await expect(barnaby.getByLabel("Response to Barnaby")).toHaveCount(2);
   await barnaby.getByRole("button", { name: /^Barnaby/ }).click();
   await expect(barnaby.getByLabel("Response to Barnaby")).toHaveCount(0);
@@ -1327,6 +1338,7 @@ test("staff share out a cycle's responses by character, and assign several in on
   await barnaby.getByLabel("Select Barnaby: Downtime action").first().check();
   const bar = l.getByRole("form", { name: "Assign selected" });
   await expect(bar.getByText("3 selected")).toBeVisible();
+  if (phone) expect(await sideways()).toBe(0);
   await bar.getByLabel("Assign selected to").selectOption({ label: "bulkassign-narr (Narrator)" });
   await l.screenshot(shots("responses-bulk"));
   await bar.getByRole("button", { name: "Assign 3" }).click();

@@ -73,6 +73,28 @@ describe("DataTable", () => {
     expect(screen.queryByText("All of Isolde Fenwright")).toBeNull();
   });
 
+  it("with wholeRow, opens a row from a click anywhere on it, but not from a control of its own", () => {
+    render(
+      <DataTable
+        label="People"
+        columns={COLUMNS}
+        rows={ROWS}
+        rowKey={(r) => r.id}
+        expand={{ label: (r) => `${r.name}'s characters`, render: (r) => <p>All of {r.name}</p>, wholeRow: true }}
+      />,
+    );
+    const chevron = screen.getByRole("button", { name: "Isolde Fenwright's characters" });
+    fireEvent.click(screen.getAllByRole("cell").find((c) => c.textContent === "Toreador")!);
+    expect(chevron.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByText("All of Isolde Fenwright")).toBeTruthy();
+    // The chevron opens and closes it once, not twice.
+    fireEvent.click(chevron);
+    expect(screen.queryByText("All of Isolde Fenwright")).toBeNull();
+    // A button of the row's own does its own thing.
+    fireEvent.click(screen.getByRole("button", { name: "Actions for Isolde Fenwright" }));
+    expect(screen.queryByText("All of Isolde Fenwright")).toBeNull();
+  });
+
   it("marks the column the list is sorted by", () => {
     const sorted = COLUMNS.map((c) => (c.key === "xp" ? { ...c, sort: "descending" as const } : c));
     render(<DataTable label="Characters" columns={sorted} rows={ROWS} rowKey={(r) => r.id} />);

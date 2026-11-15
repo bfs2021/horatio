@@ -137,6 +137,9 @@ def test_a_name_that_links_to_no_character_is_flagged(ledger: Ledger) -> None:
     flag = found[0]["flags"][0]
     assert (flag["kind"], flag["side"]) == ("unmatched", "creditor")
     assert flag["detail"] == "No character in the troupe has this name."
+    # The ledger's list marks it flagged, without its flags (#975).
+    listed = ledger.ledger("open")["boons"]
+    assert [(b["flagged"], b["flags"]) for b in listed] == [(True, None)]
 
     # A name that is a character's says so, to link it.
     ledger.one(named("vidal"), ledger.agnes)
@@ -151,9 +154,13 @@ def test_a_name_that_links_to_no_character_is_flagged(ledger: Ledger) -> None:
         )
     )
     assert cleared["flags"] == []
+    assert cleared["flagged"] is False
     assert cleared["state"] == "registered"
     assert cleared["events"][-1]["kind"] == "flag_cleared"
     assert boon["id"] not in [b["id"] for b in queue(ledger)]
+    assert [b["flagged"] for b in ledger.ledger("open")["boons"] if b["id"] == boon["id"]] == [
+        False
+    ]
 
 
 def test_a_likely_duplicate_is_flagged_but_boons_entered_together_are_not(

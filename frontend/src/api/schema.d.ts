@@ -16540,6 +16540,11 @@ export interface components {
             departed: boolean;
             /** Events */
             events?: components["schemas"]["BoonEventOut"][] | null;
+            /**
+             * Flagged
+             * @default false
+             */
+            flagged: boolean;
             /** Flags */
             flags?: components["schemas"]["BoonFlagOut"][] | null;
             gallant?: components["schemas"]["GallantOut"] | null;
@@ -16614,6 +16619,8 @@ export interface components {
             character_id: string | null;
             /** Kind */
             kind: string | null;
+            /** Left */
+            left?: ("dead" | "off_field") | null;
             /** Name */
             name: string;
             /** Standing */

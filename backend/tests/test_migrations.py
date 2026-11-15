@@ -896,7 +896,7 @@ def test_the_boon_log_migration_sorts_who_each_line_was_done_as(
     """Migration 0231 (#992): a line done as no character was staff's; as a character
     holding the Harpy title then, the Harpy's; as one the Harpy gave access, a Lesser
     Harpy's; as anyone else (or the Harpy before they held it), a player's."""
-    command.downgrade(alembic_config, "0229")
+    command.downgrade(alembic_config, "0230")
     user, troupe, boon = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
     harpy, talon, player = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
     lines = {name: uuid.uuid4() for name in ("staff", "harpy", "early", "talon", "player")}

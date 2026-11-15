@@ -19,13 +19,13 @@ from tests.test_api_boons import named, row
 
 
 class Sight(Audits):
-    """The Court with the full ledger, Lesser Harpies on, and Iris one who may add and
-    edit boons."""
+    """The Court with the full ledger, Lesser Harpies on, and Iris one who may add,
+    correct and settle boons."""
 
     def __init__(self, troupe: Troupe) -> None:
         super().__init__(troupe)
         ok(self.setting(True))
-        ok(super(Audits, self).give(self.iris, can_add=True, can_edit=True))
+        ok(super(Audits, self).give(self.iris, can_add=True, can_edit=True, can_settle=True))
 
     def log(self, boon: dict[str, Any], by: Person | None = None) -> list[dict[str, Any]]:
         return ok(self.get(boon, by=by))["events"]

@@ -33,7 +33,10 @@ class BoonTalonsSettingIn(BaseModel):
 
 class TalonIn(BaseModel):
     can_add: bool = False
+    # Correct boons: edit what one says, and link a name to a character.
     can_edit: bool = False
+    # Settle and move boons, and review what players report (#984).
+    can_settle: bool = False
     can_audit: bool = False
 
 
@@ -42,6 +45,7 @@ class TalonOut(BaseModel):
     name: str
     can_add: bool
     can_edit: bool
+    can_settle: bool
     can_audit: bool
     # The Harpy who gave it, by their character's name; empty when staff did.
     given_by: str
@@ -101,6 +105,7 @@ def talons_out(db: DbSession, troupe: Troupe, harpy: Character | None) -> BoonTa
                 name=t.character.name,
                 can_add=t.talon.can_add,
                 can_edit=t.talon.can_edit,
+                can_settle=t.talon.can_settle,
                 can_audit=t.talon.can_audit,
                 given_by=t.given_by,
                 given_at=t.talon.created_at,
@@ -162,6 +167,7 @@ def give_talon(
         character,
         add=body.can_add,
         edit=body.can_edit,
+        settle=body.can_settle,
         audits=body.can_audit,
         by=harpy,
     )

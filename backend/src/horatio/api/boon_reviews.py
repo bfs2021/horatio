@@ -80,11 +80,17 @@ class LinkOut(BaseModel):
     skipped: int
 
 
-def review_troupe(db: DbSession, user: User, troupe_id: uuid.UUID) -> tuple[Troupe, Keeper]:
+def review_troupe(
+    db: DbSession, user: User, troupe_id: uuid.UUID, link: bool = False
+) -> tuple[Troupe, Keeper]:
     """The troupe, for those who review its boons, while it keeps a ledger, and who
-    `user` reviews as: its running staff, or a Harpy given the review queue (#688)."""
+    `user` reviews as: its running staff, a Harpy given the review queue (#688), or a
+    Lesser Harpy who may settle boons (#984). To `link` a name to a character, which
+    corrects a boon, a Lesser Harpy needs to be let correct boons instead."""
     troupe = db.get(Troupe, troupe_id)
     keeper = boon_harpy.keeper(db, user, troupe, "submissions") if troupe is not None else None
+    if link and troupe is not None and (keeper is None or keeper.role == "talon"):
+        keeper = boon_harpy.keeper(db, user, troupe, "edit")
     if troupe is None or keeper is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such troupe.")
     if not boons.tracked(troupe):
@@ -176,7 +182,7 @@ def link(
     troupe_id: uuid.UUID, boon_id: uuid.UUID, body: LinkIn, db: DbSession, user: CurrentUser
 ) -> LinkOut:
     """Put a character in place of a name on a boon, or on every boon naming it."""
-    troupe, keeper = review_troupe(db, user, troupe_id)
+    troupe, keeper = review_troupe(db, user, troupe_id, link=True)
     boon = troupe_boon(db, troupe, boon_id)
     character = db.get(Character, body.character_id)
     if character is None or (

@@ -45,6 +45,7 @@ export function HarpyLedgerPage() {
         role: shown.role ?? "harpy",
         add: shown.can_add ?? true,
         edit: shown.can_edit ?? true,
+        settle: shown.can_settle ?? true,
         review: shown.can_review ?? true,
         audit: shown.can_audit ?? true,
         word: shown.talon_word ?? "Lesser Harpy",

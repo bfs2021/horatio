@@ -23,7 +23,9 @@ Harpy gave access (horatio.boon_talons, #689). It answers for one `need`:
 - "submissions": the review queue (#687);
 - "view": seeing the whole ledger;
 - "add": registering boons;
-- "edit": editing, trading, passing on, settling, voiding and reopening them;
+- "edit": correcting them: what one says, and linking a name on it to a character;
+- "settle": trading, passing on, settling, voiding and reopening them, and answering
+  a status loss or Gallant (#984);
 - "audit": auditing a character's boons (#690).
 Audits (#690), Gallant's offers (#693) and Boonbreakers (#717) are meant to ask it too.
 
@@ -72,7 +74,7 @@ ACCESS = {
 }
 RANK = {level: n for n, level in enumerate(ACCESS)}
 # What working the ledger can take (`keeper`'s `need`).
-NEEDS = ("submissions", "view", "add", "edit", "audit")
+NEEDS = ("submissions", "view", "add", "edit", "settle", "audit")
 EVERYTHING = frozenset(NEEDS)
 # What a Harpy may do, by the troupe's setting.
 HARPY_CAN = {

@@ -21,8 +21,11 @@ class BoonTalon(Record):
     )
     # Register boons.
     can_add: Mapped[bool] = mapped_column(default=False, server_default="false")
-    # Edit, trade, pass on, settle, void and reopen boons, and review reports.
+    # Correct boons: edit what one says, and link a name on it to a character.
     can_edit: Mapped[bool] = mapped_column(default=False, server_default="false")
+    # Settle and move boons: trade, pass on, settle, void and reopen them, answer a
+    # status loss or Gallant, and review what players report (#984).
+    can_settle: Mapped[bool] = mapped_column(default=False, server_default="false")
     # Audit a character's boons (#690).
     can_audit: Mapped[bool] = mapped_column(default=False, server_default="false")
     # The Harpy who gave it, as their character; none when staff did, or once deleted.

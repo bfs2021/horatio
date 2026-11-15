@@ -8,7 +8,7 @@ book names) at the time was the Harpy's; one done as a character the Harpy has g
 access to the ledger was a Lesser Harpy's; any other was a player's, in the Play View.
 
 Revision ID: 0231
-Revises: 0229
+Revises: 0230
 Create Date: 2026-11-15 16:00:00.000000
 """
 
@@ -18,7 +18,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "0231"
-down_revision: str | None = "0229"
+down_revision: str | None = "0230"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

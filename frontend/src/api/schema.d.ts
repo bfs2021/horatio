@@ -22538,6 +22538,11 @@ export interface components {
              */
             can_review: boolean;
             /**
+             * Can Settle
+             * @default true
+             */
+            can_settle: boolean;
+            /**
              * Gives Access
              * @default false
              */
@@ -34206,6 +34211,11 @@ export interface components {
              * @default false
              */
             can_edit: boolean;
+            /**
+             * Can Settle
+             * @default false
+             */
+            can_settle: boolean;
         };
         /** TalonOut */
         TalonOut: {
@@ -34215,6 +34225,8 @@ export interface components {
             can_audit: boolean;
             /** Can Edit */
             can_edit: boolean;
+            /** Can Settle */
+            can_settle: boolean;
             /**
              * Character Id
              * Format: uuid

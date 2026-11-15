@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { api, unwrap } from "../api/client";
+import { ActionMenu, MenuItem, MenuLink } from "../components/ActionMenu";
 import { Avatar } from "../components/Avatar";
 import { clanNamed } from "../clanNames";
 import type { TroupeOut } from "../api/types";
@@ -24,6 +25,7 @@ export function CharactersPage() {
   const dates = useDates();
   const characters = useQuery({ queryKey: ["characters"], queryFn: () => unwrap(api.GET("/api/characters")) });
   const [name, setName] = useState("");
+  const nameInput = useRef<HTMLInputElement>(null);
   const [wanted, setSplat] = useState("vampire");
   // A troupe's "Play here" card links here with ?troupe=<id>, so the character is built for it.
   const [params] = useSearchParams();
@@ -46,30 +48,57 @@ export function CharactersPage() {
   });
 
   const yourTroupes = running.length > 0 && <YourTroupes troupes={running} heading={!troupesFirst} />;
+  // The rare actions, beside whichever heading says "Your characters": the page's, or the card's under Your troupes.
+  const more = (
+    <ActionMenu label="More for your characters" className="ml-auto">
+      <MenuLink to="/characters/import">Import a character</MenuLink>
+      {!!characters.data?.length && (
+        <MenuItem onSelect={exportAll}>
+          Export all
+          <span className="block text-xs text-mist">Every character of yours, retired ones too, in one .zip</span>
+        </MenuItem>
+      )}
+    </ActionMenu>
+  );
+  // On a phone New character is below the list (and any troupes), so this takes you to it.
+  const toNewCharacter = (
+    <LinkButton
+      href="#new-character"
+      className="md:hidden"
+      onClick={(e) => {
+        e.preventDefault();
+        document.getElementById("new-character")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        nameInput.current?.focus({ preventScroll: true });
+      }}
+    >
+      New character
+    </LinkButton>
+  );
   return (
     <>
       {troupesFirst ? (
-        <PageTitle subtitle="The troupes you run, and what is waiting on you in each.">Your troupes</PageTitle>
+        <PageTitle subtitle="The troupes you run, and what is waiting on you in each." actions={toNewCharacter}>
+          Your troupes
+        </PageTitle>
       ) : (
-        <PageTitle subtitle="Characters you play. Build one here, then bring it to a troupe.">Your characters</PageTitle>
+        <PageTitle
+          subtitle="Characters you play. Build one here, then bring it to a troupe."
+          actions={
+            <span className="flex w-full gap-2 md:w-auto">
+              {toNewCharacter}
+              {more}
+            </span>
+          }
+        >
+          Your characters
+        </PageTitle>
       )}
       <div className="grid gap-6 md:grid-cols-[2fr_1fr]">
         <div className="flex min-w-0 flex-col gap-6">
           {troupesFirst && yourTroupes}
           <Card
             title={troupesFirst ? "Your characters" : undefined}
-            actions={
-              <span className="ml-auto flex flex-wrap gap-2">
-                <LinkButton variant="secondary" to="/characters/import">
-                  Import a character
-                </LinkButton>
-                {!!characters.data?.length && (
-                  <LinkButton variant="secondary" href="/api/character-backups" download title="Every character of yours, retired ones too, in one .zip">
-                    Export all
-                  </LinkButton>
-                )}
-              </span>
-            }
+            actions={troupesFirst && more}
           >
             {characters.isPending ? (
               <Loading />
@@ -79,9 +108,9 @@ export function CharactersPage() {
                   <li key={c.id}>
                     <Link to={`/characters/${c.id}`} className="flex items-center gap-3 py-3 hover:text-gold">
                       <Avatar name={c.name} picture={c.picture} clan={c.clan} />
-                      <span className="min-w-0">
-                        <span className="text-base">{c.name}</span>
-                        <span className="ml-2 text-sm text-mist capitalize">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-base">{c.name}</span>
+                        <span className="block text-sm text-mist capitalize">
                           {c.splat}
                           {/* As the troupe it plays in calls its clan. */}
                           {c.clan && ` · ${clanNamed(c.clan, c.assamite_name)}`}
@@ -109,37 +138,47 @@ export function CharactersPage() {
           </Card>
           {!troupesFirst && yourTroupes}
         </div>
-        <Card title="New character">
-          <form
-            className="flex flex-col gap-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-              create.mutate(undefined);
-            }}
-          >
-            <Field label="Name">
-              <Input required value={name} onChange={(e) => setName(e.target.value)} />
-            </Field>
-            <BuildFor value={buildFor} onChange={setBuildFor} newCharacter />
-            <Field label="Splat" hint={troupe && offered.length === 1 ? `${troupe.name} takes ${offered[0]!.label.toLowerCase()} characters only.` : undefined}>
-              <Select value={splat} onChange={(e) => setSplat(e.target.value)}>
-                {offered.map((s) => (
-                  <option key={s.splat} value={s.splat}>
-                    {s.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <ErrorText error={splats.error} />
-            <ErrorText error={create.error} />
-            <Button type="submit" disabled={create.isPending}>
-              Create
-            </Button>
-          </form>
-        </Card>
+        <div id="new-character" className="scroll-mt-4">
+          <Card title="New character">
+            <form
+              className="flex flex-col gap-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                create.mutate(undefined);
+              }}
+            >
+              <Field label="Name">
+                <Input ref={nameInput} required value={name} onChange={(e) => setName(e.target.value)} />
+              </Field>
+              <BuildFor value={buildFor} onChange={setBuildFor} newCharacter />
+              <Field label="Splat" hint={troupe && offered.length === 1 ? `${troupe.name} takes ${offered[0]!.label.toLowerCase()} characters only.` : undefined}>
+                <Select value={splat} onChange={(e) => setSplat(e.target.value)}>
+                  {offered.map((s) => (
+                    <option key={s.splat} value={s.splat}>
+                      {s.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <ErrorText error={splats.error} />
+              <ErrorText error={create.error} />
+              <Button type="submit" disabled={create.isPending}>
+                Create
+              </Button>
+            </form>
+          </Card>
+        </div>
       </div>
     </>
   );
+}
+
+/** Downloads every character of the person's in one .zip, as a link with `download` would. */
+function exportAll() {
+  const link = document.createElement("a");
+  link.href = "/api/character-backups";
+  link.download = "";
+  link.click();
 }
 
 /** For staff: each troupe they run, with what is waiting on them there, from the same lines as its About page. */

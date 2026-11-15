@@ -940,6 +940,7 @@ MESSAGES: dict[str, str] = {
     "house.boons_judge_ban": "{actor} switched judging the ban on no boons registered from"
     " the boon ledger {setting}.",
     "boon.weights": "{actor} set what boons weigh in the standings: {changed}.",
+    "boon.exported": "{actor} exported {what} as {format} ({shown}).",
     "boon.registered": "{actor} registered {what}: {debtor} owes {creditor}{because}.",
     "boon.edited": "{actor} edited {debtor}'s {kind} boon to {creditor}{because}.",
     "boon.traded": "{actor} recorded {debtor}'s {kind} boon traded by {before} to {creditor}"

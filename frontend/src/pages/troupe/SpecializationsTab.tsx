@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router";
 import { api, unwrap } from "../../api/client";
-import { Badge, Button, Card, Empty, ErrorText, Loading, PageTabs, Textarea } from "../../components/ui";
+import { PartPicker } from "../../components/PartPicker";
+import { Badge, Button, Card, Empty, ErrorText, Loading, Textarea } from "../../components/ui";
 import { useRulesAction } from "../../hooks";
 import { kindGroups, kindLabel, kindSlug } from "./specializations";
 
@@ -10,7 +11,8 @@ import { kindGroups, kindLabel, kindSlug } from "./specializations";
  * The troupe's own lists of specialisations: the areas its Influences cover, the
  * notable people Contacts can be. Where a kind has a list, characters playing by
  * this troupe's rules choose from it; otherwise they use the catalogue or name
- * their own. One kind at a time, each on its own tab (/specializations/lore).
+ * their own. One kind at a time, each a part of its own (/specializations/lore),
+ * chosen in a `PartPicker` grouped as on a sheet (#906).
  */
 export function SpecializationsTab({ troupeId, canEdit }: { troupeId: string; canEdit: boolean }) {
   const kinds = useQuery({
@@ -27,22 +29,18 @@ export function SpecializationsTab({ troupeId, canEdit }: { troupeId: string; ca
         Each kind of specialisation can use the rule set's list (players may also name their own), or a list of this troupe's.
         It applies to characters whose home troupe this is, or who are being built for it.
       </p>
-      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6">
-        {kindGroups(kinds.data).map((group) => (
-          <div key={group.label} className="flex min-w-0 items-center gap-2">
-            <span className="shrink-0 text-xs text-mist">{group.label}</span>
-            <PageTabs
-              label={group.label}
-              className="min-w-0"
-              tabs={group.kinds.map((k) => ({ to: `${base}/${kindSlug(k.category)}`, label: kindLabel(k.name) }))}
-            />
-          </div>
-        ))}
-      </div>
-      <Routes>
-        {first && <Route index element={<Navigate to={`${base}/${kindSlug(first.category)}`} replace />} />}
-        <Route path=":kind" element={<KindPage troupeId={troupeId} kinds={kinds.data} canEdit={canEdit} />} />
-      </Routes>
+      <PartPicker
+        label="Specialisations"
+        parts={kindGroups(kinds.data).map((group) => ({
+          label: group.label,
+          parts: group.kinds.map((k) => ({ to: `${base}/${kindSlug(k.category)}`, label: kindLabel(k.name) })),
+        }))}
+      >
+        <Routes>
+          {first && <Route index element={<Navigate to={`${base}/${kindSlug(first.category)}`} replace />} />}
+          <Route path=":kind" element={<KindPage troupeId={troupeId} kinds={kinds.data} canEdit={canEdit} />} />
+        </Routes>
+      </PartPicker>
     </div>
   );
 }

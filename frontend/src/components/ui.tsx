@@ -424,6 +424,7 @@ export function SubTabs({ label, tabs, className }: { label: string; tabs: Tab[]
  * control, quieter than the pills above it, so the two never read as one row
  * wrapped. When the parts don't fit on one line they wrap onto more, between
  * tabs and never inside a label, so every one is in sight, on a phone too.
+ * For a page of five parts or fewer: one with more uses `PartPicker` (#906).
  */
 export function PageTabs({ label, tabs, className }: { label: string; tabs: Tab[]; className?: string }) {
   const nav = useRef<HTMLElement>(null);

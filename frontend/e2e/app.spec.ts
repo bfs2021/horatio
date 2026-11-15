@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { closeContextsAfterEach, PASSWORD, run, shots, person, makeCustodian, topBar } from "./support";
+import { closeContextsAfterEach, PASSWORD, run, shots, person, makeCustodian, topBar, expectPartOpen } from "./support";
 
 /** The app itself: About, the Help pages, signing in on the way to a link, and reloading after a deploy. */
 
@@ -161,7 +161,7 @@ test("the browser tab names the page: the tab open, then the troupe or character
   await expect(p).toHaveTitle(`Approvals · ${troupe} · Horatio`);
   // A tab's own tabs come first.
   await p.goto(`/troupes/${troupeId}/house-rules/costs`);
-  await expect(p.getByRole("link", { name: "Costs", exact: true })).toHaveAttribute("aria-current", "page");
+  await expectPartOpen(p, "Costs");
   expect(await p.title()).toMatch(new RegExp(`^Costs · .+ · ${troupe} · Horatio$`));
 
   const character = await p.request.post("/api/characters", { headers: { "X-Horatio": "1" }, data: { splat: "vampire", name: "Tabitha Tallis" } });

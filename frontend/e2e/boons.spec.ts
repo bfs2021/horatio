@@ -161,6 +161,49 @@ test("staff see the boon standings: each character's net by the troupe's weights
   await expect(l.getByText(/Major 4/)).toBeVisible();
 });
 
+test("on a phone the boon standings fold into blocks, nothing sideways with 20 long names; from sm up they are tables (#914)", async ({ browser }) => {
+  const custodian = await person(browser, "bfold914-cust");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "bfold914-lead");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Ledger of Long Names ${run}`, lead_handle: lead.handle });
+  const l = lead.page;
+  const names = Array.from({ length: 20 }, (_, i) =>
+    i === 0 ? "Wolfeschlegelsteinhausenbergerdorffvoralternwarengewissenhaft" : `Bartholomew Featherstonehaugh-Cholmondeley of Wolverhampton ${i + 1}`,
+  );
+  const npcs: { id: string }[] = [];
+  for (const name of names) npcs.push(await send(l, "POST", `/api/troupes/${troupe.id}/npcs`, { name }));
+  await send(l, "PUT", `/api/troupes/${troupe.id}/boon-ledger`, { on: true });
+  // Each owes the next a major boon, and the first two owe each other.
+  const owes = (debtor: { id: string }, creditor: { id: string }, kind: string) => ({ debtor: { character_id: debtor.id }, creditor: { character_id: creditor.id }, kind, made_on: "2026-10-03" });
+  await send(l, "POST", `/api/troupes/${troupe.id}/boons`, { boons: [...npcs.map((n, i) => owes(n, npcs[(i + 1) % 20], "major")), owes(npcs[1], npcs[0], "minor")] });
+
+  const phone = test.info().project.name === "phone";
+  if (phone) await l.setViewportSize({ width: 375, height: 800 });
+  await l.goto(`/troupes/${troupe.id}/boons/standings`);
+  const standing = l.getByRole("table", { name: "Standing by character" });
+  await expect(standing.locator("tbody tr")).toHaveCount(20);
+  await expect(standing.getByText(names[0], { exact: true })).toBeVisible();
+  await expect(l.getByRole("table", { name: "Owing each other" })).toContainText(names[0]);
+  // Against the viewport, not innerWidth: a phone widens its layout to fit what is too wide.
+  expect(await l.evaluate(() => document.documentElement.scrollWidth)).toBe(l.viewportSize()!.width);
+  // The net, under the name on a phone and in its column from sm up, both read in words.
+  const first = standing.getByRole("row", { name: new RegExp(names[0]) });
+  await expect(first).toContainText("+1");
+  if (phone) await expect(first.getByText("Net:", { exact: true })).toBeVisible();
+  else {
+    await expect(standing.getByRole("columnheader", { name: "Net" })).toBeVisible();
+    await expect(first.getByRole("cell", { name: "owed 1 more than they owe" })).toBeVisible();
+  }
+  await l.screenshot(shots("boon-standings-long-names"));
+});
+
 test("a Disgraced creditor's boons need not be repaid, and staff register the boon an apology owes for a slip (#694)", async ({ browser }) => {
   const custodian = await person(browser, "bslip-custodian");
   makeCustodian(custodian.email);

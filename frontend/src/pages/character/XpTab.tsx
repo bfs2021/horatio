@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { XpEntryOut } from "../../api/types";
+import { DataTable } from "../../components/DataTable";
 import { Button, Card, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
@@ -29,45 +30,57 @@ export function XpTab({ characterId, selfEntering = false }: { characterId: stri
       {selfEntering && <SelfEntered characterId={characterId} />}
       <DebtCard characterId={characterId} />
       <Card title="Experience history">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left text-mist">
-              <tr>
-                <th className="py-2 pr-3 font-normal">Date</th>
-                <th className="py-2 pr-3 font-normal">What</th>
-                <th className="py-2 pr-3 text-right font-normal">XP</th>
-                <th className="py-2 text-right font-normal">Balance</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ash">
-              {rows.reverse().map((e) => (
-                <tr key={e.id}>
-                  <td className="py-2 pr-3 align-top whitespace-nowrap text-mist">
-                    <time dateTime={e.entered_on}>{dates.day(e.entered_on)}</time>
-                  </td>
-                  <td className="py-2 pr-3">
-                    {e.reason}
-                    {!UNLABELLED.has(e.kind) && <span className="ml-2 text-xs text-mist">{KINDS[e.kind] ?? e.kind}</span>}
-                    {e.kind === "correction" && e.corrects_id && <span className="block text-xs text-mist">Corrects “{reasons.get(e.corrects_id)}”</span>}
-                    {e.corrected_to != null && <span className="block text-xs text-gold">Corrected: now gives {e.corrected_to} XP</span>}
-                    {e.to_debt > 0 && (
-                      <span className="block text-xs text-gold">
-                        {e.to_debt} XP to the debt{e.debt > 0 ? `; ${e.debt} still owed` : "; it is paid off"}
-                      </span>
-                    )}
-                    {e.correctable && <Correct characterId={characterId} entry={e} />}
-                  </td>
-                  <td className={`py-2 pr-3 text-right align-top font-mono ${e.amount < 0 ? "text-blood-bright" : "text-gold"}`}>
-                    {e.amount > 0 ? `+${e.amount}` : e.amount}
-                  </td>
-                  <td className={`py-2 text-right align-top font-mono ${e.balance < 0 ? "text-blood-bright" : ""}`} title={e.balance < 0 ? `${-e.balance} XP owed` : undefined}>
-                    {e.balance}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          label="Experience history"
+          rows={rows.reverse()}
+          rowKey={(e) => e.id}
+          columns={[
+            {
+              key: "date",
+              header: "Date",
+              phone: "shown",
+              className: "whitespace-nowrap text-mist",
+              cell: (e) => <time dateTime={e.entered_on}>{dates.day(e.entered_on)}</time>,
+            },
+            {
+              key: "what",
+              header: "What",
+              phone: "title",
+              cell: (e) => (
+                <>
+                  {e.reason}
+                  {!UNLABELLED.has(e.kind) && <span className="ml-2 text-xs text-mist">{KINDS[e.kind] ?? e.kind}</span>}
+                  {e.kind === "correction" && e.corrects_id && <span className="block text-xs text-mist">Corrects “{reasons.get(e.corrects_id)}”</span>}
+                  {e.corrected_to != null && <span className="block text-xs text-gold">Corrected: now gives {e.corrected_to} XP</span>}
+                  {e.to_debt > 0 && (
+                    <span className="block text-xs text-gold">
+                      {e.to_debt} XP to the debt{e.debt > 0 ? `; ${e.debt} still owed` : "; it is paid off"}
+                    </span>
+                  )}
+                  {e.correctable && <Correct characterId={characterId} entry={e} />}
+                </>
+              ),
+            },
+            {
+              key: "xp",
+              header: "XP",
+              phone: "shown",
+              numeric: true,
+              cell: (e) => <span className={e.amount < 0 ? "text-blood-bright" : "text-gold"}>{e.amount > 0 ? `+${e.amount}` : e.amount}</span>,
+            },
+            {
+              key: "balance",
+              header: "Balance",
+              phone: "shown",
+              numeric: true,
+              cell: (e) => (
+                <span className={e.balance < 0 ? "text-blood-bright" : ""} title={e.balance < 0 ? `${-e.balance} XP owed` : undefined}>
+                  {e.balance}
+                </span>
+              ),
+            },
+          ]}
+        />
       </Card>
       <GamesAttended characterId={characterId} />
     </div>

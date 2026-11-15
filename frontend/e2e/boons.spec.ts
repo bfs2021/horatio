@@ -20,6 +20,23 @@ function ledgerOf(page: Page) {
   };
 }
 
+// The ledger's views (#976), by the value each has: side by side from lg up, a select on a phone.
+const VIEW_NAMES = { open: "Open", departed: "Departed", settled: "Settled", void: "Void", all: "All", review: "To review" } as const;
+type LedgerView = keyof typeof VIEW_NAMES;
+const onPhone = () => test.info().project.name === "phone";
+
+/** A view of the ledger, which holds its count: "Open (4)". */
+function viewOf(page: Page, view: LedgerView) {
+  return onPhone()
+    ? page.getByRole("combobox", { name: "Ledger views" }).locator(`option[value="${view}"]`)
+    : page.getByRole("radiogroup", { name: "Ledger views" }).getByRole("radio", { name: new RegExp(`^${VIEW_NAMES[view]} \\(`) });
+}
+
+async function showView(page: Page, view: LedgerView) {
+  if (onPhone()) await page.getByRole("combobox", { name: "Ledger views" }).selectOption(view);
+  else await viewOf(page, view).click();
+}
+
 test("staff keep the boon ledger: a game's boons at once, then a settling, an edit and a trade, each in its log", async ({ browser }) => {
   const custodian = await person(browser, "boons-custodian");
   makeCustodian(custodian.email);
@@ -76,7 +93,7 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
 
   const boons = ledgerOf(l);
   await expect(boons.row("Mireille Dauvin owes Anselm Roque, minor")).toHaveCount(3);
-  await expect(l.getByRole("tab", { name: /^Open/ })).toContainText("(4)");
+  await expect(viewOf(l, "open")).toContainText("(4)");
   // One line each (#975): a name only, someone not in Horatio, in italics.
   const vargaRow = boons.row("Elder Varga owes Mireille Dauvin, trivial");
   // (A phone's first line repeats the creditor, and its fold the state, so each is looked for where it shows.)
@@ -96,8 +113,8 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   await settle.getByLabel(/^Called in/).check();
   await settle.getByLabel("Note (optional)").fill("Called in for a favour at court");
   await settle.getByRole("button", { name: "Settle it" }).click();
-  await expect(l.getByRole("tab", { name: /^Open/ })).toContainText("(3)");
-  await l.getByRole("tab", { name: /^Settled/ }).click();
+  await expect(viewOf(l, "open")).toContainText("(3)");
+  await showView(l, "settled");
   await expect(boons.rows).toHaveCount(1);
   await expect(boons.row("Mireille Dauvin owes Anselm Roque, minor")).toContainText("Settled: called in");
   // The chevron opens it too, from the keyboard.
@@ -107,7 +124,7 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   await expect(settledLog).toContainText("Called in for a favour at court");
 
   // The trivial boon was typed in wrong: an edit, with why, keeps what changed in its log.
-  await l.getByRole("tab", { name: /^Open/ }).click();
+  await showView(l, "open");
   await expect(boons.rows).toHaveCount(3);
   await boons.row("Elder Varga owes Mireille Dauvin, trivial").click();
   const varga = boons.detail("Elder Varga owes Mireille Dauvin, trivial");
@@ -199,16 +216,115 @@ test("the ledger shows a hundred boons a page, with Previous and Next, and the p
   // Another view starts from its first page; one that fits on a page needs no pager.
   await pages.getByRole("button", { name: "Next" }).click();
   await expect(l).toHaveURL(/[?&]page=2\b/);
-  await l.getByRole("tab", { name: /^All/ }).click();
+  await showView(l, "all");
   await expect(l).not.toHaveURL(/page=/);
   await expect(pages).toContainText("1 to 100 of 140");
-  await l.getByRole("tab", { name: /^Settled/ }).click();
+  await showView(l, "settled");
   await expect(l.getByText("None here.")).toBeVisible();
   await expect(pages).toHaveCount(0);
   // An old link past the last page shows the last there is.
   await l.goto(`/troupes/${troupe.id}/boons?page=9`);
   await expect(pages).toContainText("101 to 140 of 140");
   await expect(l).toHaveURL(/[?&]page=2\b/);
+});
+
+test("the ledger's toolbar searches the reason and conditions, picks kinds, filters by night and sorts, all kept in the URL (#976)", async ({ browser }) => {
+  const custodian = await person(browser, "toolbar-custodian");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "toolbar-lead");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Ledger Toolbar ${run}`, lead_handle: lead.handle });
+  const l = lead.page;
+  await send(l, "PUT", `/api/troupes/${troupe.id}/boon-ledger`, { on: true });
+  const boon = (debtor: string, creditor: string, kind: string, made_on: string, reason: string, conditions = "") => ({
+    debtor: { name: debtor },
+    creditor: { name: creditor },
+    kind,
+    made_on,
+    reason,
+    conditions,
+  });
+  await send(l, "POST", `/api/troupes/${troupe.id}/boons`, {
+    boons: [
+      boon("Orsolya Venk", "Piet Marlowe", "minor", "2026-03-01", "Silence at the masquerade"),
+      boon("Quintus Hale", "Orsolya Venk", "major", "2026-04-01", "Shelter from the hunters", "Cannot be traded"),
+      boon("Rhea Solberg", "Quintus Hale", "trivial", "2026-05-01", "An introduction"),
+      boon("Piet Marlowe", "Rhea Solberg", "life", "2026-02-01", "Saved from the sun"),
+    ],
+    note: "",
+  });
+
+  await l.goto(`/troupes/${troupe.id}/boons`);
+  const boons = ledgerOf(l);
+  await expect(boons.rows).toHaveCount(4);
+  await expect(viewOf(l, "open")).toContainText("(4)");
+  // Newest first, as it starts.
+  await expect(boons.rows.first()).toHaveAccessibleName("Details: Rhea Solberg owes Quintus Hale, trivial");
+
+  // Part of a reason narrows the list, and the views' counts follow; a reload keeps it.
+  const searchBox = l.getByRole("searchbox", { name: "Search the ledger" });
+  await searchBox.fill("MASQ");
+  await expect(boons.rows).toHaveCount(1);
+  await expect(boons.row("Orsolya Venk owes Piet Marlowe, minor")).toHaveCount(1);
+  await expect(viewOf(l, "open")).toContainText("(1)");
+  await expect(l).toHaveURL(/[?&]q=MASQ\b/);
+  await l.reload();
+  await expect(searchBox).toHaveValue("MASQ");
+  await expect(boons.rows).toHaveCount(1);
+  // The conditions, and a name only, any part of it.
+  await searchBox.fill("traded");
+  await expect(boons.rows).toHaveCount(1);
+  await expect(boons.row("Quintus Hale owes Orsolya Venk, major")).toHaveCount(1);
+  await searchBox.fill("solb");
+  await expect(boons.rows).toHaveCount(2);
+  await searchBox.fill("");
+  await expect(boons.rows).toHaveCount(4);
+
+  // Kinds, several at once; then More filters, with how many are set.
+  const kinds = l.getByRole("group", { name: "Kinds" });
+  await kinds.getByRole("button", { name: "Major" }).click();
+  await kinds.getByRole("button", { name: "Life" }).click();
+  await expect(boons.rows).toHaveCount(2);
+  await expect(l).toHaveURL(/[?&]kind=major%2Clife\b/);
+  await l.getByRole("button", { name: "More filters" }).click();
+  await l.getByRole("group", { name: "More filters" }).getByLabel("Made from").fill("2026-03-01");
+  await expect(boons.rows).toHaveCount(1);
+  await expect(boons.row("Quintus Hale owes Orsolya Venk, major")).toHaveCount(1);
+  await expect(l.getByRole("button", { name: "More filters, 1 set" })).toBeVisible();
+  await l.getByRole("button", { name: "Show every boon" }).click();
+  await expect(boons.rows).toHaveCount(4);
+  await expect(l).not.toHaveURL(/kind=|from=/);
+
+  // The column headings sort (from lg up); on a phone, the Order under More filters.
+  if (onPhone()) {
+    await l.getByRole("group", { name: "More filters" }).getByLabel("Order").selectOption({ label: "Kind, trivial to life" });
+  } else {
+    await boons.table.getByRole("button", { name: "Kind" }).click();
+    await expect(boons.table.getByRole("columnheader", { name: "Kind" })).toHaveAttribute("aria-sort", "ascending");
+  }
+  await expect(boons.rows.first()).toHaveAccessibleName("Details: Rhea Solberg owes Quintus Hale, trivial");
+  await expect(boons.rows.last()).toHaveAccessibleName("Details: Piet Marlowe owes Rhea Solberg, life");
+  await expect(l).toHaveURL(/[?&]sort=kind\b/);
+  if (!onPhone()) {
+    await boons.table.getByRole("button", { name: "Kind" }).click();
+    await expect(boons.rows.first()).toHaveAccessibleName("Details: Piet Marlowe owes Rhea Solberg, life");
+    await expect(l).toHaveURL(/[?&]dir=desc\b/);
+  }
+
+  // A link reproduces the view: the view, the kinds, the order.
+  await l.goto(`/troupes/${troupe.id}/boons?view=all&kind=minor,trivial&sort=debtor`);
+  await expect(boons.rows).toHaveCount(2);
+  await expect(boons.rows.first()).toHaveAccessibleName("Details: Orsolya Venk owes Piet Marlowe, minor");
+  await expect(kinds.getByRole("button", { name: "Minor" })).toHaveAttribute("aria-pressed", "true");
+  if (onPhone()) await expect(l.getByRole("combobox", { name: "Ledger views" })).toHaveValue("all");
+  else await expect(viewOf(l, "all")).toHaveAttribute("aria-checked", "true");
+  await l.screenshot(shots("boon-ledger-toolbar"));
 });
 
 test("staff write a passage of story on a side of a boon, cut to a line, and its other side's player reads it as written (#990)", async ({ browser }) => {
@@ -299,7 +415,7 @@ test("staff export the ledger from its ⋯ menu: this view or the whole ledger, 
   await troupeTab(l, "Boons");
   const ledger = ledgerOf(l);
   await expect(ledger.rows).toHaveCount(2);
-  await l.getByLabel("Kind", { exact: true }).selectOption({ label: "Major" });
+  await l.getByRole("group", { name: "Kinds" }).getByRole("button", { name: "Major" }).click();
   await expect(ledger.rows).toHaveCount(1);
 
   const { readFile } = await import("node:fs/promises");
@@ -581,7 +697,7 @@ test("in the Play View's Boons tab a player reports a boon, sees what the troupe
 
   // In the ledger, staff see it was done as Isolde.
   await l.goto(`/troupes/${troupe.id}/boons`);
-  await l.getByRole("tab", { name: /^Settled/ }).click();
+  await showView(l, "settled");
   await ledgerOf(l).row("Tobiah Venn owes Isolde Marrow, major").click();
   const log = ledgerOf(l).detail("Tobiah Venn owes Isolde Marrow, major").getByRole("list", { name: "Log of Tobiah Venn owes Isolde Marrow" });
   await expect(log).toContainText("as Isolde Marrow");
@@ -651,7 +767,7 @@ test("a creditor with Social Nobility, repaid a boon, gives its debtor Gallant f
   expect(found.held.map((h: { name: string }) => h.name)).toEqual(["Gallant"]);
   const l = lead.page;
   await l.goto(`/troupes/${troupe.id}/boons`);
-  await l.getByRole("tab", { name: /^Settled/ }).click();
+  await showView(l, "settled");
   await ledgerOf(l).row("Hesk Arlow owes Lady Corvane, minor").click();
   const log = ledgerOf(l).detail("Hesk Arlow owes Lady Corvane, minor").getByRole("list", { name: "Log of Hesk Arlow owes Lady Corvane" });
   await expect(log).toContainText("Gallant given");
@@ -703,7 +819,7 @@ test("held for review, a player's report waits, flagged for its unlinked name, u
 
   // The lead sees it waiting, flagged for its name, and accepts it.
   await l.goto(`/troupes/${troupe.id}/boons`);
-  await l.getByRole("tab", { name: /^To review/ }).click();
+  await showView(l, "review");
   const row = l.getByRole("list", { name: "Boons to review" }).getByRole("listitem", { name: "To review: Mysterious Stranger owes Corvin Ashby, minor" });
   await expect(row).toContainText("Name not linked (debtor, Mysterious Stranger): No character in the troupe has this name.");
   await expect(row.getByText("Waits for review").first()).toBeVisible();
@@ -716,7 +832,7 @@ test("held for review, a player's report waits, flagged for its unlinked name, u
   await expect(l.getByText("Nothing waits for review, and no boon is flagged.")).toBeVisible();
 
   // It stands in the ledger, with its review in its log; and the report is gone from the player's tab.
-  await l.getByRole("tab", { name: /^Open/ }).click();
+  await showView(l, "open");
   await ledgerOf(l).row("Mysterious Stranger owes Corvin Ashby, minor").click();
   const log = ledgerOf(l).detail("Mysterious Stranger owes Corvin Ashby, minor").getByRole("list", { name: "Log of Mysterious Stranger owes Corvin Ashby" });
   await expect(log).toContainText("Reported for review");
@@ -811,7 +927,7 @@ test("the Harpy keeps the ledger from the Play View as their character, and neve
   // name; the Harpy goes by what the court knows, and the court hasn't heard.
   await send(player.page, "POST", `/api/characters/${edric}/retire`, { reason: "final_death", note: "", listed: false });
   await l.reload();
-  await l.getByRole("tab", { name: /^Departed/ }).click();
+  await showView(l, "departed");
   await expect(ledgerOf(l).row("Edric Thorne owes Lady Ashgrove, major").getByText("Dead", { exact: true }).filter({ visible: true })).toBeVisible();
   await h.reload();
   const atCourt = ledgerOf(h).row("Edric Thorne owes Lady Ashgrove, major");
@@ -965,8 +1081,8 @@ test("staff declare a Boonbreaker: their open boons are made void, both ways, an
   const mark = l.getByRole("list", { name: "Boonbreakers" }).getByRole("listitem", { name: "Ottavia Sterne, Boonbreaker" });
   await expect(mark).toContainText("2 boons made void · holds Disgraced for it");
   await expect(mark).toContainText("Refused: Ottavia Sterne owes Lucan Mireaux, major");
-  await expect(l.getByRole("tab", { name: /^Open/ })).toContainText("(0)");
-  await l.getByRole("tab", { name: /^Void/ }).click();
+  await expect(viewOf(l, "open")).toContainText("(0)");
+  await showView(l, "void");
   const voided = ledgerOf(l).row("Ottavia Sterne owes Lucan Mireaux, major");
   await expect(voided).toContainText("Boonbreaker");
   await expect(voided).toContainText("Void");

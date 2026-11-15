@@ -26,6 +26,7 @@ const CHECKED: Record<string, number> = {
   "pages/rules/RulesPage.tsx": 1, // a menu's options
   "pages/settings/PreferencesPage.tsx": 1, // every tab offered until the troupes are in
   "pages/troupe/BookTraitsSection.tsx": 1, // isLoading first
+  "pages/troupe/BoonsTab.tsx": 1, // a menu's options (At a game)
   "pages/troupe/CyclePage.tsx": 1, // facts, once the cycle is in
   "pages/troupe/EquipmentEditor.tsx": 1, // shown when there are some
   "pages/troupe/FeedingTerritories.tsx": 2, // isPending first

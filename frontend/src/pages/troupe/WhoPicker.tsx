@@ -1,6 +1,6 @@
 import { useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { CharacterChoice } from "../../api/types";
-import { Empty, Input, Textarea } from "../../components/ui";
+import { Button, Empty, Input, Textarea } from "../../components/ui";
 import { findCharacters } from "./logInfluence";
 
 type Option = { kind: "character"; character: CharacterChoice } | { kind: "name"; name: string } | { kind: "text" };
@@ -119,9 +119,10 @@ export function WhoPicker({
         <span id={hintId} className="text-xs text-mist">
           {anyText.hint}
         </span>
-        <button
+        <Button
           type="button"
-          className="self-start text-xs text-gold underline hover:text-parchment"
+          variant="ghost"
+          className="self-start"
           onClick={() => {
             setWriting(false);
             setText("");
@@ -129,7 +130,7 @@ export function WhoPicker({
           }}
         >
           Find a character instead
-        </button>
+        </Button>
       </div>
     );
   }

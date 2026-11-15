@@ -351,7 +351,7 @@ function BoonRow({
       {boon.conditions && <p className="text-xs text-mist">Conditions: {boon.conditions}</p>}
       {boon.notify_on_trade && <p className="text-xs text-mist">Its debtor&apos;s player is told if it&apos;s traded.</p>}
       {boon.creditor_disgraced && <p className="text-xs text-blood-bright">{disgracedText(creditor)}</p>}
-      {boon.state === "settled" && <p className="text-xs text-mist">{settledText(boon, dates.day)}</p>}
+      {boon.state === "settled" && <p className="text-xs text-mist">{settledText(boon, dates.date)}</p>}
       {settling && <Settle boon={boon} characterId={characterId} online={online} done={() => setSettling(false)} />}
       {boon.gallant && <Gallant boon={boon} offer={boon.gallant} characterId={characterId} online={online} />}
     </li>
@@ -455,7 +455,7 @@ function Reports({ reports, name, troupe }: { reports: PlayReportOut[]; name: st
             {r.state === "pending" ? (
               <p className="text-xs text-mist">Waiting for {troupe}&apos;s staff to review it.</p>
             ) : (
-              <p className="text-xs text-blood-bright">Not accepted{r.rejected_at ? `, ${dates.day(r.rejected_at)}` : ""}: {r.rejected_because}</p>
+              <p className="text-xs text-blood-bright">Not accepted{r.rejected_at ? `, ${dates.date(r.rejected_at)}` : ""}: {r.rejected_because}</p>
             )}
           </li>
         ))}

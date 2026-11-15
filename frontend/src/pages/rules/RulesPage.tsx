@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { PriceOut, RulesBrowserOut, TraitCheckOut } from "../../api/types";
+import { BackToTop } from "../../components/BackToTop";
 import { ClanNames, useClanName, useTroupeClanName } from "../../components/ClanNames";
 import { clanNamed } from "../../clanNames";
 import { EmptyState, FilterBar } from "../../components/EmptyState";
@@ -246,6 +247,7 @@ export function RulesPage() {
           )
         )}
       </div>
+      <BackToTop />
     </ClanNames>
   );
 }

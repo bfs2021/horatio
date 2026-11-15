@@ -8,6 +8,7 @@ import { useOnline } from "../offline/connection";
 import { NeedsConnection } from "../offline/NeedsConnection";
 import { pipGroups } from "../ratings";
 import { openTab, tabOpens, textOf, useTitle } from "../title";
+import { RowChevron } from "./RowChevron";
 import { SectionPicker } from "./SectionPicker";
 
 function cx(...classes: (string | false | null | undefined)[]): string {
@@ -260,13 +261,16 @@ export function CountBubble({ count, label }: { count: number; label: string }) 
  * (a tab that leaves the page, #922). */
 export type Tab = { to: string; label: string; ariaLabel?: string; end?: boolean; also?: string; count?: number; countLabel?: string; countInGroup?: boolean };
 
-/** How wide the fade is at an edge of a tab bar with more beyond it. */
-const FADE_PX = 32;
+/** How wide the fade is at an edge of a tab bar with more beyond it: as wide as the chevron over it. */
+const FADE_PX = 40;
 
 /**
  * For a row of tabs that scrolls sideways on a narrow screen: brings the open
  * tab (the one with `aria-current`) into view whenever the page changes, and
- * fades whichever edge has more tabs beyond it, so the row is seen to scroll.
+ * fades whichever edge has more tabs beyond it, with a chevron over the fade
+ * that scrolls the row that way (#921), so the row is seen to scroll.
+ * `scroller` goes on the part that scrolls, and `chevrons` beside it, in a
+ * `relative` box around it (`ROW`).
  */
 function useTabRow<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -300,6 +304,13 @@ function useTabRow<T extends HTMLElement>() {
     for (const tab of Array.from(row.children)) watch.observe(tab);
     return () => watch.disconnect();
   }, [measure]);
+  // By most of the row's width: the tab cut off under one chevron comes out just clear of the other.
+  const scroll = useCallback((way: 1 | -1) => {
+    const row = ref.current;
+    if (!row) return;
+    const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    row.scrollBy({ left: way * Math.max(row.clientWidth - 2 * FADE_PX, row.clientWidth / 2), behavior: still ? "auto" : "smooth" });
+  }, []);
   let style: CSSProperties | undefined;
   if (edges.start || edges.end) {
     const from = edges.start ? `transparent, black ${FADE_PX}px` : "black";
@@ -307,36 +318,49 @@ function useTabRow<T extends HTMLElement>() {
     const mask = `linear-gradient(to right, ${from}, ${to})`;
     style = { maskImage: mask, WebkitMaskImage: mask };
   }
-  return { ref, style, onScroll: measure };
+  const chevrons = (
+    <>
+      {edges.start && <RowChevron side="start" onPress={() => scroll(-1)} />}
+      {edges.end && <RowChevron side="end" onPress={() => scroll(1)} />}
+    </>
+  );
+  return { ref, scroller: { ref, style, onScroll: measure }, chevrons };
 }
 
-/** The tab bars' shared look on a phone: the row runs to the screen's edges and scrolls. */
-const ROW = "-mx-4 flex overflow-x-auto px-4 sm:mx-0 sm:px-0";
+/**
+ * The tab bars' shared look: on a phone the row runs to the screen's edges.
+ * `ROW` is the box around it, which holds the chevrons; `SCROLLER` is the part that scrolls.
+ */
+const ROW = "relative -mx-4 sm:mx-0";
+const SCROLLER = "flex overflow-x-auto px-4 sm:px-0";
 
 export function Tabs({ tabs }: { tabs: Tab[] }) {
-  const row = useTabRow<HTMLElement>();
+  const row = useTabRow<HTMLDivElement>();
   const { pathname } = useLocation();
   useTitle(openTab(tabs, pathname)?.label, row.ref);
   return (
-    <nav {...row} className={cx(ROW, "mb-6 gap-1 border-b border-ash")}>
-      {tabs.map((t) => (
-        <NavLink
-          key={t.to}
-          to={t.to}
-          end={t.end}
-          className={({ isActive }) =>
-            cx(
-              "shrink-0 border-b-2 px-3 py-2 text-sm whitespace-nowrap",
-              isActive ? "border-gold text-parchment" : "border-transparent text-mist hover:text-parchment",
-            )
-          }
-        >
-          <span className="inline-flex items-center gap-1.5">
-            {t.label}
-            {t.count !== undefined && <CountBubble count={t.count} label={t.countLabel ?? "waiting"} />}
-          </span>
-        </NavLink>
-      ))}
+    <nav className={cx(ROW, "mb-6")}>
+      <div {...row.scroller} className={cx(SCROLLER, "gap-1 border-b border-ash")}>
+        {tabs.map((t) => (
+          <NavLink
+            key={t.to}
+            to={t.to}
+            end={t.end}
+            className={({ isActive }) =>
+              cx(
+                "shrink-0 border-b-2 px-3 py-2 text-sm whitespace-nowrap",
+                isActive ? "border-gold text-parchment" : "border-transparent text-mist hover:text-parchment",
+              )
+            }
+          >
+            <span className="inline-flex items-center gap-1.5">
+              {t.label}
+              {t.count !== undefined && <CountBubble count={t.count} label={t.countLabel ?? "waiting"} />}
+            </span>
+          </NavLink>
+        ))}
+      </div>
+      {row.chevrons}
     </nav>
   );
 }
@@ -352,34 +376,37 @@ export function GroupedTabs({ label, groups }: { label: string; groups: { label:
   const { pathname } = useLocation();
   const shown = groups.filter((g) => g.tabs.length > 0);
   const open = shown.find((g) => g.tabs.some((t) => tabOpens(t, pathname)));
-  const row = useTabRow<HTMLElement>();
+  const row = useTabRow<HTMLDivElement>();
   useTitle(open && openTab(open.tabs, pathname)?.label, row.ref);
   return (
     // Closer to the heading and the content on a phone, where height is short (#904).
     <div className="mb-6 max-sm:-mt-2 max-sm:mb-4">
       <SectionPicker label={label} groups={shown} className="sm:hidden" />
-      <nav aria-label={label} {...row} className={cx(ROW, "gap-x-1 border-b border-ash max-sm:hidden")}>
-        {shown.map((g) => {
-          const active = g === open;
-          const counts = g.tabs.filter((t) => t.count !== undefined && t.countInGroup !== false);
-          const total = counts.reduce((sum, t) => sum + (t.count ?? 0), 0);
-          return (
-            <Link
-              key={g.label}
-              to={g.to && g.tabs.some((t) => t.to === g.to) ? g.to : g.tabs[0]!.to}
-              aria-current={active ? "true" : undefined}
-              className={cx(
-                "shrink-0 border-b-2 px-3 py-2 text-sm whitespace-nowrap",
-                active ? "border-gold text-parchment" : "border-transparent text-mist hover:text-parchment",
-              )}
-            >
-              <span className="inline-flex items-center gap-1.5">
-                {g.label}
-                {counts.length > 0 && <CountBubble count={total} label="waiting" />}
-              </span>
-            </Link>
-          );
-        })}
+      <nav aria-label={label} className={cx(ROW, "max-sm:hidden")}>
+        <div {...row.scroller} className={cx(SCROLLER, "gap-x-1 border-b border-ash")}>
+          {shown.map((g) => {
+            const active = g === open;
+            const counts = g.tabs.filter((t) => t.count !== undefined && t.countInGroup !== false);
+            const total = counts.reduce((sum, t) => sum + (t.count ?? 0), 0);
+            return (
+              <Link
+                key={g.label}
+                to={g.to && g.tabs.some((t) => t.to === g.to) ? g.to : g.tabs[0]!.to}
+                aria-current={active ? "true" : undefined}
+                className={cx(
+                  "shrink-0 border-b-2 px-3 py-2 text-sm whitespace-nowrap",
+                  active ? "border-gold text-parchment" : "border-transparent text-mist hover:text-parchment",
+                )}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  {g.label}
+                  {counts.length > 0 && <CountBubble count={total} label="waiting" />}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+        {row.chevrons}
       </nav>
       {open && open.tabs.length > 1 && <SubTabs label={open.label} tabs={open.tabs} className="mt-3 mb-0 max-sm:hidden" />}
     </div>
@@ -391,30 +418,33 @@ export function GroupedTabs({ label, groups }: { label: string; groups: { label:
  * `GroupedTabs`. For the parts of one page, inside it, use `PageTabs`.
  */
 export function SubTabs({ label, tabs, className }: { label: string; tabs: Tab[]; className?: string }) {
-  const row = useTabRow<HTMLElement>();
+  const row = useTabRow<HTMLDivElement>();
   const { pathname } = useLocation();
   useTitle(openTab(tabs, pathname)?.label, row.ref);
   return (
     // A className of its own replaces the margin below.
-    <nav aria-label={label} {...row} className={cx(ROW, "gap-2", className ?? "mb-5")}>
-      {tabs.map((t) => (
-        // Marked open as NavLink would, and under its `also` address too.
-        <Link
-          key={t.to}
-          to={t.to}
-          aria-label={t.ariaLabel}
-          aria-current={tabOpens(t, pathname) ? "page" : undefined}
-          className={cx(
-            "shrink-0 rounded-full border px-3 py-1 text-sm whitespace-nowrap",
-            tabOpens(t, pathname) ? "border-gold/60 bg-gold/10 text-parchment" : "border-ash text-mist hover:text-parchment",
-          )}
-        >
-          <span className="inline-flex items-center gap-1.5">
-            {t.label}
-            {t.count !== undefined && <CountBubble count={t.count} label={t.countLabel ?? "waiting"} />}
-          </span>
-        </Link>
-      ))}
+    <nav aria-label={label} className={cx(ROW, className ?? "mb-5")}>
+      <div {...row.scroller} className={cx(SCROLLER, "gap-2")}>
+        {tabs.map((t) => (
+          // Marked open as NavLink would, and under its `also` address too.
+          <Link
+            key={t.to}
+            to={t.to}
+            aria-label={t.ariaLabel}
+            aria-current={tabOpens(t, pathname) ? "page" : undefined}
+            className={cx(
+              "shrink-0 rounded-full border px-3 py-1 text-sm whitespace-nowrap",
+              tabOpens(t, pathname) ? "border-gold/60 bg-gold/10 text-parchment" : "border-ash text-mist hover:text-parchment",
+            )}
+          >
+            <span className="inline-flex items-center gap-1.5">
+              {t.label}
+              {t.count !== undefined && <CountBubble count={t.count} label={t.countLabel ?? "waiting"} />}
+            </span>
+          </Link>
+        ))}
+      </div>
+      {row.chevrons}
     </nav>
   );
 }

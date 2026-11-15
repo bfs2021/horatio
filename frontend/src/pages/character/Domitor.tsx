@@ -78,7 +78,7 @@ export function DomitorPanel({
       <ErrorText error={domitor.error} />
       {canChange && catalogue && !open && (
         <Button variant="secondary" className="self-start" onClick={() => setChanging(true)}>
-          {domitor.data ? "Change domitor" : "Choose domitor"}
+          {domitor.data ? "Edit domitor" : "Choose domitor"}
         </Button>
       )}
       {open && <DomitorForm character={character} sheet={sheet} catalogue={catalogue} onDone={domitor.data ? () => setChanging(false) : undefined} />}
@@ -231,7 +231,7 @@ export function DomitorForm({ character, sheet, catalogue, onDone }: { character
       <ErrorText error={save.error} />
       <div className="flex gap-2">
         <Button type="submit" disabled={!!missing || save.isPending}>
-          Save domitor
+          Save
         </Button>
         {onDone && (
           <Button type="button" variant="ghost" onClick={onDone}>

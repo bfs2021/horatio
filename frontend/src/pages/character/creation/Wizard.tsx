@@ -940,7 +940,7 @@ function OwnArchetype({ character, sheet, onSaved }: { character: CharacterOut; 
       </Field>
       <ErrorText error={save.error} />
       <div>
-        <Button disabled={!name.trim() || save.isPending} onClick={() => save.mutate(undefined, { onSuccess: onSaved })}>
+        <Button variant="secondary" disabled={!name.trim() || save.isPending} onClick={() => save.mutate(undefined, { onSuccess: onSaved })}>
           Save archetype
         </Button>
       </div>

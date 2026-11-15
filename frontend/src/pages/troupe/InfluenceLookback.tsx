@@ -21,8 +21,8 @@ export function InfluenceLookback({ troupeId, canEdit }: { troupeId: string; can
       actions={
         canEdit &&
         days === null && (
-          <Button variant="secondary" className="min-h-8 px-3" aria-label="Change how far lookups look back" onClick={() => setDays(now)}>
-            Change
+          <Button variant="secondary" className="min-h-8 px-3" aria-label="Edit how far lookups look back" onClick={() => setDays(now)}>
+            Edit
           </Button>
         )
       }

@@ -102,7 +102,7 @@ export function CharacterSire({ character, sire, onDone }: { character: Characte
         <ErrorText error={save.error} />
         <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={save.isPending || !ready}>
-            Save sire
+            Save
           </Button>
           <Button type="button" variant="ghost" onClick={onDone}>
             Cancel

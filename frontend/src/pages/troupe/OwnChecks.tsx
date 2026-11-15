@@ -112,11 +112,11 @@ export function OwnChecks({ troupeId, canEdit }: { troupeId: string; canEdit: bo
                       <Button
                         variant="secondary"
                         className="min-h-8 px-3"
-                        aria-label={`Change: ${c.message}`}
+                        aria-label={`Edit: ${c.message}`}
                         aria-expanded={editor.isOpen(c)}
                         onClick={(e) => editor.toggle(c, e.currentTarget)}
                       >
-                        Change
+                        Edit
                       </Button>
                       <Button variant="ghost" className="min-h-8 px-2" aria-label={`Remove: ${c.message}`} onClick={() => setRemoving(c)}>
                         Remove
@@ -224,8 +224,8 @@ function OwnCheckEditor({ troupeId, editing, onClose }: { troupeId: string; edit
   const text = body ? preview.data?.text : "";
 
   return (
-    <section aria-label={editing === "new" ? "A new check" : "Change the check"} className="flex flex-col gap-4 rounded-md border border-gold/40 p-3 sm:p-4">
-      <CardHeading>{editing === "new" ? "A new check" : "Change the check"}</CardHeading>
+    <section aria-label={editing === "new" ? "A new check" : "Edit the check"} className="flex flex-col gap-4 rounded-md border border-gold/40 p-3 sm:p-4">
+      <CardHeading>{editing === "new" ? "A new check" : "Edit the check"}</CardHeading>
       {unreadable && <p className="text-sm text-blood-bright">The form cannot show this check's condition. Build it again, or keep it as it is.</p>}
       {!cat && <Loading />}
       <ErrorText error={catalogue.error} />

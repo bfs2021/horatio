@@ -468,7 +468,7 @@ export function LocationForm({
       <ErrorText error={save.error} />
       <div className="flex gap-2">
         <Button type="submit" disabled={save.isPending}>
-          {location ? "Save changes" : "Add location"}
+          {location ? "Save" : "Add location"}
         </Button>
         {onCancel && (
           <Button type="button" variant="ghost" onClick={onCancel}>

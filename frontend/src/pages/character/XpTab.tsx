@@ -156,7 +156,7 @@ function DebtCard({ characterId }: { characterId: string }) {
               <Input required maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} />
             </Field>
           </div>
-          <Button type="submit" disabled={save.isPending || amount < 1 || !reason.trim()}>
+          <Button type="submit" variant="secondary" disabled={save.isPending || amount < 1 || !reason.trim()}>
             {change === "add" ? "Add debt" : "Forgive debt"}
           </Button>
           <ErrorText error={save.error} />

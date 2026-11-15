@@ -170,8 +170,8 @@ function Written({
       </div>
       {!n.published && (
         <div className="flex shrink-0 gap-1">
-          <Button variant="ghost" aria-label={`Change the nomination “${n.text.slice(0, 40)}”`} onClick={() => setEditing({ text: n.text, about: aboutValue(n.about) })}>
-            Change
+          <Button variant="ghost" aria-label={`Edit the nomination “${n.text.slice(0, 40)}”`} onClick={() => setEditing({ text: n.text, about: aboutValue(n.about) })}>
+            Edit
           </Button>
           <Button variant="ghost" aria-label={`Take out the nomination “${n.text.slice(0, 40)}”`} disabled={remove.isPending} onClick={() => remove.mutate()}>
             Take out

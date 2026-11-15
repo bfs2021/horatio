@@ -104,7 +104,7 @@ function AgencyChannel({ troupeId, agency, channels }: { troupeId: string; agenc
     <>
       {channelName(channels, agency.discord_channel)}{" "}
       <Link to={`/troupes/${troupeId}/connectors`} className="underline hover:text-parchment">
-        Change in Connectors
+        Edit in Connectors
       </Link>
     </>
   );

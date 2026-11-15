@@ -240,10 +240,10 @@ export function FreeChoicesRow({ character, trait, editable }: { character: Char
         <Button
           variant="ghost"
           className="min-h-7 px-1 py-0 text-xs text-gold"
-          aria-label={`${done ? "Change" : "Choose"} the free traits for ${trait.name}`}
+          aria-label={`${done ? "Edit" : "Choose"} the free traits for ${trait.name}`}
           onClick={() => setDraft(saved)}
         >
-          {done ? "Change" : "Choose"}
+          {done ? "Edit" : "Choose"}
         </Button>
       )}
       {locked && (saved.length > 0 || placedElsewhere) && <p className="text-mist">{locked}</p>}

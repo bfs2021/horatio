@@ -15,10 +15,7 @@ const viewport = { width: 375, height: 800 };
 const headers = { "X-Horatio": "1" };
 
 // Screens known to be too wide, each waiting on its own ticket: the address, with "ID" for each id.
-const KNOWN: string[] = [
-  // Its Troupe selects (Yorick import, Fit NPC creation picks) are as wide as the longest troupe name: #969.
-  "/custodian/tools",
-];
+const KNOWN: string[] = [];
 
 async function send(page: Page, method: "GET" | "POST" | "PUT" | "PATCH", url: string, data?: object) {
   const response = await page.request.fetch(url, { method, headers, data });

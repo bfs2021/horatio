@@ -135,7 +135,7 @@ export function JyhadCardPage() {
                     disabled={save.isPending || typed === null}
                     className="shrink-0 rounded-md bg-blood px-4 py-1.5 text-sm hover:bg-blood-bright disabled:opacity-60"
                   >
-                    Save card
+                    Save
                   </button>
                 </div>
               </form>

@@ -284,7 +284,7 @@ test("influence spent at a game goes in the troupe's influence log, and comes of
   const later = p.getByRole("dialog", { name: "Details of E2" });
   await later.getByLabel("Action").selectOption({ label: "1: A Friend in Need" });
   await later.getByLabel("Purpose").fill("To get a favour from the mayor's aide");
-  await later.getByRole("button", { name: "Save details" }).click();
+  await later.getByRole("button", { name: "Save", exact: true }).click();
   await expect(p.getByText("Elite: 1: A Friend in Need, To get a favour from the mayor's aide")).toBeVisible();
   await l.reload();
   await expect(l.getByRole("listitem", { name: "Entry E2" }).getByText("To get a favour from the mayor's aide")).toBeVisible();
@@ -450,7 +450,7 @@ test("Gossip is filled from the influence log, and a discovery block hides an en
   // A longer lookback finds the action from 100 days back.
   await l.goto(`/troupes/${troupeId}/house-rules/actions`);
   await expect(l.getByText("90 days", { exact: true })).toBeVisible();
-  await l.getByRole("button", { name: "Change how far lookups look back" }).click();
+  await l.getByRole("button", { name: "Edit how far lookups look back" }).click();
   await l.getByLabel("Days to look back").fill("120");
   await l.getByRole("button", { name: "Save", exact: true }).click();
   await expect(l.getByText("120 days", { exact: true })).toBeVisible();

@@ -84,10 +84,10 @@ export function FeedingTerritories({ troupeId, canManage }: { troupeId: string; 
             {canManage && editing === null && (
               <Button
                 variant="ghost"
-                aria-label={`Change ${t.name}`}
+                aria-label={`Edit ${t.name}`}
                 onClick={() => setEditing({ id: t.id, draft: { name: t.name, size: t.size, area: t.area, held_by: t.held_by, holder_ids: t.holder_ids } })}
               >
-                Change
+                Edit
               </Button>
             )}
           </li>

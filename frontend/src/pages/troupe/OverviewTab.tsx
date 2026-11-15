@@ -34,7 +34,7 @@ export function OverviewTab({ troupe, can }: { troupe: TroupeOut; can: ReturnTyp
   // Who may join and the XP range each have a part of Troupe settings (#908).
   const settings = (part: TroupeSettingsPart) => (
     <Link to={`${base}/${troupeSettings(part)}`} className="text-sm text-mist underline hover:text-parchment">
-      Change in Customise
+      Edit in Customise
     </Link>
   );
   return (

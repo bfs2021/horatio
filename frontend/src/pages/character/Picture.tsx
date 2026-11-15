@@ -28,7 +28,7 @@ export function CharacterPicture({ character }: { character: CharacterOut }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={character.picture ? `Change ${character.name}'s picture` : `Add a picture of ${character.name}`}
+        aria-label={character.picture ? `Edit ${character.name}'s picture` : `Add a picture of ${character.name}`}
         className="group relative shrink-0 rounded-full"
       >
         {avatar}
@@ -292,7 +292,7 @@ export function Cropper({
           Back
         </Button>
         <Button type="button" disabled={saving || (!box && !(failed && unreadable))} onClick={() => onSave(box && natural ? toCrop(natural.w, natural.h, box) : null)}>
-          {saving ? "Saving…" : "Save picture"}
+          {saving ? "Saving…" : "Save"}
         </Button>
       </div>
     </div>

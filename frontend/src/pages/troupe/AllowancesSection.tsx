@@ -98,11 +98,11 @@ export function AllowancesSection({ troupeId, canEdit }: { troupeId: string; can
                               <Button
                                 variant="secondary"
                                 className="min-h-8 px-3"
-                                aria-label={`Change actions for ${r.who}`}
+                                aria-label={`Edit actions for ${r.who}`}
                                 aria-expanded={open}
                                 onClick={(e) => editor.toggle(change, e.currentTarget)}
                               >
-                                Change
+                                Edit
                               </Button>
                               <Button variant="ghost" className="min-h-8 px-2" aria-label={`Remove actions for ${r.who}`} onClick={() => remove.mutate(r.id!)}>
                                 Remove
@@ -113,11 +113,11 @@ export function AllowancesSection({ troupeId, canEdit }: { troupeId: string; can
                             <Button
                               variant="secondary"
                               className="min-h-8 px-3"
-                              aria-label={`Change actions for ${r.who}`}
+                              aria-label={`Edit actions for ${r.who}`}
                               aria-expanded={open}
                               onClick={(e) => editor.toggle(change, e.currentTarget)}
                             >
-                              Change
+                              Edit
                             </Button>
                           )}
                         </span>

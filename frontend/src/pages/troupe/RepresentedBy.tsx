@@ -39,8 +39,8 @@ export function RepresentedBy({ troupeId, entry, seated, canSet }: { troupeId: s
       <span className="flex flex-wrap items-baseline gap-x-2 text-mist">
         Represented by: {current ? named(current) : "nobody yet"}
         {canSet && (
-          <button type="button" className="text-xs underline hover:text-gold" aria-label={`Change who represents ${entry.name}`} onClick={start}>
-            Change
+          <button type="button" className="text-xs underline hover:text-gold" aria-label={`Edit who represents ${entry.name}`} onClick={start}>
+            Edit
           </button>
         )}
       </span>

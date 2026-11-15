@@ -176,8 +176,8 @@ function CategoryRow({ troupeId, splat, category, canEdit }: { troupeId: string;
         <span className="flex shrink-0 items-center gap-2">
           {category.house && <Badge tone="gold">House rule</Badge>}
           {canEdit && !editing && (
-            <Button variant="secondary" className="min-h-8 px-3" aria-label={`Change starting ${category.name}`} onClick={() => setEditing(true)}>
-              Change
+            <Button variant="secondary" className="min-h-8 px-3" aria-label={`Edit starting ${category.name}`} onClick={() => setEditing(true)}>
+              Edit
             </Button>
           )}
           {canEdit && category.house && !editing && (

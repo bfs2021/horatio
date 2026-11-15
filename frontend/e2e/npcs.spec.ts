@@ -264,7 +264,7 @@ test("staff choose a quick NPC's Thaumaturgic Expertise path and a skill's field
   await expect(p.getByText("21 XP", { exact: true })).toBeVisible();
 
   // And it can be changed again later.
-  await p.getByRole("button", { name: "Change the detail of Crafts: Illumination" }).click();
+  await p.getByRole("button", { name: "Edit the detail of Crafts: Illumination" }).click();
   await p.getByLabel("Crafts field", { exact: true }).fill("Painting");
   await p.getByRole("button", { name: "Set", exact: true }).click();
   await expect(p.getByRole("button", { name: "Crafts: Painting 2", exact: true })).toHaveAttribute("aria-pressed", "true");
@@ -299,7 +299,7 @@ test("staff choose what a quick NPC's Piece That Remains gives on its sheet, and
   await piece.getByRole("combobox").selectOption("Ventrue Royalty");
   await p.screenshot(shots("npc-given-merit"));
   await piece.getByRole("button", { name: "Save" }).click();
-  await expect(piece.getByRole("button", { name: "Change the free traits for Piece That Remains" })).toBeVisible();
+  await expect(piece.getByRole("button", { name: "Edit the free traits for Piece That Remains" })).toBeVisible();
   await expect(piece).toContainText("Ventrue Royalty");
   // Royalty is held, free, and its own dots are placed with the creation picks.
   await expect(p.locator('[data-free-choices="Ventrue Royalty"]')).toContainText("placed with the NPC's creation picks");
@@ -312,7 +312,7 @@ test("staff choose what a quick NPC's Piece That Remains gives on its sheet, and
 
   // Changed under the merit in the builder: Royalty goes, with its places, and the price with it.
   const built = p.locator('[data-free-choices="Piece That Remains"]');
-  await built.getByRole("button", { name: "Change the free traits for Piece That Remains" }).click();
+  await built.getByRole("button", { name: "Edit the free traits for Piece That Remains" }).click();
   await built.getByRole("combobox").selectOption("Aura of Command");
   await built.getByRole("button", { name: "Save" }).click();
   await expect(built).toContainText("Aura of Command");

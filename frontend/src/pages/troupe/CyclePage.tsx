@@ -311,7 +311,7 @@ function CompletionXp({ cycle }: { cycle: CycleOut }) {
               setEditing(true);
             }}
           >
-            Change
+            Edit
           </button>
         )}
       </span>

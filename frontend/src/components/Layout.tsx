@@ -111,6 +111,9 @@ function SignedOutLinks({ link }: { link: LinkClass }) {
   const { pathname, search, hash } = useLocation();
   const passedOn = useNext();
   const next = SIGN_IN_PAGES.test(pathname) ? passedOn : SPENT_LINKS.test(pathname) || pathname === "/" ? null : pathname + search + hash;
+  // One red button a screen (#920): it steps back where the page has its own, the
+  // sign-in pages' and a troupe's public page's.
+  const ownPrimary = SIGN_IN_PAGES.test(pathname) || pathname.startsWith("/t/");
   return (
     <nav aria-label="Main" className="flex items-center gap-3 text-sm whitespace-nowrap sm:gap-4">
       {/* Too narrow for all three, the footer has Help instead. */}
@@ -120,7 +123,10 @@ function SignedOutLinks({ link }: { link: LinkClass }) {
       <NavLink to={withNext("/sign-in", next)} className={link}>
         Sign in
       </NavLink>
-      <Link to={withNext("/sign-up", next)} className="inline-flex min-h-9 items-center rounded-md bg-blood px-3 font-medium text-parchment hover:bg-blood-bright">
+      <Link
+        to={withNext("/sign-up", next)}
+        className={`inline-flex min-h-9 items-center rounded-md px-3 font-medium text-parchment ${ownPrimary ? "border border-ash bg-dusk hover:border-mist" : "bg-blood hover:bg-blood-bright"}`}
+      >
         Create account
       </Link>
     </nav>

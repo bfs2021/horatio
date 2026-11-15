@@ -139,8 +139,14 @@ export function CostsSection({ troupeId, canEdit }: { troupeId: string; canEdit:
                             {c.replaced && <Badge>Replaced here</Badge>}
                             {canEdit && c.house && c.id && (
                               <>
-                                <Button variant="secondary" className="min-h-8 px-3" aria-expanded={open} onClick={(e) => editor.toggle(change, e.currentTarget)}>
-                                  Change
+                                <Button
+                                  variant="secondary"
+                                  className="min-h-8 px-3"
+                                  aria-label={`Edit the price for ${named(subject(c, category))}`}
+                                  aria-expanded={open}
+                                  onClick={(e) => editor.toggle(change, e.currentTarget)}
+                                >
+                                  Edit
                                 </Button>
                                 <Button
                                   variant="ghost"
@@ -156,11 +162,11 @@ export function CostsSection({ troupeId, canEdit }: { troupeId: string; canEdit:
                               <Button
                                 variant="secondary"
                                 className="min-h-8 px-3"
-                                aria-label={`Change the price for ${named(subject(c, category))}`}
+                                aria-label={`Edit the price for ${named(subject(c, category))}`}
                                 aria-expanded={open}
                                 onClick={(e) => editor.toggle(change, e.currentTarget)}
                               >
-                                Change
+                                Edit
                               </Button>
                             )}
                           </span>
@@ -371,7 +377,7 @@ function PriceEditor({ troupeId, splat, data, editing, onClose }: { troupeId: st
         <ErrorText error={save.error} />
         <div className="flex gap-2">
           <Button type="submit" disabled={!ready || save.isPending}>
-            Save price
+            {start ? "Save" : "Add the price"}
           </Button>
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel

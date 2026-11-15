@@ -46,8 +46,8 @@ export function KeywordChooser({
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone="gold">{current.name}</Badge>
           {offered.length > 1 && (
-            <Button variant="ghost" className="min-h-8 px-2" aria-label={`Change ${current.name} to another kind of action`} onClick={() => setChoosing(true)}>
-              Change
+            <Button variant="ghost" className="min-h-8 px-2" aria-label={`Edit the kind of action: ${current.name}`} onClick={() => setChoosing(true)}>
+              Edit
             </Button>
           )}
         </div>
@@ -91,7 +91,7 @@ export function KeywordChooser({
                 setChoosing(false);
               }}
             >
-              Change to {pending.name}
+              Switch to {pending.name}
             </Button>
             <Button variant="ghost" onClick={() => setPending(null)}>
               Keep {current.name}

@@ -113,7 +113,7 @@ export function ChangeEmail({ person }: { person: Person }) {
           {sent === null && cancel.isSuccess && <Notice>Cancelled. Their email stays as it is.</Notice>}
           <ErrorText error={start.error ?? profile.error} />
           <Button type="submit" variant="secondary" disabled={start.isPending} className="self-start">
-            Change email
+            {canEmail ? "Send the link" : "Make the link"}
           </Button>
         </form>
       )}

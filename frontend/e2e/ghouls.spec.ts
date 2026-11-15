@@ -112,7 +112,7 @@ test("a player builds a ghoul in the wizard, bound to their own vampire, and lat
   await domitor.getByLabel("Find a vampire").fill("ysol");
   await domitor.getByRole("radio", { name: /Lady Ysolde/ }).check();
   await expect(domitor.getByText("Wendel's in-clan disciplines would be the domitor's: Auspex, Celerity and Presence.")).toBeVisible();
-  await domitor.getByRole("button", { name: "Save domitor" }).click();
+  await domitor.getByRole("button", { name: "Save", exact: true }).click();
   await expect(domitor.getByText("Bound to Lady Ysolde, Toreador.")).toBeVisible();
   await expect(p.getByText("In-clan now: Auspex, Celerity and Presence.")).toBeVisible();
 
@@ -173,7 +173,7 @@ test("a player builds a ghoul in the wizard, bound to their own vampire, and lat
   await expect(card.getByText("In-clan disciplines, the domitor's: Auspex, Celerity and Presence.")).toBeVisible();
 
   // Until a troupe accepts Wendel, the player binds him to another domitor, and moves his dots.
-  await card.getByRole("button", { name: "Change domitor" }).click();
+  await card.getByRole("button", { name: "Edit domitor" }).click();
   await card.getByRole("radio", { name: "Not in Horatio" }).check();
   await card.getByLabel("Domitor's name").fill("Old Marta");
   await card.getByLabel("Domitor's clan").selectOption("Ventrue");
@@ -181,7 +181,7 @@ test("a player builds a ghoul in the wizard, bound to their own vampire, and lat
   await card.getByLabel("Presence", { exact: true }).selectOption("2");
   await expect(card.getByText("Move all 3 dots; 2 are placed.")).toBeVisible();
   await card.getByLabel("Dominate", { exact: true }).selectOption("1");
-  await card.getByRole("button", { name: "Save domitor" }).click();
+  await card.getByRole("button", { name: "Save", exact: true }).click();
   await expect(card.getByText("Bound to Old Marta, Ventrue, who is not in Horatio.")).toBeVisible();
   await expect(card.getByText("In-clan disciplines, the domitor's: Dominate, Fortitude and Presence.")).toBeVisible();
   const traits = await (await p.request.get(`/api/characters/${ghoulId}/sheet`)).json();

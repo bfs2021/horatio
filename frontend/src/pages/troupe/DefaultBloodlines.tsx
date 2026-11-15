@@ -73,8 +73,8 @@ export function DefaultBloodlinesCard({
       actions={
         canEdit &&
         editing === null && (
-          <Button variant="secondary" className="min-h-8 px-3" aria-label="Change default bloodlines" onClick={() => setEditing(own)}>
-            Change
+          <Button variant="secondary" className="min-h-8 px-3" aria-label="Edit default bloodlines" onClick={() => setEditing(own)}>
+            Edit
           </Button>
         )
       }

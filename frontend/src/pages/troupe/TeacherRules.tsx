@@ -73,11 +73,11 @@ export function TeacherRules({ troupeId, canEdit }: { troupeId: string; canEdit:
                     <Button
                       variant="secondary"
                       className="min-h-8 px-3"
-                      aria-label={`Change: ${r.text}`}
+                      aria-label={`Edit: ${r.text}`}
                       aria-expanded={editor.isOpen(r)}
                       onClick={(e) => editor.toggle(r, e.currentTarget)}
                     >
-                      Change
+                      Edit
                     </Button>
                     <Button variant="ghost" className="min-h-8 px-2" aria-label={`Remove: ${r.text}`} onClick={() => setRemoving(r)}>
                       Remove
@@ -163,7 +163,7 @@ function TeacherRuleEditor({ troupeId, editing, onClose }: { troupeId: string; e
   const cat = catalogue.data;
   const problem = "problem" in built ? built.problem : preview.data?.problem;
   const text = body ? preview.data?.text : "";
-  const title = editing === "new" ? "A new teacher rule" : "Change the teacher rule";
+  const title = editing === "new" ? "A new teacher rule" : "Edit the teacher rule";
 
   return (
     <section aria-label={title} className="flex flex-col gap-4 rounded-md border border-gold/40 p-3 sm:p-4">

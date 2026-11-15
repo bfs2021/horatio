@@ -82,7 +82,7 @@ You can also make a troupe without a request. On **Custodian › Troupe manageme
 
 Each troupe has one lead storyteller. Only you can change who it is, for example when a lead steps down or is suspended:
 
-1. On **Custodian › Troupe management**, under **Troupes**, choose **Change lead…** on the troupe's row. (Or open the troupe, then its **Staff** tab, and use **Appoint a new lead** under **Lead storyteller**.)
+1. On **Custodian › Troupe management**, under **Troupes**, choose **Appoint a new lead…** on the troupe's row. (Or open the troupe, then its **Staff** tab, and use **Appoint a new lead** under **Lead storyteller**.)
 2. Under **New lead**, pick the person, or type a name or handle to find them. The dialog says who leads it now.
 3. Choose **Appoint**.
 
@@ -183,7 +183,7 @@ For a player who has lost their old address:
 
 1. Choose **⋯ › Change email…**.
 2. Give the **New email** and a **Reason**, which is for the log: they aren't shown it.
-3. Choose **Change email**.
+3. Choose **Send the link** (or **Make the link**, where Horatio can't send email).
 
 They keep their old address until they open the link sent to the new one, within 7 days; then the old address is told. If Horatio can't send email on your server, you get the link to send them yourself, with **Copy link**.
 
@@ -303,7 +303,7 @@ The server, username and password stay in `deploy/production.env`: change them t
 
 ### Email design
 
-The **Email design** card sets how every email Horatio sends looks: password resets, email changes, suspensions, notifications and the daily digest, account merges, and downtime results and quests' news. Each email goes as a formatted email with a plain-text version beside it, for mail apps that want only text. The card says in a line what is in the header now, whose colours, and whether there is a footer of your own; the boxes are under **Change the design**, and the preview under **Preview a sample email**.
+The **Email design** card sets how every email Horatio sends looks: password resets, email changes, suspensions, notifications and the daily digest, account merges, and downtime results and quests' news. Each email goes as a formatted email with a plain-text version beside it, for mail apps that want only text. The card says in a line what is in the header now, whose colours, and whether there is a footer of your own; the boxes are under **Edit the design**, and the preview under **Preview a sample email**.
 
 - **Header:** the site's name, on a header colour with a text colour, or a **header picture** in its place, such as a logo. The picture is made at most 1200 × 400 px and kept small, as a PNG (if it has transparency) or a JPEG, never WebP, which some mail apps can't show. It travels inside every email, so it shows without signing in, and Horatio never learns who opened one. Where a mail app blocks pictures, the site's name shows instead. A picture too detailed to make small enough is refused, with the reason.
 - **Accent:** for buttons and the line under the header. Links use it too, darkened where they must be to read on white.

@@ -108,7 +108,7 @@ export function BadgeNote({ character, troupeId, onDone }: { character: Pick<Cha
           Print badge
         </Button>
         <Button type="submit" disabled={save.isPending || typed === null}>
-          Save note
+          Save
         </Button>
       </div>
     </form>

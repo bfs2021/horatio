@@ -1,6 +1,9 @@
+import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import type { TroupeOut } from "../../api/types";
+import { Dialog } from "../../components/Dialog";
+import { Button } from "../../components/ui";
 import { BackstorySettings } from "./BackstorySettings";
 import { BadgeSetting } from "./BadgeSetting";
 import { BloodBondsSetting } from "./BloodBondsSetting";
@@ -17,71 +20,113 @@ import { ThrowImagesSetting } from "./ThrowImagesSetting";
 import { WhosWhoSetting } from "./WhosWhoSetting";
 
 /**
- * A feature's own settings, folded at the top of its tab (#784), for those who may change
- * them. Switching the feature on and off is the Features list's, on Troupe settings; its
- * Settings link lands here, open. An address ending `#settings-<part>` (#785) opens it too,
- * at that part's card.
+ * Scrolls the dialog's own scroller to `card`, and nothing beyond the dialog: scrollIntoView
+ * would also move the page under it, and on a phone the dialog itself, off the screen.
  */
-export function FeatureSettings({ children, single = false }: { children: ReactNode; single?: boolean }) {
-  const { hash } = useLocation();
+function scrollWithin(card: HTMLElement) {
+  for (let el = card.parentElement; el; el = el.parentElement) {
+    const { overflowY } = getComputedStyle(el);
+    if ((overflowY === "auto" || overflowY === "scroll") && el.scrollHeight > el.clientHeight) {
+      el.scrollTop += card.getBoundingClientRect().top - el.getBoundingClientRect().top - 16;
+      return;
+    }
+    if (el instanceof HTMLDialogElement) return;
+  }
+}
+
+/**
+ * A feature's own settings, behind one Settings button right-aligned above its tab's content
+ * (#909), in a dialog named after the tab: full screen on a phone. Switching the feature on and
+ * off is the Features list's, on Troupe settings; its Settings link lands here, with the dialog
+ * open. An address ending `#settings-<part>` (#785) opens it at that part's card. Those who may
+ * read but not change them see the same cards, read-only.
+ */
+export function FeatureSettings({ tab, children, single = false }: { tab: string; children: ReactNode; single?: boolean }) {
+  const { hash, pathname, search } = useLocation();
+  const navigate = useNavigate();
   const asked = hash === `#${SETTINGS_HASH}` || hash.startsWith(`#${SETTINGS_HASH}-`);
   const [open, setOpen] = useState(asked);
-  const ref = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
-    if (!asked) return;
-    setOpen(true);
-    (document.getElementById(hash.slice(1)) ?? ref.current)?.scrollIntoView({ block: "start" });
+    if (asked) setOpen(true);
   }, [asked, hash]);
+  // Landing on a part, its card is scrolled to once the cards above it have loaded and
+  // taken their height: again each time a load ends, until none is left.
+  const client = useQueryClient();
+  const fetching = useIsFetching();
+  const landed = useRef<string | null>(null);
+  useEffect(() => {
+    if (!open || !asked || landed.current === hash) return;
+    const card = document.getElementById(hash.slice(1));
+    if (card) scrollWithin(card);
+    if (client.isFetching() === 0) landed.current = hash;
+  }, [open, asked, hash, fetching, client]);
+  const close = () => {
+    setOpen(false);
+    landed.current = null;
+    // The address no longer opens it, so going back to the tab doesn't either.
+    if (asked) void navigate({ pathname, search }, { replace: true });
+  };
   return (
-    <details
-      ref={ref}
-      id={SETTINGS_HASH}
-      open={open}
-      onToggle={(e) => setOpen(e.currentTarget.open)}
-      className="mb-6 scroll-mt-4 rounded-lg border border-ash"
-    >
-      <summary className="cursor-pointer px-4 py-3 text-sm text-parchment">Settings</summary>
-      <div className={`grid items-start gap-6 border-t border-ash p-4 ${single ? "" : "md:grid-cols-2"}`}>{children}</div>
-    </details>
+    <>
+      <div className="mb-3 flex justify-end">
+        <Button variant="secondary" onClick={() => setOpen(true)}>
+          Settings
+        </Button>
+      </div>
+      <Dialog title={`${tab} settings`} open={open} onClose={close} wide phoneFull>
+        {/* On a wider screen the cards scroll under the dialog's title, which stays in sight; a phone's dialog does that itself. */}
+        <div id={SETTINGS_HASH} className={`grid items-start gap-6 sm:max-h-[calc(100dvh-9rem)] sm:overflow-y-auto ${single ? "" : "md:grid-cols-2"}`}>
+          {children}
+        </div>
+      </Dialog>
+    </>
   );
 }
 
-/** The features whose settings are folded at the top of their own tab. */
+/** The features whose settings are behind the Settings button of their own tab. */
 type OnTab = "whos_who" | "play_view" | "boons" | "blood_bonds";
 
-/** A feature's tab's folded Settings, with the cards that were on Troupe settings (#784). */
-export function TabSettings({ troupe, feature }: { troupe: TroupeOut; feature: OnTab }) {
+/** The name of each feature's tab, for its settings dialog's title. */
+const TAB_NAMES: Record<OnTab, string> = { whos_who: "Who's Who", play_view: "At game", boons: "Boons", blood_bonds: "Bonds" };
+
+/** A feature's tab's Settings, with the cards that were on Troupe settings (#784). */
+export function TabSettings({ troupe, feature, canEdit }: { troupe: TroupeOut; feature: OnTab; canEdit: boolean }) {
   return (
-    <FeatureSettings single={feature !== "play_view"}>
-      {feature === "whos_who" && <WhosWhoSetting troupe={troupe} canEdit />}
+    <FeatureSettings tab={TAB_NAMES[feature]} single={feature !== "play_view"}>
+      {feature === "whos_who" && <WhosWhoSetting troupe={troupe} canEdit={canEdit} />}
       {feature === "play_view" && (
         <>
-          <PlayTabsSetting troupe={troupe} canEdit />
-          <StatusAtCheckinSetting troupe={troupe} canEdit />
-          <BadgeSetting troupe={troupe} canEdit />
-          <ThrowImagesSetting troupe={troupe} canEdit />
+          <PlayTabsSetting troupe={troupe} canEdit={canEdit} />
+          <StatusAtCheckinSetting troupe={troupe} canEdit={canEdit} />
+          <BadgeSetting troupe={troupe} canEdit={canEdit} />
+          <ThrowImagesSetting troupe={troupe} canEdit={canEdit} />
         </>
       )}
-      {feature === "boons" && <BoonLedgerSetting troupe={troupe} canEdit />}
-      {feature === "blood_bonds" && <BloodBondsSetting troupe={troupe} canEdit />}
+      {feature === "boons" && <BoonLedgerSetting troupe={troupe} canEdit={canEdit} />}
+      {feature === "blood_bonds" && <BloodBondsSetting troupe={troupe} canEdit={canEdit} />}
     </FeatureSettings>
   );
 }
 
+type Place = "locations" | "quests" | "characters" | "approvals";
+
+/** The name of each place's tab, for its settings dialog's title. */
+const PLACE_NAMES: Record<Place, string> = { locations: "Locations", quests: "Quests", characters: "Roster", approvals: "Approvals" };
+
 /**
- * The house rules that set up a feature rather than a rule, folded at the top of the tab where
- * staff meet that feature (#785): Locations on World › Locations, Quests on Downtimes › Quests,
+ * The house rules that set up a feature rather than a rule, behind the Settings button of the
+ * tab where staff meet that feature (#785): Locations on World › Locations, Quests on Downtimes › Quests,
  * Retainers on Characters, and Backstories, Teachers and Free changes on Approvals, where what
  * they ask for is reviewed. Running staff read them; storytellers change them, as under House rules.
  */
-export function PartSettings({ troupeId, place, canEdit }: { troupeId: string; place: "locations" | "quests" | "characters" | "approvals"; canEdit: boolean }) {
+export function PartSettings({ troupeId, place, canEdit }: { troupeId: string; place: Place; canEdit: boolean }) {
   const part = (key: SettingsPart, card: ReactNode) => (
-    <div id={settingsPart(key)} className="scroll-mt-4">
+    <div id={settingsPart(key)}>
       {card}
     </div>
   );
   return (
-    <FeatureSettings single>
+    <FeatureSettings tab={PLACE_NAMES[place]} single>
       {place === "locations" && part("locations", <LocationRulesSection troupeId={troupeId} canEdit={canEdit} />)}
       {place === "quests" && part("quests", <QuestSettings troupeId={troupeId} canEdit={canEdit} />)}
       {place === "characters" && part("retainers", <RetainerRules troupeId={troupeId} canEdit={canEdit} />)}

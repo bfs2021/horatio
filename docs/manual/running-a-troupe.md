@@ -296,7 +296,7 @@ The NPC's **IC chat** tab lists its recent messages, newest first, with when eac
 
 ## Titles and status
 
-**Court › Titles** lists the titles the troupe gives in tables: those held first, with who holds them, then the vacant ones by sect, folded away under **Show vacant**. Each row has the title, its sect, the status it gives, whether it is a **House rule** (a title the troupe added), and its **One holder at a time** switch. On a phone each row folds into a short card, with the switch under it.
+**Court › Titles** lists the titles the troupe gives in tables: those held first, with who holds them, then the vacant ones by sect, folded away under **Show vacant**. Each row has the title, its sect, the status it gives, whether it is a **House rule** (a title the troupe added), and its **One holder at a time** switch. On a phone each row folds into a short card, with its holder, sect and the status it gives under the title, then the switch.
 
 - **One holder at a time** is a house rule you set title by title, for the book's titles and your own alike. It's off for every title until you switch it on, so several characters may hold a Prince, say, where your game runs two domains. Switched on, players can't choose the title while someone holds it, though staff can still give it. For a title with other names (a Baron is also an Advocate), it is for them all. Each change goes in the troupe's log.
 - **Add a title** makes a title of the troupe's own: its name, its sect (or any sect), the status it gives, and whether it is one holder at a time.
@@ -335,7 +335,7 @@ Switched off, the ledger and its entries in the log are hidden; what was registe
 
 The **Who's Who** tab shows the troupe's active characters as cards, for its players and staff. It is never public. The court comes first, in rank order, then a section for each clan with a seat, then **Other** for the clans without one, then those no longer with us. Search it by character, player or title, or filter it by clan and sect.
 
-What it shows of sect status is set in its **Settings**, at the top of the tab (see [A feature's own settings](#a-features-own-settings)).
+What it shows of sect status is set in its **Settings** (see [A feature's own settings](#a-features-own-settings)).
 
 ## News
 
@@ -436,7 +436,7 @@ Publishing, editing a published announcement, pinning and unpinning, unpublishin
 
 - **Give equipment** gives an item: weapons, protective gear and other gear with the book's qualities, or a Vampiric Text. Start from the book's items or the troupe's own templates; **Save as a template** keeps one for next time.
 - An item can be made special, with any number of qualities and effects of the troupe's own. A special item shows **Special, by** its troupe on its row.
-- The list is a table: each item, who holds it, its kind, qualities and grade, and when and by whom it was given. On a phone, each item folds into a card. Choose an item's name to read what it does.
+- The list is a table: each item, who holds it, its kind, qualities and grade, and when and by whom it was given. On a phone, each item folds into a card, with the same details under its name, each with what it is: **Held by**, **Kind** and so on. Choose an item's name to read what it does.
 - Each item's **⋯**, at the end of its row, holds **History** (an item given from a downtime response says so there, linking to the response), and, while it's held, **Change…**, **Move…** (to another home character), **Discard…** and **Take back…** (with a reason; its player is told). A discarded item's **⋯** offers **Restore to** its last holder instead.
 - **Find items** searches by words, holder, kind, quality, grade, who gave it and when, held or discarded.
 - **Export CSV** downloads the list; **Find these characters** opens the Roster on the holders.
@@ -450,7 +450,7 @@ Publishing, editing a published announcement, pinning and unpinning, unpublishin
 **World › Locations** is the troupe's record of the places that matter in its chronicle, and its characters' havens, with who controls each. Storytellers and assistant storytellers keep it; players and narrators never see it, except that a player keeps part of their own Haven from their sheet (see below).
 
 - **Add a location** adds one.
-- The list is a table of each location's name, type, controller, qualities (negative ones in red), influence area and whether it is locked. On a phone each row folds into a short card.
+- The list is a table of each location's name, type, controller, qualities (negative ones in red), influence area and whether it is locked. On a phone each row folds into a short card, with the same details under its name, each with what it is: **Type**, **Controller** and so on.
 - Filter the list by controller, type, quality, influence, feeding block, locked or not, and negative qualities.
 - The **⋯** at the end of a row holds **Open**, **Edit…** (the form opens over the list), **Build a quest for it** (when quests are on) and **Remove…**.
 - Open a location to change it, forfeit it, remove a negative quality, add subsidiaries, and read its log.
@@ -518,7 +518,7 @@ Below it, nothing is changed: Setup points to where things are.
 
 ## Customise: troupe settings
 
-**Customise › Troupe settings** holds the settings for the whole troupe, in groups, under a list of its features. A feature with a tab of its own keeps the rest of its settings at the top of that tab (see [A feature's own settings](#a-features-own-settings)).
+**Customise › Troupe settings** holds the settings for the whole troupe, in groups, under a list of its features. A feature with a tab of its own keeps the rest of its settings behind the **Settings** button of that tab (see [A feature's own settings](#a-features-own-settings)).
 
 Every settings card saves the same way, here and in a feature's own settings. Switches, ticks and choices save as you make them, and Horatio says **Saved.** each time. A card with fields to type in, such as **Experience**, is always open: change what you like, then choose its **Save**, at the bottom of the card. Until you do, it says **Not saved yet**, and leaving the page asks first. A card you can only read says who changes it.
 
@@ -575,9 +575,9 @@ The **Story bible** tab, beside **The setting**, is its staff-only companion (ME
 
 ### A feature's own settings
 
-Who's Who, At game, Boons and Bonds each have **Settings** at the top of their tab, folded away until opened, for storytellers. A feature's **Settings** link in the Features list opens them.
+Who's Who, At game, Boons and Bonds each have a **Settings** button at the right, above the tab's content. It opens the feature's settings in a box over the tab, named after it (**Boons settings**), the whole screen on a phone; **Close** (or **×**) takes you back to the tab. Storytellers change them there, and assistant storytellers read them. A feature's **Settings** link in the Features list opens the box on its tab.
 
-The house rules that set up a feature rather than a rule are folded the same way at the top of the tab where you meet that feature: Locations on **World › Locations**, quest requests on **Downtimes › Quests**, Retainers on **Characters › Characters**, and Backstories, Teachers and Free changes on **Characters › Approvals**, where what they ask for is reviewed. Storytellers change them there and assistant storytellers read them, as before under House rules; links to their old House rules addresses open them there (see [Settings moved from House rules](#settings-moved-from-house-rules)).
+The house rules that set up a feature rather than a rule are behind the same button on the tab where you meet that feature: Locations on **World › Locations**, quest requests on **Downtimes › Quests**, Retainers on **Characters › Roster**, and Backstories, Teachers and Free changes on **Characters › Approvals**, where what they ask for is reviewed. Storytellers change them there and assistant storytellers read them, as before under House rules; links to their old House rules addresses open the box at that setting (see [Settings moved from House rules](#settings-moved-from-house-rules)).
 
 - **Who's Who**: whether it also shows the negative status each character carries into a game here, and whether players see its sire lines.
 - **At game** (**Games › At game**), for the Play View and the game itself:
@@ -590,7 +590,7 @@ The house rules that set up a feature rather than a rule are folded the same way
 
 ### Settings moved from House rules
 
-Each of these sits in the **Settings** at the top of its tab.
+Each of these is behind the **Settings** button of its tab.
 
 #### Location rules
 
@@ -673,7 +673,7 @@ Switching feeding off only hides it. What was recorded is kept and comes back if
 
 ## Customise: house rules
 
-**Customise › House rules** holds the troupe's changes to the rule set. It opens on **As players read it**: the troupe's **House rules** tab exactly as its players see it, everything the troupe plays differently from the book in one page. After it come the parts, one page each, where storytellers change the rules and assistant storytellers read them: Checks, Costs, Starting points, Downtime actions, Downtime keywords, Languages, House merits and flaws, Written rules and Book traits. Locations, Quests, Retainers, Backstories, Free changes and Teachers set up a feature rather than a rule, so they're in the Settings at the top of that feature's tab (see [Settings moved from House rules](#settings-moved-from-house-rules)). A house rule applies to characters whose home troupe this is, and those being built for it.
+**Customise › House rules** holds the troupe's changes to the rule set. It opens on **As players read it**: the troupe's **House rules** tab exactly as its players see it, everything the troupe plays differently from the book in one page. After it come the parts, one page each, where storytellers change the rules and assistant storytellers read them: Checks, Costs, Starting points, Downtime actions, Downtime keywords, Languages, House merits and flaws, Written rules and Book traits. Locations, Quests, Retainers, Backstories, Free changes and Teachers set up a feature rather than a rule, so they're behind the **Settings** button of that feature's tab (see [Settings moved from House rules](#settings-moved-from-house-rules)). A house rule applies to characters whose home troupe this is, and those being built for it.
 
 On a wide screen the parts are listed down the left of the page, with the open one beside them. On a phone or a tablet, one button above the page names the open part, such as **Costs**; tap it for them all.
 
@@ -980,7 +980,7 @@ Never carried:
 - connectors (Discord channels, tokens);
 - the troupe's titles and seated clans, its own equipment templates, house location qualities and backstory question sets.
 
-If the backstory settings coming in need questions this troupe doesn't have, the review says so: add them in the **Settings** at the top of **Characters › Approvals** (see [Backstories](#backstories)).
+If the backstory settings coming in need questions this troupe doesn't have, the review says so: add them in the **Settings** of **Characters › Approvals** (see [Backstories](#backstories)).
 
 ## Approvals
 

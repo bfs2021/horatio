@@ -90,6 +90,8 @@ test("storytellers build an NPC quickly and give it a title", async ({ browser }
   await titles.getByRole("button", { name: "Close" }).click();
   // The title shows on the row, to read.
   await expect(p.getByRole("list", { name: "Prince Vasquez's titles" }).getByText("Prince")).toBeVisible();
+  // Under the list, what the pill's star means: a hover title never shows on a phone (#919).
+  await expect(p.getByText("★ marks a character's active title, the one that gives status.")).toBeVisible();
   await p.screenshot(shots("roster-titles"));
   await troupeTab(p, "Log");
   await expect(p.getByText("npc-lead gave Prince Vasquez the title Prince.")).toBeVisible();

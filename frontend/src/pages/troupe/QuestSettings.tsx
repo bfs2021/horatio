@@ -4,7 +4,7 @@ import { SettingCard, SettingForm, useSettingForm } from "../../components/Setti
 import { ErrorText, Field, Input, Loading } from "../../components/ui";
 
 /**
- * How many quests a character may ask for each cycle, folded at the top of the Quests tab (#785).
+ * How many quests a character may ask for each cycle, in the Quests tab's Settings (#785, #909).
  * Quests are switched on and off in the Features list, on Troupe settings (#784), the one place.
  */
 export function QuestSettings({ troupeId, canEdit }: { troupeId: string; canEdit: boolean }) {

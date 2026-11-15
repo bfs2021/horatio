@@ -774,3 +774,52 @@ test("staff find who holds what in the Characters filter, and items on the Equip
   const searched = await call(p, "POST", `/api/troupes/${troupe.id}/characters/search`, { match: "all", items: [{ what: "equipment", op: "has", value: { quality: "Staking" } }] });
   expect(searched.status()).toBe(403);
 });
+
+test("on a phone the Equipment tab folds into blocks, nothing sideways with 20 long names; from lg up it is a table (#914)", async ({ browser }) => {
+  const custodian = await person(browser, "kfold914-cust");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "kfold914-lead");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Armoury of Long Names ${run}`, lead_handle: lead.handle });
+  const l = lead.page;
+  // Twenty long names, one a single word longer than a phone is wide.
+  const names = Array.from({ length: 20 }, (_, i) =>
+    i === 0 ? "Wolfeschlegelsteinhausenbergerdorffvoralternwarengewissenhaft" : `Bartholomew Featherstonehaugh-Cholmondeley of Wolverhampton ${i + 1}`,
+  );
+  // Twenty items, each held by an NPC: the first item is the long word.
+  const items = names.map((name, i) => (i === 0 ? name : `Ceremonial Silver-Chased Longsword of the Featherstonehaugh-Cholmondeleys ${i + 1}`));
+  for (const [i, item] of items.entries()) {
+    const npc = await send(l, "POST", `/api/troupes/${troupe.id}/npcs`, { name: names[i]!, wizard: false });
+    await send(l, "POST", `/api/troupes/${troupe.id}/equipment`, { character_id: npc.id, name: item, kind: "melee", grade: "standard", qualities: [{ name: "Concealable" }] });
+  }
+  const phone = test.info().project.name === "phone";
+  // The narrowest phone the review measured.
+  if (phone) await l.setViewportSize({ width: 375, height: 800 });
+  // Against the viewport, not innerWidth: a phone widens its layout to fit what is too wide.
+  const sideways = async () => (await l.evaluate(() => document.documentElement.scrollWidth)) - l.viewportSize()!.width;
+
+  await l.goto(`/troupes/${troupe.id}/equipment`);
+  const found = l.getByRole("table", { name: "Equipment", exact: true });
+  await expect(found.locator("tbody tr")).toHaveCount(20);
+  const first = found.getByRole("row", { name: `${items[0]}, held by ${names[0]}` });
+  await expect(first.getByRole("button", { name: items[0], exact: true })).toBeVisible();
+  await expect(first.getByRole("link", { name: names[0] })).toBeVisible();
+  expect(await sideways()).toBe(0);
+  // From lg up a table, its headings showing; on a phone what the columns show folds under the name, each with what it is.
+  if (phone) await expect(first.getByText("Kind:", { exact: true })).toBeVisible();
+  else await expect(found.getByRole("columnheader", { name: "Held by" })).toBeVisible();
+  await expect(first.getByText("Concealable", { exact: true }).filter({ visible: true })).toBeVisible();
+  await l.screenshot(shots("equipment-long-names"));
+  // The name still opens what the item is, and the ⋯ its history.
+  await first.getByRole("button", { name: items[0], exact: true }).click();
+  await expect(l.getByRole("dialog", { name: items[0] })).toBeVisible();
+  await l.getByRole("dialog").getByRole("button", { name: "Close" }).click();
+  await itemAction(l, `${items[0]}, held by ${names[0]}`, "History");
+  await expect(l.getByRole("dialog", { name: `History of ${items[0]}` })).toBeVisible();
+});

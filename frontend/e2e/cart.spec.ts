@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { closeContextsAfterEach, run, shots, person, makeCustodian, builtVampire, ATTRIBUTES_AND_FOCUSES, backstoryOptional, characterTab, tapMid } from "./support";
+import { closeContextsAfterEach, run, shots, person, makeCustodian, builtVampire, ATTRIBUTES_AND_FOCUSES, backstoryOptional, characterTab, tapMid, tabSettings } from "./support";
 
 /** The XP cart: changes on the sheet wait in it until Spend XP makes them. */
 
@@ -443,10 +443,14 @@ test("with free changes by games played, a new character drops a skill for its f
   const troupeId = (await made.json()).id;
   await backstoryOptional(custodian.page, troupeId);
 
-  // The lead gives new characters free changes for their first 3 games, in the Settings at the top of Approvals.
+  // The lead gives new characters free changes for their first 3 games, in Approvals' Settings.
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/approvals#settings-free-changes`);
-  const freeChanges = l.getByRole("region", { name: "Free changes for new characters" });
+  const settings = await tabSettings(l, "Approvals");
+  const freeChanges = settings.getByRole("region", { name: "Free changes for new characters" });
+  // The address opens the dialog at the card, below Backstories and Teachers, with the dialog's title still in sight.
+  await expect(freeChanges.getByRole("heading", { name: "Free changes for new characters" })).toBeInViewport();
+  await expect(settings.getByRole("heading", { name: "Approvals settings" })).toBeInViewport();
   await freeChanges.getByLabel(/^By games played/).check();
   await freeChanges.getByLabel("Games attended").fill("3");
   await freeChanges.getByRole("button", { name: "Save", exact: true }).click();

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { closeContextsAfterEach, run, shots, person, makeCustodian, backstoryOptional, characterTab, troupeTab, expectTabOpen } from "./support";
+import { closeContextsAfterEach, run, shots, person, makeCustodian, backstoryOptional, characterTab, troupeTab, expectTabOpen, tabSettings } from "./support";
 
 /** The Who's Who, and what a player says about their character and themselves. */
 
@@ -347,11 +347,12 @@ test("sire lines: a player gives a sire from the menu, staff see the sire and bo
   await p.goto(`/troupes/${troupeId}/whos-who`);
   await expect(p.getByText("The troupe’s characters, for its players and staff. It is never public.")).toBeVisible();
   await expect(p.getByRole("button", { name: "Sire lines" })).toHaveCount(0);
-  // The Who's Who's own settings, folded at the top of its tab for the storytellers (#784).
+  // The Who's Who's own settings, behind its tab's Settings button (#784, #909).
   await l.goto(`/troupes/${troupeId}/whos-who#settings`);
+  const settings = await tabSettings(l, "Who's Who");
   // It changes once the troupe is saved, so click and wait for it.
-  await l.getByRole("switch", { name: /Show the sire lines to players/ }).click();
-  await expect(l.getByRole("switch", { name: /Show the sire lines to players/ })).toBeChecked();
+  await settings.getByRole("switch", { name: /Show the sire lines to players/ }).click();
+  await expect(settings.getByRole("switch", { name: /Show the sire lines to players/ })).toBeChecked();
   await p.reload();
   await p.getByRole("button", { name: "Sire lines" }).click();
   await expect(p.getByRole("figure", { name: "Sire lines" }).getByRole("img", { name: /^Aurelie: .*sire Mother Aldegonde/ })).toBeAttached();
@@ -515,9 +516,9 @@ test("pronouns: a player gives their own and their character's, the Who's Who sh
   const badge = l.getByRole("article", { name: "Badge for Ines" });
   await expect(badge.getByText("Neonate", { exact: false })).toBeVisible();
   await expect(badge.getByText("she/her")).toHaveCount(0);
-  // Badges are At game's settings, folded at the top of its tab (#784).
+  // Badges are At game's settings, behind its tab's Settings button (#784, #909).
   await l.goto(`/troupes/${troupeId}/play#settings`);
-  const setting = l.locator("section").filter({ has: l.getByRole("heading", { name: "Badges", exact: true }) });
+  const setting = (await tabSettings(l, "At game")).locator("section").filter({ has: l.getByRole("heading", { name: "Badges", exact: true }) });
   await expect(setting.getByLabel(/^Print character pronouns/)).not.toBeChecked();
   await setting.getByLabel(/^Print character pronouns/).click();
   await expect(setting.getByLabel(/^Print character pronouns/)).toBeChecked();

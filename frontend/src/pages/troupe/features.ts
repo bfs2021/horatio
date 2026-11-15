@@ -29,8 +29,8 @@ export type Feature = {
   /** Its tab, under the troupe, when the troupe's staff have it. */
   tab?: { label: string; to: string };
   /**
-   * Where the rest of its settings are, under the troupe: folded at the top of its own tab
-   * ("boons#settings", #784; "quests#settings-quests", #785) or a card on Troupe settings
+   * Where the rest of its settings are, under the troupe: behind its own tab's Settings button
+   * ("boons#settings", #784, #909; "quests#settings-quests", #785) or a card on Troupe settings
    * ("#feature-feeding"). None when the switch is all there is.
    */
   settings?: string;
@@ -41,13 +41,13 @@ export type Feature = {
 /** The id of a feature's settings card on Troupe settings, for the list to link to. */
 export const settingsAnchor = (key: FeatureKey) => `feature-${key.replace(/_/g, "-")}`;
 
-/** The id of the folded Settings at the top of a feature's own tab (#784). */
+/** The address of the Settings dialog of a feature's own tab, which opens it (#784, #909). */
 export const SETTINGS_HASH = "settings";
 
 /** The house-rule parts that set up a feature, moved to the tab where staff meet it (#785). */
 export type SettingsPart = "locations" | "quests" | "retainers" | "backstories" | "teachers" | "free-changes";
 
-/** Where each part now lives, under the troupe: its tab, folded open at the part (`#settings-<part>`). */
+/** Where each part now lives, under the troupe: its tab, its Settings open at the part (`#settings-<part>`). */
 export const PART_HOMES: Record<SettingsPart, string> = {
   locations: "locations",
   quests: "quests",
@@ -57,17 +57,14 @@ export const PART_HOMES: Record<SettingsPart, string> = {
   "free-changes": "approvals",
 };
 
-/** The id of a part's card in its tab's folded Settings. */
+/** The id of a part's card in its tab's Settings dialog. */
 export const settingsPart = (part: SettingsPart) => `${SETTINGS_HASH}-${part}`;
 
 /** A part's new home, from an old House rules or Rules address (#785). */
 export const partHome = (part: SettingsPart) => `${PART_HOMES[part]}#${settingsPart(part)}`;
 
-/** A feature's settings folded at the top of its tab: for storytellers only, as only they change them. */
+/** A feature's settings behind its tab's Settings button: running staff read them, its storytellers change them. */
 const onTab = (to: string) => `${to}#${SETTINGS_HASH}`;
-
-/** Whether a feature's settings link lands on its tab's folded Settings, which only those who may change them see. */
-export const settingsOnTab = (settings: string) => settings.endsWith(`#${SETTINGS_HASH}`) || settings.includes(`#${SETTINGS_HASH}-`);
 
 const onOff = (on: boolean) => (on ? "On" : "Off");
 const requests = (n: number) => (n === 1 ? "1 request" : `${n} requests`);

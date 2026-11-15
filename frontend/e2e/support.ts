@@ -35,6 +35,24 @@ export async function switchFeature(page: Page, troupeId: string, name: string, 
 }
 
 /**
+ * A troupe tab's own settings (#909): the dialog its Settings button opens, named
+ * "<tab> settings" ("Boons settings", "Approvals settings"). An address ending `#settings`
+ * or `#settings-<part>` opens it already, so the button is pressed only without one.
+ */
+export async function tabSettings(page: Page, tab: string): Promise<Locator> {
+  const dialog = page.getByRole("dialog", { name: `${tab} settings` });
+  if (!/#settings(-[a-z-]+)?$/.test(page.url())) await page.locator("main").getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(dialog).toBeVisible();
+  return dialog;
+}
+
+/** Closes a tab's settings dialog (`tabSettings`), back to the tab: its ×, or Close across its foot on a phone. */
+export async function closeTabSettings(dialog: Locator) {
+  await dialog.getByRole("button", { name: "Close" }).click();
+  await expect(dialog).toBeHidden();
+}
+
+/**
  * The site's main navigation in the top bar (#746): the bar itself on a wide screen;
  * below 1024px, behind the Menu button, which this opens if it isn't open already.
  * Characters, Troupes, Rulebook, Help, Custodian, the account link and Sign

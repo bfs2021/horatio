@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { closeContextsAfterEach, run, shots, person, makeCustodian, backstoryOptional, characterTab, builtVampire, ATTRIBUTES_AND_FOCUSES, switchFeature, troupeTab } from "./support";
+import { closeContextsAfterEach, run, shots, person, makeCustodian, backstoryOptional, characterTab, builtVampire, ATTRIBUTES_AND_FOCUSES, switchFeature, troupeTab, tabSettings } from "./support";
 
 /** Status and titles, on the sheet, on badges and at a game. */
 
@@ -300,9 +300,9 @@ test("with a boon ledger, the ban on no boons registered with the Harpy is judge
   await expect(boonsBan).toContainText("does not apply");
   await expect(card.getByText("Fleeting: 0 of 5")).toBeVisible();
 
-  // The lead has the ledger judge it, in the Boons tab's settings (#784).
+  // The lead has the ledger judge it, in the Boons tab's settings (#784, #909).
   await l.goto(`/troupes/${troupeId}/boons#settings`);
-  const judge = l.getByRole("switch", { name: /Judge “No boons registered” from the boon ledger/ });
+  const judge = (await tabSettings(l, "Boons")).getByRole("switch", { name: /Judge “No boons registered” from the boon ledger/ });
   await judge.check();
   await expect(l.getByText("The boon ledger now judges the ban on no boons registered with the Harpy.")).toBeVisible();
   await expect(judge).toBeChecked();
@@ -604,7 +604,7 @@ test("a troupe chooses whether its badges print titles and status: by default al
 
   // In At game's settings (#784), the lead turns titles off and prints negative status only.
   await l.goto(`/troupes/${troupeId}/play#settings`);
-  const setting = l.locator("section").filter({ has: l.getByRole("heading", { name: "Badges", exact: true }) });
+  const setting = (await tabSettings(l, "At game")).locator("section").filter({ has: l.getByRole("heading", { name: "Badges", exact: true }) });
   await expect(setting.getByLabel("Print titles")).toBeChecked();
   await expect(setting.getByLabel(/^All/)).toBeChecked();
   // Each saves as it is clicked, and shows once saved.
@@ -783,7 +783,7 @@ test("where the troupe chooses the night's status at check-in, an elder Senescha
   // The lead switches the house rule on in At game's settings (#784), and the players' House rules tab says so.
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/play#settings`);
-  const card = l.locator("section").filter({ has: l.getByRole("heading", { name: "The night's status" }) });
+  const card = (await tabSettings(l, "At game")).locator("section").filter({ has: l.getByRole("heading", { name: "The night's status" }) });
   await card.getByLabel("Choose the night's status at check-in").click();
   await expect(card.getByLabel("Choose the night's status at check-in")).toBeChecked();
   await p.goto(`/troupes/${troupeId}/house-rules`);
@@ -1063,6 +1063,58 @@ test("titles by sect: a Camarilla troupe gives Camarilla titles only to its own,
   await expect(held.getByRole("row", { name: "Master of Elysium" }).getByRole("link", { name: "Elena Varga" })).toBeVisible();
   const wide = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(wide).toBeLessThanOrEqual(0);
+});
+
+test("on a phone the Titles tab folds into blocks, nothing sideways with 20 long names; from lg up its titles are tables (#914)", async ({ browser }) => {
+  const custodian = await person(browser, "tfold914-cust");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "tfold914-lead");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Court of Long Titles ${run}`, lead_handle: lead.handle });
+  const l = lead.page;
+  // Twenty long names, one a single word longer than a phone is wide.
+  const names = Array.from({ length: 20 }, (_, i) =>
+    i === 0 ? "Wolfeschlegelsteinhausenbergerdorffvoralternwarengewissenhaft" : `Bartholomew Featherstonehaugh-Cholmondeley of Wolverhampton ${i + 1}`,
+  );
+  // Twenty titles of the troupe's own, each held by an NPC: the first title is the long word.
+  const titles = names.map((name, i) => (i === 0 ? name : `Hereditary Keeper of the Featherstonehaugh-Cholmondeley Archives ${i + 1}`));
+  for (const [i, title] of titles.entries()) {
+    await send(l, "POST", `/api/troupes/${troupe.id}/titles`, { name: title, sect: null, status: [], unique: false });
+    const npc = await send(l, "POST", `/api/troupes/${troupe.id}/npcs`, { name: names[i]!, wizard: false });
+    await send(l, "PUT", `/api/troupes/${troupe.id}/characters/${npc.id}/titles`, { titles: [title] });
+  }
+  const phone = test.info().project.name === "phone";
+  // The narrowest phone the review measured.
+  if (phone) await l.setViewportSize({ width: 375, height: 800 });
+  // Against the viewport, not innerWidth: a phone widens its layout to fit what is too wide.
+  const sideways = async () => (await l.evaluate(() => document.documentElement.scrollWidth)) - l.viewportSize()!.width;
+
+  await l.goto(`/troupes/${troupe.id}/titles`);
+  const held = l.getByRole("table", { name: "Held titles" });
+  await expect(held.locator("tbody tr")).toHaveCount(20);
+  const first = held.getByRole("row", { name: titles[0], exact: true });
+  await expect(first.getByText(titles[0]!, { exact: true })).toBeVisible();
+  await expect(first.getByRole("link", { name: names[0] })).toBeVisible();
+  expect(await sideways()).toBe(0);
+  // From lg up a table, its headings showing; on a phone what the columns show folds under the title, each with what it is.
+  if (phone) {
+    await expect(first.getByText("Sect:", { exact: true })).toBeVisible();
+    await expect(first.getByRole("switch", { name: "One holder at a time", exact: true })).toBeVisible();
+  } else {
+    await expect(held.getByRole("columnheader", { name: "Holder", exact: true })).toBeVisible();
+    await expect(first.getByRole("switch", { name: `One holder at a time: ${titles[0]}` })).toBeVisible();
+  }
+  await l.screenshot(shots("titles-long-names"));
+  // The vacant ones, without a holder, fold the same way.
+  await l.getByRole("button", { name: /^Show vacant \(\d+\)$/ }).click();
+  await expect(l.getByRole("table", { name: "Camarilla titles" })).toBeVisible();
+  expect(await sideways()).toBe(0);
 });
 
 test("the court over time: staff give a Prince and take it away, and see one finished bar with its dates, and let players see it (#712)", async ({ browser }) => {

@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api/client";
 import type { CharacterOut, RetainerOut, RetainersOut } from "../../api/types";
 import { DateInput } from "../../components/DateInput";
 import { Button, ErrorText, Input, Select } from "../../components/ui";
+import { useConfirm } from "../../components/ConfirmDialog";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 import { pageLabel } from "../../components/TraitInfo";
@@ -262,6 +263,7 @@ function RetainerEditor({ character, draft: first, onDone }: { character: Charac
   const remove = useAction((retainerId: string) =>
     unwrap(api.DELETE("/api/characters/{character_id}/retainers/{retainer_id}", { params: { path: { character_id: character.id, retainer_id: retainerId } } })),
   );
+  const [confirmed, confirming] = useConfirm();
   const change = (patch: Partial<Draft>) => setDraft((was) => ({ ...was, ...patch }));
   const label = d.name || "Retainer";
   // Its name and dots are the sheet's for one bought, and the merit's for one its rules give.
@@ -334,12 +336,14 @@ function RetainerEditor({ character, draft: first, onDone }: { character: Charac
             aria-label={`Remove ${label}`}
             disabled={remove.isPending}
             onClick={async () => {
-              if (window.confirm(`Remove ${label} from ${character.name}'s Retainers?`)) done(await remove.mutateAsync(d.id!));
+              const ask = { title: `Remove ${label} from ${character.name}'s Retainers?`, body: "What is written here about it goes too.", action: "Remove" };
+              if (await confirmed(ask)) done(await remove.mutateAsync(d.id!));
             }}
           >
             Remove
           </Button>
         )}
+        {confirming}
       </div>
       <ErrorText error={save.error ?? remove.error} />
     </form>

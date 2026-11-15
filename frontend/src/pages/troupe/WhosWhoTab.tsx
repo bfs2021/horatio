@@ -8,6 +8,7 @@ import { Dialog } from "../../components/Dialog";
 import { useClanName } from "../../components/ClanNames";
 import { LinesVeilsNote } from "../../components/LinesVeils";
 import { Badge, Empty, ErrorText, Input, Loading, Select } from "../../components/ui";
+import { LinkButton } from "../../components/LinkButton";
 import { RemembrancesPanel } from "../nominations/Remembrances";
 import { RepresentedBy } from "./RepresentedBy";
 import { NO_FILTER, clanText, filterChoices, sections, type Section, type WhosWhoFilter } from "./whosWho";
@@ -63,14 +64,9 @@ export function WhosWhoTab({ troupeId }: { troupeId: string }) {
               ))}
             </div>
           )}
-          <a
-            href={`/print/troupes/${troupeId}/whos-who`}
-            target="_blank"
-            rel="noopener"
-            className="inline-flex min-h-9 items-center rounded-md border border-ash px-3 text-sm text-parchment hover:border-gold hover:text-gold"
-          >
+          <LinkButton variant="secondary" href={`/print/troupes/${troupeId}/whos-who`} target="_blank" rel="noopener">
             Print
-          </a>
+          </LinkButton>
         </div>
       </div>
       {view === "lines" && (

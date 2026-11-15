@@ -2751,7 +2751,7 @@ test("a troupe's Overview switches it public at once, shows its XP range, and Wa
   const viewing = l.getByLabel("Viewing as staff");
   await expect(viewing).toContainText("Viewing as lead storyteller");
   await expect(viewing.getByRole("link", { name: "tidy-player" })).toBeVisible();
-  await viewing.getByRole("link", { name: `back to ${troupeName}` }).click();
+  await viewing.getByRole("link", { name: `← ${troupeName}` }).click();
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/approvals$`));
 
   // The player sees About without the box, and the XP range only to read.

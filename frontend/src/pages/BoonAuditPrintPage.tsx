@@ -8,6 +8,7 @@ import { useDates } from "../dates";
 import { usePreferences } from "../hooks";
 import { PAPERS, pageRule } from "../paper";
 import { useTitle } from "../title";
+import { BackLink } from "../components/BackLink";
 
 /**
  * An audit of a character's boons (#690), as it was made, black on white: for the
@@ -32,9 +33,7 @@ export function BoonAuditPrintPage() {
     <div className="min-h-screen bg-neutral-200 py-6 text-black print:min-h-0 print:bg-white print:py-0">
       <style>{pageRule(paper, "0.45in")}</style>
       <div className="mx-auto mb-4 flex items-center justify-between gap-4 px-4 print:hidden" style={width}>
-        <button onClick={() => navigate(-1)} className="text-sm underline">
-          ← Back
-        </button>
+        <BackLink print label="Back" onClick={() => navigate(-1)} />
         <button onClick={() => window.print()} className="rounded bg-black px-4 py-1.5 text-sm text-white">
           Print
         </button>

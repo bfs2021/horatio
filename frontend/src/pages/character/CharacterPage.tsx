@@ -3,13 +3,14 @@ import { useState, type ReactNode } from "react";
 import { Link, Route, Routes, useMatch, useParams, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { CharacterOut } from "../../api/types";
-import { Badge, ErrorText, GroupedTabs, Loading, PageTitle, Tabs } from "../../components/ui";
+import { Badge, ErrorText, Loading, PageTitle, Tabs } from "../../components/ui";
 import { useMe } from "../../hooks";
 import { BackstoryTab, useBackstoryStanding } from "./BackstoryTab";
 import { characterTabGroups, type TabGroup } from "./characterTabs";
 import { CreationWizard } from "./creation/Wizard";
 import { choiceName } from "./creation/logic";
 import { abilities, roleLabel } from "../troupe/roles";
+import { SectionPicker } from "../../components/SectionPicker";
 import { DowntimeTab } from "./DowntimeTab";
 import { EquipmentTab } from "./EquipmentTab";
 import { GiveEquipment } from "./GiveEquipment";
@@ -354,16 +355,13 @@ function Header({ character, children }: { character: CharacterOut; children: Re
 }
 
 /**
- * A PC's tabs: on a phone in groups, with the open group's tabs under them; on
- * a wider screen all in one row, as they fit. A group of one shows as its tab.
+ * A PC's tabs: on a phone one picker of them all, in their groups (#904); on a
+ * wider screen all in one row, as they fit.
  */
 function CharacterTabs({ groups }: { groups: TabGroup[] }) {
-  const named = groups.map((g) => (g.tabs.length === 1 ? { ...g, label: g.tabs[0]!.label } : g));
   return (
     <>
-      <div className="sm:hidden">
-        <GroupedTabs label="Tab groups" groups={named} />
-      </div>
+      <SectionPicker label="Character tabs" groups={groups} className="mb-4 sm:hidden" />
       <div className="hidden sm:block">
         <Tabs tabs={groups.flatMap((g) => g.tabs)} />
       </div>

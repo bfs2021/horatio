@@ -47,7 +47,7 @@ test("Generation changes in the cart until a home troupe accepts the character, 
   await p.screenshot(shots("generation-repriced"));
   await p.getByRole("button", { name: "Spend XP" }).click();
   await expect(p.getByText("Spent 12 XP.")).toBeVisible();
-  await p.locator("main").getByRole("link", { name: "Experience", exact: true }).click();
+  await characterTab(p, "Experience");
   await expect(p.getByText("Generation 1 → 2: Brawl 4 → 5 repriced")).toBeVisible();
   await expect(p.getByText("Generation 1 → 2: Herd 2 → 3 repriced")).toBeVisible();
 
@@ -361,7 +361,7 @@ test("once accepted, a merit or flaw is asked of the home troupe: one declined, 
   await expect(trait("Low Pain Threshold")).toHaveCount(0);
   await expect(trait("Rugged")).toHaveCount(0);
   await expect(part("Health Levels").getByRole("img", { name: "Injured: 3 boxes" })).toBeVisible();
-  await p.locator("main").getByRole("link", { name: "Experience", exact: true }).click();
+  await characterTab(p, "Experience");
   await expect(p.getByText("Rugged 3 → 0 (declined)")).toBeVisible();
   await expect(p.getByText("Low Pain Threshold 3 → 0", { exact: true })).toBeVisible();
 });
@@ -598,7 +598,7 @@ test("changes on the sheet wait in a cart, and only Spend XP makes them, all or 
   await expect(p.getByText("Spent 7 XP.")).toBeVisible(); // 9 for Dodge, less 2 for Archaic
   await expect(p.getByText("23", { exact: true })).toBeVisible();
   await expect(p.locator("li", { has: p.getByRole("button", { name: "Raise Dodge" }) }).getByLabel("5 dots", { exact: true })).toHaveText("5");
-  await p.locator("main").getByRole("link", { name: "Experience", exact: true }).click();
+  await characterTab(p, "Experience");
   await expect(p.getByText("Dodge 3 → 5")).toBeVisible();
 });
 

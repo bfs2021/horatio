@@ -107,6 +107,8 @@ A troupe's page has its tabs in groups, one for each job. Which tabs you see dep
 
 A number on a tab is how much waits on you there, such as approvals to decide.
 
+On a phone, the groups and their tabs give way to one button at the top that says where you are, such as **Customise › Troupe settings**, with how much waits on you in all at its right. Tap it for a list of every group with its tabs under it, and tap a tab to go there.
+
 ## The Overview and what's waiting on you
 
 ![The troupe's Overview for a lead storyteller: Waiting on you, the games to come, and the start of the profile.](images/running-a-troupe/overview.png)

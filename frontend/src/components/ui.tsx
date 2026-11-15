@@ -8,6 +8,7 @@ import { useOnline } from "../offline/connection";
 import { NeedsConnection } from "../offline/NeedsConnection";
 import { pipGroups } from "../ratings";
 import { openTab, tabOpens, textOf, useTitle } from "../title";
+import { SectionPicker } from "./SectionPicker";
 
 function cx(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(" ");
@@ -255,7 +256,7 @@ export function CountBubble({ count, label }: { count: number; label: string }) 
  * `countInGroup: false` keeps a count that isn't waiting on anyone (characters being
  * built, #774) out of its group's "waiting" total. */
 /** A tab: `also` is another address under which it shows as open (see `tabOpens`). */
-type Tab = { to: string; label: string; end?: boolean; also?: string; count?: number; countLabel?: string; countInGroup?: boolean };
+export type Tab = { to: string; label: string; end?: boolean; also?: string; count?: number; countLabel?: string; countInGroup?: boolean };
 
 /** How wide the fade is at an edge of a tab bar with more beyond it. */
 const FADE_PX = 32;
@@ -340,10 +341,10 @@ export function Tabs({ tabs }: { tabs: Tab[] }) {
 
 /**
  * Tabs in groups, for a page with too many to fit one row: the groups in a row,
- * and under it the open group's own tabs. On a phone each row scrolls sideways,
- * with the open tab kept in view. A group opens its first tab, or the one its
- * `to` names; a group of one is a plain tab. Counts add up on their group, so
- * what waits is seen from anywhere.
+ * and under it the open group's own tabs. A group opens its first tab, or the
+ * one its `to` names; a group of one is a plain tab. Counts add up on their
+ * group, so what waits is seen from anywhere. On a phone the two rows give way
+ * to one `SectionPicker` (#904).
  */
 export function GroupedTabs({ label, groups }: { label: string; groups: { label: string; tabs: Tab[]; to?: string }[] }) {
   const { pathname } = useLocation();
@@ -352,8 +353,10 @@ export function GroupedTabs({ label, groups }: { label: string; groups: { label:
   const row = useTabRow<HTMLElement>();
   useTitle(open && openTab(open.tabs, pathname)?.label, row.ref);
   return (
-    <div className="mb-6">
-      <nav aria-label={label} {...row} className={cx(ROW, "gap-x-1 border-b border-ash")}>
+    // Closer to the heading and the content on a phone, where height is short (#904).
+    <div className="mb-6 max-sm:-mt-2 max-sm:mb-4">
+      <SectionPicker label={label} groups={shown} className="sm:hidden" />
+      <nav aria-label={label} {...row} className={cx(ROW, "gap-x-1 border-b border-ash max-sm:hidden")}>
         {shown.map((g) => {
           const active = g === open;
           const counts = g.tabs.filter((t) => t.count !== undefined && t.countInGroup !== false);
@@ -376,7 +379,7 @@ export function GroupedTabs({ label, groups }: { label: string; groups: { label:
           );
         })}
       </nav>
-      {open && open.tabs.length > 1 && <SubTabs label={open.label} tabs={open.tabs} className="mt-3 mb-0" />}
+      {open && open.tabs.length > 1 && <SubTabs label={open.label} tabs={open.tabs} className="mt-3 mb-0 max-sm:hidden" />}
     </div>
   );
 }

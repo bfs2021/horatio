@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { closeContextsAfterEach, makeCustodian, openNewTroupe, PASSWORD, person, run, shots, topBar } from "./support";
+import { closeContextsAfterEach, makeCustodian, openNewTroupe, PASSWORD, person, run, shots, topBar, troupeTab } from "./support";
 
 /** Storytellers building NPCs, of every kind and form. */
 
@@ -24,7 +24,7 @@ test("storytellers build an NPC quickly and give it a title", async ({ browser }
   const p = lead.page;
   await (await topBar(p)).getByRole("link", { name: "Troupes" }).click();
   await p.getByRole("link", { name: troupeName }).click();
-  await p.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "Characters", exact: true }).click();
+  await troupeTab(p, "Roster");
   // NPCs share the Characters list (#556): it opens on player characters, and shows NPCs at a choice.
   await p.locator("main").getByRole("radio", { name: "NPCs" }).click();
   await expect(p).toHaveURL(/\/characters\?show=npcs$/);
@@ -77,7 +77,7 @@ test("storytellers build an NPC quickly and give it a title", async ({ browser }
   // Titles are given on the troupe's Roster tab, where Everyone shows NPCs beside player characters.
   await (await topBar(p)).getByRole("link", { name: "Troupes" }).click();
   await p.getByRole("link", { name: troupeName }).click();
-  await p.getByRole("navigation", { name: "Troupe sections" }).getByRole("link", { name: "Characters", exact: true }).click();
+  await troupeTab(p, "Roster");
   await expect(p.getByText("No player characters have joined this troupe yet.")).toBeVisible();
   await p.locator("main").getByRole("radio", { name: "Everyone" }).click();
   await p.getByRole("button", { name: "Actions for Prince Vasquez" }).click();
@@ -91,8 +91,7 @@ test("storytellers build an NPC quickly and give it a title", async ({ browser }
   // The title shows on the row, to read.
   await expect(p.getByRole("list", { name: "Prince Vasquez's titles" }).getByText("Prince")).toBeVisible();
   await p.screenshot(shots("roster-titles"));
-  await p.getByRole("link", { name: "Troupe", exact: true }).click();
-  await p.locator("main").getByRole("link", { name: "Log", exact: true }).click();
+  await troupeTab(p, "Log");
   await expect(p.getByText("npc-lead gave Prince Vasquez the title Prince.")).toBeVisible();
 
   // The NPCs: badges for those ticked or for every NPC, and each one's Play View. The NPCs

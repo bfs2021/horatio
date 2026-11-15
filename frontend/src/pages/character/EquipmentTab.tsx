@@ -3,6 +3,7 @@ import { useState, type ReactNode } from "react";
 import { api, unwrap } from "../../api/client";
 import type { CharacterOut, EquipmentItemOut, EquipmentReceiverOut } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState";
+import { CardHeading } from "../../components/Headings";
 import { pageLabel } from "../../components/TraitInfo";
 import { Badge, Card, ErrorText, Loading, Notice } from "../../components/ui";
 import { useDates } from "../../dates";
@@ -150,7 +151,7 @@ export function EquipmentCard({
     >
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h3 className="font-display text-base text-gold">{item.name}</h3>
+          <CardHeading>{item.name}</CardHeading>
           <p className="text-mist">{kindText(undefined, item)}</p>
         </div>
         {item.special && (

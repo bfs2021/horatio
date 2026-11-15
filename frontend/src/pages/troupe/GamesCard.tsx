@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api/client";
 import type { CalendarLinks, GameRsvpsOut, TroupeOut } from "../../api/types";
 import { Dialog } from "../../components/Dialog";
 import { EmptyState } from "../../components/EmptyState";
+import { CardHeading, SectionLabel } from "../../components/Headings";
 import { AtHandle } from "../../components/PersonPicker";
 import { useToast } from "../../components/Toast";
 import { Button, Card, ErrorText, Loading } from "../../components/ui";
@@ -173,9 +174,9 @@ function PastGames({ troupeId }: { troupeId: string }) {
   if (!past.data?.length) return null;
   return (
     <section aria-labelledby="past-games" className="mt-4 border-t border-ash pt-3">
-      <h3 id="past-games" className="text-sm text-mist">
+      <SectionLabel id="past-games">
         Games played
-      </h3>
+      </SectionLabel>
       <ul aria-label="Games played" className="mt-1 flex flex-col gap-1 text-sm">
         {past.data.map((g) => (
           <li key={g.id}>
@@ -201,9 +202,9 @@ function WhoIsComing({ game }: { game: GameRsvpsOut }) {
       <div className="mt-1 flex flex-col gap-2">
         {byAnswer(game.answers ?? []).map((group) => (
           <div key={group.answer}>
-            <h3 className="text-xs text-mist">
+            <SectionLabel>
               {group.label} ({group.people.length})
-            </h3>
+            </SectionLabel>
             <ul aria-label={group.label} className="flex flex-col gap-0.5">
               {group.people.map((r) => (
                 <li key={r.person.id}>
@@ -236,9 +237,9 @@ function Subscribe({ troupe }: { troupe: TroupeOut }) {
       <LinkRow title={`${troupe.name} only`} troupeId={troupe.id} personal={false} link={links.data.troupe} />
       <LinkRow title="All your troupes" troupeId={troupe.id} personal link={links.data.personal} />
       <section aria-labelledby="calendar-help" className="flex flex-col gap-2">
-        <h3 id="calendar-help" className="font-display text-parchment">
+        <CardHeading id="calendar-help">
           How to subscribe
-        </h3>
+        </CardHeading>
         <dl className="flex flex-col gap-2">
           <div>
             <dt className="text-parchment">Google Calendar</dt>
@@ -284,7 +285,7 @@ function LinkRow({ title, troupeId, personal, link }: { title: string; troupeId:
 
   return (
     <section aria-label={title} className="flex flex-col gap-2 rounded-md border border-ash p-3">
-      <h3 className="font-display text-parchment">{title}</h3>
+      <CardHeading>{title}</CardHeading>
       {link ? (
         <>
           <span className="font-mono text-xs break-all select-all">{link.url}</span>

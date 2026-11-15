@@ -12,7 +12,7 @@ import { TalonsSetting } from "./BoonTalons";
 
 /**
  * How the troupe keeps its boon ledger (#685): what players see, review, the Harpy, talons
- * and the ban. Folded at the top of the Boons tab (#784); the ledger itself is switched on
+ * and the ban. In the Boons tab's Settings (#784, #909); the ledger itself is switched on
  * and off in Troupe settings' Features list. Switched off, it's hidden everywhere; what was
  * registered is kept, and comes back when it is switched on again.
  */

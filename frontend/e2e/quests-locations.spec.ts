@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { closeContextsAfterEach, run, shots, person, makeCustodian, builtVampire, ATTRIBUTES_AND_FOCUSES, backstoryOptional, characterTab, troupeTab, expectTabCount } from "./support";
+import { closeContextsAfterEach, run, shots, person, makeCustodian, builtVampire, ATTRIBUTES_AND_FOCUSES, backstoryOptional, characterTab, troupeTab, expectTabCount, tabSettings, closeTabSettings } from "./support";
 
 /** Quests, the troupe's locations, and shared backgrounds. */
 
@@ -42,7 +42,7 @@ test("quests: a player asks for one, staff build it Complex 2 and send it, it is
   await characterTab(p, "Results");
   await expect(p.locator("main").getByRole("link", { name: "Quests", exact: true })).toHaveCount(0);
   const l = lead.page;
-  // Quests are switched on in the Features list; their requests a cycle are in the Quests tab's Settings (#785).
+  // Quests are switched on in the Features list; their requests a cycle are in the Quests tab's Settings (#785, #909).
   await l.goto(`/troupes/${troupeId}/settings`);
   const row = l.getByRole("list", { name: "Features" }).getByRole("listitem", { name: "Quests" });
   await row.getByRole("switch", { name: "Quests" }).click();
@@ -50,9 +50,11 @@ test("quests: a player asks for one, staff build it Complex 2 and send it, it is
   await row.getByRole("link", { name: "Settings for Quests" }).click();
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupeId}/quests#settings-quests$`));
   // One a cycle, as a troupe starts: nothing to save until it changes.
-  const requests = l.getByRole("region", { name: "Quest requests" });
+  const settings = await tabSettings(l, "Quests");
+  const requests = settings.getByRole("region", { name: "Quest requests" });
   await expect(requests.getByLabel("Requests per character per cycle")).toHaveValue("1");
   await expect(requests.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
+  await closeTabSettings(settings);
 
   // The player asks for a quest, from behind a button below their quests; a second is refused with the reason.
   await p.reload();

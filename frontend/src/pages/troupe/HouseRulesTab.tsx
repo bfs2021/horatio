@@ -6,6 +6,7 @@ import type { SplatHouseRulesOut, TroupeOut } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState";
 import { HouseMark, HouseSummary } from "../../components/HouseMark";
 import { useClanName } from "../../components/ClanNames";
+import { SectionLabel } from "../../components/Headings";
 import { Card, ErrorText, Loading } from "../../components/ui";
 import { BookTraitChanges } from "./BookTraitChanges";
 import { writtenStrength } from "./checkStrength";
@@ -237,7 +238,7 @@ export function HouseRulesTab({ troupe, staff }: { troupe: TroupeOut; staff: boo
 function SplatPart({ label, split, children }: { label: string; split: boolean; children: ReactNode }) {
   return (
     <section className="not-first:mt-4">
-      {split && <h3 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">{label}</h3>}
+      {split && <SectionLabel className="mb-1">{label}</SectionLabel>}
       <ul className="divide-y divide-ash">{children}</ul>
     </section>
   );

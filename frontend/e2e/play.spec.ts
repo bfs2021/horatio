@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, characterTab, closeContextsAfterEach, makeCustodian, openNewTroupe, openScene, person, run, shots, topBar, undoInHeader } from "./support";
+import { ATTRIBUTES_AND_FOCUSES, backstoryOptional, builtVampire, characterTab, closeContextsAfterEach, makeCustodian, openNewTroupe, openScene, person, run, shots, topBar, undoInHeader, tabSettings } from "./support";
 
 /** The Play View at a game: blood, feeding, the Beast and derangements. */
 
@@ -135,9 +135,9 @@ test("a troupe switches Play View tabs off: Pools goes from a player's Play View
   const tabs = p.getByRole("tablist", { name: "Play View" });
   await expect(tabs.getByRole("tab", { name: "Pools" })).toBeVisible();
 
-  // The lead switches Pools off in At game's settings, folded at the top of its tab (#784).
+  // The lead switches Pools off in At game's settings, behind its tab's Settings button (#784, #909).
   await l.goto(`/troupes/${troupeId}/play#settings`);
-  const setting = l.locator("section").filter({ has: l.getByRole("heading", { name: "Play View tabs", exact: true }) });
+  const setting = (await tabSettings(l, "At game")).locator("section").filter({ has: l.getByRole("heading", { name: "Play View tabs", exact: true }) });
   const pools = setting.getByRole("switch", { name: "Pools", exact: true });
   await expect(pools).toBeChecked();
   await pools.click();
@@ -1626,7 +1626,7 @@ test("a troupe uploads its own rock, paper and scissors, names the set and previ
 
   const l = lead.page;
   await l.goto(`/troupes/${troupeId}/play#settings`);
-  const card = l.locator("section").filter({ has: l.getByRole("heading", { name: "Throw pictures", exact: true }) });
+  const card = (await tabSettings(l, "At game")).locator("section").filter({ has: l.getByRole("heading", { name: "Throw pictures", exact: true }) });
   await expect(card.getByText("None yet")).toHaveCount(3);
 
   // A small PNG for each: Horatio keeps it whole on a transparent square.

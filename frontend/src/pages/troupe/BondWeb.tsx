@@ -6,6 +6,7 @@ import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import { levelName } from "../../bonds";
 import { ChartFrame, clanKey, clanSlots, formatValue, Legend, series, slotOf, useMarks, useZoom, ZoomControls, type ChartTable, type LegendItem } from "../../charts";
+import { CardHeading } from "../../components/Headings";
 import { ErrorText, Select } from "../../components/ui";
 import { bondWeb, chains, DEFAULT_FILTERS, linkStatusText, mostThralls, standingText, webClans, type WebFilters, type WebLink, type WebNode } from "./bondWeb";
 
@@ -331,7 +332,7 @@ function Findings({ web }: { web: ReturnType<typeof bondWeb> }) {
     <div className="grid gap-4 md:grid-cols-2">
       {top.length > 0 && (
         <section aria-label="Most thralls" className="rounded-lg border border-ash bg-dusk p-4">
-          <h3 className="mb-2 text-base text-gold">Most thralls</h3>
+          <CardHeading className="mb-2">Most thralls</CardHeading>
           <ol className="flex flex-col gap-1 text-sm">
             {top.map((m) => (
               <li key={m.person.key} className="flex justify-between gap-3">
@@ -347,7 +348,7 @@ function Findings({ web }: { web: ReturnType<typeof bondWeb> }) {
       )}
       {chained.length > 0 && (
         <section aria-label="Chains of bonds" className="rounded-lg border border-ash bg-dusk p-4">
-          <h3 className="mb-2 text-base text-gold">Chains of bonds</h3>
+          <CardHeading className="mb-2">Chains of bonds</CardHeading>
           <p className="mb-2 text-sm text-mist">Bound to someone, with thralls of their own.</p>
           <ul className="flex flex-col gap-1 text-sm">
             {chained.map((c) => (

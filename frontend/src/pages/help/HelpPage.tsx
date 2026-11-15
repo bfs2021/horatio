@@ -3,6 +3,7 @@ import { useEffect, useMemo } from "react";
 import { Link, useLocation, useParams, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import { BackToTop } from "../../components/BackToTop";
+import { SectionLabel } from "../../components/Headings";
 import { Card, Input, Notice, PageTitle } from "../../components/ui";
 import { useMe } from "../../hooks";
 import { helpPath } from "../../manualLink";
@@ -187,7 +188,7 @@ function Topic({ page }: { page: Page }) {
           <>
             <aside className="hidden lg:block print:hidden">
               <nav aria-label="On this page" className="sticky top-4 text-sm">
-                <h2 className="mb-2 text-xs tracking-wide text-mist uppercase">On this page</h2>
+                <SectionLabel as="h2" className="mb-2">On this page</SectionLabel>
                 <SectionList sections={sections} page={page.name} current={anchor} />
               </nav>
             </aside>

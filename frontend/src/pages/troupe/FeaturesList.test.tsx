@@ -98,18 +98,19 @@ describe("the Features list (#783)", () => {
     expect(list.getByRole("switch", { name: "Boons" }).getAttribute("aria-checked")).toBe("true");
     expect(list.getByRole("link", { name: "Open Boons" }).getAttribute("href")).toBe("/troupes/t1/boons");
     expect(within(list.getByRole("listitem", { name: "Blood bonds" })).getByText("Players manage")).toBeTruthy();
-    // A feature with a tab of its own keeps its settings folded at the top of that tab (#784).
+    // A feature with a tab of its own keeps its settings behind that tab's Settings button (#784, #909).
     expect(list.getByRole("link", { name: "Settings for Boons" }).getAttribute("href")).toBe("/troupes/t1/boons#settings");
     expect(list.getByRole("link", { name: "Settings for Feeding" }).getAttribute("href")).toBe("#feature-feeding");
     expect(list.getAllByRole("link", { name: "Open Nominations" })).toHaveLength(1);
   });
 
-  it("has no switches for those who may only read the settings, nor links to settings only storytellers see", () => {
+  it("has no switches for those who may only read the settings, and links to them all the same (#909)", () => {
     const list = show({ ...TROUPE, boons: true }, false);
     expect(list.queryAllByRole("switch")).toHaveLength(0);
     expect(list.getAllByRole("listitem")).toHaveLength(features(TROUPE).length);
     expect(list.getByRole("link", { name: "Open Boons" })).toBeTruthy();
-    expect(list.queryByRole("link", { name: "Settings for Boons" })).toBeNull();
+    // They read a tab's settings in its Settings dialog, read-only.
+    expect(list.getByRole("link", { name: "Settings for Boons" }).getAttribute("href")).toBe("/troupes/t1/boons#settings");
     expect(list.getByRole("link", { name: "Settings for Feeding" })).toBeTruthy();
   });
 

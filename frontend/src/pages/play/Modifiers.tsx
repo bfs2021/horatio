@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { PoolModifier, TestPool } from "../../api/types";
+import { SectionLabel } from "../../components/Headings";
 import { Button, ErrorText, Input, Select } from "../../components/ui";
 import { describe } from "./pools";
 import type { ModifierFields, useModifiers } from "./useModifiers";
@@ -132,7 +133,7 @@ export function ModifiersPanel({ pools, modifiers }: { pools: TestPool[]; modifi
   const off = modifiers.modifiers.filter((m) => !m.on);
   return (
     <div className="border-t border-ash pt-2" role="group" aria-label="Your own">
-      <h3 className="mb-1 text-xs tracking-wide text-mist uppercase">Your own</h3>
+      <SectionLabel className="mb-1">Your own</SectionLabel>
       {modifiers.modifiers.length === 0 && <p className="text-sm text-mist">Note a bonus or penalty from a merit, flaw, power, equipment or the scene. Switch it on while it counts.</p>}
       <ul className="divide-y divide-ash/60">
         {on.map((m) => (
@@ -141,7 +142,7 @@ export function ModifiersPanel({ pools, modifiers }: { pools: TestPool[]; modifi
       </ul>
       {off.length > 0 && (
         <>
-          <h4 className="mt-2 text-xs tracking-wide text-mist uppercase">Switched off</h4>
+          <SectionLabel as="h4" className="mt-2">Switched off</SectionLabel>
           <ul className="divide-y divide-ash/60">
             {off.map((m) => (
               <Row key={m.id} modifier={m} pools={pools} modifiers={modifiers} />

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { AgencyOut, ChannelsOut } from "../../api/types";
+import { SectionLabel } from "../../components/Headings";
 import { useToast } from "../../components/Toast";
 import { Badge, ErrorText, Field, Loading, Notice, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
@@ -46,7 +47,7 @@ export function DiscordPostChannels({ troupeId }: { troupeId: string }) {
   return (
     <section aria-label="Channels for the whole troupe" className="flex flex-col gap-3 rounded-md border border-ash p-3">
       <div>
-        <h3 className="font-sans text-xs tracking-wide text-mist uppercase">Channels for the whole troupe</h3>
+        <SectionLabel>Channels for the whole troupe</SectionLabel>
         <p className="mt-1 text-xs text-mist">Where Horatio posts for everyone in the troupe. Each is saved as you choose it; the switches for downtime results don't apply here.</p>
       </div>
       {channels.error ? (
@@ -60,7 +61,7 @@ export function DiscordPostChannels({ troupeId }: { troupeId: string }) {
           <PostChannel kind="news" troupeId={troupeId} channels={channels.data} />
           <PostChannel kind="announcement" troupeId={troupeId} channels={channels.data} />
           <div>
-            <h4 className="mb-1 font-sans text-xs tracking-wide text-mist uppercase">Each news agency's channel</h4>
+            <SectionLabel as="h4" className="mb-1">Each news agency's channel</SectionLabel>
             {agencies.error ? (
               <ErrorText error={agencies.error} />
             ) : !agencies.data ? (

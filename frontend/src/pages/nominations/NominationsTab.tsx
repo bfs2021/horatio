@@ -3,6 +3,7 @@ import { api, unwrap } from "../../api/client";
 import type { EntryOut, MonthOut, RememberedOut } from "../../api/types";
 import { Avatar } from "../../components/Avatar";
 import { EmptyState } from "../../components/EmptyState";
+import { SectionLabel } from "../../components/Headings";
 import { Button, Card, Empty, ErrorText, Loading } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { monthOrder, publishedWhat } from "./nominations";
@@ -58,7 +59,7 @@ function Month({ month, canStar, nominations }: { month: MonthOut; canStar: bool
     <Card title={month.name}>
       {remembered.length > 0 && (
         <section aria-label={`Remembrances in ${month.name}`} className="mb-4 flex flex-col gap-4">
-          <h3 className="text-sm tracking-wide text-mist uppercase">Remembrances</h3>
+          <SectionLabel>Remembrances</SectionLabel>
           {remembered.map((r) => (
             <Remembered key={r.character_id} remembered={r} />
           ))}
@@ -69,7 +70,7 @@ function Month({ month, canStar, nominations }: { month: MonthOut; canStar: bool
           <Empty>No nominations this month.</Empty>
         ) : (
           <>
-            {remembered.length > 0 && <h3 className="text-sm tracking-wide text-mist uppercase">Player Nominations</h3>}
+            {remembered.length > 0 && <SectionLabel>Player Nominations</SectionLabel>}
             <ul aria-label={`${month.name}'s Player Nominations`} className="divide-y divide-ash">
               {monthOrder(month.nominations).map((n) => (
                 <Entry key={n.id} entry={n} canStar={canStar} />

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router";
 import { openTab, useTitle } from "../title";
 import { Dialog } from "./Dialog";
+import { SectionLabel } from "./Headings";
 import { PickerButton, TabSheet, Where } from "./SectionPicker";
 import { CountBubble, type Tab } from "./ui";
 
@@ -46,7 +47,7 @@ export function PartPicker({ label, parts, children }: { label: string; parts: T
         <div className="space-y-4 max-lg:hidden">
           {groups.map((g, i) => (
             <section key={g.label ?? i}>
-              {g.label && <h3 className="mb-1 px-3 font-sans text-xs tracking-wide text-mist uppercase">{g.label}</h3>}
+              {g.label && <SectionLabel className="mb-1 px-3">{g.label}</SectionLabel>}
               <ul aria-label={g.label} className="space-y-0.5">
                 {g.tabs.map((t) => {
                   const isOpen = t === part;

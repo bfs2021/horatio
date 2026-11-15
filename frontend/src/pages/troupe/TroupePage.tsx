@@ -89,8 +89,10 @@ export function TroupePage() {
   const t = troupe.data;
   const can = abilities(t.my_role, me.data?.is_custodian ?? false);
   const base = `/troupes/${t.id}`;
-  // Those who may change a feature's settings find them folded at the top of its tab (#784).
-  const settings = can.storyteller && !t.archived;
+  // A feature's settings are behind its tab's Settings button (#784, #909): running staff read
+  // them, and its storytellers change them while the troupe is in play.
+  const settings = can.running;
+  const changes = can.storyteller && !t.archived;
 
   return (
     <>
@@ -139,7 +141,7 @@ export function TroupePage() {
             path="whos-who"
             element={
               <>
-                {settings && <TabSettings troupe={t} feature="whos_who" />}
+                {settings && <TabSettings troupe={t} feature="whos_who" canEdit={changes} />}
                 <WhosWhoTab troupeId={t.id} />
               </>
             }
@@ -167,7 +169,7 @@ export function TroupePage() {
             path="play"
             element={
               <>
-                {settings && <TabSettings troupe={t} feature="play_view" />}
+                {settings && <TabSettings troupe={t} feature="play_view" canEdit={changes} />}
                 <PlayTab troupeId={t.id} />
               </>
             }
@@ -204,7 +206,7 @@ export function TroupePage() {
             path="bonds/*"
             element={
               <>
-                {settings && <TabSettings troupe={t} feature="blood_bonds" />}
+                {settings && <TabSettings troupe={t} feature="blood_bonds" canEdit={changes} />}
                 <BondsPages troupeId={t.id} />
               </>
             }
@@ -215,7 +217,7 @@ export function TroupePage() {
             path="boons/*"
             element={
               <>
-                {settings && <TabSettings troupe={t} feature="boons" />}
+                {settings && <TabSettings troupe={t} feature="boons" canEdit={changes} />}
                 <BoonsPages troupeId={t.id} />
               </>
             }

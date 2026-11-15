@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api/client";
 import type { components } from "../../api/schema";
 import { Avatar } from "../../components/Avatar";
 import { Dialog } from "../../components/Dialog";
+import { SectionLabel } from "../../components/Headings";
 import { AtHandle, PersonPicker } from "../../components/PersonPicker";
 import { Badge, Button, Empty, ErrorText, Field, Loading, Textarea } from "../../components/ui";
 import { useRulesAction } from "../../hooks";
@@ -145,7 +146,7 @@ function Confirm({
       </ul>
       {p.open_requests.length > 0 && (
         <section>
-          <h3 className="mb-1 text-mist">Waiting requests, which stay open for {to} to see or withdraw</h3>
+          <SectionLabel className="mb-1">Waiting requests, which stay open for {to} to see or withdraw</SectionLabel>
           <ul className="list-disc space-y-1 pl-5">
             {p.open_requests.map((r, i) => (
               <li key={i}>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
+import { RadioList } from "../../components/RadioList";
 import { Toggle } from "../../components/Toggle";
 import { Button, Card, ErrorText } from "../../components/ui";
 import { useAction } from "../../hooks";
@@ -148,15 +149,13 @@ function WhoSetting({
             save.mutate(editing);
           }}
         >
-          {options.map((o) => (
-            <label key={o.value} className="flex items-start gap-2 text-sm">
-              <input type="radio" name={field} className="mt-1" checked={editing === o.value} onChange={() => setEditing(o.value)} />
-              <span>
-                {o.label}
-                <span className="block text-xs text-mist">{o.meaning}</span>
-              </span>
-            </label>
-          ))}
+          <RadioList
+            label={title}
+            hideLabel
+            value={editing}
+            options={options.map((o) => ({ value: o.value, label: o.label, hint: o.meaning }))}
+            onChange={setEditing}
+          />
           <div className="flex gap-2">
             <Button type="submit" disabled={save.isPending}>
               Save

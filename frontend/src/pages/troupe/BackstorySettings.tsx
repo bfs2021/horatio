@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { BackstoryQuestionIn, BackstoryQuestionOut, BackstoryQuestionSetOut, BackstorySettingsOut } from "../../api/types";
+import { RadioList } from "../../components/RadioList";
 import { Checkbox } from "../../components/Checkbox";
 import { Badge, Button, Card, ErrorText, Field, Input, Loading, Notice, Select, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
@@ -96,18 +97,12 @@ export function BackstorySettings({ troupeId }: { troupeId: string }) {
               save.mutate(shown);
             }}
           >
-            <fieldset className="flex flex-col gap-2 text-sm">
-              <legend className="mb-1 text-mist">How backstories are written</legend>
-              {MODES.map((m) => (
-                <label key={m.value} className="flex min-h-10 items-start gap-2">
-                  <input type="radio" name="backstory-mode" className="mt-1" checked={shown.mode === m.value} onChange={() => setDraft({ ...shown, mode: m.value })} />
-                  <span>
-                    {m.label}
-                    <span className="block text-xs text-mist">{m.meaning}</span>
-                  </span>
-                </label>
-              ))}
-            </fieldset>
+            <RadioList
+              label="How backstories are written"
+              value={shown.mode}
+              options={MODES.map((m) => ({ value: m.value, label: m.label, hint: m.meaning }))}
+              onChange={(mode) => setDraft({ ...shown, mode })}
+            />
             <Checkbox
               label="Need an approved backstory before accepting a character"
               checked={shown.required}

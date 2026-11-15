@@ -4,6 +4,7 @@ import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { api, unwrap } from "../../../api/client";
 import type { CatalogueOut, CharacterOut, CreationOut, SheetOut, TraitOut, TraitRefOut } from "../../../api/types";
 import { useClanName } from "../../../components/ClanNames";
+import { Dialog } from "../../../components/Dialog";
 import { Button, Card, ErrorText, Field, Input, Loading, Notice, Textarea } from "../../../components/ui";
 import { useAction, useRatingRefusals, useRefusals, useUnavailable, useRulesAction } from "../../../hooks";
 import { BuildFor } from "../BuildFor";
@@ -172,46 +173,41 @@ export function CreationWizard({ character }: { character: CharacterOut }) {
           .join(" ")}`
       : null;
   const go = (i: number) => navigate(`/characters/${character.id}/create/${steps[i]!.key}`);
+  // Steps with nothing left to do, ticked in the list: Concept once the clan is chosen (a
+  // ghoul's comes with its domitor; sect and the rest may wait), and a step of picks once
+  // every pick is placed.
+  const done = new Set(
+    steps
+      .filter((s) => {
+        if (notices.some((n) => n.on.includes(s.key)) || needs.some((n) => s.categories.includes(n.step))) return false;
+        if (s.key === "concept") return ghoul ? ghoul.domitor : !!clanOf(sheet.data);
+        const pools = creation.data.pools.filter((p) => p.kind === "picks" && s.categories.includes(p.category));
+        return pools.length > 0 && pools.every((p) => p.remaining <= 0);
+      })
+      .map((s) => s.key),
+  );
 
   return (
     <div className="grid gap-6 lg:grid-cols-[12rem_minmax(0,1fr)]">
-      {/* min-w-0: without it the step list's sideways scroller widens the page on phones. */}
       <nav aria-label="Creation steps" className="min-w-0">
-        <StepProgress steps={steps} index={index} stuck={stuck} />
-        {/* relative: so the screen-reader-only marks past the right edge are clipped here, not left to widen the page. */}
-        <StepList index={index}>
-          {steps.map((s, i) => (
-            <li key={s.key} data-current={i === index || undefined}>
-              {stuck !== -1 && i > stuck ? (
-                <span
-                  aria-disabled="true"
-                  aria-describedby="locked-why"
-                  title={`Finish ${steps[stuck]!.title} first`}
-                  className="flex cursor-not-allowed items-center gap-1 rounded px-3 py-1.5 text-sm whitespace-nowrap text-line"
-                >
+        <StepBar steps={steps} index={index} stuck={stuck} characterId={character.id}>
+          {(onGo) => (
+            <>
+              <ol className="flex flex-col gap-1">
+                <StepLinks steps={steps} index={index} stuck={stuck} characterId={character.id} done={done} notices={notices} onGo={onGo} />
+              </ol>
+              {lockedWhy && (
+                <p className="mt-3 flex gap-1.5 px-3 text-xs text-mist">
                   <Lock />
-                  {i + 1}. {s.title}
-                </span>
-              ) : (
-              <Link
-                to={`/characters/${character.id}/create/${s.key}`}
-                aria-current={i === index ? "step" : undefined}
-                className={`block rounded px-3 py-1.5 text-sm whitespace-nowrap ${i === index ? "bg-dusk text-gold" : "text-mist hover:text-parchment"}`}
-              >
-                {i + 1}. {s.title}
-                {notices.some((n) => n.on.includes(s.key)) && (
-                  <>
-                    <span aria-hidden className="ml-1.5 text-blood-bright" title="Something here needs a look">
-                      •
-                    </span>
-                    <span className="sr-only"> (needs a look)</span>
-                  </>
-                )}
-              </Link>
+                  <span>{lockedWhy}</span>
+                </p>
               )}
-            </li>
-          ))}
-        </StepList>
+            </>
+          )}
+        </StepBar>
+        <ol className="hidden flex-col gap-1 lg:flex">
+          <StepLinks steps={steps} index={index} stuck={stuck} characterId={character.id} done={done} notices={notices} />
+        </ol>
         {lockedWhy && (
           <p id="locked-why" className="mt-2 flex gap-1.5 px-3 text-xs text-mist">
             <Lock />
@@ -237,57 +233,156 @@ export function CreationWizard({ character }: { character: CharacterOut }) {
 }
 
 /**
- * Where the player is, for a phone, whose step list scrolls sideways out of view:
- * "Step 2 of 8 · Attributes", over a bar of a segment a step. Steps done or here are
- * gold, those open grey, and those locked (as the line under the list says why) dark.
+ * The steps on a phone, in one line: "Step 3 of 8 · Focuses" over a bar of a segment a
+ * step, with the steps before and after at its ends. Steps done or here are gold on the
+ * bar, those open grey, and those locked (as the line under the list says why) dark.
+ * Pressing the line opens the whole list, to go to any step. Gone from `lg` up, where
+ * the list stands down the side.
  */
-function StepProgress({ steps, index, stuck }: { steps: Step[]; index: number; stuck: number }) {
+function StepBar({
+  steps,
+  index,
+  stuck,
+  characterId,
+  children,
+}: {
+  steps: Step[];
+  index: number;
+  stuck: number;
+  characterId: string;
+  children: (onGo: () => void) => ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
   const locked = stuck === -1 ? 0 : steps.length - 1 - stuck;
   const where = `Step ${index + 1} of ${steps.length}`;
+  const isLocked = (i: number) => stuck !== -1 && i > stuck;
+  const end = (i: number, label: string, arrow: ReactNode) => {
+    const box = "flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-ash bg-dusk";
+    if (i < 0 || i >= steps.length) return <span aria-hidden className="w-11 shrink-0" />;
+    const name = `${label}: ${steps[i]!.title}`;
+    return isLocked(i) ? (
+      <button type="button" disabled aria-label={name} aria-describedby="locked-why" className={`${box} cursor-not-allowed text-line`}>
+        {arrow}
+      </button>
+    ) : (
+      <Link to={`/characters/${characterId}/create/${steps[i]!.key}`} aria-label={name} className={`${box} text-parchment hover:border-mist`}>
+        {arrow}
+      </Link>
+    );
+  };
   return (
-    <div className="mb-3 px-3 lg:hidden">
-      <p className="flex items-center gap-1.5 text-sm text-mist">
-        <span>
-          {where} · <span className="text-parchment">{steps[index]!.title}</span>
-        </span>
-        {locked > 0 && (
-          <span className="ml-auto flex items-center gap-1 text-xs">
-            <Lock />
-            {locked} locked
+    <div className="mb-3 flex items-center gap-2 lg:hidden">
+      {end(index - 1, "Previous step", <Chevron back />)}
+      <div className="min-w-0 flex-1">
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          onClick={() => setOpen(true)}
+          className="flex min-h-8 w-full items-center gap-1.5 rounded text-left text-sm text-mist hover:text-parchment"
+        >
+          <span className="min-w-0 truncate">
+            {where} · <span className="text-parchment">{steps[index]!.title}</span>
           </span>
-        )}
-      </p>
-      <div
-        role="progressbar"
-        aria-label="Creation progress"
-        aria-valuemin={1}
-        aria-valuemax={steps.length}
-        aria-valuenow={index + 1}
-        aria-valuetext={`${where}: ${steps[index]!.title}`}
-        className="mt-1.5 flex gap-1"
-      >
-        {steps.map((s, i) => (
-          <span key={s.key} className={`h-1 flex-1 rounded-full ${i <= index ? "bg-gold" : stuck !== -1 && i > stuck ? "bg-ash" : "bg-line"}`} />
-        ))}
+          {locked > 0 && (
+            // A padlock and the number, to leave the step's name room; the line under says why.
+            <span className="ml-auto flex shrink-0 items-center gap-1 text-xs" title={`${locked} locked`}>
+              <Lock />
+              {locked}
+              <span className="sr-only"> locked</span>
+            </span>
+          )}
+          <span aria-hidden className={`shrink-0 text-xs ${locked > 0 ? "" : "ml-auto"}`}>
+            ▾
+          </span>
+        </button>
+        <div
+          role="progressbar"
+          aria-label="Creation progress"
+          aria-valuemin={1}
+          aria-valuemax={steps.length}
+          aria-valuenow={index + 1}
+          aria-valuetext={`${where}: ${steps[index]!.title}`}
+          className="mt-1 flex gap-1"
+        >
+          {steps.map((s, i) => (
+            <span key={s.key} className={`h-1 flex-1 rounded-full ${i <= index ? "bg-gold" : isLocked(i) ? "bg-ash" : "bg-line"}`} />
+          ))}
+        </div>
       </div>
+      {end(index + 1, "Next step", <Chevron />)}
+      <Dialog title="Creation steps" open={open} onClose={() => setOpen(false)}>
+        {children(() => setOpen(false))}
+      </Dialog>
     </div>
   );
 }
 
-/** The steps, a column on a wide screen and a sideways scroller on a phone, kept
- * scrolled to the step the player is on. */
-function StepList({ index, children }: { index: number; children: ReactNode }) {
-  const list = useRef<HTMLOListElement>(null);
-  useEffect(() => {
-    const ol = list.current;
-    const here = ol?.querySelector<HTMLElement>("[data-current]");
-    // Sideways only: scrollIntoView would move the page too.
-    if (ol && here && ol.scrollWidth > ol.clientWidth) ol.scrollLeft = here.offsetLeft - (ol.clientWidth - here.offsetWidth) / 2;
-  }, [index]);
+/** Each step, linked unless locked, and marked if it is done or something on it needs a look. */
+function StepLinks({
+  steps,
+  index,
+  stuck,
+  characterId,
+  done,
+  notices,
+  onGo,
+}: {
+  steps: Step[];
+  index: number;
+  stuck: number;
+  characterId: string;
+  done: Set<string>;
+  notices: StepNotice[];
+  onGo?: () => void;
+}) {
+  return steps.map((s, i) => (
+    <li key={s.key}>
+      {stuck !== -1 && i > stuck ? (
+        <span
+          aria-disabled="true"
+          aria-describedby="locked-why"
+          title={`Finish ${steps[stuck]!.title} first`}
+          className="flex cursor-not-allowed items-center gap-1 rounded px-3 py-1.5 text-sm whitespace-nowrap text-line"
+        >
+          <Lock />
+          {i + 1}. {s.title}
+        </span>
+      ) : (
+        <Link
+          to={`/characters/${characterId}/create/${s.key}`}
+          onClick={onGo}
+          aria-current={i === index ? "step" : undefined}
+          className={`flex items-center rounded px-3 py-1.5 text-sm whitespace-nowrap ${i === index ? "bg-dusk text-gold" : "text-mist hover:text-parchment"}`}
+        >
+          {i + 1}. {s.title}
+          {notices.some((n) => n.on.includes(s.key)) && (
+            <>
+              <span aria-hidden className="ml-1.5 text-blood-bright" title="Something here needs a look">
+                •
+              </span>
+              <span className="sr-only"> (needs a look)</span>
+            </>
+          )}
+          {done.has(s.key) && (
+            <>
+              <span aria-hidden className="ml-auto pl-2 text-gold" title="Done">
+                ✓
+              </span>
+              <span className="sr-only"> (done)</span>
+            </>
+          )}
+        </Link>
+      )}
+    </li>
+  ));
+}
+
+/** An arrow for the step before (`back`) or after. */
+function Chevron({ back = false }: { back?: boolean }) {
   return (
-    <ol ref={list} className="relative flex gap-1 overflow-x-auto lg:flex-col">
-      {children}
-    </ol>
+    <svg viewBox="0 0 16 16" aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d={back ? "M10 3 5 8l5 5" : "M6 3l5 5-5 5"} />
+    </svg>
   );
 }
 

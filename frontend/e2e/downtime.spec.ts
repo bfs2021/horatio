@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { backstoryOptional, characterTab, choosePick, choosePicks, closeContextsAfterEach, makeCustodian, openNewTroupe, openSlot, person, pickedAt, run, shots, switchFeature, topBar } from "./support";
+import { backstoryOptional, characterTab, inSteps, choosePick, choosePicks, closeContextsAfterEach, makeCustodian, openNewTroupe, openSlot, person, pickedAt, run, shots, switchFeature, topBar } from "./support";
 
 /** Downtime: a troupe's whole month, and feeding in a downtime. */
 
@@ -105,7 +105,7 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   await p.getByRole("button", { name: "Save and continue" }).click();
   await expect(p.getByText(/Before moving on: A vampire needs at least 1 dot of Generation/)).toBeVisible();
   await expect(p.getByRole("heading", { name: "Backgrounds", exact: true })).toBeVisible();
-  await expect(p.getByRole("navigation", { name: "Creation steps" }).getByRole("link", { name: /Disciplines/ })).toHaveCount(0);
+  await inSteps(p, (steps) => expect(steps.getByRole("link", { name: /Disciplines/ })).toHaveCount(0));
   await choosePick(p, "Backgrounds", 1, "Generation");
   await next("Disciplines");
   await expect(p.getByText("in-clan").first()).toBeVisible();

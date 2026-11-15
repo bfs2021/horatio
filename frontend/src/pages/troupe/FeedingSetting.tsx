@@ -3,7 +3,8 @@ import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
 import { useToast } from "../../components/Toast";
 import { Toggle } from "../../components/Toggle";
-import { Card, ErrorText } from "../../components/ui";
+import { SettingCard } from "../../components/SettingCard";
+import { ErrorText } from "../../components/ui";
 import { useRulesAction } from "../../hooks";
 
 export type Setting = { feeding: TroupeOut["feeding"]; resonance: boolean; territories: boolean; rack: boolean };
@@ -65,11 +66,12 @@ export function FeedingSetting({ troupeId, canEdit }: { troupeId: string; canEdi
   const played = RULES.filter((r) => now[r.key]);
 
   return (
-    <Card title="Feeding">
-      <p className="mb-3 text-sm text-mist">
-        How Horatio handles feeding between games. As the book has it, each clan needs a number of feeding actions a cycle, Herd and some traits change it, and staff
-        answer full or half Blood for the next game. Feeding is switched on and off in the Features list.
-      </p>
+    <SettingCard
+      title="Feeding"
+      state={off ? "Off" : "On"}
+      readOnly={!canEdit}
+      about="How Horatio handles feeding between games. As the book has it, each clan needs a number of feeding actions a cycle, Herd and some traits change it, and staff answer full or half Blood for the next game. Feeding is switched on and off in the Features list."
+    >
       {!canEdit ? (
         <p className="text-sm">
           {off ? "Not tracked." : played.length > 0 ? `With ${played.map((r) => r.label).join(", ")} (Vol. 2).` : "As the book has it."}
@@ -97,6 +99,6 @@ export function FeedingSetting({ troupeId, canEdit }: { troupeId: string; canEdi
           <ErrorText error={save.error} />
         </div>
       )}
-    </Card>
+    </SettingCard>
   );
 }

@@ -1,10 +1,9 @@
-import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { TroupeOut } from "../../api/types";
 import { RadioList } from "../../components/RadioList";
 import { Toggle } from "../../components/Toggle";
-import { Button, Card, ErrorText } from "../../components/ui";
-import { useAction } from "../../hooks";
+import { SettingCard, useSaveOnChange } from "../../components/SettingCard";
+import { ErrorText } from "../../components/ui";
 
 type Setting = "players" | "staff";
 
@@ -44,7 +43,6 @@ export function StatusSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit:
       canEdit={canEdit}
       field="status_by"
       title="Status on sheets"
-      label="Change who keeps status on sheets"
       options={OPTIONS}
       about="Who adds and removes sect status on the sheets of characters whose home is here. Storytellers and assistant storytellers always can, with a reason for the character's log."
     />
@@ -59,7 +57,6 @@ export function TitlesSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit:
       canEdit={canEdit}
       field="titles_by"
       title="Titles on sheets"
-      label="Change who chooses titles"
       options={TITLE_OPTIONS}
       about="Who gives titles to characters whose home is here. Storytellers and assistant storytellers always can, from the Roster tab or the character's Status & Titles tab."
     />
@@ -72,15 +69,16 @@ export function TitlesSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit:
  * the Play View as the game begins, as the book has it.
  */
 export function StatusAtCheckinSetting({ troupe, canEdit }: { troupe: TroupeOut; canEdit: boolean }) {
-  const save = useAction((on: boolean) =>
+  const save = useSaveOnChange((on: boolean) =>
     unwrap(api.PATCH("/api/troupes/{troupe_id}", { params: { path: { troupe_id: troupe.id } }, body: { status_at_checkin: on } })),
   );
   const on = troupe.status_at_checkin;
   return (
-    <Card title="The night's status">
-      <p className="mb-3 text-sm text-mist">
-        A character with more than one source of abiding status, such as a title and its social age, carries only one into a game (MET: VTM p. 311).
-      </p>
+    <SettingCard
+      title="The night's status"
+      readOnly={!canEdit}
+      about="A character with more than one source of abiding status, such as a title and its social age, carries only one into a game (MET: VTM p. 311)."
+    >
       {!canEdit ? (
         <p className="text-sm">{on ? "Chosen at check-in, and fixed for the game." : "Chosen on the Play View as the game begins."}</p>
       ) : (
@@ -95,17 +93,16 @@ export function StatusAtCheckinSetting({ troupe, canEdit }: { troupe: TroupeOut;
           <ErrorText error={save.error} />
         </div>
       )}
-    </Card>
+    </SettingCard>
   );
 }
 
-/** A setting of who does something on the troupe's sheets: its players, or staff only. */
+/** A setting of who does something on the troupe's sheets: its players, or staff only. Saved as it is chosen. */
 function WhoSetting({
   troupe,
   canEdit,
   field,
   title,
-  label,
   options,
   about,
 }: {
@@ -113,60 +110,31 @@ function WhoSetting({
   canEdit: boolean;
   field: "status_by" | "titles_by";
   title: string;
-  label: string;
   options: { value: Setting; label: string; meaning: string }[];
   about: string;
 }) {
-  const [editing, setEditing] = useState<Setting | null>(null);
-  const save = useAction(async (value: Setting) => {
-    await unwrap(api.PATCH("/api/troupes/{troupe_id}", { params: { path: { troupe_id: troupe.id } }, body: { [field]: value } }));
-    setEditing(null);
-  });
+  const save = useSaveOnChange((value: Setting) => unwrap(api.PATCH("/api/troupes/{troupe_id}", { params: { path: { troupe_id: troupe.id } }, body: { [field]: value } })));
   const now = troupe[field] as Setting;
   const current = options.find((o) => o.value === now) ?? options[0]!;
   return (
-    <Card
-      title={title}
-      actions={
-        canEdit &&
-        editing === null && (
-          <Button variant="secondary" className="min-h-8 px-3" aria-label={label} onClick={() => setEditing(now)}>
-            Change
-          </Button>
-        )
-      }
-    >
-      <p className="mb-3 text-sm text-mist">{about}</p>
-      {editing === null ? (
+    <SettingCard title={title} about={about} readOnly={!canEdit}>
+      {!canEdit ? (
         <p className="text-sm">
           {current.label}. <span className="text-mist">{current.meaning}</span>
         </p>
       ) : (
-        <form
-          className="flex flex-col gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate(editing);
-          }}
-        >
+        <div className="flex flex-col gap-2">
           <RadioList
             label={title}
             hideLabel
-            value={editing}
+            value={now}
             options={options.map((o) => ({ value: o.value, label: o.label, hint: o.meaning }))}
-            onChange={setEditing}
+            disabled={save.isPending}
+            onChange={(value) => save.mutate(value)}
           />
-          <div className="flex gap-2">
-            <Button type="submit" disabled={save.isPending}>
-              Save
-            </Button>
-            <Button type="button" variant="ghost" onClick={() => setEditing(null)}>
-              Cancel
-            </Button>
-          </div>
           <ErrorText error={save.error} />
-        </form>
+        </div>
       )}
-    </Card>
+    </SettingCard>
   );
 }

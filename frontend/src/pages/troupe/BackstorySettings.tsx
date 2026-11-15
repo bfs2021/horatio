@@ -3,8 +3,10 @@ import { useState } from "react";
 import { api, unwrap } from "../../api/client";
 import type { BackstoryQuestionIn, BackstoryQuestionOut, BackstoryQuestionSetOut, BackstorySettingsOut } from "../../api/types";
 import { RadioList } from "../../components/RadioList";
+import { SettingCard, useSaveOnChange } from "../../components/SettingCard";
+import { Toggle } from "../../components/Toggle";
 import { Checkbox } from "../../components/Checkbox";
-import { Badge, Button, Card, ErrorText, Field, Input, Loading, Notice, Select, Textarea } from "../../components/ui";
+import { Badge, Button, ErrorText, Field, Input, Loading, Notice, Select, Textarea } from "../../components/ui";
 import { useAction } from "../../hooks";
 
 type Mode = BackstorySettingsOut["mode"];
@@ -47,11 +49,7 @@ export function BackstorySettings({ troupeId }: { troupeId: string }) {
     queryKey: ["backstory-settings", troupeId],
     queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/backstory-settings", path)),
   });
-  const [draft, setDraft] = useState<{ mode: Mode; required: boolean } | null>(null);
-  const save = useAction(async (value: { mode: Mode; required: boolean }) => {
-    await unwrap(api.PUT("/api/troupes/{troupe_id}/backstory-settings", { ...path, body: value }));
-    setDraft(null);
-  });
+  const save = useSaveOnChange((value: { mode: Mode; required: boolean }) => unwrap(api.PUT("/api/troupes/{troupe_id}/backstory-settings", { ...path, body: value })));
   const template = useAction(() => unwrap(api.POST("/api/troupes/{troupe_id}/backstory-template", path)));
   const [newSet, setNewSet] = useState("");
   const addSet = useAction(async () => {
@@ -62,27 +60,16 @@ export function BackstorySettings({ troupeId }: { troupeId: string }) {
   if (settings.error) return <ErrorText error={settings.error} />;
   const s = settings.data;
   const now = { mode: s.mode, required: s.required };
-  const shown = draft ?? now;
   const mode = MODES.find((m) => m.value === now.mode)!;
 
   return (
     <div className="flex flex-col gap-6">
-      <Card
+      <SettingCard
         title="Backstories"
-        actions={
-          s.can_edit &&
-          draft === null && (
-            <Button variant="secondary" className="min-h-8 px-3" aria-label="Change backstory settings" onClick={() => setDraft(now)}>
-              Change
-            </Button>
-          )
-        }
+        readOnly={!s.can_edit}
+        about="Each character has one backstory, in Markdown, which only its player and this troupe's storytellers and assistant storytellers read. They read it as part of accepting the character, and can send it back with feedback."
       >
-        <p className="mb-3 text-sm text-mist">
-          Each character has one backstory, in Markdown, which only its player and this troupe's storytellers and assistant storytellers read. They read it as part
-          of accepting the character, and can send it back with feedback.
-        </p>
-        {draft === null ? (
+        {!s.can_edit ? (
           <div className="flex flex-col gap-1 text-sm">
             <p>
               {mode.label}: <span className="text-mist">{mode.meaning}</span>
@@ -90,39 +77,31 @@ export function BackstorySettings({ troupeId }: { troupeId: string }) {
             <p>{now.required ? "An approved backstory is needed before a character is accepted here." : "Accepting a character doesn't need its backstory approved."}</p>
           </div>
         ) : (
-          <form
-            className="flex flex-col gap-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              save.mutate(shown);
-            }}
-          >
+          <div className="flex flex-col gap-4">
             <RadioList
               label="How backstories are written"
-              value={shown.mode}
+              value={now.mode}
               options={MODES.map((m) => ({ value: m.value, label: m.label, hint: m.meaning }))}
-              onChange={(mode) => setDraft({ ...shown, mode })}
+              disabled={save.isPending}
+              onChange={(mode) => save.mutate({ ...now, mode })}
             />
-            <Checkbox
+            <Toggle
               label="Need an approved backstory before accepting a character"
-              checked={shown.required}
-              onChange={(required) => setDraft({ ...shown, required })}
+              checked={now.required}
+              disabled={save.isPending}
+              onChange={(required) => save.mutate({ ...now, required })}
             />
-            <div className="flex flex-wrap gap-2">
-              <Button type="submit" disabled={save.isPending}>
-                Save
-              </Button>
-              <Button type="button" variant="ghost" onClick={() => setDraft(null)}>
-                Cancel
-              </Button>
-            </div>
             <ErrorText error={save.error} />
-          </form>
+          </div>
         )}
-      </Card>
+      </SettingCard>
 
       {(now.mode !== "free" || s.sets.length > 0) && (
-        <Card title="Questions">
+        <SettingCard
+          title="Questions"
+          readOnly={!s.can_edit}
+          about="The troupe's own backstory questions, in sets, for players who answer them."
+        >
           {s.sets.length === 0 && (
             <div className="mb-4 flex flex-col gap-2">
               <Notice>
@@ -160,7 +139,7 @@ export function BackstorySettings({ troupeId }: { troupeId: string }) {
               <ErrorText error={addSet.error} />
             </form>
           )}
-        </Card>
+        </SettingCard>
       )}
     </div>
   );

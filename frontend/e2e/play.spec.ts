@@ -234,11 +234,12 @@ test("at a game, the Play View tracks blood and uses, offline too, and the story
 
   // A house rule: characters start a game with 8 blood.
   await p.goto(`/troupes/${troupeId}/settings`);
-  await p.getByRole("button", { name: "Change starting blood" }).click();
-  await p.getByLabel("This much:").check();
-  await p.getByLabel("Starting blood").fill("8");
-  await p.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(p.getByText("8 blood, or the generation's most if that is less")).toBeVisible();
+  const startingBlood = p.getByRole("region", { name: "Blood at the start of a game" });
+  await startingBlood.getByRole("radio", { name: "This much" }).check();
+  await startingBlood.getByLabel("Starting blood").fill("8");
+  await startingBlood.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(p.getByText("Saved.", { exact: true })).toBeVisible();
+  await expect(startingBlood.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
 
   // Play, from the sheet.
   await p.goto(`/characters/${npc}/sheet`);
@@ -1640,8 +1641,8 @@ test("a troupe uploads its own rock, paper and scissors, names the set and previ
   await expect(card.getByText("Add the rest: the set is offered only with all three.")).toHaveCount(0);
 
   await card.getByLabel(/Title for the set/).fill("Land of the Sky bones");
-  await card.getByRole("button", { name: "Use this title" }).click();
-  await expect(card.getByRole("button", { name: "Use this title" })).toBeDisabled();
+  await card.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(card.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
 
   // The preview shows all three as the Throws tab would, in Dark, then Ultra goth.
   const preview = card.getByRole("region", { name: "Preview" });

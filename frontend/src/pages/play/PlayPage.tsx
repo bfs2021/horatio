@@ -369,7 +369,7 @@ function PlayShell({
 }) {
   return (
     <div className="min-h-screen bg-night pb-16 text-parchment">
-      <header className="sticky top-0 z-10 border-b border-ash bg-night/95 backdrop-blur">
+      <header className="play-header">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-2">
           {scene ? (
             <Link to={scene} className="inline-flex min-h-10 items-center rounded-md border border-gold/60 px-3 text-sm text-gold hover:bg-gold/10">

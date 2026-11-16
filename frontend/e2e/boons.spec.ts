@@ -11,7 +11,8 @@ closeContextsAfterEach();
  * "Boon: Agnes owes Bram, minor", with what to do with it in its Actions menu.
  */
 function ledgerOf(page: Page) {
-  const table = page.getByRole("table", { name: "Boons" });
+  // Not while it shows the rows before, dimmed, and waits for the view's own (#1031).
+  const table = page.getByRole("table", { name: "Boons" }).and(page.locator(":not([aria-busy])"));
   const row = (name: string) => table.getByRole("row", { name, exact: true });
   const actions = (name: string) => page.getByRole("button", { name: `Actions: ${name}`, exact: true });
   return {
@@ -570,6 +571,66 @@ test("the ledger's toolbar searches the reason and conditions, picks kinds, filt
   await l.goto(`/troupes/${troupe.id}/boons?view=review`);
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/boons/review$`));
   await expect(l.getByRole("list", { name: "Boons to review" })).toBeVisible();
+});
+
+test("a view of the ledger not read yet keeps the toolbar, the totals and the table on screen while it comes, the rows before dimmed (#1031)", async ({ browser }) => {
+  const custodian = await person(browser, "unseen-custodian");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "unseen-lead");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Ledger Unseen ${run}`, lead_handle: lead.handle });
+  const l = lead.page;
+  await send(l, "PUT", `/api/troupes/${troupe.id}/boon-ledger`, { on: true });
+  const boon = (debtor: string, creditor: string, kind: string, made_on: string) => ({ debtor: { name: debtor }, creditor: { name: creditor }, kind, made_on, reason: "" });
+  const made = await send(l, "POST", `/api/troupes/${troupe.id}/boons`, {
+    boons: [
+      boon("Wendeline Asch", "Corvin Talbot", "minor", "2026-03-01"),
+      boon("Corvin Talbot", "Wendeline Asch", "trivial", "2026-04-01"),
+      boon("Ysolde Marrick", "Corvin Talbot", "major", "2026-05-01"),
+      boon("Ysolde Marrick", "Wendeline Asch", "minor", "2026-06-01"),
+    ],
+    note: "",
+  });
+  await send(l, "POST", `/api/troupes/${troupe.id}/boons/${made[3].id}/void`, { note: "Entered twice" });
+
+  await l.goto(`/troupes/${troupe.id}/boons`);
+  const boons = ledgerOf(l);
+  await expect(boons.rows).toHaveCount(3);
+  // From here on, note anything of the ledger's frame that leaves the page, however briefly.
+  await l.evaluate(() => {
+    const frame = { toolbar: 'input[aria-label="Search the ledger"]', totals: '[role="group"][aria-label="The whole ledger"]', table: 'table[aria-label="Boons"]' };
+    const gone: string[] = [];
+    (window as unknown as { ledgerGone: string[] }).ledgerGone = gone;
+    new MutationObserver(() => {
+      for (const [name, selector] of Object.entries(frame)) if (!document.querySelector(selector) && !gone.includes(name)) gone.push(name);
+    }).observe(document.body, { childList: true, subtree: true });
+  });
+  // The Void view's boons are held back until the test lets them come.
+  let letThrough = () => {};
+  const held = new Promise<void>((resolve) => (letThrough = resolve));
+  await l.route(/\/api\/troupes\/[^/]+\/boons\?(.*&)?view=void\b/, async (route) => {
+    await held;
+    await route.continue();
+  });
+  await showView(l, "void");
+  // While it comes: the open boons, dimmed and marked busy, under the toolbar and the totals.
+  const waiting = l.getByRole("table", { name: "Boons" });
+  await expect(waiting).toHaveAttribute("aria-busy", "true");
+  await expect(waiting).toHaveClass(/opacity-60/);
+  await expect(waiting.getByRole("button", { name: /^Details: / })).toHaveCount(3);
+  await expect(l.getByRole("searchbox", { name: "Search the ledger" })).toBeVisible();
+  await expect(totalOf(l, "Open")).toHaveAccessibleName("Open 3");
+  letThrough();
+  await expect(boons.rows).toHaveCount(1);
+  await expect(boons.row("Ysolde Marrick owes Wendeline Asch, minor")).toHaveCount(1);
+  await expect(waiting).not.toHaveAttribute("aria-busy");
+  expect(await l.evaluate(() => (window as unknown as { ledgerGone: string[] }).ledgerGone)).toEqual([]);
 });
 
 test("the ledger groups its rows by debtor, creditor or night under headings with their count and weight, past the first five closed, kept in the URL; over 500 boons it waits for a narrower search (#981)", async ({ browser }) => {

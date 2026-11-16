@@ -89,14 +89,17 @@ export function AddTraitPanel({
   const mine = new Set(held.filter((h) => h.category === category && !h.detail && !isInstance(catalogue, h.category, h.name)).map((h) => h.name));
   const q = query.trim().toLowerCase();
   const barred = useBarred(character.id, current);
-  const shown = applyFilter(all, filter, barred).filter((t) => !mine.has(t.name));
+  // The list waits for the checks it is judged by, so no row shows as one to take and
+  // then greys or moves under "you can't" as a tap lands on it (#1032).
+  const judged = !!current?.ready && (filter !== "can" || barred !== undefined);
+  const shown = judged ? applyFilter(all, filter, barred).filter((t) => !mine.has(t.name)) : [];
   // Either name finds the clan stored as Assamite (#430).
   const matching = shown.filter((t) => !q || withClanNames(t.name).toLowerCase().includes(q));
   // What "can take" leaves out, a tap away: greyed with the reason under Everything.
   const leftOut =
-    filter === "can" && current?.ready ? all.filter((t) => !mine.has(t.name) && (!q || withClanNames(t.name).toLowerCase().includes(q))).length - matching.length : 0;
+    filter === "can" && judged ? all.filter((t) => !mine.has(t.name) && (!q || withClanNames(t.name).toLowerCase().includes(q))).length - matching.length : 0;
   // Nothing here: perhaps it lives in another category.
-  const elsewhere = matching.length === 0 ? foundElsewhere(choices, category, query, held).slice(0, 5) : [];
+  const elsewhere = judged && matching.length === 0 ? foundElsewhere(choices, category, query, held).slice(0, 5) : [];
   const switchTo = (key: string, can = true) => {
     setCategory(key);
     setName("");
@@ -173,7 +176,7 @@ export function AddTraitPanel({
         </Select>
         <Input
           aria-label={`Search ${cat?.name ?? ""}`}
-          placeholder={`Search ${countOf(shown.length, cat?.name ?? "")}${filter === "can" ? " you can take" : ""}…`}
+          placeholder={judged ? `Search ${countOf(shown.length, cat?.name ?? "")}${filter === "can" ? " you can take" : ""}…` : `Search ${cat?.name ?? ""}…`}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="min-w-40 flex-1"
@@ -213,7 +216,12 @@ export function AddTraitPanel({
             </button>
           </li>
         ))}
-        {matching.length === 0 && elsewhere.length === 0 && leftOut === 0 && <li className="px-2 text-sm text-mist">Nothing matches.</li>}
+        {!judged && (
+          <li>
+            <Loading compact label={`Checking what ${character.name} can take…`} />
+          </li>
+        )}
+        {judged && matching.length === 0 && elsewhere.length === 0 && leftOut === 0 && <li className="px-2 text-sm text-mist">Nothing matches.</li>}
         {leftOut > 0 && (
           <li className="px-2 py-1.5 text-xs text-mist">
             {matching.length > 0 ? `${leftOut} more you can't take: ` : `None you can take. ${leftOut} you can't: `}

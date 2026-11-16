@@ -108,7 +108,7 @@ export function ScenePage() {
 
   return (
     <div className="min-h-screen bg-night pb-16 text-parchment">
-      <header className="sticky top-0 z-10 border-b border-ash bg-night/95 backdrop-blur">
+      <header className="play-header">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-1">
           <Breadcrumb crumbs={[...atGameCrumbs(troupeId, troupe.data?.name), { label: "Scenes", to: list }]} />
           {awake && (

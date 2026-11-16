@@ -53,7 +53,8 @@ export function BoonPartyHeader({
   return (
     <section aria-label="Whose boons" className="flex flex-col gap-2">
       <BackLink label="The whole ledger" to={back} className="self-start" />
-      {found.isPending ? (
+      {/* Offline, whose page it was isn't kept up as theirs (#1031). */}
+      {found.isPending || (found.isPlaceholderData && found.fetchStatus === "paused") ? (
         found.fetchStatus === "paused" ? (
           <p className="text-sm text-mist">Their totals come with a signal.</p>
         ) : (
@@ -62,7 +63,10 @@ export function BoonPartyHeader({
       ) : found.error ? (
         <ErrorText error={found.error} />
       ) : (
-        <Head found={found.data} auditTo={auditTo} offline={offline} />
+        // Whose page it was, dimmed, while theirs comes (#1031).
+        <div aria-busy={found.isPlaceholderData || undefined} className={found.isPlaceholderData ? "opacity-60" : ""}>
+          <Head found={found.data} auditTo={auditTo} offline={offline} />
+        </div>
       )}
     </section>
   );

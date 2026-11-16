@@ -7,7 +7,7 @@ switch and its uses a game; and its downtime actions and feeding. Nothing is sav
 
 import uuid
 from collections.abc import Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
@@ -137,8 +137,8 @@ def preview(
     before = effects(trial.without.rule_set.grants, sheet, trial.without.rule_set)
     after = effects(trial.with_it.rule_set.grants, with_it, trial.with_it.rule_set)
     # The sheets as they would be held, with what their grants give.
-    was = granted(trial.without, sheet, before)
-    now = granted(trial.with_it, with_it, after)
+    was = sheets.granted(trial.without, sheet, before)
+    now = sheets.granted(trial.with_it, with_it, after)
 
     changes = (
         dots_given(was, now, [k for k, givers in after.givers.items() if merit in givers])
@@ -179,44 +179,6 @@ def named(category: str, name: str, detail: str) -> str:
 
 
 Key = tuple[str, str, str]
-
-
-def granted(
-    rules: TroupeRules, sheet: Sequence[SheetTrait], found: Effects
-) -> dict[Key, tuple[int, SheetTrait]]:
-    """Each trait as horatio.sheets.apply_grants would hold it under these grants,
-    with how many dots bought there the grants would make free (and refund)."""
-    held: dict[Key, tuple[int, SheetTrait]] = {
-        (t.category, t.name, t.detail): (0, t) for t in sheet
-    }
-    keys = (
-        set(found.added)
-        | set(found.free_up_to)
-        | {k for k, (_, t) in held.items() if t.granted_rating}
-    )
-    for key in keys:
-        trait = held[key][1] if key in held else SheetTrait(key[0], key[1], 0, 0, key[2])
-        free_up_to = found.free_up_to.get(key, 0)
-        # A merit is given whole, at its value.
-        whole = fixed_rating(rules, sheet, key[0], key[1]) if free_up_to else None
-        free_up_to = whole if whole is not None else free_up_to
-        now = sheets.regrant(
-            trait.rating or 0,
-            trait.free_rating,
-            trait.granted_rating,
-            found.added.get(key, 0),
-            free_up_to,
-        )
-        held[key] = (
-            now.made_free,
-            replace(
-                trait,
-                rating=now.rating,
-                free_rating=now.free_rating,
-                granted_rating=now.granted_rating,
-            ),
-        )
-    return held
 
 
 def dots_given(

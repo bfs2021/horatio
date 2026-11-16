@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { api, unwrap } from "../../api/client";
-import { useToast } from "../../components/Toast";
 import { Button, ErrorText, Field, Input, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { FORM_NAMES, type NpcForm, type NpcKind, groupedKinds, kindPages, resourceText } from "./npcKinds";
@@ -13,11 +12,10 @@ const NEW_CUSTOM: Custom = { name: "", nature: "supernatural", resource: { name:
 /**
  * The fast way to make an NPC, on the troupe's Characters list when it shows NPCs:
  * its name, kind and form. A sheeted one goes to its quick build or to step-by-step
- * creation; a Stock NPC has no sheet to go to, so it joins the list.
+ * creation; a Stock NPC goes to its own page, for its specialisations and notes.
  */
 export function NewNpc({ troupeId }: { troupeId: string }) {
   const navigate = useNavigate();
-  const toast = useToast();
   const path = { params: { path: { troupe_id: troupeId } } };
   const kinds = useQuery({ queryKey: ["npc-kinds"], queryFn: () => unwrap(api.GET("/api/npc-kinds")), staleTime: Infinity });
   const [name, setName] = useState("");
@@ -37,13 +35,8 @@ export function NewNpc({ troupeId }: { troupeId: string }) {
       stock: form === "stock" ? { rating, specializations: [], notes: "" } : null,
     };
     const npc = await unwrap(api.POST("/api/troupes/{troupe_id}/npcs", { ...path, body }));
-    if (form === "sheeted") {
-      navigate(`/characters/${npc.id}${wizard ? "/create" : ""}`);
-      return;
-    }
-    // A Stock NPC has no sheet to go to: it joins the list here.
-    setName("");
-    toast({ message: `${npc.name} joined the list.` });
+    // A sheeted NPC opens its sheet; a Stock NPC, which has none, opens its own page (#1040).
+    navigate(form === "sheeted" ? `/characters/${npc.id}${wizard ? "/create" : ""}` : `/troupes/${troupeId}/npcs/${npc.id}`);
   });
   const ready = !!name && !(kind?.custom && !custom.name) && !create.isPending;
 
@@ -59,7 +52,15 @@ export function NewNpc({ troupeId }: { troupeId: string }) {
         <Input required value={name} onChange={(e) => setName(e.target.value)} />
       </Field>
       <Field label="Kind" hint={kind && <KindSummary kind={kind} />}>
-        <Select value={kindKey} onChange={(e) => setKindKey(e.target.value)}>
+        <Select
+          value={kindKey}
+          onChange={(e) => {
+            setKindKey(e.target.value);
+            // A rating above the new kind's highest comes down to it.
+            const max = kinds.data?.find((k) => k.key === e.target.value)?.rating_max;
+            if (max) setRating((r) => Math.min(r, max));
+          }}
+        >
           {groupedKinds(kinds.data ?? []).map((g) => (
             <optgroup key={g.label} label={g.label}>
               {g.kinds.map((k) => (
@@ -91,7 +92,13 @@ export function NewNpc({ troupeId }: { troupeId: string }) {
       </div>
       {form === "stock" && (
         <Field label="Rating" hint={`1 to ${kind?.rating_max ?? 5}: its test pool is twice this (p. 489).`}>
-          <Input type="number" min={1} max={kind?.rating_max ?? 5} value={rating} onChange={(e) => setRating(Number(e.target.value))} />
+          <Select value={rating} onChange={(e) => setRating(Number(e.target.value))}>
+            {upTo(1, kind?.rating_max ?? 5).map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </Select>
         </Field>
       )}
       <ErrorText error={create.error} />
@@ -115,6 +122,11 @@ export function NewNpc({ troupeId }: { troupeId: string }) {
       )}
     </form>
   );
+}
+
+/** The whole numbers from `first` to `last`, for a drop-down. */
+function upTo(first: number, last: number): number[] {
+  return Array.from({ length: last - first + 1 }, (_, i) => first + i);
 }
 
 /** What a kind is, in a line: mortal or not, its resource, and its pages. */
@@ -148,10 +160,22 @@ function CustomKindFields({ custom, onChange }: { custom: Custom; onChange: (c: 
           <Input required value={custom.resource.name} onChange={(e) => resource({ name: e.target.value })} />
         </Field>
         <Field label="Pool">
-          <Input type="number" min={1} max={50} value={custom.resource.size} onChange={(e) => resource({ size: Number(e.target.value) })} />
+          <Select value={custom.resource.size} onChange={(e) => resource({ size: Number(e.target.value) })}>
+            {upTo(1, 50).map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </Select>
         </Field>
         <Field label="A turn">
-          <Input type="number" min={0} max={10} value={custom.resource.per_turn} onChange={(e) => resource({ per_turn: Number(e.target.value) })} />
+          <Select value={custom.resource.per_turn} onChange={(e) => resource({ per_turn: Number(e.target.value) })}>
+            {upTo(0, 10).map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </Select>
         </Field>
       </div>
     </fieldset>

@@ -146,3 +146,28 @@ def test_every_technique_elder_and_luminary_power_says_what_it_does_and_where() 
         or not PAGE.fullmatch(t.get("page_reference", ""))
     )
     assert unsaid == []
+
+
+# The Dark Thaumaturgy rituals come from the V20 LARP SRD, whose page is a link.
+SRD_RITUAL = re.compile(r"https://www\.oneworldofdarkness\.com/srd-v20/rituals/[a-z0-9-]+")
+
+
+def test_every_ritual_says_what_it_does_and_where() -> None:
+    """A player reads what a ritual does before learning it (issue #1024): its cost,
+    casting time, test and effect in a line of our own, and the book's page. The
+    Sabbat's ritae too, which the NPC builder lists among them."""
+    with TRAITS_FILE.open("rb") as f:
+        rituals = [
+            t for t in tomllib.load(f)["traits"] if t["category"] in ("rituals", "sabbat_rituals")
+        ]
+
+    unsaid = sorted(
+        f"{t['category']}: {t['name']}"
+        for t in rituals
+        if not (t.get("description") or "").strip()
+        or not (
+            PAGE.fullmatch(page := t.get("page_reference", ""))
+            or (t["name"].startswith("Dark Thaumaturgy: ") and SRD_RITUAL.fullmatch(page))
+        )
+    )
+    assert rituals and unsaid == []

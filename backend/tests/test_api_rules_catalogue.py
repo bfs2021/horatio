@@ -15,9 +15,11 @@ from tests.api_helpers import Troupe
 pytestmark = pytest.mark.usefixtures("without_bank")
 
 # Bytes. With every empty field sent, the catalogue was 589 KB and the rules browser
-# 772 KB; without them, 254 KB and 428 KB (Nov 2026).
-CATALOGUE_BUDGET = 300_000
-BROWSER_BUDGET = 500_000
+# 772 KB; without them, 254 KB and 428 KB (Nov 2026). A line and a page for every
+# technique and ritual (#1000, #1024) took them to 325 KB and 499 KB: about 15 KB more
+# gzipped, fetched once a rules version (horatio.api.etags).
+CATALOGUE_BUDGET = 350_000
+BROWSER_BUDGET = 550_000
 
 
 @pytest.fixture

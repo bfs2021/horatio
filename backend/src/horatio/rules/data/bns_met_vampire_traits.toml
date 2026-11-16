@@ -7,6 +7,8 @@
 # the book, and a `page_reference`: a bare number for MET: VTM, otherwise the
 # book first ("Vol. 2, p. 269", "Vol. 2 Issue 1, p. 46"). One that no book we
 # have describes says why in `unsourced` instead (tests/test_catalogue_descriptions.py).
+# Every technique, elder and luminary power, ritual and Sabbat ritus has one too: its
+# cost, action or casting time, test and effect, and its page.
 # The Dark Thaumaturgy rituals come from the V20 LARP SRD, not a book, so their
 # `page_reference` is their page there, a link.
 #
@@ -5381,151 +5383,211 @@ properties = { visible = "Path of Typhon" }
 [[traits]]
 category = "rituals"
 name = "Abyssal: Abyssal Ichor"
+description = "1 Blood and cephalopod ink cut with an obsidian or jet blade: a vial of ichor, used as ink only the supernatural can read, as an oil that makes an item Nondescript, or as a tasteless poison (3 doses). Up to 5 vials a downtime action."
+page_reference = "Vol. 2, p. 100"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Adornment of Ashes"
+description = "1 Blood and a rune of black hardwood ash on your body: for the night, inside your Shroud of Night, no power needing Gaze and Focus can target you, though you can still use yours. Marring the rune (a Disarm) ends it."
+page_reference = "Vol. 2, p. 108"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Affliction of the Void"
+description = "1 Blood and one of your own teeth: for the night your jaw becomes a maw that bites without a Grapple (a breach of the Masquerade); Blood you drink feeds the Abyss, so no blood bond, and vampire blood heals you 1 normal damage. End it with a Willpower and a pulled tooth."
+page_reference = "Vol. 2, p. 111"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Avatar of Screams"
+description = "1 Blood, cutting out your tongue for a tiny Arm of the Abyss: each Dominate power you win also deals 1 unsoakable aggravated damage (2 on an exceptional success), without breaking Forgetful Mind; the target avoids it by relenting."
+page_reference = "Vol. 2, p. 113"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Bind the Shadow"
+description = "1 Blood and silver tools to cut away the shadow of a helpless or willing target: while you keep it, +3 to Dominate and Abyss Mysticism against them, and no shadow powers work on or for them, for a year and a day."
+page_reference = "Vol. 2, p. 111"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Cassandra's Folly"
+description = "Once a month, 1 Blood and an instrument burnt in an ethylene flame: you or a willing subject gain Oracular Ability (or a further use of it) for the night, but cannot communicate anything true at all, by any means."
+page_reference = "Vol. 2, pp. 111-112"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Clasp of Shadow"
+description = "Sever and eat up to 3 Arms of the Abyss (lowering your maximum by each): that night, once per arm, a simple action while Grappling leaves a shadow copy with 3 health levels holding the Grapple as you step away."
+page_reference = "Vol. 2, p. 100"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Coagulated Darkness"
+description = "A downtime action and Blood up to your Obtenebration powers, left three nights in the dark, then eaten: for one game, that many extra Blood, spent only on Physical tests or healing in torpor, beyond your per-turn limit."
+page_reference = "Vol. 2, p. 101"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Dark Hand that Feeds"
+description = "5 minutes and 2 Blood at a metal sigil: summon a Shadow Fiend, a level 3 Stock NPC with a 5 Blood pool, that obeys you for the night, spying, fetching, reporting by telepathy and fighting. One at a time."
+page_reference = "Vol. 2, p. 101"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Echoes in Darkness"
+description = "A tiny shadow from Shadow Play in a willing target's ear: for up to 30 days, alone in a dark room and saying your name, they can whisper back and forth with you. Up to your Occult dots of targets at once."
+page_reference = "Vol. 2, p. 104"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Ensnared Mind"
+description = "1 Blood, burning the target's name, opposed Abyss test: that night, scattering the embers (simple action) within a mile leaves them unable to tell friend from foe for an hour: no relenting, no designating allies, no Assist maneuvers but Assist Defender. One at a time."
+page_reference = "Vol. 2, p. 108"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Feasts of Famine"
+description = "10 minutes and 1 Blood, slitting your fingertips: for the night, your Arms of the Abyss have mouths and can feed from a target they Grapple, as if you drank (blood bonds and poisons included)."
+page_reference = "Vol. 2, p. 104"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Filaments of Catharsis"
+description = "Cast in place of the 5 turns' chant for Walk the Abyss: the journey takes 15 minutes on a win, 30 on a tie and an hour on a loss; or, alone and within 5 miles, take 2 unreducible aggravated damage to arrive in a minute with no test."
+page_reference = "Vol. 2, p. 102"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Gloom Sentinel"
+description = "1 Blood, once a night: shape a sentinel from a shadow and, with a simple action, call it out of any shadow to Assist Defender you with traits of twice your Obtenebration dots, until its 3 health levels are gone."
+page_reference = "Vol. 2, p. 109"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Helping Hands"
+description = "1 Blood, submerged, strangling a living creature: the next time you summon your Arms of the Abyss, each gives +3 instead of +1 when it uses Assist Attacker, one arm to an attacker."
+page_reference = "Vol. 2, p. 112"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Incarnation of Madness"
+description = "1 Blood and an offering deep in the Abyss, taking Nightmares: for 30 days, no one who attacks you gets a surprise action, and anyone who uses Gaze and Focus on you in Black Metamorphosis or Tenebrous Form is blinded, yet you keep their Gaze and Focus."
+page_reference = "Vol. 2, p. 113"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Maeljin Urge"
+description = "1 Blood, shattering a mirror, to trap an Urge (a derangement from the book's table), then 1 Blood to pass it by touch: each holder suffers it for 10 minutes and gains a Derangement trait, then must pass it on, until the night ends."
+page_reference = "Vol. 2, pp. 114-115"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Mapping the Abyssal Pathway"
+description = "1 Blood for sigils painted before Walk the Abyss: you and your companions take half damage (rounded down) from the Abyss, and you can take six companions instead of three."
+page_reference = "Vol. 2, p. 102"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Memories Lost"
+description = "15 minutes and 1 Blood at a dark reflection: cast up to 15 minutes of memory into the Abyss for good, maybe getting a painful random one back (often, Nightmares); or seek lost memories, by a Complex quest for yours or an Epic one for another's."
+page_reference = "Vol. 2, p. 109"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Oubliette"
+description = "A crystal soaked a day in shadow and 1 Blood: in your Shroud of Night, a simple and a standard action seal an unconscious or torpid body inside it, stable and out of reach of Telepathy, until it's broken (2 health levels) or released. Up to your Occult dots of crystals."
+page_reference = "Vol. 2, p. 115"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Palace of Tenebrae"
+description = "10 minutes and 1 Blood smearing runes on your haven's floor: for the night anyone but an Abyss Mystic overlooks the building (not a public place like Elysium), and Walk the Abyss reaches it in half the time. One at a time."
+page_reference = "Vol. 2, p. 105"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Psychic Void"
+description = "1 Blood and 20 minutes under saltwater: until the night ends you leave no psychic impression for Spirit's Touch and the like, object spirits can't recall you, and you get a +3 wild card against Auspex and like mental powers."
+page_reference = "Vol. 2, p. 112"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Shadow Tempering"
+description = "1 Blood to reforge a weapon's shadow with a silver hammer: for a year, a two-handed weapon (Brutal, Long Range) needs one hand, and a one-handed one gains Balanced, beyond its quality limit."
+page_reference = "Vol. 2, p. 103"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Shadow Transgressor"
+description = "1 Blood on a pair of shoes you stole this week: once, wearing them, a simple action swaps places with one of your visible Arms of the Abyss, either of you taking over the other's Grapple. Neither of you may be Grappled."
+page_reference = "Vol. 2, p. 105"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Shadowy Sanctum"
+description = "1 Blood to coat a room of your haven in shadow: meditating there regains 1 Willpower every 5 minutes, and Walk the Abyss to it takes 10 minutes with no damage. One at a time."
+page_reference = "Vol. 2, p. 110"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Sin Collector"
+description = "1 Blood, smashing an icon in water: for the night, each free sin near you that earns a Beast trait gives you back up to 1 Blood and 1 Willpower (5 in all), or a lost point of morality in sight gives 5 Blood and all your Willpower and ends it."
+page_reference = "Vol. 2, p. 106"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Smothering Darkness"
+description = "1 Blood, pinching out a ring of candles: for the night, your Shadow Play (a simple action) can snuff out lights in sight up to campfire size; a supernatural light needs Social + Occult against its power's pool."
+page_reference = "Vol. 2, p. 103"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Void's Vesicle"
+description = "1 Blood and a creature that has never seen light: for the night, use your total Obtenebration dots (techniques and elder powers too) in place of Stealth, but you gain Eerie Presence and are a breach of the Masquerade in light."
+page_reference = "Vol. 2, p. 106"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: What Once Was Lost"
+description = "1 Blood, standing still in the Abyss: seek an item you or a companion held for 30 days that is lost (not destroyed or held by someone); if the Storyteller allows, a quest of difficulty 1 to 5 by how long it's been lost recovers it, or one like it."
+page_reference = "Vol. 2, pp. 106-107"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Abyssal: Whispers in the Dark"
+description = "An hour in darkness flogging yourself (1 Blood and 1 unsoakable normal damage): write a question in the blood and the Abyss writes an answer, on general subjects only, never personal secrets, as the Storyteller decides."
+page_reference = "Vol. 2, p. 110"
 properties = { rating = 3 }
 
 # Dark Thaumaturgy (issue #414): infernal rituals a thaumaturge may take as
@@ -5676,776 +5738,1086 @@ properties = { rating = 1 }
 [[traits]]
 category = "rituals"
 name = "Necromancy: Ancestral Ties"
+description = "1 Blood, 5 minutes, decorating a bone from a corpse: it glows blue in the hand of any blood descendant of that corpse."
+page_reference = "Vol. 2, p. 133"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Baleful Doll"
+description = "1 Blood over an effigy holding a piece of the target, then broken, opposed test: they gain Fragile Bones for an hour, unless the doll is destroyed. One use a doll."
+page_reference = "Vol. 2, p. 142"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Bastone Diabolico"
+description = "1 Blood, 20 minutes, on a rune-carved human thighbone: your one permanent weapon, 1 normal damage (errata), Fast, hitting in the world or the Shadowlands; each hit drains a vampire's Blood or a wraith's Pathos. -1 to summon or control wraiths while you carry it."
+page_reference = "184"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Bathory's Blessing"
+description = "1 Blood, bathing in the blood of as many dying or fresh mortal dead as your Generation dots: flawless skin and an extra Social focus for the evening. Killing for it gives you 4 Beast traits."
+page_reference = "Vol. 2, p. 139"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Bind Death's Sickle"
+description = "2 to 6 casters on consecrated ground, 1 Blood each: until sunrise no one dies naturally within a mile per caster's Necromancy dot; at sunrise they all die at once. A deep breach of the Masquerade, and 10 Willpower among you, or you all fall into torpor."
+page_reference = "Vol. 2, p. 145"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Black Blood"
+description = "1 Blood, 10 minutes: turn 3 of your Blood (unusable, and drunk first by anyone feeding on you), or all the blood in a fresh corpse or blood bag, to black ichor: 2 normal damage per point drunk, and -1 to Physical tests for an hour."
+page_reference = "182"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Body and Soul"
+description = "1 Blood carving sigils into a zombie a wraith possesses (opposed Necromancy test if it's unwilling): bound together as a Retainer with the zombie's Physical and the wraith's Mental and Social powers. Up to your Occult dots of them."
+page_reference = "Vol. 2, p. 143"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Broken Heart"
+description = "1 Blood, burning something dear to the target (or their vitae), opposed test within 10 miles: a mortal dies at the next strong emotion within 48 hours; a supernatural loses all Social focuses until sunrise."
+page_reference = "Vol. 2, p. 143"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Call of the Hungry Dead"
+description = "1 Blood, 5 minutes, opposed Necromancy test against a target within a mile: the voices of the dead plague them, and they get one fewer downtime action next time. Doesn't stack."
+page_reference = "181"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Charon's Obol"
+description = "1 Blood, dipping a coin in Shadowlands water during Ex Nihilo: an ally holding it in their mouth can follow you or another necromancer into the Shadowlands, thrown out if it's lost. Up to your Occult dots of coins."
+page_reference = "Vol. 2, p. 136"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Chill of Oblivion"
+description = "1 Blood, 25 minutes: until sunrise fire and heat deal you normal damage, not aggravated, and 1 Blood puts out a flame up to a bonfire within a step; but you have Eerie Presence and a diablerie-streaked aura, and wraiths and Necromancy get +3 against you."
+page_reference = "186"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Circle of Cerberus"
+description = "1 Blood, 5 minutes: a circle of salt and silver on the floor; until sunrise, everyone inside gets +5 to defend against wraiths and Necromancy, and like powers."
+page_reference = "181"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Dark Absolution"
+description = "Destroy tokens of a wraith's fetters, then 1 Blood to make it manifest and drain its angst (its Stock level), gaining a Beast trait a point: when none is left, it transcends."
+page_reference = "Vol. 2, p. 139"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Dark Assistant"
+description = "1 Blood, 5 minutes: animate a severed hand, to fetch and do small tasks, or a human skull, to recall perfectly whatever is read or explained to it. Lasts until destroyed; it can't fight and has 2 health levels."
+page_reference = "181"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Day of Remembrance"
+description = "1 Blood and a public blessing at an event for the dead: for 7 days, everyone there can once turn an exceptional success they lose to into a plain one. One at a time each."
+page_reference = "Vol. 2, p. 136"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Demense Macabre"
+description = "1 Blood on a shrine to St. Zita, with fresh bread every two weeks: within 7 days ghostly servants (Stock 1 wraiths) give your haven or location the Guards and Staff qualities. One at a time."
+page_reference = "Vol. 2, pp. 136-137"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Din of the Damned"
+description = "1 Blood, 10 minutes, a line of crematorium-ash chalk around a room: until dawn any eavesdropping on it is garbled, and mortals leave and won't come back, or take -5 to all pools if made to stay."
+page_reference = "182"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Eternal Vigilance"
+description = "A salve of your blood and a zombie's on its face: for 30 days, 1 Blood and a simple action let you see and hear through it for three turns and give it orders, while your own body is senseless. Up to your Occult dots of zombies."
+page_reference = "Vol. 2, p. 133"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Exploitation of Weakness"
+description = "1 Blood, ashes of a personal item on an effigy, opposed test: for 30 nights the target has Prey Exclusion for a kind of mortal you choose, unknowing. Not on a Ventrue."
+page_reference = "Vol. 2, p. 139"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Eyes of the Grave"
+description = "1 Blood, 5 minutes, on a portrait of a target within a mile (made with Crafts 2), opposed Necromancy test: tearing it later that night blinds them for a turn. One at a time."
+page_reference = "181"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Fell Familiar"
+description = "Feed an animal flesh of someone killed by an animal: one of your wraiths possesses it for a year and a day, using the higher stock rating, its powers and the animal's. One at a time."
+page_reference = "Vol. 2, p. 144"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Funeral Feast"
+description = "1 Blood over food given to mourners: for an hour wraiths can eat it in the Shadowlands, and up to your Occult dots of them each regain twice your Occult dots in Pathos."
+page_reference = "Vol. 2, pp. 133-134"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Ghost in the System"
+description = "An evening blessing a Stock Location for ghosts to haunt: for a year and a day, any quest against it is 3 harder (past 5, it becomes the next kind of quest)."
+page_reference = "Vol. 2, p. 134"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Ghostly Enforcer"
+description = "1 Blood on a marker of a real debt (a minor boon or more): within 7 days a Usurer wraith haunts the debtor's dreams, and they start the next game 3 Blood and 1 Willpower down. Once a month per debtor."
+page_reference = "Vol. 2, p. 140"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Grave Robber's Boon"
+description = "1 Blood and 5 minutes' prayer, scattering pomegranate seeds: learn of every body buried within 100 yards and roughly what its grave goods are worth. Undead in the earth don't show."
+page_reference = "Vol. 2, p. 134"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Grave Ward"
+description = "1 Blood on a coin from the year of death, buried at the grave: for a year you know at once if it is disturbed or its wraith attacked or targeted by Necromancy, and a corpse raised from it turns on its raiser for 10 minutes. Up to your Occult dots of graves."
+page_reference = "Vol. 2, p. 137"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Greater Exploitation of Weakness"
+description = "1 Blood and a sample of the blood, opposed test: for 30 days the target can feed only on blood of the kind you choose; any other turns to ash in their mouth. Overrides Prey Exclusion and the Ventrue weakness."
+page_reference = "Vol. 2, pp. 145-146"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Guiding Spirits"
+description = "Once a night, ask the dead the way to a place you know: the safest path there, as one Safe Travel (Underworld 1) Influence action, until sunrise."
+page_reference = "Vol. 2, p. 134"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Hand of Glory"
+description = "A murderer's hand prepared over a fortnight with 1 Blood, and 1 Blood a month to keep: light a candle in it and every mortal in a building up to three storeys sleeps for an hour. Five uses; anyone can light it."
+page_reference = "Vol. 2, p. 144"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Honored Epitaph"
+description = "1 Blood and dust from a memorial bearing a wraith's name: for a year and a day it gains a skill specialisation fitting the marker's words, beyond its usual limit (not Lore or Linguistics)."
+page_reference = "Vol. 2, pp. 137-138"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Lethe's Waters"
+description = "1 Blood, 20 minutes; then once that night, 1 Blood and a standard action, Physical + Athletics against Physical + Dodge: the target forgets everything and sees you as a friend for 10 minutes. Any attack on them ends it."
+page_reference = "184"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Letters from Beyond"
+description = "Once every 6 months, a letter in ink with 1 Blood: a Harbinger wraith, paid as it asks (often Resources x3 for a vampire), carries it to anyone living or dead who mattered to the writer and brings a reply within 24 hours."
+page_reference = "Vol. 2, p. 146"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Moldering Presence"
+description = "1 Blood, 15 minutes: for the night, a standard action rots any object you touch (at once up to the size of a book); in combat, a successful Grapple destroys an item the target holds."
+page_reference = "183"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Rise, Cerberus"
+description = "Slay three hounds and chant three nights: a three-headed ghost hound guards your haven, a 4-point Stock NPC with 10 Pathos and Dread Gaze that sees through Obfuscate and never leaves. One at a time (errata)."
+page_reference = "183"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Ritual of Xipe Totec"
+description = "1 Blood, 20 minutes: flay a living mortal of your build with an obsidian dagger and wear their skin, a flawless disguise to the eye with none of their knowledge. You gain 3 Beast traits."
+page_reference = "184-186"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Scales of Maat"
+description = "1 Blood, 10 minutes, with a fetter, remains or something a wraith touched: learn its powers, rough strength, cause of death and how long it has been dead."
+page_reference = "183"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Sepulchral Beacon"
+description = "1 Blood, 10 minutes: until sunrise, sense breaches of the Shroud within a mile (a death, Necromancy, Shroud Mastery) and the way to them."
+page_reference = "182-183"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Silver Thread"
+description = "1 Blood with a newborn's hair, stirred in pewter, binding a ball of yarn: in the Shadowlands it guides you home, and lowers the difficulty of one quest there by 1, but a failed quest costs you one more consequence. One at a time."
+page_reference = "Vol. 2, p. 135"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Sip of Death"
+description = "5 minutes brewing up to 5 draughts, 1 Blood each: a drinker gets one free retest against a wraith or spectre that night, with no blood bond. One a night each."
+page_reference = "Vol. 2, p. 135"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Smoking Mirror"
+description = "1 Blood, 5 minutes, on an obsidian mirror at least six inches across: until sunrise you have Death's Gaze through it, seeing wraiths and the Shadowlands, and with Medicine the living's illnesses and injuries."
+page_reference = "181-182"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Spirit Beacon"
+description = "1 Blood, 15 minutes, on a human skull: until sunrise, charged one way it draws every wraith within a mile, the other way it drives them a mile off; resisting costs a wraith 1 Pathos every 10 minutes."
+page_reference = "183-184"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Stained Sight"
+description = "1 Blood, 10 minutes, with hair, flesh or Blood of a target within a mile, opposed Necromancy test: they gain the Death Sight flaw for a month or two games, whichever is longer."
+page_reference = "183"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Strength of Rotten Flesh"
+description = "1 Blood, 20 minutes, on one of your zombies: for a month it gains two skill focuses of your choice and double its health levels."
+page_reference = "186"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Stygian Fortress"
+description = "1 Blood and ashes painted on a door in the Shadowlands: after 15 minutes, it opens on your Stygian Fortress, a 5-point Prestige Stock Location, for 30 days, renewed by a downtime action. One at a time."
+page_reference = "Vol. 2, p. 141"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: The Servant Undying"
+description = "1 Blood, 15 minutes: a Retainer signs a contract in their own blood; if killed, they rise as a clever zombie to finish your last order, then crumble to ash."
+page_reference = "184"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Theft of Identity"
+description = "With Medicine 1, 1 Blood and 1 unsoakable aggravated damage a part: swap your eyes, tongue or fingers for a fresh corpse's to pass its retinal, voice or fingerprint checks, and recall its passwords and accounts."
+page_reference = "Vol. 2, p. 138"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Thorn of the Undead Heart"
+description = "1 Blood and nine oak seeds in a fresh corpse buried at full moon: next full moon, cut stakes (up to your Morality) that stake at -1 instead of -3. Anyone can use one, within a month."
+page_reference = "Vol. 2, p. 142"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Wail of the Departed"
+description = "1 Blood on silk wrapping art of a weeping woman, cast under a new moon: place it in a building, and any death there strikes you deaf for a turn. Lasts 90 days, renewable; up to your Occult dots of them."
+page_reference = "Vol. 2, p. 138"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Warping the Morbid Visage"
+description = "1 Blood, 5 minutes: a true corpse takes your face, colouring and build for up to three nights, while you keep its tongue. Its DNA is unchanged."
+page_reference = "182"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: We Are Legion"
+description = "Once a lunar cycle, 3 Blood and a zombie fed a funeral meal and buried: an hour later, three times your Occult dots of 3-point Stock zombies rise and serve you as one until sunrise. A breach of the Masquerade."
+page_reference = "Vol. 2, p. 147"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Necromancy: Weight of the Tomb"
+description = "Once a month, 1 Blood, 25 minutes, with hair, flesh or Blood of a target within a mile, opposed Necromancy test: name an activity; until next sunset, doing it deals them 3 aggravated damage that can't be reduced."
+page_reference = "186"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Banish Big Brother"
+description = "1 Blood, 10 minutes: until sunrise you sense when you are being recorded, and can shut down cameras and microphones in sight for an hour, but not distant ones like satellites."
+page_reference = "204"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Battle Ward"
+description = "1 Blood, 20 minutes, a blood circle three steps across on a fixed surface: inside it, +1 wild card to Dodge per dot of your primary path and +3 to Thaumaturgy pools; a thaumaturge who takes it gets +3 against you."
+page_reference = "Vol. 2, p. 176"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Bind the Accusing Tongue"
+description = "1 Blood, 5 minutes, with the target's image, a lock of their hair and a black silk cord, opposed Thaumaturgy test: until dawn they cannot speak, write or otherwise say anything against you."
+page_reference = "202"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Blade of the Eternal Thirst"
+description = "Craft: Weaponsmithing 2, 25 minutes, a bone blade steeped in 3 Blood: in your hands it deals aggravated damage and stores 1 Blood from each damaging hit (up to 3), which a simple action lets you drink. One blade; renew it monthly with 1 Blood."
+page_reference = "Vol. 2, p. 180"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Blood Contract"
+description = "1 Blood, 25 minutes: a contract in your blood, freely signed in blood by each party, naming the service, the payment and how it ends; anyone who breaks it takes damage into torpor, and every party knows."
+page_reference = "209-211"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Blood Mastery"
+description = "1 Blood, 5 minutes, burning a point of the target's Blood: you win the first test of your next opposed challenge against them; a Willpower retest goes on as normal. Ends at dawn."
+page_reference = "202"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Blood Walk"
+description = "1 Blood and 3 hours in a trance, pouring a point of the subject's vitae into a cauldron: learn their sire, grandsire and great-grandsire by face and best-known name. No familiarity gained."
+page_reference = "Vol. 2, p. 167"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Blood Wine"
+description = "Thirty days over a gallon of red wine, 1 Blood every five days: 16 glasses, each worth a point of Blood to a vampire, and euphoric; a Beast trait for every two glasses drunk."
+page_reference = "Vol. 2, p. 163"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Broken Eye of Anubis (Setite)"
+description = "1 Blood and honey on a stone eye, held 2 minutes while you gaze on the target: within 90 days, break it for one use of a power needing familiarity or a sympathetic link to them. Up to your Occult dots of eyes."
+page_reference = "Vol. 2, p. 176"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Burning Blade"
+description = "1 Blood, 10 minutes over a blade; later a standard action and 1 normal damage to your hand lights it: it deals aggravated damage to supernatural creatures for one hit per Occult dot. Only you can wield it."
+page_reference = "204-205"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Canopic Jar (Setite)"
+description = "1 Blood, 5 minutes over a clay vessel up to a litre: it and what's in it can't be seen remotely (Scry, Clairvoyance), and it takes 6 damage to break and none from fire. Up to twice your Occult dots of them."
+page_reference = "Vol. 2, p. 167"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Certamen (Tremere)"
+description = "1 Blood, usually cast by the judge: a formal Tremere magical duel fought from runic circles (Enhancing, Regenerating, Rejuvenating, Stoic, Quicksilver) under agreed terms, until a victory condition is met. No magic leaves the arena."
+page_reference = "Vol. 2, pp. 180-182"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Cobra's Favor"
+description = "1 Blood, 25 minutes, then drinking venom, herbs and your Blood (1 unreducible aggravated): for a month, anyone who drinks your blood takes 1 unreducible aggravated damage per point."
+page_reference = "211"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Communicate with Kindred Sire"
+description = "1 Blood, 5 minutes: speak mind to mind with your sire anywhere in the world for an hour, if they accept; you feel it if they are in torpor or dead."
+page_reference = "202"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Conduit of Fate"
+description = "Path of Caelestinikenesis; 1 Blood each from two willing vampires whose hands you bind, and 1 of yours: for 30 days, or until both agree to cut it, damage, healing, torpor and new effects on one also happen to the other."
+page_reference = "Vol. 2, p. 182"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Conjoined Psyche"
+description = "1 Blood from you and a willing ally on two crystal jewels: for the night, within a mile, either of you can spend Willpower from your joint pool. Breaking a jewel ends it."
+page_reference = "Vol. 2, p. 177"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Craft Bloodstone"
+description = "10 minutes, a pebble steeped in 3 Blood from any source: you always know its direction and rough distance. Up to your Occult dots of stones."
+page_reference = "205"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Dead Zone"
+description = "1 Blood, 20 minutes, runes in animal blood on a room up to 10 square feet per Occult dot: for a year and a day, nothing more complex than a crossbow works inside."
+page_reference = "Vol. 2, p. 177"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Defense of the Sacred Haven"
+description = "1 Blood, 5 minutes, sigils in your blood on every window and door: sunlight cannot enter a room up to 10 steps across while you stay in it."
+page_reference = "203"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Deflection of Wooden Doom"
+description = "1 Blood, 10 minutes in a circle of wood, then a splinter under your tongue: the first Pierce the Heart against you misses as the stake crumbles, and the ritual ends."
+page_reference = "203"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Detect the Hidden Observer"
+description = "1 Blood, 15 minutes, burning personal papers and anointing yourself with the ash: until sunrise you feel it, and know how, when someone actively spies on you by supernatural means, but not who or where. Obfuscate doesn't count."
+page_reference = "206"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Digital Sentry"
+description = "Three standard actions while using a Path of Technomancy power on a device: for 30 days you are familiar with it and know whenever someone uses it, but not who. Up to your Computer dots of them."
+page_reference = "Vol. 2, p. 163"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Encrypt Missive"
+description = "1 Blood, 5 minutes, a bloody thumbprint on a message: to anyone but those it's meant for, it reads as something mundane, like a shopping list or spam."
+page_reference = "Vol. 2, p. 163"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Engaging the Vessel of Transference"
+description = "1 Blood, 5 minutes, on a glass vessel of your blood: the first other person whose bare skin touches it swaps 1 Blood for 1 of yours, kept until the seal breaks. Occult 2 recognises it."
+page_reference = "203"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Eyes of the Night Hawk"
+description = "1 Blood, 10 minutes: until sunrise, see and hear through a bird of prey that follows your commands; put out its eyes when it returns or be blind for three nights."
+page_reference = "205"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Fell Incantation"
+description = "1 Blood, 25 minutes, burning a page of a magical tome: for the evening, the first point of damage from each of your Thaumaturgy powers can't be reduced or negated, but all your magic is overtly unnatural."
+page_reference = "Vol. 2, p. 183"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Firewalker"
+description = "1 Blood, 15 minutes, swallowing a coal (1 unsoakable aggravated): ignore the next 5 damage from fire, and if a fire's damage is all ignored, stay immune to it while you stay in it."
+page_reference = "Vol. 2, p. 171"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Flesh of the Fiery Touch"
+description = "1 Blood, 15 minutes, swallowing an ember (1 aggravated damage): until dawn, anyone who hits you with Brawl takes 1 aggravated, and anyone grappling you takes 1, then 2, then 3 more each turn until they let go."
+page_reference = "206"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Fool the Future"
+description = "15 minutes of low electric current, then 1 Blood: for the night, machines within 100 feet register you as alive, with body heat and a heartbeat."
+page_reference = "Vol. 2, p. 171"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Greater Bond of Servitude"
+description = "1 Blood, 5 minutes, blood sigils on a restrained ghoul who has fasted 7 days: for a year they can hold 3 more of your Blood beyond their maximum. One domitor's at a time."
+page_reference = "Vol. 2, p. 164"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Hand of Ptah (Setite)"
+description = "1 Blood, 15 minutes, with familiarity or a crafted likeness of an object up to a van: whisper its name or break the likeness to destroy it, or, if magical, suppress its magic for 24 hours. Once a night per object."
+page_reference = "Vol. 2, p. 171"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Humanity's Folly"
+description = "1 Blood, 5 minutes, with hair or blood of a mortal or ghoul within a mile, opposed test: for the evening they gain a vampire's flaw of your choice from the book's list (Cannot Cross Running Water, Obvious Predator, and others)."
+page_reference = "Vol. 2, p. 164"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Illuminate the Trail of Prey"
+description = "1 Blood, 5 minutes, with the target's birth name or a drawn likeness, where they have been since the last sunrise, opposed Thaumaturgy test: until sunrise only you see glowing footprints leading to them over land. One try a night."
+page_reference = "203"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Illusion of Peaceful Death"
+description = "1 Blood, 10 minutes, dusting a corpse with a feather soaked in a good man's blood: for a month it seems to have died naturally to mundane investigation; supernatural ones take -3."
+page_reference = "205"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Imbued Offering"
+description = "1 Blood, 10 minutes, over a trinket for a non-vampire kind: for 30 days it can restore 1 spent Gnosis, Glamour or the like to one of them (3 with the right Lore). Up to your Occult dots of them."
+page_reference = "Vol. 2, pp. 167-168"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Incorporeal Passage"
+description = "1 Blood, 15 minutes: for five minutes, while you gaze into a mirror shard, walk through walls and let Physical attacks pass through you, moving only forward and making no attacks. Ending inside something hurts, or sends you to torpor."
+page_reference = "206"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Indelible Mark"
+description = "1 Blood for belladonna ink and 1 more on a willing target's new tattoo, brand or piercing: for a year and a day it can't be removed, they are familiar to you, and your line-of-sight powers reach them anywhere. Up to your Occult dots of marks."
+page_reference = "Vol. 2, p. 172"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Induce Bloodthirst"
+description = "1 Blood after three nights on animal blood; later, within 3 turns of drinking 3 Blood from one person, a simple action sends you into a frenzy with the Strength focus and +2 to Grapple against those you fed on. Expires at night's end."
+page_reference = "Vol. 2, pp. 177-178"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Innocence of the Child's Heart"
+description = "1 Blood, 20 minutes, sacrificing a mortal child and dipping their toy in the heart's blood: while you carry it your aura reads pure white, for a week plus a week per Occult dot. You lose a point of Morality unless on the Path of Evil Revelations."
+page_reference = "208"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Jinun's Bane (Assamite)"
+description = "1 Blood and 15 minutes' chant in kalif smoke: the next time each participant frenzies, they keep choosing their targets with all frenzy bonuses, and a rage frenzy doesn't turn to fear at Incapacitated."
+page_reference = "Vol. 2, p. 173"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Kiss of the Asp (Assamite)"
+description = "1 Blood, 10 minutes, drinking a snake's blood and venom (toxicity 10 or more): for the night, each Taste of Death attack is also a free Blinding Attack, with no Willpower, penalty or loss of damage."
+page_reference = "Vol. 2, p. 168"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Lightning Rod"
+description = "1 Blood, 25 minutes, a rod of lightning-struck wood: holding it, your Weather Control: Lightning deals aggravated damage and can arc once a turn to a second target within 3 steps (another test, 1 less damage). Only you can use it; one at a time."
+page_reference = "Vol. 2, p. 183"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Machine Blitz"
+description = "1 Blood, 10 minutes, destroying a device you have used: for an hour, 1 Blood and a standard action stop a machine you can see, anything more complex than a firearm (errata). Repair takes Computer 3, or the like, and an hour."
+page_reference = "205"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Milk of Set (Setite)"
+description = "1 Blood, 5 minutes: a salve that makes an object malfunction for a day, as the Storyteller decides, never in your direct favour. No effect on creatures; three batches at a time."
+page_reference = "Vol. 2, p. 165"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Mirror Walk"
+description = "Two silver mirrors soaked in 2 Blood over three nights: say the password before one and after three turns step through to the other, with one willing passenger. One pair at a time; 10 minutes between uses."
+page_reference = "208-209"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Mirror of Second Sight"
+description = "1 Blood, a silver mirror soaked in your blood over three nights: in it you alone see supernatural creatures' true forms, and ghosts."
+page_reference = "207"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Mnemosyne Crystal (Tremere)"
+description = "1 Blood, 10 minutes on a quartz crystal; then 1 Blood with it on the forehead as you use Forgetful Mind: the memories you take are kept in it until it's broken. Up to your Occult dots of crystals."
+page_reference = "Vol. 2, p. 168"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Paper Flesh"
+description = "1 Blood, 25 minutes, burning paper with the target's birth name and image, opposed test: until sunrise they lose their top 3 dots of Fortitude (2 if Stamina-focused), elder powers first. They must be present, or within 10 miles if you know their birth name."
+page_reference = "211"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Pavis of the Foul Presence"
+description = "1 Blood, 15 minutes, a blue silk cord at your neck: the next Presence power aimed at you is resisted as usual, and if you win it turns back on its user; either way, that power can't touch you from them for an hour."
+page_reference = "207"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Perfect Forgery"
+description = "1 Blood, 20 minutes, coating a hand in mirror dust and silver: that night, Magic of the Smith on an object you touch makes a perfect copy, magic and all, lasting until sunrise. One copy."
+page_reference = "Vol. 2, p. 178"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Plausible Deniability"
+description = "Once a night, 1 Blood, 10 minutes, burning snakeskin: for 24 hours, you can make one failed Path of Corruption power undetectable to anyone, the target included."
+page_reference = "Vol. 2, p. 169"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Power of the Pyramid (Tremere)"
+description = "3 to 10 Tremere who know it, 1 Blood each and 20 minutes' chant: the champion gets +2 wild card on challenges using Occult for each supporter still chanting (their standard action) within sight."
+page_reference = "Vol. 2, pp. 178-179"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Preservation of the Perfect Form"
+description = "1 Blood, 5 minutes, frozen and dusted on an object up to a small truck: for 50 years it doesn't age or weather, though fire and force still harm it. Up to your Occult dots of objects."
+page_reference = "Vol. 2, p. 165"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Principal Focus of Vitae Infusion"
+description = "1 Blood, 5 minutes: turn a point of your Blood into a marble that, crushed in the mouth (a simple action), refills it; someone you teach can drink it, taking a step of blood bond to you. Up to your Occult dots of them."
+page_reference = "203-204"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Proximity Ward"
+description = "1 Blood, 10 minutes, a sigil traced in your blood: the first humanoid to come within a step alerts you, wherever you are; three standard actions rearm it. Up to your Occult dots of wards."
+page_reference = "Vol. 2, p. 169"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Purity of Flesh"
+description = "1 Blood, 10 minutes meditating in a circle of 13 candles: your body is cleansed of poisons, diseases, taints and foreign objects (like a Shaft of Belated Quiescence), and Fleshcraft. Not blood bonds or Severed Hand."
+page_reference = "Vol. 2, p. 169"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Reawaken the Dead Water (Koldun)"
+description = "1 Blood, 5 minutes, water strained through your ancestral soil: until sunrise you can drink the vial (a simple action) to regain 3 Willpower. One vial at a time; no use to anyone else."
+page_reference = "Vol. 2, p. 165"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Recure of the Homeland"
+description = "10 minutes, earth from your mortal birthplace mixed with 2 Blood: a paste that heals you 2 aggravated wounds a night, if used within a minute."
+page_reference = "206"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Reverse Protocol"
+description = "1 Blood, 15 minutes, swallowing molten mirror (1 unsoakable aggravated): for the evening you can score an exceptional success defending against an opposed ritual, and then, with a simple action and a contested test, turn it on its caster."
+page_reference = "Vol. 2, p. 173"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Rite of Chantry Dedication (Tremere)"
+description = "1 Blood, 15 minutes, swearing to defend a chantry: for a year and a day each caster gets +5 wild card to blood magic test pools within its walls. One chantry at a time."
+page_reference = "Vol. 2, p. 174"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Rite of Introduction (Tremere)"
+description = "1 Blood, 5 minutes, chanting your name, rank and purpose over a cauldron: the nearest chantry in the domain (or within 50 miles) knows of you and where you are, and may reply; you learn if there is none."
+page_reference = "Vol. 2, p. 166"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Rite of Marduk Slain and Risen (Assamite)"
+description = "1 Blood, a 30-minute rite with the would-be diablerist and three Assamite or Path of Blood players: if they diablerize the named victim within 24 hours, the victim's sire, childer and bonded share the death, and take -3 against them for 3 months."
+page_reference = "Vol. 2, p. 184"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Scent of Deception (Assamite)"
+description = "1 Blood, 5 minutes: for an hour you can't be tracked by scent, or by Illuminate the Trail of Prey; or, for a downtime action, your scent leads trackers to a person or place you know."
+page_reference = "Vol. 2, p. 166"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Scry"
+description = "1 Blood, 20 minutes, a silver bowl of spring water and owl's blood, opposed Thaumaturgy test: see and hear around a person you know (or have a keepsake of) for a minute per Occult dot; a place you know needs no test. Fails on the invisible."
+page_reference = "209"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Severed Hand"
+description = "1 Blood and a night's work on a helpless vampire: the part you cut off can't regrow for a year and a day or until recovered, and a thaumaturge holding it gets +3 to Thaumaturgy against its owner."
+page_reference = "209"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Severing Sands (Setite)"
+description = "1 Blood and sun-dried sand; later a standard action and Mental + Occult against Mental + Willpower within 3 steps: banish a wraith, spirit or elemental for 24 hours, or send a projector home; others can't heal or be healed for 3 turns. Three handfuls at a time."
+page_reference = "Vol. 2, pp. 184-185"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Shaft of Belated Quiescence"
+description = "A night's work with 3 Blood on a rowan stake: its tip breaks off in a vampire it damages and burrows toward the heart, each hour an opposed test (Thaumaturgy against Physical + Survival) for 3 normal damage, staking them at Incapacitated. One per 2 Occult dots."
+page_reference = "208"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Shakari's Shroud (Assamite)"
+description = "1 Blood, 20 minutes, judging and slaying a venomous animal and drinking its venom: for the night you, or another, seem to be on Humanity, not a Path."
+page_reference = "Vol. 2, p. 179"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Soul of the Homunculi"
+description = "1 Blood, 15 minutes, bleeding into a prepared bowl: a Homunculus, a 2-dot Retainer, gives you 2 more downtime actions a month, and rituals it helps with take the time of one level lower. One at a time."
+page_reference = "207"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Stone of the True Form"
+description = "1 Blood, 25 minutes, on a small stone: whoever it touches returns to their own shape and can't transform this turn or the next; throw it (Physical + Athletics against Physical + Dodge, 10 steps) or touch with a Disarm. One at a time."
+page_reference = "211"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Telekinetic Attunement"
+description = "1 Blood, 10 minutes with a lodestone sculpture: the next Manipulate you activate lasts the whole night, with no need to activate it again for other objects."
+page_reference = "Vol. 2, p. 170"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Thaumaturgic Metabolism"
+description = "Medicine 1; 1 Blood, 15 minutes placing magnetic needles: for the night, each time you spend Blood on a Path of Blood power, heal 1 normal damage."
+page_reference = "Vol. 2, p. 175"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Traitor's Deception"
+description = "1 Blood, 15 minutes, swallowing poison berries: until sunrise your lack of faith doesn't make Sabbat ritae like the Vaulderie fail."
+page_reference = "Vol. 2, p. 175"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Unerring Combustion"
+description = "1 Blood, 10 minutes, burning three feathers: for the night, Flame Bolt and Engulf never miss; a lost challenge still deals 1 aggravated damage."
+page_reference = "Vol. 2, p. 170"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Warding Circle"
+description = "1 Blood, 5 minutes, a circle of mortal blood a step across per Occult dot: the creatures it bars (ghouls and part-supernaturals; vampires, Garou and fae at primary path 3; spirits and demons at 5) take 3 aggravated crossing it. Lasts the night, or a year and a day for a downtime action."
+page_reference = "204"
 properties = { rating = 1 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Way of Flame (Koldun)"
+description = "1 Blood, 10 minutes, filling a room with smoke that settles as ash: for a lunar month, if anyone else disturbs it, everything in the room burns, 3 aggravated to all inside. Your ancestral soil survives."
+page_reference = "Vol. 2, p. 170"
 properties = { rating = 2 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Way of the Earth (Koldun)"
+description = "1 Blood, 20 minutes, a paste of ancestral soil and rainwater: later, a standard action tracing it on yourself gives the Rugged merit for an hour; wounds on those levels vanish after. One at a time."
+page_reference = "Vol. 2, p. 179"
 properties = { rating = 4 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Way of the Supreme (Koldun)"
+description = "1 Blood and a 4-hour elemental ceremony: for a lunar month, the elemental you summon with Elemental Summoning gains a bonus by kind (fire: +3 initiative and a Celerity round; earth: 2 health levels and harder blows; water: calms your frenzies; air: knockdowns)."
+page_reference = "Vol. 2, p. 185"
 properties = { rating = 5 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Way of the Wind (Koldun)"
+description = "1 Blood, 15 minutes airing your ancestral soil, then sealed: for a lunar month, open it (a simple action) to put out a fire up to house size, ending Wall of Fire, Engulf and Firestorm, and any new fire for 5 minutes. Three bottles at a time."
+page_reference = "Vol. 2, p. 175"
 properties = { rating = 3 }
 
 [[traits]]
 category = "rituals"
 name = "Thaumaturgy: Whispers of the Ghost"
+description = "1 Blood, 5 minutes in silence, cutting the ear from a living creature (usually a Beast trait): for the night, in Psychic Projection you can whisper to someone without manifesting."
+page_reference = "Vol. 2, p. 166"
 properties = { rating = 1 }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Acceptance"
+description = "Inducts a True Sabbat into a pack, usually through a game or challenge that sets their place. Ignoblis ritus: +1 wild card to one challenge in the next three nights that fits the ritus, one Ignoblis bonus at a time."
+page_reference = "436-437"
 properties = { type = "Ignoblis", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Atra Sacramentum"
+description = "Orthodox faction ritus, offering a piece of your own flesh (2 unpreventable aggravated damage): until next sunset, or until healed, you suffer no clan weakness. Once a lunar month."
+page_reference = "438-439"
 properties = { type = "Faction", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Binding"
+description = "Auctoritas ritus, each Winter Solstice, renewing the Sabbat oath and hearing grievances: for a month, participants frenzy as if they had 1 fewer Beast trait among others bound with them."
+page_reference = "427"
 properties = { type = "Auctoritas", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Blessing of St. Blaise"
+description = "Order of St. Blaise faction ritus: ends the effects of any poison, drug or other harmful substance swallowed, and guards against the next one in seven days. Not blood bonds or Disease Carrier."
+page_reference = "440"
 properties = { type = "Faction", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Blood Bath"
+description = "Auctoritas ritus ordaining a vampire to the clergy, standing in a pool of the participants' blood; most Sabbat won't recognise an Archbishop or higher without one."
+page_reference = "427"
 properties = { type = "Auctoritas", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Blood Feast"
+description = "Auctoritas ritus, a feast on mortals led by a Sacrosanct Cardinal, Priscus or the Regent: Blood drunk there counts double toward your Blood pool (not per-turn spending) for three nights, or until spent."
+page_reference = "428"
 properties = { type = "Auctoritas", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Contrition"
+description = "Auctoritas ritus of atonement: the penitent, with one second, has three nights to finish a task set by their Priest and the aggrieved; success clears all negative status for it, failure strips all status for three months or six games."
+page_reference = "428-429"
 properties = { type = "Auctoritas", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Creation Rite"
+description = "Auctoritas ritus initiating a proven fledgling as True Sabbat: a consecrated brand to the forehead as they swear the Sabbat oath. Every pack Priest learns it."
+page_reference = "429"
 properties = { type = "Auctoritas", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Danse Macabre"
+description = "Farewell to destroyed packmates, or a departing nomadic pack, with offerings from each guest. Ignoblis ritus: +1 wild card to one challenge in the next three nights that fits the ritus, one Ignoblis bonus at a time."
+page_reference = "436-437"
 properties = { type = "Ignoblis", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Fire Dance"
+description = "Auctoritas ritus, leaping again and again through a bonfire: for three nights, participants test fear frenzy as if they had 1 fewer Beast trait; those who refuse gain the Cowardly negative status."
+page_reference = "429"
 properties = { type = "Auctoritas", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Games of Instinct"
+description = "Auctoritas ritus of dangerous games: whoever completes one gains a Physical attribute focus for three nights, then no focus from ritae for two games or a month, whichever is longer."
+page_reference = "429"
 properties = { type = "Auctoritas", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "High Holidays"
+description = "Auctoritas ritus at a High Holiday (Palla Grande, Festivo Dello Estinto and the older ones): participants gain 1 Willpower over their maximum, spent first, for up to a month."
+page_reference = "429-430"
 properties = { type = "Auctoritas", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Irad's Wall"
+description = "Ultra Conservative faction ritus: consecrate a room up to 100 square feet with incense and salt; until sunrise no spirit, wraith or projected mind can enter, and a body carried in pulls its spirit back."
+page_reference = "438"
 properties = { type = "Faction", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Monomacy"
+description = "Auctoritas ritus of the formal duel that settles disputes, by default one on one in a 30-foot circle at the new moon: each duellist gets one extra retest to avoid losing it, and the victor chooses death, exile or loss of position."
+page_reference = "430-432"
 properties = { type = "Auctoritas", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Running the Gauntlet"
+description = "Physical games and open combat between participants, for the sect to watch and learn. Ignoblis ritus: +1 wild card to one challenge in the next three nights that fits the ritus, one Ignoblis bonus at a time."
+page_reference = "436-437"
 properties = { type = "Ignoblis", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Sacrificial Rites"
+description = "Capture a human, werewolf or vampire alive, then sacrifice it as bloodily as possible as a warning. Ignoblis ritus: +1 wild card to one challenge in the next three nights that fits the ritus, one Ignoblis bonus at a time."
+page_reference = "436-437"
 properties = { type = "Ignoblis", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Sermons of Caine"
+description = "Auctoritas ritus of theological teaching or debate: those who take part gain a Mental attribute focus for three nights, then no focus from ritae for two games or a month, whichever is longer."
+page_reference = "432-433"
 properties = { type = "Auctoritas", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Stealth"
+description = "Vows and tests of silence and moving unseen, such as crossing Camarilla ground unnoticed. Ignoblis ritus: +1 wild card to one challenge in the next three nights that fits the ritus, one Ignoblis bonus at a time."
+page_reference = "436-437"
 properties = { type = "Ignoblis", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Sun Dance"
+description = "Chanting, dancing and counting coup from sunset to sunrise, with no wounds healed. Ignoblis ritus: +1 wild card to one challenge in the next three nights that fits the ritus, one Ignoblis bonus at a time."
+page_reference = "436-437"
 properties = { type = "Ignoblis", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Tower of Babel"
+description = "Loyalist faction ritus for up to 10: until sunrise they can talk to one another, by any sense or even by phone, in a tongue no one else can decipher by any means."
+page_reference = "439"
 properties = { type = "Faction", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Vaulderie"
+description = "Auctoritas ritus of shared, purified blood from a chalice among willing believers: it frees them of blood bonds and gives each pair a vinculum, from 1 (kinship) to 5 (devotion) as they repeat it."
+page_reference = "433-435"
 properties = { type = "Auctoritas", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Vision Quest"
+description = "A week's starvation, meditation and a pageant of Caine's stories, seeking a vision or a pack's leadership. Ignoblis ritus: +1 wild card to one challenge in the next three nights that fits the ritus, one Ignoblis bonus at a time."
+page_reference = "436-437"
 properties = { type = "Ignoblis", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "War Party"
+description = "Auctoritas ritus on up to 15 vampires hunting a named enemy who isn't True Sabbat, until sunrise: each can take up to 5 Beast traits for +1 wild card each against the target; the killer gains Triumphant."
+page_reference = "435"
 properties = { type = "Auctoritas", sect = "Sabbat" }
 
 [[traits]]
 category = "sabbat_rituals"
 name = "Wild Hunt"
+description = "Auctoritas ritus by an Archbishop or higher (Sacrosanct or Glorious) against a Sabbat traitor who doesn't answer the charges in three nights: they bear a bleeding mark, lose all status and position, and their vinculums to others break."
+page_reference = "435-436"
 properties = { type = "Auctoritas", sect = "Sabbat" }
 
 [[traits]]

@@ -285,6 +285,23 @@ test("a boon opens in a side panel from its row or a link, facts first, what to 
   await l.goBack();
   await expect(detail).toHaveCount(0);
   await expect(boons.rows).toHaveCount(1);
+  // A phone's dialog says it has closed a moment after it goes: a view chosen in that moment is kept, and the boon
+  // stays closed (#1025). Here the view changes, then the dialog says it closed, before the page has caught up.
+  if (onPhone()) {
+    await boons.open(oriel);
+    await expect(detail).toBeVisible();
+    await l.evaluate(() => {
+      const views = document.querySelector<HTMLSelectElement>('select[aria-label="Ledger views"]')!;
+      views.value = "all";
+      views.dispatchEvent(new Event("change", { bubbles: true }));
+      const dialog = document.querySelector("dialog[open]")!;
+      dialog.close();
+      dialog.dispatchEvent(new Event("close"));
+    });
+    await expect(l).toHaveURL((url) => url.searchParams.get("view") === "all" && !url.searchParams.has("boon"));
+    await expect(detail).toHaveCount(0);
+    await showView(l, "open");
+  }
 
   // Each action is in its Actions menu, Make void apart at its foot, and shows its form in the panel.
   await boons.open(oriel);

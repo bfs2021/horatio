@@ -84,7 +84,20 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
   const harpy = useContext(HarpyMode);
   // Room for the table at 1280 px and up (#975).
   useWidePage();
-  const [params, setParams] = useSearchParams();
+  const [params, setSearchParams] = useSearchParams();
+  // Each change to the URL builds on the one asked for before it until the page catches
+  // up, not on the address as the page was last drawn: on a phone a boon's dialog says
+  // it has closed a moment after it goes, and a view chosen in that moment was undone,
+  // or the boon opened again (#1025).
+  const asked = useRef<URLSearchParams | null>(null);
+  useEffect(() => {
+    asked.current = null;
+  }, [params]);
+  const setParams = (change: (now: URLSearchParams) => URLSearchParams, options: { replace: boolean }) => {
+    const next = change(new URLSearchParams(asked.current ?? window.location.search));
+    asked.current = next;
+    setSearchParams(next, options);
+  };
   // A page, from 1, in the URL as ?page= so a reload or a link keeps it (#978).
   const pageOf = (key: string) => Math.max(1, Math.floor(Number(params.get(key))) || 1);
   const setPage = (key: string, to: number, replace = false) =>

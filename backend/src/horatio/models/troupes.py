@@ -572,6 +572,9 @@ class CharacterTitle(Record):
     character_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("characters.id"), index=True)
     name: Mapped[str]
     active: Mapped[bool] = mapped_column(default=False, server_default="false")
+    # For the Harpy title (horatio.boon_harpy): its holder is told of each boon players
+    # report (#1018). Their own choice; each holding starts on.
+    boon_reports_told: Mapped[bool] = mapped_column(default=True, server_default="true")
 
 
 # How a holding of a title began and ended (horatio.title_history). "unknown" is for

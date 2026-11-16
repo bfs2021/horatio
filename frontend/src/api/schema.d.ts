@@ -8874,6 +8874,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/troupes/{troupe_id}/boon-reports-told": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Boon Reports Told
+         * @description Whether you are told of each boon the troupe's players report, as staff and as
+         *     its Harpy or a Lesser Harpy.
+         */
+        get: operations["get_boon_reports_told_api_troupes__troupe_id__boon_reports_told_get"];
+        /**
+         * Set Boon Reports Told
+         * @description Choose whether you are told of each boon the troupe's players report: as its
+         *     running staff (off to start with), or as its Harpy or a Lesser Harpy who approves
+         *     reported boons (on to start with).
+         */
+        put: operations["set_boon_reports_told_api_troupes__troupe_id__boon_reports_told_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/troupes/{troupe_id}/boon-review": {
         parameters: {
             query?: never;
@@ -16960,6 +16987,23 @@ export interface components {
             see: "intake" | "owes" | "owed";
             /** Settle */
             settle: boolean;
+        };
+        /** BoonReportsToldIn */
+        BoonReportsToldIn: {
+            /** On */
+            on: boolean;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "staff" | "keeper";
+        };
+        /** BoonReportsToldOut */
+        BoonReportsToldOut: {
+            /** Keeper */
+            keeper?: boolean | null;
+            /** Staff */
+            staff?: boolean | null;
         };
         /** BoonReviewIn */
         BoonReviewIn: {
@@ -54566,6 +54610,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TroupeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_boon_reports_told_api_troupes__troupe_id__boon_reports_told_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                troupe_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoonReportsToldOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_boon_reports_told_api_troupes__troupe_id__boon_reports_told_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                troupe_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BoonReportsToldIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoonReportsToldOut"];
                 };
             };
             /** @description Validation Error */

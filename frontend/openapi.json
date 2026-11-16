@@ -8071,6 +8071,56 @@
         "title": "BoonPlayersIn",
         "type": "object"
       },
+      "BoonReportsToldIn": {
+        "properties": {
+          "on": {
+            "title": "On",
+            "type": "boolean"
+          },
+          "role": {
+            "enum": [
+              "staff",
+              "keeper"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "on",
+          "role"
+        ],
+        "title": "BoonReportsToldIn",
+        "type": "object"
+      },
+      "BoonReportsToldOut": {
+        "properties": {
+          "keeper": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keeper"
+          },
+          "staff": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff"
+          }
+        },
+        "title": "BoonReportsToldOut",
+        "type": "object"
+      },
       "BoonReviewIn": {
         "properties": {
           "hold": {
@@ -87235,6 +87285,102 @@
           }
         },
         "summary": "Set Boon Players",
+        "tags": [
+          "boons"
+        ]
+      }
+    },
+    "/api/troupes/{troupe_id}/boon-reports-told": {
+      "get": {
+        "description": "Whether you are told of each boon the troupe's players report, as staff and as\nits Harpy or a Lesser Harpy.",
+        "operationId": "get_boon_reports_told_api_troupes__troupe_id__boon_reports_told_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "troupe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Troupe Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoonReportsToldOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Boon Reports Told",
+        "tags": [
+          "boons"
+        ]
+      },
+      "put": {
+        "description": "Choose whether you are told of each boon the troupe's players report: as its\nrunning staff (off to start with), or as its Harpy or a Lesser Harpy who approves\nreported boons (on to start with).",
+        "operationId": "set_boon_reports_told_api_troupes__troupe_id__boon_reports_told_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "troupe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Troupe Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BoonReportsToldIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoonReportsToldOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Boon Reports Told",
         "tags": [
           "boons"
         ]

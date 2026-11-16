@@ -10,6 +10,7 @@ import { ErrorText } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { ApprovalKinds } from "./BoonApproval";
 import { approvalSummary } from "./boonApproval";
+import { ToldOfReports } from "./BoonReportsTold";
 import { TalonsSetting } from "./BoonTalons";
 
 /**
@@ -62,6 +63,7 @@ export function BoonLedgerSetting({ troupe, canEdit }: { troupe: TroupeOut; canE
           {troupe.boon_harpy_sees_talons === false ? "What talons change is kept from the Harpy." : "The Harpy sees what their talons change."}
         </p>
       )}
+      {on && <ToldOfReports troupeId={troupe.id} as="staff" />}
     </SettingCard>
   );
 }

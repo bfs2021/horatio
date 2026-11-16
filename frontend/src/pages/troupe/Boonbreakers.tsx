@@ -54,6 +54,17 @@ export function Boonbreakers({ troupeId, characters }: { troupeId: string; chara
   );
 }
 
+/** The boons screen's Boonbreakers tab (#982), for staff and the Harpy: the marks, with who may be declared one. */
+export function BoonbreakersTab({ troupeId }: { troupeId: string }) {
+  const choices = useQuery({
+    queryKey: ["boon-characters", troupeId],
+    queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/boon-characters", { params: { path: { troupe_id: troupeId } } })),
+  });
+  if (choices.isPending) return <Loading />;
+  if (choices.error) return <ErrorText error={choices.error} />;
+  return <Boonbreakers troupeId={troupeId} characters={choices.data} />;
+}
+
 function DeclareForm({ troupeId, characters, onDone }: { troupeId: string; characters: CharacterChoice[]; onDone: () => void }) {
   const [characterId, setCharacterId] = useState("");
   const [refused, setRefused] = useState("");

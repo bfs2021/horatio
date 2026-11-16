@@ -28,6 +28,21 @@ describe("PageTabs", () => {
     for (const link of screen.getAllByRole("link")) expect(link.className).toContain("whitespace-nowrap");
   });
 
+  it("with `scrolls`, keeps one row on a phone that scrolls sideways, and wraps from sm up (#982)", () => {
+    render(
+      <MemoryRouter initialEntries={["/rules/teachers"]}>
+        <PageTabs label="House rules" tabs={tabs} scrolls />
+      </MemoryRouter>,
+    );
+    const nav = screen.getByRole("navigation", { name: "House rules" });
+    const scroller = nav.firstElementChild as HTMLElement;
+    const row = scroller.firstElementChild as HTMLElement;
+    expect(scroller.className).toContain("max-sm:overflow-x-auto");
+    expect(row.className).not.toMatch(/(^| )flex-wrap/);
+    expect(row.className).toContain("sm:flex-wrap");
+    expect(screen.getByRole("link", { name: "Teachers" }).getAttribute("aria-current")).toBe("page");
+  });
+
   it("marks the open tab", () => {
     render(
       <MemoryRouter initialEntries={["/rules/teachers"]}>

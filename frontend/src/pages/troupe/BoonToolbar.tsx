@@ -36,9 +36,8 @@ const ORDERS: { sort: LedgerSort; direction: Direction; label: string }[] = [
  * clears all of it but the view and the order.
  *
  * `counts` follow the search and filters, and show only while something narrows the
- * ledger: the totals strip above has the whole ledger's (#977). `toReview` is the
- * review queue's size, or null for one who doesn't review; it is offered while it
- * holds boons, or is open.
+ * ledger: the totals strip above has the whole ledger's (#977). The review queue has
+ * a tab of its own (#982).
  * `games` are the troupe's games, for "At a game"; none leaves it out. `end` goes at
  * the end of the search's row, such as a menu of more for the ledger.
  */
@@ -46,7 +45,6 @@ export function BoonToolbar({
   search,
   update,
   counts,
-  toReview,
   characters,
   games,
   end,
@@ -54,7 +52,6 @@ export function BoonToolbar({
   search: LedgerSearch;
   update: (change: Partial<LedgerSearch>) => void;
   counts: Partial<Record<BoonView, number>>;
-  toReview: number | null;
   characters: CharacterChoice[];
   games: BoonGameOut[];
   end?: ReactNode;
@@ -88,11 +85,11 @@ export function BoonToolbar({
   });
   // Counted within a search only: the strip above counts the whole ledger (#977).
   const counted = narrowed(search);
-  const views: { value: LedgerSearch["view"]; label: string; count?: number }[] = [
-    ...VIEWS.filter((v) => v.value !== "pending" || (counts.pending ?? 0) > 0).map((v) => ({ value: v.value, label: v.label, count: counted ? (counts[v.value] ?? 0) : undefined })),
-    // The queue is the whole ledger's, whatever the search: its count is in the strip.
-    ...(toReview !== null && (toReview > 0 || search.view === "review") ? [{ value: "review" as const, label: "To review" }] : []),
-  ];
+  const views: { value: BoonView; label: string; count?: number }[] = VIEWS.filter((v) => v.value !== "pending" || (counts.pending ?? 0) > 0).map((v) => ({
+    value: v.value,
+    label: v.label,
+    count: counted ? (counts[v.value] ?? 0) : undefined,
+  }));
   const showKind = (kind: (typeof KINDS)[number]["value"]) => {
     const on = search.kinds.includes(kind);
     update({ kinds: on ? search.kinds.filter((k) => k !== kind) : [...search.kinds, kind] });
@@ -123,7 +120,7 @@ export function BoonToolbar({
         }))}
         onChange={(view) => update({ view })}
       />
-      <Select aria-label="Ledger views" className="lg:hidden" value={search.view} onChange={(e) => update({ view: e.target.value as LedgerSearch["view"] })}>
+      <Select aria-label="Ledger views" className="lg:hidden" value={search.view} onChange={(e) => update({ view: e.target.value as BoonView })}>
         {views.map((v) => (
           <option key={v.value} value={v.value}>
             {v.count === undefined ? v.label : `${v.label} (${count.format(v.count)})`}

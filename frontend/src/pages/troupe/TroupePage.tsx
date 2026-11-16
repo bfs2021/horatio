@@ -218,7 +218,7 @@ export function TroupePage() {
             element={
               <>
                 {settings && <TabSettings troupe={t} feature="boons" canEdit={changes} />}
-                <BoonsPages troupeId={t.id} />
+                <BoonsPages troupeId={t.id} holdsReview={t.boon_review} />
               </>
             }
           />

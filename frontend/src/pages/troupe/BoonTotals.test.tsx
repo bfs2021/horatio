@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import type { BoonTotalsOut } from "../../api/types";
 import { readLedger, type LedgerSearch } from "./boonSearch";
@@ -21,15 +22,16 @@ const totals: BoonTotalsOut = {
 function Strip({ start = "", toReview = null }: { start?: string; toReview?: number | null }) {
   const [search, setSearch] = useState<LedgerSearch>(readLedger(new URLSearchParams(start)));
   return (
-    <>
-      <BoonTotals totals={totals} toReview={toReview} search={search} show={setSearch} />
+    <MemoryRouter>
+      <BoonTotals totals={totals} review={toReview === null ? null : { count: toReview, to: "/troupes/t1/boons/review" }} search={search} show={setSearch} />
       <output>{JSON.stringify(search)}</output>
-    </>
+    </MemoryRouter>
   );
 }
 
 const shown = () => JSON.parse(screen.getByRole("status").textContent!) as LedgerSearch;
-const names = (group: string) => within(screen.getByRole("group", { name: group })).getAllByRole("button").map((b) => b.textContent);
+const names = (group: string) =>
+  [...screen.getByRole("group", { name: group }).querySelectorAll("button, a")].map((b) => b.textContent);
 
 describe("BoonTotals (#977)", () => {
   it("counts the views, To review for one who reviews, and the open boons by kind, every kind", () => {
@@ -37,7 +39,7 @@ describe("BoonTotals (#977)", () => {
     expect(names("The whole ledger")).toEqual(["Open 1,254", "Departed 30", "Settled 2,100", "To review 4", "Trivial 386", "Minor 700", "Major 168", "Blood 0", "Life 0"]);
     cleanup();
     render(<Strip />);
-    expect(screen.queryByRole("button", { name: /To review/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /To review/ })).toBeNull();
   });
 
   it("shows a view or a kind, clearing the search and filters but keeping the order", () => {
@@ -49,7 +51,7 @@ describe("BoonTotals (#977)", () => {
     expect(shown()).toMatchObject({ view: "open", kinds: ["minor"] });
     expect(screen.getByRole("button", { name: "Minor 700" }).getAttribute("aria-current")).toBe("true");
     expect(screen.getByRole("button", { name: "Open 1,254" }).getAttribute("aria-current")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "To review 4" }));
-    expect(shown().view).toBe("review");
+    // The queue has a tab of its own (#982), which To review's number opens.
+    expect(screen.getByRole("link", { name: "To review 4" }).getAttribute("href")).toBe("/troupes/t1/boons/review");
   });
 });

@@ -32,24 +32,20 @@ function download(href: string) {
 /**
  * For staff (#986), and the Harpy where the troupe lets them (#987): the quiet ⋯ at
  * the end of the ledger's toolbar, to export the ledger as a CSV file or a
- * spreadsheet: the view and filters showing (`query`; none while the review queue
- * shows), or the whole ledger; or the whole ledger as a workbook with the old sheet's
- * tabs (#988). The Harpy's file holds only what their ledger shows them; the API
+ * spreadsheet: the view and filters showing (`query`), or the whole ledger; or the
+ * whole ledger as a workbook with the old sheet's tabs (#988). The review queue has a
+ * tab of its own (#982), without the menu. The Harpy's file holds only what their ledger shows them; the API
  * leaves out the rest.
  */
-export function BoonExportMenu({ troupeId, query }: { troupeId: string; query: LedgerQuery | null }) {
+export function BoonExportMenu({ troupeId, query }: { troupeId: string; query: LedgerQuery }) {
   return (
     <ActionMenu label="More for the ledger" variant="ghost" menuClassName="w-60" className="ml-auto">
       <MenuGroup label="Export">
         <div aria-hidden="true" className="px-3 pt-1 pb-0.5 text-xs text-mist">
           Export
         </div>
-        {query && (
-          <>
-            <MenuItem onSelect={() => download(exportHref(troupeId, "csv", query))}>This view (CSV)</MenuItem>
-            <MenuItem onSelect={() => download(exportHref(troupeId, "xlsx", query))}>This view (spreadsheet)</MenuItem>
-          </>
-        )}
+        <MenuItem onSelect={() => download(exportHref(troupeId, "csv", query))}>This view (CSV)</MenuItem>
+        <MenuItem onSelect={() => download(exportHref(troupeId, "xlsx", query))}>This view (spreadsheet)</MenuItem>
         <MenuItem onSelect={() => download(exportHref(troupeId, "csv", null))}>Whole ledger (CSV)</MenuItem>
         <MenuItem onSelect={() => download(exportHref(troupeId, "xlsx", null))}>Whole ledger (spreadsheet)</MenuItem>
         <MenuItem onSelect={() => download(workbookHref(troupeId))}>Whole ledger as a workbook</MenuItem>

@@ -479,35 +479,51 @@ export function SubTabs({ label, tabs, className }: { label: string; tabs: Tab[]
  * wrapped. When the parts don't fit on one line they wrap onto more, between
  * tabs and never inside a label, so every one is in sight, on a phone too.
  * For a page of five parts or fewer: one with more uses `PartPicker` (#906).
+ * `scrolls` keeps the row on one line on a phone, scrolling sideways under the
+ * tab bars' chevrons, for a page whose content needs the height more than its
+ * tabs need to be all in sight at once, as the boon ledger (#982).
  */
-export function PageTabs({ label, tabs, className }: { label: string; tabs: Tab[]; className?: string }) {
+export function PageTabs({ label, tabs, className, scrolls = false }: { label: string; tabs: Tab[]; className?: string; scrolls?: boolean }) {
   const nav = useRef<HTMLElement>(null);
+  const row = useTabRow<HTMLDivElement>();
   const { pathname } = useLocation();
   useTitle(openTab(tabs, pathname)?.label, nav);
+  const box = (
+    <div className={cx("inline-flex gap-0.5 rounded-md border border-ash bg-night p-0.5", scrolls ? "shrink-0 sm:max-w-full sm:flex-wrap" : "max-w-full flex-wrap")}>
+      {tabs.map((t) => (
+        <NavLink
+          key={t.to}
+          to={t.to}
+          end={t.end}
+          className={({ isActive }) =>
+            // At least 40 px each way on a touch screen.
+            cx(
+              "inline-flex shrink-0 items-center justify-center rounded px-2.5 py-1 text-xs whitespace-nowrap pointer-coarse:min-h-10 pointer-coarse:min-w-10",
+              isActive ? "bg-ash text-gold" : "text-mist hover:text-parchment",
+            )
+          }
+        >
+          <span className="inline-flex items-center gap-1.5">
+            {t.label}
+            {t.count !== undefined && <CountBubble count={t.count} label={t.countLabel ?? "waiting"} />}
+          </span>
+        </NavLink>
+      ))}
+    </div>
+  );
   return (
     // A className of its own replaces the margin below (Tailwind does not let a later margin class win).
-    <nav ref={nav} aria-label={label} className={className ?? "mb-5"}>
-      <div className="inline-flex max-w-full flex-wrap gap-0.5 rounded-md border border-ash bg-night p-0.5">
-        {tabs.map((t) => (
-          <NavLink
-            key={t.to}
-            to={t.to}
-            end={t.end}
-            className={({ isActive }) =>
-              // At least 40 px each way on a touch screen.
-              cx(
-                "inline-flex shrink-0 items-center justify-center rounded px-2.5 py-1 text-xs whitespace-nowrap pointer-coarse:min-h-10 pointer-coarse:min-w-10",
-                isActive ? "bg-ash text-gold" : "text-mist hover:text-parchment",
-              )
-            }
-          >
-            <span className="inline-flex items-center gap-1.5">
-              {t.label}
-              {t.count !== undefined && <CountBubble count={t.count} label={t.countLabel ?? "waiting"} />}
-            </span>
-          </NavLink>
-        ))}
-      </div>
+    <nav ref={nav} aria-label={label} className={cx(scrolls && "relative max-sm:-mx-4", className ?? "mb-5")}>
+      {scrolls ? (
+        <>
+          <div {...row.scroller} className="flex max-sm:overflow-x-auto max-sm:px-4">
+            {box}
+          </div>
+          {row.chevrons}
+        </>
+      ) : (
+        box
+      )}
     </nav>
   );
 }

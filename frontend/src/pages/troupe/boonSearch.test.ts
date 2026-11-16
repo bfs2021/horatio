@@ -42,7 +42,8 @@ describe("the boon ledger's search in the URL (#976)", () => {
 
   it("ignores what it doesn't know", () => {
     expect(read("view=lost&kind=huge&sort=colour&dir=up")).toMatchObject({ view: "open", kinds: [], sort: "date", direction: "desc" });
-    expect(read("view=review").view).toBe("review");
+    // The review queue is a tab of its own now (#982): the ledger reads an old link as the open view.
+    expect(read("view=review").view).toBe("open");
   });
 
   it("writes a sort's direction only when it isn't the way that sort goes first", () => {
@@ -69,10 +70,6 @@ describe("ledgerQuery", () => {
       direction: "desc",
     });
     expect(ledgerQuery(read("name=The+Moon&from=2026-10-01&to=2026-10-02"))).toMatchObject({ name: "The Moon", made_from: "2026-10-01", made_to: "2026-10-02" });
-  });
-
-  it("counts the open view's boons while reviewing", () => {
-    expect(ledgerQuery(read("view=review")).view).toBe("open");
   });
 });
 

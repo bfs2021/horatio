@@ -20132,6 +20132,17 @@
             "title": "Character Name",
             "type": "string"
           },
+          "character_npc_form": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Character Npc Form"
+          },
           "crafted": {
             "title": "Crafted",
             "type": "boolean"
@@ -20357,6 +20368,17 @@
           "character_name": {
             "title": "Character Name",
             "type": "string"
+          },
+          "character_npc_form": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Character Npc Form"
           },
           "crafted": {
             "title": "Crafted",
@@ -38519,6 +38541,14 @@
                 "type": "null"
               }
             ]
+          },
+          "stock_items": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/EquipmentItemOut"
+            },
+            "title": "Stock Items",
+            "type": "array"
           },
           "summons": {
             "default": [],

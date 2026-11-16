@@ -107,6 +107,8 @@ class EquipmentItemOut(BaseModel):
     character_id: uuid.UUID
     character_name: str
     character_kind: str  # pc | npc
+    # An NPC's form: "stock" for a Stock NPC (#1043), whose page is its builder.
+    character_npc_form: str | None = None
     # A PC's player.
     player_name: str | None
     name: str
@@ -399,6 +401,7 @@ class Reader:
             character_id=character.id,
             character_name=character.name,
             character_kind=character.kind,
+            character_npc_form=character.npc_form,
             player_name=self.player_name(character),
             name=item.name,
             kind=item.kind,

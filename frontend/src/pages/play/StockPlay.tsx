@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
-import { ErrorText, Loading } from "../../components/ui";
+import { Card, ErrorText, Loading } from "../../components/ui";
 import { BackLink } from "../../components/BackLink";
 import { usePreferences } from "../../hooks";
 import { kindPages, resourceText } from "../troupe/npcKinds";
 import { RulesCard, StatBlock } from "../troupe/StockNpcBuilder";
 import { AwakeSwitch, BoxTracker, GameLog, HealthTracker, Notes, PastGames, ResetGame, SyncStatus, useToldTap, type KeepAwake } from "./PlayPage";
+import { EquipmentTab } from "./Equipment";
 import type { Damage } from "./tracker";
 import type { Play, Sync } from "./usePlay";
 import { useKeepAwake } from "./wakeLock";
@@ -13,9 +14,10 @@ import { useKeepAwake } from "./wakeLock";
 /**
  * A Stock NPC's Play View (MET: VTM pp. 489–490; issue #215), simpler than a
  * sheet's: its kind's resource and its health levels to tap, the book's stat
- * block and its kind's rules card, and the game's log with Undo. A Stock NPC has
- * no Willpower, so nothing else needs tracking. Taps go through the same queue
- * and endpoints as everyone's, and Reset starts the next game the same way.
+ * block and its kind's rules card, what it carries (#1043), and the game's log
+ * with Undo. A Stock NPC has no Willpower, so nothing else needs tracking. Taps
+ * go through the same queue and endpoints as everyone's, and Reset starts the
+ * next game the same way.
  */
 export function StockPlay({ characterId, play }: { characterId: string; play: Play }) {
   const [params] = useSearchParams();
@@ -63,6 +65,25 @@ export function StockPlay({ characterId, play }: { characterId: string; play: Pl
         <StatBlock stock={stock} />
         <RulesCard kind={stock.kind} />
       </div>
+      {/* What it carries (#1043), as anyone's Equipment tab has it, given or discarded as a tap. */}
+      <Card title="Equipment">
+        <p className="mb-3 text-sm text-mist">Items don't change its test pool: add what an item gives when it's used.</p>
+        <EquipmentTab
+          characterId={characterId}
+          view={shown}
+          tap={tap}
+          kept={shown.stock_items}
+          empty={
+            <>
+              None yet. Give it equipment on{" "}
+              <Link to={builder} className="text-gold underline hover:text-parchment">
+                its page
+              </Link>
+              .
+            </>
+          }
+        />
+      </Card>
       <Notes add={(note) => tap({ kind: "note", note })} />
       <GameLog view={shown} undo={(entry) => tap({ kind: "undo", undoes: entry.id })} />
       <ResetGame view={shown} sync={sync} onReset={accept} />

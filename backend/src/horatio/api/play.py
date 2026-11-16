@@ -45,6 +45,7 @@ from horatio.api.play_status import PlayStatusOut, StatusChoiceIn, play_status_o
 from horatio.api.retainers import IdentityOut, RetainerOut, identities_out, listed
 from horatio.api.roster import roster
 from horatio.api.sect_status import StatusIn
+from horatio.api.troupe_equipment import EquipmentItemOut, Reader
 from horatio.auth.deps import CurrentUser, DbSession
 from horatio.auth.viewing import read_only
 from horatio.influence import InfluenceType
@@ -444,6 +445,11 @@ class PlayView(BaseModel):
     npc_form: Literal["sheeted", "stock"] | None = None
     # A Stock NPC's stat block, with its kind's rules; None for anyone else.
     stock: StockNpcOut | None = None
+    # What a Stock NPC carries, each item with what it does (#1043), for its Scene
+    # card and Play View: kept with the Play View, so a scene kept on a phone has
+    # them with no signal. Its test pool stays rating × 2 whatever it holds. Empty
+    # for anyone else, whose items are the Equipment tab's.
+    stock_items: list[EquipmentItemOut] = []
     # A sheeted NPC's kind and its name (a custom kind's own), for the badge and
     # rules card; None for a PC.
     npc_kind: str | None = None
@@ -915,6 +921,15 @@ def summons_out(limits: play.Limits, state: Mapping[str, Any]) -> list[SummonOut
     ]
 
 
+def stock_items(db: Session, character: Character) -> list[EquipmentItemOut]:
+    """A Stock NPC's items, weapons and the rest alike, as a printed sheet has them:
+    no staff note, and no changes from here."""
+    if character.npc_form != "stock":
+        return []
+    reader = Reader(db, None)
+    return [reader.item(item, character) for item in equipment.items_of(db, character)]
+
+
 def play_view(db: Session, character: Character) -> PlayView:
     game = play.current_game(db, character)
     limits = play.limits(db, character, game)
@@ -936,6 +951,7 @@ def play_view(db: Session, character: Character) -> PlayView:
         kind=character.kind,
         npc_form=character.npc_form,  # type: ignore[arg-type]  # checked by the database
         stock=stock_out(db, character) if character.npc_form == "stock" else None,
+        stock_items=stock_items(db, character),
         npc_kind=character.npc_kind,
         npc_kind_name=kind_name(character.npc_kind, character.npc_custom_kind),
         panels=PanelsOut(**asdict(limits.panels)),

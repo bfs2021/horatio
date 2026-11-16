@@ -87,6 +87,7 @@ function view(powers: PowerSwitch[], marks: string[] = [], forms = 1): PlayView 
     derangements: { value: 0, most: 3, start: 0, least: 0, flaws: [], temporary: [] },
     expendables: [],
     equipment: [],
+    stock_items: [],
     equipped: [],
     influence: [],
     powers: powers.map((p) => ({ ...p })),

@@ -242,6 +242,8 @@ In the quick build, a trait the NPC holds can carry a detail, as a player's can:
 
 A Stock NPC's page shows its **Stat block** worked out from its kind and rating, and a rules card for its kind. Change its name, kind or rating, add up to as many **Specialisations** as its rating, and keep **Notes**; each change saves as you make it. **Make this a full sheet…** turns it into a sheeted NPC. That cannot be undone.
 
+Its **Equipment** card lists what it carries. **Give equipment** gives it an item, as for any character, and each item's **Give** and **Discard** pass it on or drop it; change or take one back from [World › Equipment](#equipment). An item doesn't change a Stock NPC's test pool: the book's own sample Stock NPCs list their equipment beside a pool that is still twice their rating (Vol. 2 pp. 319–325). Each item says what it does instead, a weapon's damage and what its qualities give, to add when it's used. Its Play View and its card in a scene show the same.
+
 ### Giving an NPC to a player
 
 A troupe moving to Horatio can load its existing characters as NPCs, then give each one to its player as that person signs up. The lead storyteller and storytellers can give an NPC (the custodian can too); assistant storytellers can't. Only a finished, sheeted vampire or ghoul can be given: a Stock NPC has no sheet to play, so make it a full sheet first.
@@ -436,7 +438,7 @@ Publishing, editing a published announcement, pinning and unpinning, unpublishin
 
 ## Equipment
 
-**World › Equipment** lists every item the troupe's home characters hold, PCs and NPCs, for storytellers and assistant storytellers. Only a character's home troupe gives it equipment, and an item goes with its character if it moves to another home troupe.
+**World › Equipment** lists every item the troupe's home characters hold, PCs and NPCs (Stock NPCs too), for storytellers and assistant storytellers. Only a character's home troupe gives it equipment, and an item goes with its character if it moves to another home troupe.
 
 - **Give equipment** gives an item: weapons, protective gear and other gear with the book's qualities, or a Vampiric Text. Start from the book's items or the troupe's own templates; **Save as a template** keeps one for next time.
 - An item can be made special, with any number of qualities and effects of the troupe's own. A special item shows **Special, by** its troupe on its row.
@@ -1307,7 +1309,7 @@ If an award takes a character past the monthly figure, Horatio warns you (or, wi
 
 ### Scenes
 
-**Games › Scenes** (or **Open the scenes** on the At game tab) puts several characters on one page, side by side, to run a scene: tap Blood, Willpower, health and Beast traits for each, with Undo and the log. Stock NPCs show their pool and resource to tap.
+**Games › Scenes** (or **Open the scenes** on the At game tab) puts several characters on one page, side by side, to run a scene: tap Blood, Willpower, health and Beast traits for each, with Undo and the log. Stock NPCs show their pool and resource to tap, and what they carry.
 
 - A line at the top of the Scenes page and of each scene leads back: the troupe, its **At game** tab, then **Scenes**.
 - Make a scene with **Name of a new scene**, then find characters and NPCs by name to put them in it.

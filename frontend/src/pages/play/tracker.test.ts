@@ -38,6 +38,7 @@ function view(overrides: Partial<PlayView> = {}): PlayView {
     derangements: { value: 0, most: 3, start: 0, least: 0, flaws: [], temporary: [] },
     expendables: [{ key: "trait:backgrounds/Herd/", name: "Herd", detail: "", group: "Backgrounds", uses: 2, left: 2, counter_id: null, owed: 0 }],
     equipment: [],
+    stock_items: [],
     equipped: [],
     influence: [],
     powers: [],

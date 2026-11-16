@@ -11,6 +11,7 @@ import { Button, Empty, ErrorText, Input, Loading } from "../../components/ui";
 import { usePreferences } from "../../hooks";
 import { NotUsed } from "./NotUsed";
 import { LogEntries, ResetGame, SyncStatus } from "./PlayPage";
+import { CarriedItems } from "./Equipment";
 import { EquipmentSwitches } from "./EquipmentSwitches";
 import { equipmentModifiers } from "./equipped";
 import { ModifiersPanel } from "./Modifiers";
@@ -496,6 +497,7 @@ function StockCard({ pin, back, onRemove }: { pin: SceneOut["stock"][number]; ba
         </p>
         <p className="text-xs text-mist">No Willpower: no retests unless it overbids</p>
       </div>
+      <CarriedItems items={shown.stock_items} />
       <div className="flex flex-wrap items-center gap-1.5 border-t border-ash pt-2">
         <Button variant="secondary" className="min-h-10 px-3" disabled={!last} aria-label={last ? `Undo ${last.text}` : "Undo"} onClick={() => last && tap({ kind: "undo", undoes: last.id })}>
           Undo

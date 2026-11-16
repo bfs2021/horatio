@@ -193,13 +193,14 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   const traded = boons.detail("Mireille Dauvin owes Elder Varga, minor");
   await expect(traded.getByRole("list", { name: "Log of Mireille Dauvin owes Elder Varga" })).toContainText("Creditor: Anselm Roque → Elder Varga");
 
-  // On Mireille's sheet, staff see what she owes and is owed, with a way into the ledger.
+  // On Mireille's sheet, staff see what she owes and is owed, with a way into the ledger: her own page of it (#980).
   await l.goto(`/characters/${mireille}`);
   const card = l.getByRole("listitem", { name: `Boons in Ledger of Debts ${run}` });
   await expect(card).toContainText("Owes: 2 minor");
   await expect(card).toContainText("Is owed: 1 minor");
   await card.getByRole("link", { name: "In the boon ledger" }).click();
-  await expect(ledgerOf(l).rows).toHaveCount(3);
+  await expect(l.getByRole("table", { name: "Owes", exact: true }).getByRole("button", { name: /^Details: / })).toHaveCount(2);
+  await expect(l.getByRole("table", { name: "Is owed", exact: true }).getByRole("button", { name: /^Details: / })).toHaveCount(1);
 
   // Her player isn't shown her boons (that comes with #686), and can't open the ledger.
   const p = player.page;

@@ -38,8 +38,10 @@ export function firstWay(sort: LedgerSort): Direction {
   return sort === "date" ? "desc" : "asc";
 }
 
-// Every key the toolbar keeps in the URL, and the page (#978), which a change starts again.
-const KEYS = ["q", "view", "kind", "character", "name", "from", "to", "flagged", "game", "sort", "dir", "page"];
+// Every key the toolbar keeps in the URL, and the page (#978), which a change starts
+// again: a party's page has one for each of its sections (#980).
+export const PAGES = { ledger: "page", debtor: "owespage", creditor: "owedpage" } as const;
+const KEYS = ["q", "view", "kind", "character", "name", "from", "to", "flagged", "game", "sort", "dir", ...Object.values(PAGES)];
 
 export function readLedger(params: URLSearchParams): LedgerSearch {
   const view = params.get("view");
@@ -156,4 +158,36 @@ export function ledgerQuery(s: LedgerSearch) {
 export function sortBy(s: LedgerSearch, by: LedgerSort): Pick<LedgerSearch, "sort" | "direction"> {
   if (s.sort === by) return { sort: by, direction: s.direction === "asc" ? "desc" : "asc" };
   return { sort: by, direction: firstWay(by) };
+}
+
+/** A boon's side: its debtor, who owes it, or its creditor, who is owed it. */
+export type BoonSide = "debtor" | "creditor";
+
+/**
+ * Whose own page of the ledger it is (#980): a character, by id, or a name only, the
+ * whole name; null for the whole ledger.
+ */
+export type LedgerParty = { character: string } | { name: string };
+
+export function partyOf(s: LedgerSearch): LedgerParty | null {
+  if (s.character) return { character: s.character };
+  const name = s.name.trim();
+  return name ? { name } : null;
+}
+
+/**
+ * The search a name on a boon goes to (#980): that side's own page, in the same view
+ * and order, with nothing else narrowing it.
+ */
+export function onParty(s: LedgerSearch, party: Pick<BoonOut["debtor"], "character_id" | "name">): LedgerSearch {
+  return party.character_id ? { ...everyBoon(s), character: party.character_id } : { ...everyBoon(s), name: party.name };
+}
+
+/**
+ * The order of one side of a party's page (#980): the party is on every boon there, so
+ * sorted by a name, it is by the other side's.
+ */
+export function sideSort(s: LedgerSearch, side: BoonSide): LedgerSort {
+  if (s.sort !== "debtor" && s.sort !== "creditor") return s.sort;
+  return side === "debtor" ? "creditor" : "debtor";
 }

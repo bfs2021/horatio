@@ -102,6 +102,11 @@ export function shortName(name: string, most = 60): string {
   return `${(space > most / 2 ? cut.slice(0, space) : cut).trimEnd()}…`;
 }
 
+/** How a party left play, when it has: "Final Death", "Off-field", "Retired"; "" while active, or for a name only. */
+export function standingName(party: Pick<Party, "standing">): string {
+  return !party.standing || party.standing === "active" ? "" : STANDINGS[party.standing];
+}
+
 /** A party's name, with how it left play when it has: "Mercer (Final Death)". A name only is just the name. */
 export function partyName(party: Party): string {
   if (!party.standing || party.standing === "active") return party.name;

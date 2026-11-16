@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BoonOut } from "../../api/types";
-import { everyBoon, ledgerQuery, moreSet, narrowed, readLedger, showing, shows, sortBy, viewOf, writeLedger } from "./boonSearch";
+import { everyBoon, ledgerQuery, moreSet, narrowed, onParty, partyOf, readLedger, showing, shows, sideSort, sortBy, viewOf, writeLedger } from "./boonSearch";
 
 const read = (query: string) => readLedger(new URLSearchParams(query));
 
@@ -81,6 +81,33 @@ describe("sortBy", () => {
     expect(sortBy(start, "date")).toEqual({ sort: "date", direction: "asc" });
     expect(sortBy(read("sort=debtor&dir=desc"), "debtor")).toEqual({ sort: "debtor", direction: "asc" });
     expect(sortBy(read("sort=debtor"), "date")).toEqual({ sort: "date", direction: "desc" });
+  });
+});
+
+describe("a party's own page (#980)", () => {
+  it("is a character's, or a name only's, while the search names one", () => {
+    expect(partyOf(read(""))).toBeNull();
+    expect(partyOf(read("character=c1&q=x"))).toEqual({ character: "c1" });
+    expect(partyOf(read("name=+The+Moon+"))).toEqual({ name: "The Moon" });
+  });
+
+  it("is where a name on a boon goes: the view and order kept, nothing else narrowing it", () => {
+    const search = read("q=x&view=settled&kind=life&from=2026-10-01&sort=kind&name=Elder+Varga");
+    expect(onParty(search, { character_id: "c1", name: "Mireille Dauvin" })).toEqual(read("view=settled&sort=kind&character=c1"));
+    expect(onParty(search, { character_id: null, name: "The Moon" })).toEqual(read("view=settled&sort=kind&name=The+Moon"));
+  });
+
+  it("starts each of its sections on their first page again with any change", () => {
+    const now = new URLSearchParams("character=c1&owespage=2&owedpage=3&boon=b1");
+    expect(writeLedger(now, { ...read(now.toString()), kinds: ["minor"] }).toString()).toBe("boon=b1&kind=minor&character=c1");
+  });
+
+  it("sorts each section by the other side's name, where sorted by a name", () => {
+    for (const sort of ["debtor", "creditor"]) {
+      expect(sideSort(read(`sort=${sort}`), "debtor")).toBe("creditor");
+      expect(sideSort(read(`sort=${sort}`), "creditor")).toBe("debtor");
+    }
+    expect(sideSort(read("sort=kind"), "debtor")).toBe("kind");
   });
 });
 

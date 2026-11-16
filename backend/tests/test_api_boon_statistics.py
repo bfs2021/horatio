@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from horatio.models import Boon, ScheduledGame
 from tests.api_helpers import Troupe
+from tests.test_api_boon_harpy import Court, ok
 from tests.test_api_boons import Ledger, row
 
 
@@ -69,6 +70,54 @@ def test_the_statistics_show_the_month_who_owes_whom_and_the_clans(ledger: Ledge
     assert found["links"][0]["weight"] == 3.0
     assert found["links"][0]["kinds"] == {"major": 1}
     assert "Name only" in found["clan_flow"]["groups"]
+
+
+def test_boons_with_dates_out_of_order_still_chart_for_staff_and_the_harpy(
+    client_for: Callable[[], TestClient], session: Session
+) -> None:
+    # As an imported sheet's typos can have them (#1020): one settled before it went in
+    # the ledger, one entered in the future, and one with times without a zone.
+    court = Court(Troupe(client_for, session))
+    ok(court.access("full"))
+    ok(
+        court.troupe.storyteller.client.put(
+            f"/troupes/{court.troupe.id}/boon-harpy", json={"access": "full", "standings": True}
+        )
+    )
+    early, future, naive = (
+        court.one(court.agnes, court.bram),
+        court.one(court.bram, court.agnes, kind="major"),
+        court.one(court.agnes, court.bram, kind="trivial"),
+    )
+    for boon in (early, naive):
+        ok(court.act(boon, "settle", how="called_in"))
+    dates = {
+        early["id"]: (datetime(2025, 6, 1, tzinfo=UTC), datetime(2024, 3, 1, tzinfo=UTC)),
+        future["id"]: (datetime.now(UTC) + timedelta(days=90), None),
+        naive["id"]: (datetime(2025, 7, 1, 21), datetime(2025, 7, 2, 1)),
+    }
+    for id, (entered, closed) in dates.items():
+        boon = session.get(Boon, uuid.UUID(id))
+        assert boon is not None
+        boon.created_at = entered
+        if closed is not None:
+            boon.closed_at = closed
+    session.flush()
+    session.expire_all()
+
+    for by in (court.troupe.storyteller, court.harpy_player):
+        found = ok(
+            by.client.get(
+                f"/troupes/{court.troupe.id}/boon-statistics", params={"scope": "everyone"}
+            )
+        )
+        months = sorted({m["month"] for m in found["by_entered"]})
+        assert (months[0], months[-1]) == ("2024-03", datetime.now(UTC).strftime("%Y-%m"))
+        march = next(
+            m for m in found["by_entered"] if m["month"] == "2024-03" and m["kind"] == "minor"
+        )
+        assert march["settled"] == 1
+        assert [link["weight"] for link in found["links"]] == [3.0]
 
 
 def test_boons_registered_at_a_game_are_its_activity(ledger: Ledger, session: Session) -> None:

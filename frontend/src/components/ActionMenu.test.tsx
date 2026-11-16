@@ -48,6 +48,23 @@ describe("ActionMenu", () => {
     expect(menu()).toBeNull();
   });
 
+  it("disabled, can't be opened, and closes if it was open (#985)", () => {
+    const view = (disabled: boolean) => (
+      <ActionMenu label="Actions for Ines" disabled={disabled}>
+        <MenuItem>View as…</MenuItem>
+      </ActionMenu>
+    );
+    const { rerender } = render(view(false));
+    const button = screen.getByRole("button", { name: "Actions for Ines" });
+    fireEvent.click(button);
+    expect(screen.queryByRole("menu")).not.toBeNull();
+    rerender(view(true));
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(button);
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+
   it("closes on Escape, and gives focus back to the button", () => {
     const { button, menu, item } = setup();
     fireEvent.click(button);

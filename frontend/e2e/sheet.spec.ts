@@ -457,6 +457,12 @@ test("only a character with a ritual discipline sees rituals, up to its path's l
   await expect(chips.getByRole("button", { name: /^Rituals/ })).toHaveAttribute("aria-pressed", "true");
   await p.getByLabel("Search Rituals").fill(ritual(1));
   await expect(p.getByRole("button", { name: new RegExp(`^${ritual(1)}`) })).toBeEnabled();
+  // What a ritual does opens under its row, with its page, choosing nothing (#1024).
+  await p.getByLabel("Search Rituals").fill("Blood Mastery");
+  await p.getByRole("button", { name: "About Thaumaturgy: Blood Mastery" }).click();
+  await expect(p.getByText("you win the first test of your next opposed challenge against them")).toBeVisible();
+  await expect(p.getByText("MET: VTM p. 202")).toBeVisible();
+  await expect(p.getByRole("button", { name: "Add to cart" })).toHaveCount(0);
   // A ritual of each level comes before one of the next.
   await p.getByLabel("Search Rituals").fill(ritual(2));
   await expect(p.getByText("None you can take. 1 you can't:")).toBeVisible();

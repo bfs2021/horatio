@@ -75,10 +75,11 @@ function DockedPanel({ title, actions, onClose, children }: { title: string; act
     return () => document.removeEventListener("keydown", escape);
   }, []);
 
+  // Below a sticky header, where the page sets its height as --sticky-top (the Play View's ledger, #985).
   return (
     <aside
       aria-labelledby={titleId}
-      className="sticky top-4 flex max-h-[calc(100dvh-2rem)] flex-col rounded-lg border border-ash bg-dusk text-parchment shadow-xl"
+      className="sticky top-[calc(var(--sticky-top,0px)+1rem)] flex max-h-[calc(100dvh-var(--sticky-top,0px)-2rem)] flex-col rounded-lg border border-ash bg-dusk text-parchment shadow-xl"
     >
       <div className="flex items-center gap-3 border-b border-ash px-4 py-3">
         <h2 ref={heading} id={titleId} tabIndex={-1} className="min-w-0 font-display text-gold wrap-anywhere focus:outline-none">

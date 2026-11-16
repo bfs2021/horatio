@@ -24,7 +24,8 @@ const Chosen = createContext<() => void>(() => {});
  * `label` names the button to a screen reader ("Actions for Ines"). The items are
  * `MenuItem`s and `MenuLink`s, in `MenuGroup`s if there are several kinds: a line
  * divides the groups that have something in them. A plain `<Button>` unless
- * `buttonClassName` styles the button itself.
+ * `buttonClassName` styles the button itself. `disabled`, the button can't be
+ * pressed, and an open menu closes: offline, say (#985).
  */
 export function ActionMenu({
   label,
@@ -34,6 +35,7 @@ export function ActionMenu({
   buttonClassName,
   menuClassName = "w-64",
   className,
+  disabled = false,
 }: {
   label: string;
   children: ReactNode;
@@ -42,8 +44,13 @@ export function ActionMenu({
   buttonClassName?: string;
   menuClassName?: string;
   className?: string;
+  disabled?: boolean;
 }) {
   const { open, toggle, close, root, button, popover, style } = usePopover<HTMLDivElement, HTMLDivElement>();
+  // Disabled while open, it closes: there is nothing in it to choose.
+  useEffect(() => {
+    if (disabled && open) close();
+  }, [disabled, open, close]);
   // Opened with ↑, it starts at the last item; otherwise at the first.
   const startAtEnd = useRef(false);
   const items = () => Array.from(popover.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)') ?? []);
@@ -87,6 +94,7 @@ export function ActionMenu({
     "aria-expanded": open,
     onClick: toggle,
     onKeyDown: onButtonKey,
+    disabled,
   };
 
   return (
@@ -100,7 +108,7 @@ export function ActionMenu({
           {trigger}
         </Button>
       )}
-      {open && (
+      {open && !disabled && (
         <div
           ref={popover}
           role="menu"

@@ -26,6 +26,7 @@ import { SectionLabel } from "../../components/Headings";
 import { Badge, Button, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
+import { useOnline } from "../../offline/connection";
 import { ReviewPanel } from "./BoonReview";
 import { HarpyMode, useAnyText } from "./boonKeeper";
 import { WhoPicker } from "./WhoPicker";
@@ -101,6 +102,9 @@ export function BoonDetail({
 }) {
   const harpy = useContext(HarpyMode);
   const dates = useDates();
+  // Offline in the Play View, its actions can't be chosen (#985).
+  const online = useOnline();
+  const offline = harpy !== null && !online;
   const [doing, setDoing] = useState<Doing | null>(null);
   const boon = useQuery({
     queryKey: ["boon", troupeId, boonId],
@@ -119,7 +123,7 @@ export function BoonDetail({
   const actions = actionsFor(b.state).filter((a) => !harpy || (a === "edit" ? harpy.edit : harpy.settle));
   const menu =
     actions.length === 0 ? null : (
-      <ActionMenu label={`Actions: ${boonLabel(b)}`} trigger="Actions" menuClassName="w-44">
+      <ActionMenu label={`Actions: ${boonLabel(b)}`} trigger="Actions" menuClassName="w-44" disabled={offline}>
         <MenuGroup label="Change it">
           {actions
             .filter((a) => !ENDS.includes(a))
@@ -220,17 +224,20 @@ export function BoonDetail({
           </>
         )}
       </dl>
-      {(!harpy || harpy.review || harpy.edit) && (
-        <ReviewPanel
-          troupeId={troupeId}
-          boon={b}
-          characters={characters}
-          review={!harpy || harpy.review}
-          link={!harpy || harpy.role === "harpy" || harpy.edit}
-        />
-      )}
-      {b.status_loss && (!harpy || harpy.settle) && <StatusLoss troupeId={troupeId} boon={b} />}
-      {b.gallant && (!harpy || harpy.settle) && <GallantOffer troupeId={troupeId} boon={b} offer={b.gallant} />}
+      {/* What waits on a decision; offline in the Play View, it waits for a signal (#985). */}
+      <fieldset disabled={offline} className="flex min-w-0 flex-col gap-4 empty:hidden">
+        {(!harpy || harpy.review || harpy.edit) && (
+          <ReviewPanel
+            troupeId={troupeId}
+            boon={b}
+            characters={characters}
+            review={!harpy || harpy.review}
+            link={!harpy || harpy.role === "harpy" || harpy.edit}
+          />
+        )}
+        {b.status_loss && (!harpy || harpy.settle) && <StatusLoss troupeId={troupeId} boon={b} />}
+        {b.gallant && (!harpy || harpy.settle) && <GallantOffer troupeId={troupeId} boon={b} offer={b.gallant} />}
+      </fieldset>
       <div>
         <SectionLabel as="h3">Its log</SectionLabel>
         <BoonLog boon={b} />

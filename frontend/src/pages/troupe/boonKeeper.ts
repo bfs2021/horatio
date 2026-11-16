@@ -34,3 +34,21 @@ export function useAnyText() {
   const harpy = useContext(HarpyMode);
   return { longest: harpy ? LONGEST_NAME : LONGEST_TEXT, hint: ANY_TEXT_HINT };
 }
+
+/**
+ * The line at the top of the Harpy's or a Lesser Harpy's ledger, behind its ⓘ (#985):
+ * what they may do, and that it is logged as their character. "As a Lesser Harpy you
+ * may correct boons and settle and move them. What you do is logged as your character."
+ */
+export function keeperNote(keeper: LedgerKeeper): string {
+  const who = keeper.role === "harpy" ? "As the troupe's Harpy" : `As a ${keeper.word}`;
+  const deeds = [keeper.add && "register", keeper.edit && "correct", keeper.settle && "settle and move"]
+    .filter((d): d is string => Boolean(d))
+    .map((d, i) => `${d} ${i === 0 ? "boons" : "them"}`);
+  if (keeper.review) deeds.push("review what players report");
+  if (keeper.audit) deeds.push("perform audits");
+  if (keeper.export) deeds.push("export the ledger");
+  if (deeds.length === 0) return `${who} you may read the ledger; the Harpy hasn't let you change it.`;
+  const may = deeds.length === 1 ? deeds[0] : `${deeds.slice(0, -1).join(", ")} and ${deeds[deeds.length - 1]}`;
+  return `${who} you may ${may}. What you do is logged as your character.`;
+}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { everyBoon, ledgerQuery, moreSet, narrowed, readLedger, sortBy, writeLedger } from "./boonSearch";
+import type { BoonOut } from "../../api/types";
+import { everyBoon, ledgerQuery, moreSet, narrowed, readLedger, showing, shows, sortBy, viewOf, writeLedger } from "./boonSearch";
 
 const read = (query: string) => readLedger(new URLSearchParams(query));
 
@@ -80,5 +81,51 @@ describe("sortBy", () => {
     expect(sortBy(start, "date")).toEqual({ sort: "date", direction: "asc" });
     expect(sortBy(read("sort=debtor&dir=desc"), "debtor")).toEqual({ sort: "debtor", direction: "asc" });
     expect(sortBy(read("sort=debtor"), "date")).toEqual({ sort: "date", direction: "desc" });
+  });
+});
+
+describe("boons just registered (#983)", () => {
+  const party = (name: string, character_id: string | null = null) => ({ character_id, name, kind: character_id ? "pc" : null, standing: null });
+  const boon = (change: Partial<BoonOut> = {}) =>
+    ({
+      id: "b1",
+      debtor: party("Mireille Dauvin", "c1"),
+      creditor: party("Elder Varga"),
+      kind: "minor",
+      made_on: "2026-10-03",
+      reason: "Safe passage",
+      conditions: "",
+      state: "registered",
+      departed: false,
+      flagged: false,
+      ...change,
+    }) as BoonOut;
+
+  it("are in the view their state puts them in", () => {
+    expect(viewOf(boon())).toBe("open");
+    expect(viewOf(boon({ departed: true }))).toBe("departed");
+    expect(viewOf(boon({ state: "pending" }))).toBe("pending");
+  });
+
+  it("show where the search holds them, as the API narrows it", () => {
+    const made = boon();
+    expect(shows(read(""), made, null)).toBe(true);
+    expect(shows(read("view=all&q=VARGA&kind=minor&character=c1&from=2026-10-01&to=2026-10-03"), made, null)).toBe(true);
+    expect(shows(read("q=passage&name=elder+varga"), made, null)).toBe(true);
+    expect(shows(read("game=g1"), made, "g1")).toBe(true);
+  });
+
+  it("are hidden by a view or a filter that leaves them out", () => {
+    const made = boon();
+    for (const query of ["view=settled", "q=elysium", "kind=major", "character=c2", "name=mireille+dauvin", "from=2026-10-04", "to=2026-10-02", "flagged=1", "game=g1"]) {
+      expect(shows(read(query), made, null), query).toBe(false);
+    }
+  });
+
+  it("are shown by clearing the filters, in a view that holds them all", () => {
+    const narrowedSearch = read("view=settled&q=x&kind=life&sort=creditor");
+    expect(showing(narrowedSearch, [boon(), boon()])).toEqual(read("sort=creditor"));
+    expect(showing(narrowedSearch, [boon(), boon({ departed: true })])).toEqual(read("view=all&sort=creditor"));
+    expect(showing(read("view=all&kind=life"), [boon()])).toEqual(read("view=all"));
   });
 });

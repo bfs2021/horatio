@@ -3,6 +3,7 @@
  * what it asks, as it travels in the URL (so a reload or a link keeps it), and as the
  * API takes it. `?character=<id>` is the key other pages link to the ledger with.
  */
+import type { BoonOut } from "../../api/types";
 import { KINDS, VIEWS, type BoonKind, type BoonView } from "../../boons";
 
 export type LedgerSort = "date" | "debtor" | "creditor" | "kind";
@@ -98,6 +99,40 @@ export function moreSet(s: LedgerSearch): number {
 /** Whether anything narrows the ledger: the search, the kinds or the filters. */
 export function narrowed(s: LedgerSearch): boolean {
   return Boolean(s.q.trim() || s.kinds.length || moreSet(s));
+}
+
+/** The view a boon is in: open, or departed, while it stands; otherwise its state. */
+export function viewOf(b: Pick<BoonOut, "state" | "departed">): BoonView {
+  return b.state === "registered" ? (b.departed ? "departed" : "open") : b.state;
+}
+
+/**
+ * Whether the ledger, as searched, shows a boon just registered (#983), as the API
+ * would narrow it (horatio.boon_ledger.narrowing). `game` is the game it was
+ * registered at, if any.
+ */
+export function shows(s: LedgerSearch, b: BoonOut, game: string | null): boolean {
+  const sides = [b.debtor, b.creditor];
+  const q = s.q.trim().toLowerCase();
+  const name = s.name.trim().toLowerCase();
+  return (
+    (s.view === "all" || viewOf(b) === s.view) &&
+    (!q || [...sides.map((p) => p.name), b.reason, b.conditions].some((text) => text.toLowerCase().includes(q))) &&
+    (!s.kinds.length || s.kinds.includes(b.kind)) &&
+    (!s.character || sides.some((p) => p.character_id === s.character)) &&
+    (Boolean(s.character) || !name || sides.some((p) => !p.character_id && p.name.toLowerCase() === name)) &&
+    (!s.from || b.made_on >= s.from) &&
+    (!s.to || b.made_on <= s.to) &&
+    (!s.flagged || b.flagged) &&
+    (!s.game || s.game === game)
+  );
+}
+
+/** The search that shows boons just registered: nothing narrowing it, in a view that holds them all. */
+export function showing(s: LedgerSearch, made: Pick<BoonOut, "state" | "departed">[]): LedgerSearch {
+  const views = [...new Set(made.map(viewOf))];
+  const view = views.length !== 1 ? "all" : s.view === "all" ? s.view : views[0]!;
+  return { ...everyBoon(s), view };
 }
 
 /** The ledger's query for the API, without its page. */

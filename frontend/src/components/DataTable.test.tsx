@@ -124,6 +124,27 @@ describe("DataTable", () => {
     expect(document.activeElement).toBe(chevron);
   });
 
+  it("with groups, puts each under a heading row that opens and closes it (#981)", () => {
+    const toggled: string[] = [];
+    const groups = (open: boolean) => [
+      { key: "t", heading: "Toreador, 1", rows: [ROWS[0]!], open: true, onToggle: () => toggled.push("t") },
+      { key: "none", heading: "No clan, 1", rows: [ROWS[1]!], open, onToggle: () => toggled.push("none") },
+    ];
+    const { rerender } = render(<DataTable label="Characters" columns={COLUMNS} groups={groups(false)} rowKey={(r) => r.id} />);
+    const table = screen.getByRole("table", { name: "Characters" });
+    const closed = within(table).getByRole("button", { name: "No clan, 1" });
+    expect(closed.getAttribute("aria-expanded")).toBe("false");
+    expect(within(table).getByRole("button", { name: "Toreador, 1" }).getAttribute("aria-expanded")).toBe("true");
+    // The heading row spans the table; a closed group's rows are left out.
+    expect(within(table).getAllByRole("rowheader")[0]!.getAttribute("colspan")).toBe(String(COLUMNS.length));
+    expect(within(table).queryByText("Casimir Wode")).toBeNull();
+    expect(within(table).getByText("Isolde Fenwright")).toBeTruthy();
+    fireEvent.click(closed);
+    expect(toggled).toEqual(["none"]);
+    rerender(<DataTable label="Characters" columns={COLUMNS} groups={groups(true)} rowKey={(r) => r.id} />);
+    expect(within(table).getByText("Casimir Wode")).toBeTruthy();
+  });
+
   it("marks the column the list is sorted by", () => {
     const sorted = COLUMNS.map((c) => (c.key === "xp" ? { ...c, sort: "descending" as const } : c));
     render(<DataTable label="Characters" columns={sorted} rows={ROWS} rowKey={(r) => r.id} />);

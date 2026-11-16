@@ -1,10 +1,11 @@
 import { useQueries, useQuery, type Query, type QueryKey } from "@tanstack/react-query";
-import { Fragment, useContext, useEffect, useRef } from "react";
+import { Fragment, useContext, useEffect, useRef, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
-import type { BoonOut, TroupeBoonsOut } from "../../api/types";
+import type { BoonGameOut, BoonOut, TroupeBoonsOut } from "../../api/types";
 import { BOON_PAGE, kindName, stateText, type BoonView } from "../../boons";
-import { DataTable, type Column } from "../../components/DataTable";
+import { weight } from "../../boonStandings";
+import { DataTable, type Column, type DataGroup } from "../../components/DataTable";
 import { InfoButton } from "../../components/InfoButton";
 import { Pager } from "../../components/Pager";
 import { SidePanel, useSideBySide } from "../../components/SidePanel";
@@ -18,7 +19,9 @@ import { BoonDetail, boonLabel, BoonMarks, LEFT } from "./BoonDetail";
 import { RegisterBoons, type Reveal } from "./BoonEntry";
 import { BoonExportMenu } from "./BoonExport";
 import { HarpyMode, keeperNote, type LedgerKeeper } from "./boonKeeper";
+import { groupBoons, OPEN_GROUPS, type BoonGroup } from "./boonGroups";
 import {
+  GROUP_MOST,
   ledgerQuery,
   narrowed,
   onParty,
@@ -27,6 +30,7 @@ import {
   readLedger,
   showing,
   shows,
+  sideGroup,
   sideSort,
   sortBy,
   writeLedger,
@@ -145,6 +149,28 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
       };
     }),
   });
+  // Grouped (#981), each list's every row at once, where none has more than GROUP_MOST
+  // (one not read yet, as yet): a list on one page has them all already.
+  const groupable = lists.every((l) => !l.data || l.data.total <= GROUP_MOST);
+  const grouping = search.group !== "" && groupable;
+  const complete = (s: Section, list: (typeof lists)[number]) => pageOf(s.page) === 1 && Boolean(list.data && list.data.boons.length >= list.data.total);
+  const everyRow = useQueries({
+    queries: sections.map((s, i) => {
+      const query = { ...queryOf(s), limit: GROUP_MOST, offset: 0 };
+      return {
+        queryKey: ["troupe-boons", troupeId, query],
+        queryFn: () =>
+          unwrap(
+            api.GET("/api/troupes/{troupe_id}/boons", {
+              params: { path: { troupe_id: troupeId }, query },
+            }),
+          ),
+        enabled: grouping && Boolean(lists[i]?.data) && !complete(s, lists[i]!),
+        placeholderData: (previous: TroupeBoonsOut | undefined, before?: Query<TroupeBoonsOut, Error, TroupeBoonsOut, QueryKey>) =>
+          (before?.queryKey[2] as { side?: BoonSide } | undefined)?.side === s.side ? previous : undefined,
+      };
+    }),
+  });
   // Who may be named on a boon: read once, not with every page (#978).
   const choices = useQuery({
     queryKey: ["boon-characters", troupeId],
@@ -174,7 +200,7 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
   });
   const whole = lists[0]!;
   if (choices.isPending || (!party && whole.isPending)) return <Loading />;
-  const failed = lists.find((l) => l.error);
+  const failed = [...lists, ...everyRow].find((l) => l.error);
   if (failed) return <ErrorText error={failed.error} />;
   if (choices.error) return <ErrorText error={choices.error} />;
   const characters = choices.data;
@@ -205,6 +231,27 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
     if (list && list.getBoundingClientRect().top < 0) list.scrollIntoView({ block: "start" });
   };
   const empty = narrowed({ ...search, character: "", name: "" }) ? "No boons match." : search.view === "open" ? "None open." : "None here.";
+  // A list grouped (#981), from its every row: on a party's page, by the other side.
+  const groupedTable = (s: Section, list: (typeof lists)[number], every: (typeof everyRow)[number]) => {
+    if (!every.data) return <Loading compact />;
+    const by = s.side ? sideGroup(search.group, s.side) : search.group;
+    const groups = groupBoons(every.data.boons, by as BoonSide | "night", every.data.weights, s.side ? sideSort(search, s.side) : search.sort, search.direction);
+    return (
+      <BoonTable
+        key={`${search.view} ${by}`}
+        label={s.label ?? "Boons"}
+        boons={every.data.boons}
+        groups={groups}
+        games={games.data}
+        busy={list.isPlaceholderData || every.isPlaceholderData}
+        sorting={sorting(s.side)}
+        party={s.side}
+        partyTo={partyTo}
+        opened={opened}
+        onOpen={open}
+      />
+    );
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -240,6 +287,7 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
           counts={counts}
           characters={characters}
           games={games.data ?? []}
+          groupable={groupable}
           // At its right, registering boons (#983) and the menu of exports.
           end={
             (register || exports) && (
@@ -265,6 +313,8 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
               )
             ) : total === 0 ? (
               <Empty>{s.side ? empty : narrowed(search) ? "No boons match." : search.view === "open" ? "No open boons yet." : "None here."}</Empty>
+            ) : grouping ? (
+              groupedTable(s, list, complete(s, list) ? list : everyRow[i]!)
             ) : (
               <>
                 <BoonTable
@@ -331,6 +381,8 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
 function BoonTable({
   label,
   boons,
+  groups,
+  games = [],
   busy,
   sorting,
   party,
@@ -340,6 +392,10 @@ function BoonTable({
 }: {
   label: string;
   boons: BoonOut[];
+  // In groups (#981), each under a heading row, the first few open.
+  groups?: BoonGroup[];
+  // The troupe's games, to say which nights had one: staff's only.
+  games?: BoonGameOut[];
   busy: boolean;
   // A column's heading, which sorts by it (#976).
   sorting: (label: string, by: LedgerSort) => Pick<Column<BoonOut>, "header" | "label" | "sort">;
@@ -350,6 +406,8 @@ function BoonTable({
   onOpen: (boonId: string) => void;
 }) {
   const dates = useDates();
+  // The groups opened or closed by hand; the rest as they start.
+  const [toggled, setToggled] = useState<Map<string, boolean>>(new Map());
   const debtor: Column<BoonOut> = {
     key: "debtor",
     ...sorting("Debtor", "debtor"),
@@ -413,11 +471,24 @@ function BoonTable({
       folded: (b) => (stateText(b) || b.flagged ? <BoonMarks boon={b} /> : null),
     },
   ];
+  // The days the troupe's games began, as the nights are written: "2026-10-03".
+  const gameNights = new Set(games.map((g) => dates.toInput(g.starts_at).slice(0, 10)));
+  const grouped = groups?.map((g, i): DataGroup<BoonOut> => {
+    const open = toggled.get(g.key) ?? i < OPEN_GROUPS;
+    return {
+      key: g.key,
+      heading: <GroupHeading group={g} night={g.night && dates.longDay(g.night)} game={Boolean(g.night && gameNights.has(g.night))} />,
+      rows: g.boons,
+      open,
+      onToggle: () => setToggled(new Map(toggled).set(g.key, !open)),
+    };
+  });
   return (
     <DataTable
       label={label}
       columns={columns}
       rows={boons}
+      groups={grouped}
       rowKey={(b) => b.id}
       rowLabel={boonLabel}
       stackBelow="lg"
@@ -426,6 +497,27 @@ function BoonTable({
       className={busy ? "opacity-60" : ""}
       select={{ label: (b) => `Details: ${boonLabel(b)}`, onSelect: (b) => onOpen(b.id), selected: opened }}
     />
+  );
+}
+
+/**
+ * A group's heading row (#981): who it is, or the night (marked where the troupe
+ * held a game that day), then how many boons it holds and what they weigh.
+ */
+function GroupHeading({ group, night, game }: { group: BoonGroup; night: string | null; game: boolean }) {
+  const n = group.boons.length;
+  return (
+    <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+      {group.party ? (
+        <span className={`min-w-0 truncate text-parchment ${group.party.character_id ? "" : "pr-0.5 italic"}`}>{group.party.name}</span>
+      ) : (
+        <span className="text-parchment">{night}</span>
+      )}{" "}
+      {game && <Badge>Game</Badge>}{" "}
+      <span className="text-xs text-mist">
+        {count.format(n)} {n === 1 ? "boon" : "boons"} · weight {weight(group.weight)}
+      </span>
+    </span>
   );
 }
 

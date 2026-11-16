@@ -9174,7 +9174,7 @@ export interface paths {
          *     newest first for the date, A to Z or trivial to life otherwise), ties newest
          *     first, then by id. `limit` boons from `offset` (#978). With them, `totals`: the
          *     whole ledger's views counted, whatever the filters, and its open boons by kind
-         *     (#977).
+         *     (#977); and the troupe's `weights` for each kind (#981).
          */
         get: operations["troupe_boons_api_troupes__troupe_id__boons_get"];
         put?: never;
@@ -35741,6 +35741,10 @@ export interface components {
             /** Total */
             total: number;
             totals: components["schemas"]["BoonTotalsOut"];
+            /** Weights */
+            weights: {
+                [key: string]: number;
+            };
         };
         /** TroupeChanges */
         TroupeChanges: {

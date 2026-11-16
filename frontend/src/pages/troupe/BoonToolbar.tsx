@@ -6,7 +6,7 @@ import { DateInput } from "../../components/DateInput";
 import { Segmented } from "../../components/Segmented";
 import { Button, Field, Input, Select } from "../../components/ui";
 import { useDates } from "../../dates";
-import { everyBoon, moreSet, narrowed, type Direction, type LedgerSearch, type LedgerSort } from "./boonSearch";
+import { everyBoon, GROUP_MOST, moreSet, narrowed, partyOf, type Direction, type LedgerGroup, type LedgerSearch, type LedgerSort } from "./boonSearch";
 import { WhoPicker } from "./WhoPicker";
 
 const count = new Intl.NumberFormat("en-GB");
@@ -40,6 +40,11 @@ const ORDERS: { sort: LedgerSort; direction: Direction; label: string }[] = [
  * a tab of its own (#982).
  * `games` are the troupe's games, for "At a game"; none leaves it out. `end` goes at
  * the end of the search's row, such as a menu of more for the ledger.
+ *
+ * "Group by" groups the table's rows (#981) by either side or the night, where every
+ * row of the view comes at once: not `groupable` (over GROUP_MOST boons), it waits
+ * for a narrower search. On a party's own page (#980), where they are on every boon,
+ * a side is the other side.
  */
 export function BoonToolbar({
   search,
@@ -47,6 +52,7 @@ export function BoonToolbar({
   counts,
   characters,
   games,
+  groupable = true,
   end,
 }: {
   search: LedgerSearch;
@@ -54,10 +60,12 @@ export function BoonToolbar({
   counts: Partial<Record<BoonView, number>>;
   characters: CharacterChoice[];
   games: BoonGameOut[];
+  groupable?: boolean;
   end?: ReactNode;
 }) {
   const dates = useDates();
   const panelId = useId();
+  const groupHint = useId();
   const set = moreSet(search);
   // Opened by itself when a link or a reload brings filters with it.
   const [more, setMore] = useState(set > 0);
@@ -100,6 +108,20 @@ export function BoonToolbar({
     ask(everyBoon(search));
   };
   const order = ORDERS.findIndex((o) => o.sort === search.sort && o.direction === search.direction);
+  const party = partyOf(search) !== null;
+  const groups: { value: LedgerGroup; label: string }[] = party
+    ? [
+        { value: "", label: "None" },
+        { value: "debtor", label: "The other side" },
+        { value: "night", label: "Night" },
+      ]
+    : [
+        { value: "", label: "None" },
+        { value: "debtor", label: "Debtor" },
+        { value: "creditor", label: "Creditor" },
+        { value: "night", label: "Night" },
+      ];
+  const grouped = !groupable ? "" : party && search.group === "creditor" ? "debtor" : search.group;
 
   return (
     <div className="flex flex-col gap-3">
@@ -167,6 +189,29 @@ export function BoonToolbar({
             </span>
           )}
         </Button>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <label className="flex items-center gap-2 text-sm text-mist">
+            Group by
+            <Select
+              className="w-auto"
+              value={grouped}
+              disabled={!groupable}
+              aria-describedby={groupable ? undefined : groupHint}
+              onChange={(e) => update({ group: e.target.value as LedgerGroup })}
+            >
+              {groups.map((g) => (
+                <option key={g.value} value={g.value}>
+                  {g.label}
+                </option>
+              ))}
+            </Select>
+          </label>
+          {!groupable && (
+            <span id={groupHint} className="text-xs text-mist">
+              Over {count.format(GROUP_MOST)} boons: narrow the search to group them.
+            </span>
+          )}
+        </div>
         {narrowed(search) && (
           <Button variant="ghost" onClick={clear}>
             Show every boon

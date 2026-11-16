@@ -144,13 +144,34 @@ def test_the_harpy_s_player_is_told_of_each_boon_players_report(court: Court) ->
         "Agnes reported a minor boon to the ledger: Agnes owes Bram (3 Oct 2026). It waits for"
         " review."
     )
+    # With the review queue alone, To review is the ledger's only tab, at its address.
     assert word["link"] == f"/play/characters/{court.hestia}/ledger"
-    # Nobody else is told, and the Harpy isn't told of their own report.
-    others = ok(court.other.client.get("/notifications"))["items"]
-    assert not any(n["kind"] == "boon.reported" for n in others)
+    # Nobody else is told, staff included, and the Harpy isn't told of their own report.
+    for person in (court.other, court.troupe.storyteller):
+        others = ok(person.client.get("/notifications"))["items"]
+        assert not any(n["kind"] == "boon.reported" for n in others)
     report(court, court.hestia, court.harpy_player, court.agnes)
     again = ok(court.harpy_player.client.get("/notifications"))["items"]
     assert len([n for n in again if n["kind"] == "boon.reported"]) == 1
+
+
+def test_with_the_full_ledger_word_of_a_report_opens_to_review(court: Court) -> None:
+    """#1011: the full ledger opens on its boons, so word of a boon waiting for review
+    links to the To review tab; one that went straight in, to the ledger."""
+    ok(court.access("full"))
+    report(court, court.agnes, court.troupe.player, court.bram)
+    hold(court)
+    report(court, court.bram, court.other, court.agnes)
+
+    told = ok(court.harpy_player.client.get("/notifications"))["items"]
+    words = {n["summary"]: n["link"] for n in told if n["kind"] == "boon.reported"}
+    assert words == {
+        "Agnes reported a minor boon to the ledger: Agnes owes Bram (3 Oct 2026).": (
+            f"/play/characters/{court.hestia}/ledger"
+        ),
+        "Bram reported a minor boon to the ledger: Bram owes Agnes (3 Oct 2026). It waits for"
+        " review.": f"/play/characters/{court.hestia}/ledger/review",
+    }
 
 
 def test_the_play_view_shows_the_harpy_their_ledger(court: Court) -> None:

@@ -8,6 +8,8 @@ import { KINDS, VIEWS, type BoonKind, type BoonView } from "../../boons";
 
 export type LedgerSort = "date" | "debtor" | "creditor" | "kind";
 export type Direction = "asc" | "desc";
+/** What the table's rows are grouped by (#981): none, either side, or the night they were made. */
+export type LedgerGroup = "" | "debtor" | "creditor" | "night";
 
 export type LedgerSearch = {
   /** Any part of either side's name, the reason or the conditions. */
@@ -29,9 +31,17 @@ export type LedgerSearch = {
   game: string;
   sort: LedgerSort;
   direction: Direction;
+  group: LedgerGroup;
 };
 
 const SORTS: LedgerSort[] = ["date", "debtor", "creditor", "kind"];
+const GROUPS: LedgerGroup[] = ["debtor", "creditor", "night"];
+
+/**
+ * The most boons the table groups (#981), the most the API sends at once: grouping
+ * needs every row of the view, so a longer one is narrowed first.
+ */
+export const GROUP_MOST = 500;
 
 /** The way a sort goes first: newest first for the date, A to Z or trivial to life for the rest. */
 export function firstWay(sort: LedgerSort): Direction {
@@ -41,7 +51,7 @@ export function firstWay(sort: LedgerSort): Direction {
 // Every key the toolbar keeps in the URL, and the page (#978), which a change starts
 // again: a party's page has one for each of its sections (#980).
 export const PAGES = { ledger: "page", debtor: "owespage", creditor: "owedpage" } as const;
-const KEYS = ["q", "view", "kind", "character", "name", "from", "to", "flagged", "game", "sort", "dir", ...Object.values(PAGES)];
+const KEYS = ["q", "view", "kind", "character", "name", "from", "to", "flagged", "game", "sort", "dir", "group", ...Object.values(PAGES)];
 
 export function readLedger(params: URLSearchParams): LedgerSearch {
   const view = params.get("view");
@@ -49,6 +59,7 @@ export function readLedger(params: URLSearchParams): LedgerSearch {
   const sort = params.get("sort") as LedgerSort;
   const sorted = SORTS.includes(sort) ? sort : "date";
   const dir = params.get("dir");
+  const group = params.get("group") as LedgerGroup;
   return {
     q: params.get("q") ?? "",
     view: VIEWS.some((v) => v.value === view) ? (view as BoonView) : "open",
@@ -62,6 +73,7 @@ export function readLedger(params: URLSearchParams): LedgerSearch {
     game: params.get("game") ?? "",
     sort: sorted,
     direction: dir === "asc" || dir === "desc" ? dir : firstWay(sorted),
+    group: GROUPS.includes(group) ? group : "",
   };
 }
 
@@ -85,10 +97,11 @@ export function writeLedger(now: URLSearchParams, s: LedgerSearch): URLSearchPar
   put("game", s.game);
   if (s.sort !== "date") put("sort", s.sort);
   if (s.direction !== firstWay(s.sort)) put("dir", s.direction);
+  put("group", s.group);
   return params;
 }
 
-/** The search with nothing narrowing it: its view and order stay. */
+/** The search with nothing narrowing it: its view, order and grouping stay. */
 export function everyBoon(s: LedgerSearch): LedgerSearch {
   return { ...s, q: "", kinds: [], character: "", name: "", from: "", to: "", flagged: false, game: "" };
 }
@@ -189,5 +202,14 @@ export function onParty(s: LedgerSearch, party: Pick<BoonOut["debtor"], "charact
  */
 export function sideSort(s: LedgerSearch, side: BoonSide): LedgerSort {
   if (s.sort !== "debtor" && s.sort !== "creditor") return s.sort;
+  return side === "debtor" ? "creditor" : "debtor";
+}
+
+/**
+ * What one side of a party's page (#980) is grouped by: the party is on every boon
+ * there, so grouped by a name, it is by the other side's, as `sideSort` sorts.
+ */
+export function sideGroup(group: LedgerGroup, side: BoonSide): LedgerGroup {
+  if (group !== "debtor" && group !== "creditor") return group;
   return side === "debtor" ? "creditor" : "debtor";
 }

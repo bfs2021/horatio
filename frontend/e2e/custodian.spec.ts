@@ -264,7 +264,7 @@ test("People is wider on a wide screen, so no handle or email wraps, while Site 
         const lines = new Set(Array.from(range.getClientRects(), (r) => Math.round(r.top))).size;
         return lines === 1 && el.scrollWidth <= el.clientWidth;
       });
-  expect(await width()).toBe(1280);
+  await expect.poll(width).toBe(1280);
   expect(await inFull(custodian.email)).toBe(true);
   expect(await inFull(`@${custodian.handle}`)).toBe(true);
   // The header lines up with the page under it.
@@ -274,7 +274,9 @@ test("People is wider on a wide screen, so no handle or email wraps, while Site 
   // A page of text keeps the usual width.
   await c.getByRole("link", { name: "Site", exact: true }).click();
   await expect(c).toHaveURL(/\/custodian\/site$/);
-  expect(await width()).toBe(1024);
+  // The address changes first and People stays on screen, wide, until Site is drawn,
+  // so wait for the width rather than reading it once (#1003). Site is never drawn wide.
+  await expect.poll(width).toBe(1024);
 
   // At 1,024 px People is as it was.
   await c.setViewportSize({ width: 1024, height: 900 });

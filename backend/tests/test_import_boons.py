@@ -415,6 +415,36 @@ def test_what_cannot_be_imported_says_why(domain: Domain) -> None:
     assert no_master.json()["detail"] == "The spreadsheet has no Master tab."
 
 
+def test_dates_that_look_wrong_are_reported_and_imported_as_they_are(domain: Domain) -> None:
+    book = workbook(
+        [
+            boon_row("Agnes", "Bram", entered=datetime(2099, 1, 1, 20), unique="U1"),
+            boon_row("Agnes", "Bram", entered=datetime(2025, 6, 1, 21), settled=True,
+                     settled_on=date(2024, 3, 1), unique="U2"),
+            boon_row("Bram", "Agnes", entered=datetime(2024, 5, 1, 21), settled=True,
+                     settled_on=date(2099, 2, 1), unique="U3"),
+            # Settled the night it was typed in, earlier in the day: nothing to say.
+            boon_row("Bram", "Agnes", entered=datetime(2024, 3, 15, 21, 15), settled=True,
+                     settled_on=date(2024, 3, 15), unique="U4"),
+        ]
+    )  # fmt: skip
+
+    report = domain.run(book, dry_run=True)
+
+    assert [(n["row"], n["note"]) for n in report["notes"]] == [
+        ("U1", "its Input Date is in the future"),
+        ("U2", "its Settled Date is before its Input Date"),
+        ("U3", "its Settled Date is in the future"),
+    ]
+    assert report["added"] == 4
+
+    domain.run(book)
+    statistics = domain.troupe.storyteller.client.get(
+        f"/troupes/{domain.troupe.id}/boon-statistics", params={"scope": "everyone"}
+    )
+    assert statistics.status_code == 200, statistics.text
+
+
 def test_a_long_text_is_cut_to_what_the_ledger_takes_and_reported(domain: Domain) -> None:
     long = "a" * (boons.LONGEST_TEXT + 50)
     report = domain.run(workbook([boon_row(long, "Bram", reason=long, unique="U1")]))

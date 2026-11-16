@@ -167,6 +167,36 @@ def test_open_debt_is_aged_in_three_month_bands_from_the_night_it_was_made() -> 
     assert (bands[0].count, bands[1].weight, bands[-1].count) == (1, 3.0, 1)
 
 
+def test_dates_out_of_order_count_as_no_time_at_all() -> None:
+    # A night in the future, and a boon settled before the night it was made, as an
+    # imported sheet's typo can have them (#1020).
+    rows = [
+        owes("agnes", "bram", made_on=date(2027, 2, 1)),
+        owes(
+            "bram",
+            "agnes",
+            state="settled",
+            made_on=date(2026, 9, 1),
+            settled_how="called_in",
+            closed_on=date(2024, 3, 1),
+        ),
+    ]
+
+    found = compute(ledger(rows, AGNES, BRAM), DEFAULT_WEIGHTS, today=TODAY)
+
+    assert (found.debt_age[0].count, found.settling.median_months) == (1, 0)
+
+
+def test_a_kind_without_a_weight_stands_nowhere_but_is_counted() -> None:
+    weights = {k: w for k, w in DEFAULT_WEIGHTS.items() if k != "life"}
+    rows = [owes("agnes", "bram", "life"), owes("agnes", "bram")]
+
+    found = compute(ledger(rows, AGNES, BRAM), weights, today=TODAY)
+
+    assert found.totals.open == 2
+    assert [(s.who.key, s.net) for s in found.characters] == [("bram", 1.0), ("agnes", -1.0)]
+
+
 def test_band_edges() -> None:
     assert [band_of(m) for m in (0, 3, 4, 6, 7, 36, 37, 400)] == [0, 0, 1, 1, 2, 11, 12, 12]
     assert band_label(11) == "34–36"

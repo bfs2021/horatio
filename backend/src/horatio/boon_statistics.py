@@ -24,7 +24,7 @@ import uuid
 from collections import Counter, defaultdict
 from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -154,27 +154,43 @@ def group_of(value: str | None, who: Who) -> str:
 
 
 def trends(rows: Sequence[Row], weights: Mapping[str, float], today: date) -> list[MonthLine]:
-    """By month and kind, from the first boon entered to this month: registered and
-    settled that month, and open at its end."""
+    """By month and kind, from the first boon entered or settled to this month:
+    registered and settled that month, and open at its end.
+
+    A boon's dates needn't agree (#1020): one entered after today counts as entered
+    this month; one settled before it was entered counts as settled in the month it
+    was settled, and never stood open."""
+
+    def entered_on(r: Row) -> date:
+        assert r.entered_at is not None
+        return min(r.entered_at.date(), today)
+
+    def settled_on(r: Row) -> date | None:
+        closed = r.closed_at.date() if r.closed_at else None
+        return closed if r.state == "settled" and closed is not None and closed <= today else None
+
     entered = [r for r in rows if r.entered_at is not None]
     if not entered:
         return []
-    first = min(r.entered_at.date() for r in entered if r.entered_at)
+    first = min(
+        [entered_on(r) for r in entered] + [d for r in entered if (d := settled_on(r)) is not None]
+    )
     months = months_from(first, today)
+    place = {m: i for i, m in enumerate(months)}
     lines = {(m, k): MonthLine(m, k) for m in months for k in weights}
     for r in entered:
-        assert r.entered_at is not None
         w = weights[r.kind]
-        line = lines[(month_of(r.entered_at.date()), r.kind)]
+        went_in = month_of(entered_on(r))
+        line = lines[(went_in, r.kind)]
         line.registered += 1
         line.registered_weight += w
-        closed = r.closed_at.date() if r.closed_at else None
-        if r.state == "settled" and closed is not None and closed <= today:
-            done = lines[(month_of(closed), r.kind)]
+        if (settled := settled_on(r)) is not None:
+            done = lines[(month_of(settled), r.kind)]
             done.settled += 1
             done.settled_weight += w
+        closed = r.closed_at.date() if r.closed_at else None
         # Open at the end of every month from the one it went in until it closed.
-        for m in months[months.index(month_of(r.entered_at.date())) :]:
+        for m in months[place[went_in] :]:
             if closed is not None and closed <= month_end(m):
                 break
             stood = lines[(m, r.kind)]
@@ -227,13 +243,23 @@ def flow(
     return Flow(groups, matrix, counts)
 
 
+def aware(moment: datetime) -> datetime:
+    """A time with its zone: one without, as an imported row can have, is UTC."""
+    return moment if moment.tzinfo is not None else moment.replace(tzinfo=UTC)
+
+
+def during(moment: datetime | None, game: Game) -> bool:
+    """Whether a time is the game's: from before it starts to after it ends."""
+    return (
+        moment is not None
+        and aware(game.starts_at) - BEFORE_GAME <= aware(moment) <= aware(game.ends_at) + AFTER_GAME
+    )
+
+
 def at_game(r: Row, game: Game) -> bool:
     if r.game_id is not None:
         return r.game_id == game.id
-    return (
-        r.entered_at is not None
-        and game.starts_at - BEFORE_GAME <= r.entered_at <= game.ends_at + AFTER_GAME
-    )
+    return during(r.entered_at, game)
 
 
 def activity(
@@ -250,11 +276,7 @@ def activity(
             found.by_kind[r.kind] = found.by_kind.get(r.kind, 0) + 1
             on[r.debtor] += 1
             on[r.creditor] += 1
-        if (
-            r.state == "settled"
-            and r.closed_at is not None
-            and game.starts_at - BEFORE_GAME <= r.closed_at <= game.ends_at + AFTER_GAME
-        ):
+        if r.state == "settled" and during(r.closed_at, game):
             found.settled += 1
             found.settled_weight = rounded(found.settled_weight + weights[r.kind])
     ranked = sorted(on.items(), key=lambda kv: (-kv[1], people[kv[0]].name.casefold()))
@@ -276,8 +298,13 @@ def compute(
     def gone(r: Row) -> bool:
         return people[r.debtor].departed or people[r.creditor].departed
 
-    # Pending boons were never registered; void ones are never rows.
-    kept = [r for r in ledger.rows if r.state != "pending" and (scope == "everyone" or not gone(r))]
+    # Pending boons were never registered; void ones are never rows. A kind the weights
+    # don't name can't be weighed, so isn't charted.
+    kept = [
+        r
+        for r in ledger.rows
+        if r.state != "pending" and r.kind in weights and (scope == "everyone" or not gone(r))
+    ]
     standing_open = [r for r in kept if r.state == "registered"]
 
     # Each party's standing, as the standings work it out.

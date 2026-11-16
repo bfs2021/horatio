@@ -30,9 +30,20 @@ export type Reveal = (made: BoonOut[], game: string | null) => (() => void) | nu
  * "Register boons" at the end of the ledger's toolbar (#983), for those who may add:
  * the quick entry in a wide dialog, the whole screen on a phone. Leaving it with rows
  * started asks first. Once they are registered it closes, and the toast says how many;
- * where the ledger's search hides them, it offers to show them.
+ * where the ledger's search hides them, it offers to show them. `disabled` (offline in
+ * the Play View, #985), the button can't be pressed; a dialog already open stays.
  */
-export function RegisterBoons({ troupeId, characters, reveal }: { troupeId: string; characters: CharacterChoice[]; reveal: Reveal }) {
+export function RegisterBoons({
+  troupeId,
+  characters,
+  reveal,
+  disabled = false,
+}: {
+  troupeId: string;
+  characters: CharacterChoice[];
+  reveal: Reveal;
+  disabled?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   // Whether a row is started: a ref, so an Escape straight after a change reads it.
   const started = useRef(false);
@@ -47,7 +58,7 @@ export function RegisterBoons({ troupeId, characters, reveal }: { troupeId: stri
   };
   return (
     <>
-      <Button variant="secondary" onClick={() => setOpen(true)}>
+      <Button variant="secondary" disabled={disabled} onClick={() => setOpen(true)}>
         Register boons
       </Button>
       <Dialog title="Register boons" open={open} onClose={leave} wide phoneFull asksToClose>

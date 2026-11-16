@@ -465,7 +465,8 @@ def compute(
         ):
             totals.name_only += 1
 
-    kept = [r for r in rows if scope == "everyone" or not gone(r)]
+    # A kind the weights don't name can't be weighed, so stands nowhere.
+    kept = [r for r in rows if r.kind in weights and (scope == "everyone" or not gone(r))]
     standing_open = [r for r in kept if r.state == "registered"]
     settled = [r for r in kept if r.state == "settled"]
 

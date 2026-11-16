@@ -9,8 +9,8 @@ function Wide() {
   return null;
 }
 
-function Page({ wide }: { wide: number }) {
-  const page = usePageWidth();
+function Page({ wide, widths = [] }: { wide: number; widths?: [string, string] | [] }) {
+  const page = usePageWidth(...widths);
   return (
     <main data-testid="main" className={page.width}>
       <WidePages ask={page.ask}>
@@ -36,6 +36,13 @@ describe("useWidePage", () => {
     expect(screen.getByTestId("main").className).toBe("max-w-7xl");
     rerender(<Page wide={0} />);
     expect(screen.getByTestId("main").className).toBe("max-w-5xl");
+  });
+
+  it("takes a page's own widths (#985)", () => {
+    const { rerender } = render(<Page wide={0} widths={["max-w-3xl", "max-w-3xl lg:max-w-7xl"]} />);
+    expect(screen.getByTestId("main").className).toBe("max-w-3xl");
+    rerender(<Page wide={1} widths={["max-w-3xl", "max-w-3xl lg:max-w-7xl"]} />);
+    expect(screen.getByTestId("main").className).toBe("max-w-3xl lg:max-w-7xl");
   });
 
   it("does nothing outside a layout", () => {

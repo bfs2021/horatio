@@ -35,11 +35,11 @@ function download(href: string) {
  * spreadsheet: the view and filters showing (`query`), or the whole ledger; or the
  * whole ledger as a workbook with the old sheet's tabs (#988). The review queue has a
  * tab of its own (#982), without the menu. The Harpy's file holds only what their ledger shows them; the API
- * leaves out the rest.
+ * leaves out the rest. `disabled`, offline in the Play View (#985).
  */
-export function BoonExportMenu({ troupeId, query }: { troupeId: string; query: LedgerQuery }) {
+export function BoonExportMenu({ troupeId, query, disabled = false }: { troupeId: string; query: LedgerQuery; disabled?: boolean }) {
   return (
-    <ActionMenu label="More for the ledger" variant="ghost" menuClassName="w-60" className="ml-auto">
+    <ActionMenu label="More for the ledger" variant="ghost" menuClassName="w-60" className="ml-auto" disabled={disabled}>
       <MenuGroup label="Export">
         <div aria-hidden="true" className="px-3 pt-1 pb-0.5 text-xs text-mist">
           Export

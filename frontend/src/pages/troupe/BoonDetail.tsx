@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useContext, useState, type ReactNode } from "react";
+import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { BoonEventOut, BoonOut, CharacterChoice } from "../../api/types";
 import { partyIn } from "../../bonds";
@@ -26,6 +27,7 @@ import { SectionLabel } from "../../components/Headings";
 import { Badge, Button, ErrorText, Field, Input, Loading, Select, Textarea } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
+import { useOnline } from "../../offline/connection";
 import { ReviewPanel } from "./BoonReview";
 import { HarpyMode, useAnyText } from "./boonKeeper";
 import { WhoPicker } from "./WhoPicker";
@@ -93,14 +95,20 @@ export function BoonDetail({
   boonId,
   characters,
   frame = inline,
+  partyTo,
 }: {
   troupeId: string;
   boonId: string;
   characters: CharacterChoice[];
   frame?: DetailFrame;
+  /** In the ledger, where each side's name goes: their own page of it (#980). */
+  partyTo?: (party: BoonOut["debtor"]) => string;
 }) {
   const harpy = useContext(HarpyMode);
   const dates = useDates();
+  // Offline in the Play View, its actions can't be chosen (#985).
+  const online = useOnline();
+  const offline = harpy !== null && !online;
   const [doing, setDoing] = useState<Doing | null>(null);
   const boon = useQuery({
     queryKey: ["boon", troupeId, boonId],
@@ -119,7 +127,7 @@ export function BoonDetail({
   const actions = actionsFor(b.state).filter((a) => !harpy || (a === "edit" ? harpy.edit : harpy.settle));
   const menu =
     actions.length === 0 ? null : (
-      <ActionMenu label={`Actions: ${boonLabel(b)}`} trigger="Actions" menuClassName="w-44">
+      <ActionMenu label={`Actions: ${boonLabel(b)}`} trigger="Actions" menuClassName="w-44" disabled={offline}>
         <MenuGroup label="Change it">
           {actions
             .filter((a) => !ENDS.includes(a))
@@ -161,11 +169,20 @@ export function BoonDetail({
       <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
         {sides.map(({ side, party }) => {
           // A side written as text, in full where elsewhere it is cut to a line (#990).
-          if (party.character_id || shortName(party.name) === party.name) return null;
+          const long = !party.character_id && shortName(party.name) !== party.name;
+          if (!long && !partyTo) return null;
           return (
             <div key={side} className="contents">
               <dt className="text-mist">{side === "debtor" ? "Debtor" : "Creditor"}</dt>
-              <dd className="whitespace-pre-line italic wrap-anywhere">{party.name}</dd>
+              <dd className={`wrap-anywhere ${long ? "whitespace-pre-line" : ""} ${party.character_id ? "" : "italic"}`}>
+                {partyTo ? (
+                  <Link to={partyTo(party)} className="underline hover:text-gold">
+                    {party.name}
+                  </Link>
+                ) : (
+                  party.name
+                )}
+              </dd>
             </div>
           );
         })}
@@ -220,17 +237,20 @@ export function BoonDetail({
           </>
         )}
       </dl>
-      {(!harpy || harpy.review || harpy.edit) && (
-        <ReviewPanel
-          troupeId={troupeId}
-          boon={b}
-          characters={characters}
-          review={!harpy || harpy.review}
-          link={!harpy || harpy.role === "harpy" || harpy.edit}
-        />
-      )}
-      {b.status_loss && (!harpy || harpy.settle) && <StatusLoss troupeId={troupeId} boon={b} />}
-      {b.gallant && (!harpy || harpy.settle) && <GallantOffer troupeId={troupeId} boon={b} offer={b.gallant} />}
+      {/* What waits on a decision; offline in the Play View, it waits for a signal (#985). */}
+      <fieldset disabled={offline} className="flex min-w-0 flex-col gap-4 empty:hidden">
+        {(!harpy || harpy.review || harpy.edit) && (
+          <ReviewPanel
+            troupeId={troupeId}
+            boon={b}
+            characters={characters}
+            review={!harpy || harpy.review}
+            link={!harpy || harpy.role === "harpy" || harpy.edit}
+          />
+        )}
+        {b.status_loss && (!harpy || harpy.settle) && <StatusLoss troupeId={troupeId} boon={b} />}
+        {b.gallant && (!harpy || harpy.settle) && <GallantOffer troupeId={troupeId} boon={b} offer={b.gallant} />}
+      </fieldset>
       <div>
         <SectionLabel as="h3">Its log</SectionLabel>
         <BoonLog boon={b} />

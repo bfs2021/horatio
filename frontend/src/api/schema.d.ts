@@ -8782,6 +8782,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/troupes/{troupe_id}/boon-party": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Boon Party
+         * @description A character (`character_id`) or a name only (`name`, the whole name, ignoring
+         *     case) in the troupe's ledger (#980): who they are, whether they have left as the
+         *     caller may know it (a Harpy as the court knows it), and the boons standing that
+         *     they owe and are owed, counted and weighed as the Standings tab does. A character
+         *     must be on the ledger or one the caller may name on a boon.
+         */
+        get: operations["boon_party_api_troupes__troupe_id__boon_party_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/troupes/{troupe_id}/boon-players": {
         parameters: {
             query?: never;
@@ -9067,9 +9091,11 @@ export interface paths {
          * @description A page of the troupe's boons in one view of its ledger: open (standing, both
          *     parties in play), departed (standing, but someone on it is dead or off-field),
          *     settled, void, pending, or all. Narrowed to those a character (`character_id`) or
-         *     a name only (`name`, the whole name) is on; holding `q` in either side's name, the
-         *     reason or the conditions; of any `kind` given (several at once); made between two
-         *     nights; still `flagged` for review; or registered at a game (`game_id`). Sorted by
+         *     a name only (`name`, the whole name) is on, either side or one (`side`: as the
+         *     debtor, what they owe, or as the creditor, what they are owed, #980); holding `q`
+         *     in either side's name, the reason or the conditions; of any `kind` given (several
+         *     at once); made between two nights; still `flagged` for review; or registered at a
+         *     game (`game_id`). Sorted by
          *     `sort` (date, debtor, creditor or kind, by weight) in `direction` (asc or desc;
          *     newest first for the date, A to Z or trivial to life otherwise), ties newest
          *     first, then by id. `limit` boons from `offset` (#978). With them, `totals`: the
@@ -16743,6 +16769,17 @@ export interface components {
             /** Submitted By */
             submitted_by: string | null;
         };
+        /**
+         * BoonOwingOut
+         * @description Standing boons on one side of a party (#980): how many, and what they weigh by
+         *     the troupe's weights (horatio.boon_standings).
+         */
+        BoonOwingOut: {
+            /** Count */
+            count: number;
+            /** Weight */
+            weight: number;
+        };
         /** BoonPairOut */
         BoonPairOut: {
             /** Count */
@@ -16765,6 +16802,25 @@ export interface components {
              * @default
              */
             name: string;
+        };
+        /**
+         * BoonPartyLedgerOut
+         * @description A character's or a name's own page of the ledger (#980), as its keeper sees it:
+         *     who they are, and what they owe and are owed, as the Standings tab counts them.
+         *     `owes` and `owed` are the boons with everyone on them in play (the Standings'
+         *     "active", the ledger's Open view); the `_everyone` pair counts those naming
+         *     someone who has left too (the Standings' "everyone").
+         */
+        BoonPartyLedgerOut: {
+            /** Can Audit */
+            can_audit: boolean;
+            owed: components["schemas"]["BoonOwingOut"];
+            owed_everyone: components["schemas"]["BoonOwingOut"];
+            owes: components["schemas"]["BoonOwingOut"];
+            owes_everyone: components["schemas"]["BoonOwingOut"];
+            party: components["schemas"]["BoonPartyOut"];
+            /** Sheet */
+            sheet: boolean;
         };
         /** BoonPartyOut */
         BoonPartyOut: {
@@ -54232,6 +54288,40 @@ export interface operations {
             };
         };
     };
+    boon_party_api_troupes__troupe_id__boon_party_get: {
+        parameters: {
+            query?: {
+                character_id?: string | null;
+                name?: string;
+            };
+            header?: never;
+            path: {
+                troupe_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoonPartyLedgerOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     set_boon_players_api_troupes__troupe_id__boon_players_put: {
         parameters: {
             query?: never;
@@ -54740,6 +54830,7 @@ export interface operations {
                 view?: "open" | "departed" | "settled" | "void" | "pending" | "all";
                 character_id?: string | null;
                 name?: string;
+                side?: ("debtor" | "creditor") | null;
                 q?: string;
                 kind?: ("trivial" | "minor" | "major" | "blood" | "life")[] | null;
                 made_from?: string | null;

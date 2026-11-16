@@ -7737,6 +7737,25 @@
         "title": "BoonOut",
         "type": "object"
       },
+      "BoonOwingOut": {
+        "description": "Standing boons on one side of a party (#980): how many, and what they weigh by\nthe troupe's weights (horatio.boon_standings).",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "weight": {
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "count",
+          "weight"
+        ],
+        "title": "BoonOwingOut",
+        "type": "object"
+      },
       "BoonPairOut": {
         "properties": {
           "count": {
@@ -7783,6 +7802,45 @@
           }
         },
         "title": "BoonPartyIn",
+        "type": "object"
+      },
+      "BoonPartyLedgerOut": {
+        "description": "A character's or a name's own page of the ledger (#980), as its keeper sees it:\nwho they are, and what they owe and are owed, as the Standings tab counts them.\n`owes` and `owed` are the boons with everyone on them in play (the Standings'\n\"active\", the ledger's Open view); the `_everyone` pair counts those naming\nsomeone who has left too (the Standings' \"everyone\").",
+        "properties": {
+          "can_audit": {
+            "title": "Can Audit",
+            "type": "boolean"
+          },
+          "owed": {
+            "$ref": "#/components/schemas/BoonOwingOut"
+          },
+          "owed_everyone": {
+            "$ref": "#/components/schemas/BoonOwingOut"
+          },
+          "owes": {
+            "$ref": "#/components/schemas/BoonOwingOut"
+          },
+          "owes_everyone": {
+            "$ref": "#/components/schemas/BoonOwingOut"
+          },
+          "party": {
+            "$ref": "#/components/schemas/BoonPartyOut"
+          },
+          "sheet": {
+            "title": "Sheet",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "party",
+          "owes",
+          "owed",
+          "owes_everyone",
+          "owed_everyone",
+          "can_audit",
+          "sheet"
+        ],
+        "title": "BoonPartyLedgerOut",
         "type": "object"
       },
       "BoonPartyOut": {
@@ -86727,6 +86785,78 @@
         ]
       }
     },
+    "/api/troupes/{troupe_id}/boon-party": {
+      "get": {
+        "description": "A character (`character_id`) or a name only (`name`, the whole name, ignoring\ncase) in the troupe's ledger (#980): who they are, whether they have left as the\ncaller may know it (a Harpy as the court knows it), and the boons standing that\nthey owe and are owed, counted and weighed as the Standings tab does. A character\nmust be on the ledger or one the caller may name on a boon.",
+        "operationId": "boon_party_api_troupes__troupe_id__boon_party_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "troupe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Troupe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "character_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Character Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 2000,
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoonPartyLedgerOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Boon Party",
+        "tags": [
+          "boons"
+        ]
+      }
+    },
     "/api/troupes/{troupe_id}/boon-players": {
       "put": {
         "description": "What the troupe's players see of its boon ledger in the Play View, and whether a\nboon's creditor's player may mark it settled there.",
@@ -87522,7 +87652,7 @@
     },
     "/api/troupes/{troupe_id}/boons": {
       "get": {
-        "description": "A page of the troupe's boons in one view of its ledger: open (standing, both\nparties in play), departed (standing, but someone on it is dead or off-field),\nsettled, void, pending, or all. Narrowed to those a character (`character_id`) or\na name only (`name`, the whole name) is on; holding `q` in either side's name, the\nreason or the conditions; of any `kind` given (several at once); made between two\nnights; still `flagged` for review; or registered at a game (`game_id`). Sorted by\n`sort` (date, debtor, creditor or kind, by weight) in `direction` (asc or desc;\nnewest first for the date, A to Z or trivial to life otherwise), ties newest\nfirst, then by id. `limit` boons from `offset` (#978). With them, `totals`: the\nwhole ledger's views counted, whatever the filters, and its open boons by kind\n(#977).",
+        "description": "A page of the troupe's boons in one view of its ledger: open (standing, both\nparties in play), departed (standing, but someone on it is dead or off-field),\nsettled, void, pending, or all. Narrowed to those a character (`character_id`) or\na name only (`name`, the whole name) is on, either side or one (`side`: as the\ndebtor, what they owe, or as the creditor, what they are owed, #980); holding `q`\nin either side's name, the reason or the conditions; of any `kind` given (several\nat once); made between two nights; still `flagged` for review; or registered at a\ngame (`game_id`). Sorted by\n`sort` (date, debtor, creditor or kind, by weight) in `direction` (asc or desc;\nnewest first for the date, A to Z or trivial to life otherwise), ties newest\nfirst, then by id. `limit` boons from `offset` (#978). With them, `totals`: the\nwhole ledger's views counted, whatever the filters, and its open boons by kind\n(#977).",
         "operationId": "troupe_boons_api_troupes__troupe_id__boons_get",
         "parameters": [
           {
@@ -87578,6 +87708,26 @@
               "default": "",
               "title": "Name",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "side",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "debtor",
+                    "creditor"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Side"
             }
           },
           {

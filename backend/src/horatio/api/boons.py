@@ -9,13 +9,14 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select
 
 from horatio import (
     boon_gallant,
     boon_harpy,
     boon_ledger,
     boon_reviews,
+    boon_standings,
     boon_status,
     boon_talons,
     boonbreakers,
@@ -37,7 +38,7 @@ from horatio.models import (
     TroupeMembership,
     User,
 )
-from horatio.permissions import TroupeAction, visible_character
+from horatio.permissions import TroupeAction, can_view_character, visible_character
 
 router = APIRouter(tags=["boons"])
 
@@ -270,6 +271,32 @@ class TroupeBoonsOut(BaseModel):
     counts: dict[str, int]
     # The same for the whole ledger, and its open boons by kind (#977).
     totals: BoonTotalsOut
+
+
+class BoonOwingOut(BaseModel):
+    """Standing boons on one side of a party (#980): how many, and what they weigh by
+    the troupe's weights (horatio.boon_standings)."""
+
+    count: int
+    weight: float
+
+
+class BoonPartyLedgerOut(BaseModel):
+    """A character's or a name's own page of the ledger (#980), as its keeper sees it:
+    who they are, and what they owe and are owed, as the Standings tab counts them.
+    `owes` and `owed` are the boons with everyone on them in play (the Standings'
+    "active", the ledger's Open view); the `_everyone` pair counts those naming
+    someone who has left too (the Standings' "everyone")."""
+
+    party: BoonPartyOut
+    owes: BoonOwingOut
+    owed: BoonOwingOut
+    owes_everyone: BoonOwingOut
+    owed_everyone: BoonOwingOut
+    # The caller may audit this character's boons (#690): never a name only.
+    can_audit: bool
+    # The caller is the troupe's staff and may open the character's sheet.
+    sheet: bool
 
 
 class TroupeBoonSummaryOut(BaseModel):
@@ -622,6 +649,7 @@ def troupe_boons(
     view: View = "open",
     character_id: uuid.UUID | None = None,
     name: str = "",
+    side: Side | None = None,
     q: Annotated[str, Query(max_length=boons.LONGEST_NAME)] = "",
     kind: Annotated[list[Kind] | None, Query()] = None,
     made_from: date | None = None,
@@ -636,9 +664,11 @@ def troupe_boons(
     """A page of the troupe's boons in one view of its ledger: open (standing, both
     parties in play), departed (standing, but someone on it is dead or off-field),
     settled, void, pending, or all. Narrowed to those a character (`character_id`) or
-    a name only (`name`, the whole name) is on; holding `q` in either side's name, the
-    reason or the conditions; of any `kind` given (several at once); made between two
-    nights; still `flagged` for review; or registered at a game (`game_id`). Sorted by
+    a name only (`name`, the whole name) is on, either side or one (`side`: as the
+    debtor, what they owe, or as the creditor, what they are owed, #980); holding `q`
+    in either side's name, the reason or the conditions; of any `kind` given (several
+    at once); made between two nights; still `flagged` for review; or registered at a
+    game (`game_id`). Sorted by
     `sort` (date, debtor, creditor or kind, by weight) in `direction` (asc or desc;
     newest first for the date, A to Z or trivial to life otherwise), ties newest
     first, then by id. `limit` boons from `offset` (#978). With them, `totals`: the
@@ -648,6 +678,7 @@ def troupe_boons(
     filters = boon_ledger.Filters(
         character_id=character_id,
         name=name,
+        side=side,
         q=q,
         kinds=kind or (),
         made_from=made_from,
@@ -693,6 +724,88 @@ def boon_characters(
     ledger, retired ones too: read once, apart from the ledger's pages (#978)."""
     troupe, keeper = ledger_troupe(db, user, troupe_id)
     return choices_for(db, troupe, keeper)
+
+
+def owing_out(counts: Mapping[str, int], weights: Mapping[str, float]) -> BoonOwingOut:
+    return BoonOwingOut(
+        count=sum(counts.values()),
+        weight=boon_standings.rounded(sum(weights[k] * n for k, n in counts.items())),
+    )
+
+
+@router.get("/troupes/{troupe_id}/boon-party")
+def boon_party(
+    troupe_id: uuid.UUID,
+    db: DbSession,
+    user: CurrentUser,
+    character_id: uuid.UUID | None = None,
+    name: Annotated[str, Query(max_length=boons.LONGEST_TEXT)] = "",
+) -> BoonPartyLedgerOut:
+    """A character (`character_id`) or a name only (`name`, the whole name, ignoring
+    case) in the troupe's ledger (#980): who they are, whether they have left as the
+    caller may know it (a Harpy as the court knows it), and the boons standing that
+    they owe and are owed, counted and weighed as the Standings tab does. A character
+    must be on the ledger or one the caller may name on a boon."""
+    troupe, keeper = ledger_troupe(db, user, troupe_id)
+    named = name.strip()
+    if (character_id is None) == (not named):
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "Give a character or a name, not both."
+        )
+    character = None
+    if character_id is not None:
+        character = db.get(Character, character_id)
+        on_ledger = db.scalar(
+            select(Boon.id)
+            .where(
+                Boon.troupe_id == troupe.id,
+                or_(Boon.debtor_id == character_id, Boon.creditor_id == character_id),
+            )
+            .limit(1)
+        )
+        named_by = {c.id for c in choices_for(db, troupe, keeper)} if on_ledger is None else set()
+        if character is None or (on_ledger is None and character_id not in named_by):
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "No such character in this ledger.")
+    else:
+        # As the ledger writes it, if it does.
+        written = db.scalar(
+            select(Boon.debtor_name)
+            .where(Boon.troupe_id == troupe.id, func.lower(Boon.debtor_name) == named.lower())
+            .union(
+                select(Boon.creditor_name).where(
+                    Boon.troupe_id == troupe.id, func.lower(Boon.creditor_name) == named.lower()
+                )
+            )
+            .limit(1)
+        )
+        named = written or named
+    left = boon_ledger.gone(db, troupe.id, keeper.court)
+    weights = boon_standings.weights_of(troupe)
+    sides = {}
+    for side in ("debtor", "creditor"):
+        filters = boon_ledger.Filters(character_id=character_id, name=named, side=side)
+        sides[side] = boon_ledger.standing_by_kind(
+            db, boon_ledger.narrowing(troupe.id, filters), left
+        )
+
+    def everyone(side: str) -> dict[str, int]:
+        open_, departed = sides[side]
+        return {k: n + departed[k] for k, n in open_.items()}
+
+    party = party_out(character, named, keeper.court)
+    party.boonbreaker = character_id in boonbreakers.marked(db, troupe.id)
+    audits = boon_harpy.keeper(db, user, troupe, "audit")
+    return BoonPartyLedgerOut(
+        party=party,
+        owes=owing_out(sides["debtor"][0], weights),
+        owed=owing_out(sides["creditor"][0], weights),
+        owes_everyone=owing_out(everyone("debtor"), weights),
+        owed_everyone=owing_out(everyone("creditor"), weights),
+        can_audit=character is not None
+        and audits is not None
+        and character.id in {c.id for c in choices_for(db, troupe, audits) if c.in_troupe},
+        sheet=character is not None and keeper.staff and can_view_character(db, user, character),
+    )
 
 
 @router.get("/troupes/{troupe_id}/boons/{boon_id}")

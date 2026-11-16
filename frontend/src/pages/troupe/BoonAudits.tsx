@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { BoonAuditSummaryOut } from "../../api/types";
 import { useToast } from "../../components/Toast";
@@ -25,7 +25,11 @@ function useAudits(troupeId: string) {
 export function AuditsCard({ troupeId, inPlay = false }: { troupeId: string; inPlay?: boolean }) {
   const audits = useAudits(troupeId);
   const toast = useToast();
-  const [subject, setSubject] = useState("");
+  // A character's page of the ledger links here to audit them (#980): ?character=<id>.
+  const [params] = useSearchParams();
+  const [asked, setSubject] = useState(params.get("character") ?? "");
+  // Only one they may audit: a link may name another.
+  const subject = audits.data?.subjects.some((s) => s.id === asked) ? asked : "";
   const [givenTo, setGivenTo] = useState("");
   const make = useAction(
     async () => {

@@ -819,6 +819,10 @@ test("storytellers give an NPC powers, and one out of order is marked until it i
   await p.getByLabel("Search Rituals").fill("Abyssal Ichor");
   await p.getByRole("checkbox", { name: "Abyssal: Abyssal Ichor" }).click();
   await slowly(p.getByRole("checkbox", { name: "Abyssal: Abyssal Ichor" })).toBeChecked();
+  // A ritual says what it does too (#1024).
+  await p.getByRole("button", { name: "About Abyssal: Abyssal Ichor" }).click();
+  await expect(p.getByText("used as ink only the supernatural can read")).toBeVisible();
+  await expect(p.getByText("Vol. 2, p. 100")).toBeVisible();
 
   await p.getByLabel("Search Extra in-clan disciplines").fill("Fortitude");
   await p.getByRole("checkbox", { name: "Fortitude", exact: true }).click();

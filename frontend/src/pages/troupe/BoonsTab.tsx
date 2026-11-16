@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { Navigate, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { BoonOut } from "../../api/types";
@@ -10,13 +10,13 @@ import { Pager } from "../../components/Pager";
 import { SidePanel, useSideBySide } from "../../components/SidePanel";
 import { SortHeading } from "../../components/SortHeading";
 import { useWidePage } from "../../components/widePage";
-import { Badge, Button, Card, Empty, ErrorText, Loading } from "../../components/ui";
+import { Badge, Empty, ErrorText, Loading } from "../../components/ui";
 import { useDates } from "../../dates";
 import { BoonDetail, boonLabel, BoonMarks, LEFT } from "./BoonDetail";
-import { QuickEntry } from "./BoonEntry";
+import { RegisterBoons, type Reveal } from "./BoonEntry";
 import { BoonExportMenu } from "./BoonExport";
 import { HarpyMode, type LedgerKeeper } from "./boonKeeper";
-import { ledgerQuery, narrowed, readLedger, sortBy, writeLedger, type LedgerSearch, type LedgerSort } from "./boonSearch";
+import { ledgerQuery, narrowed, readLedger, showing, shows, sortBy, writeLedger, type LedgerSearch, type LedgerSort } from "./boonSearch";
 import { BoonToolbar } from "./BoonToolbar";
 import { BoonTotals } from "./BoonTotals";
 
@@ -83,7 +83,6 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
   const docked = useSideBySide() && !harpy;
   // The top of the list, brought back into sight when paging from its foot.
   const top = useRef<HTMLDivElement>(null);
-  const [adding, setAdding] = useState(false);
   const query = { ...ledgerQuery(search), limit: PAGE, offset: (page - 1) * PAGE };
   const ledger = useQuery({
     queryKey: ["troupe-boons", troupeId, query],
@@ -128,6 +127,11 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
     const way = search.sort === by ? (search.direction === "asc" ? "ascending" : "descending") : undefined;
     return { header: <SortHeading label={label} sort={way} onSort={() => update(sortBy(search, by))} />, label, sort: way };
   };
+  // Boons just registered that the search hides: "Show them" clears it (#983).
+  const reveal: Reveal = (made, game) => (made.every((b) => shows(search, b, game)) ? null : () => update(showing(search, made)));
+  const register = (!harpy || harpy.add) && <RegisterBoons troupeId={troupeId} characters={characters} reveal={reveal} />;
+  // Exports (#986): this view, or the whole ledger; the Harpy's where the troupe lets them (#987).
+  const exports = (!harpy || harpy.export) && <BoonExportMenu troupeId={troupeId} query={query} />;
   const turn = (to: number) => {
     setPage(to);
     const list = top.current;
@@ -158,17 +162,7 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
             )}
           </InfoButton>
         </div>
-        {!adding && (!harpy || harpy.add) && (
-          <Button variant="secondary" onClick={() => setAdding(true)}>
-            Register boons
-          </Button>
-        )}
       </div>
-      {adding && (
-        <Card title="Register boons">
-          <QuickEntry troupeId={troupeId} characters={characters} onDone={() => setAdding(false)} />
-        </Card>
-      )}
 
       <div ref={top} className="flex scroll-mt-4 flex-col gap-3">
         <BoonTotals totals={totals} review={reviews && reviewTo ? { count: toReview, to: reviewTo } : null} search={search} show={update} />
@@ -178,8 +172,15 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
           counts={counts}
           characters={characters}
           games={games.data ?? []}
-          // Exports (#986): this view, or the whole ledger; the Harpy's where the troupe lets them (#987).
-          end={(!harpy || harpy.export) && <BoonExportMenu troupeId={troupeId} query={query} />}
+          // At its right, registering boons (#983) and the menu of exports.
+          end={
+            (register || exports) && (
+              <div className="ml-auto flex items-center gap-2">
+                {register}
+                {exports}
+              </div>
+            )
+          }
         />
       </div>
 

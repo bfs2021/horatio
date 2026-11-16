@@ -97,7 +97,9 @@ export function WhoPicker({
     } else if (e.key === "Enter" && open && options[active]) {
       e.preventDefault();
       pick(options[active]);
-    } else if (e.key === "Escape") {
+    } else if (e.key === "Escape" && open) {
+      // Closes the list only, not a dialog it is in.
+      e.preventDefault();
       setOpen(false);
     }
   };

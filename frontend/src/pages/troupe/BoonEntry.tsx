@@ -1,14 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { useContext, useState } from "react";
+import { useContext, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { api, unwrap } from "../../api/client";
-import type { CharacterChoice } from "../../api/types";
+import type { BoonOut, CharacterChoice } from "../../api/types";
 import { partyIn } from "../../bonds";
 import { emptyRow, KINDS, rowStarted, rowsTotal, type BoonKind, type EntryRow } from "../../boons";
+import { Checkbox } from "../../components/Checkbox";
+import { useConfirm } from "../../components/ConfirmDialog";
 import { DateInput } from "../../components/DateInput";
+import { Dialog } from "../../components/Dialog";
 import { useToast } from "../../components/Toast";
 import { Button, ErrorText, Field, Input, Select } from "../../components/ui";
 import { useDates } from "../../dates";
-import { useAction } from "../../hooks";
+import { useAction, useLeaveWarning } from "../../hooks";
 import { FormButtons } from "./BoonDetail";
 import { HarpyMode, useAnyText } from "./boonKeeper";
 import { WhoPicker } from "./WhoPicker";
@@ -18,11 +21,63 @@ function today(dates: ReturnType<typeof useDates>) {
 }
 
 /**
+ * Boons just registered, and the game they were registered at: a way to show them
+ * where the ledger's search hides them, or null where it shows them.
+ */
+export type Reveal = (made: BoonOut[], game: string | null) => (() => void) | null;
+
+/**
+ * "Register boons" at the end of the ledger's toolbar (#983), for those who may add:
+ * the quick entry in a wide dialog, the whole screen on a phone. Leaving it with rows
+ * started asks first. Once they are registered it closes, and the toast says how many;
+ * where the ledger's search hides them, it offers to show them.
+ */
+export function RegisterBoons({ troupeId, characters, reveal }: { troupeId: string; characters: CharacterChoice[]; reveal: Reveal }) {
+  const [open, setOpen] = useState(false);
+  // Whether a row is started: a ref, so an Escape straight after a change reads it.
+  const started = useRef(false);
+  const [confirmed, confirming] = useConfirm();
+  const close = () => {
+    setOpen(false);
+    started.current = false;
+  };
+  const leave = async () => {
+    if (started.current && !(await confirmed({ title: "Discard these boons?", body: "The rows you've started aren't registered. They'll be lost.", action: "Discard" }))) return;
+    close();
+  };
+  return (
+    <>
+      <Button variant="secondary" onClick={() => setOpen(true)}>
+        Register boons
+      </Button>
+      <Dialog title="Register boons" open={open} onClose={leave} wide phoneFull asksToClose>
+        <QuickEntry troupeId={troupeId} characters={characters} reveal={reveal} started={started} onCancel={leave} onDone={close} />
+      </Dialog>
+      {confirming}
+    </>
+  );
+}
+
+/**
  * Register boons: one, or a whole game's at once. Each row is a boon, made as many
  * times as its count ("1 of 3", "2 of 3"...); rows left untouched are skipped. All
- * register together, or none do.
+ * register together, or none do. `started` says whether any row is started.
  */
-export function QuickEntry({ troupeId, characters, onDone }: { troupeId: string; characters: CharacterChoice[]; onDone: () => void }) {
+function QuickEntry({
+  troupeId,
+  characters,
+  reveal,
+  started: startedRef,
+  onCancel,
+  onDone,
+}: {
+  troupeId: string;
+  characters: CharacterChoice[];
+  reveal: Reveal;
+  started: RefObject<boolean>;
+  onCancel: () => void;
+  onDone: () => void;
+}) {
   const harpy = useContext(HarpyMode);
   const anyText = useAnyText();
   const dates = useDates();
@@ -47,6 +102,12 @@ export function QuickEntry({ troupeId, characters, onDone }: { troupeId: string;
   }));
   const ready = parts.length > 0 && parts.every((p) => p.debtor && p.creditor && p.row.made_on);
   const total = rowsTotal(rows);
+  // Leaving the page with rows started asks first, as closing the dialog does.
+  const unsaved = started.length > 0;
+  useLeaveWarning(unsaved, { inApp: true });
+  useLayoutEffect(() => {
+    startedRef.current = unsaved;
+  });
   const save = useAction(async () => {
     const body = parts.map(({ row, debtor, creditor }) => ({
       debtor: debtor!,
@@ -65,15 +126,17 @@ export function QuickEntry({ troupeId, characters, onDone }: { troupeId: string;
         body: { boons: body, note, game_id: gameId || null },
       }),
     );
+    const show = reveal(made, gameId || null);
     toast({
       message: made.length === 1 ? "Registered a boon." : `Registered ${made.length} boons.`,
+      action: show ? { label: made.length === 1 ? "Show it" : "Show them", onClick: show } : undefined,
     });
     onDone();
   });
   return (
     <form
       aria-label="Register boons"
-      className="mt-3 flex flex-col gap-3 border-t border-ash pt-3"
+      className="flex flex-col gap-3"
       onSubmit={(e) => {
         e.preventDefault();
         save.mutate(undefined);
@@ -156,10 +219,7 @@ export function QuickEntry({ troupeId, characters, onDone }: { troupeId: string;
               </Field>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={row.notify_on_trade} onChange={(e) => set(i, { notify_on_trade: e.target.checked })} />
-                Tell the debtor&apos;s player if it&apos;s traded
-              </label>
+              <Checkbox label="Tell the debtor's player if it's traded" checked={row.notify_on_trade} onChange={(notify_on_trade) => set(i, { notify_on_trade })} />
               {rows.length > 1 && (
                 <Button type="button" variant="ghost" onClick={() => setRows(rows.filter((_, j) => j !== i))}>
                   Remove
@@ -175,7 +235,7 @@ export function QuickEntry({ troupeId, characters, onDone }: { troupeId: string;
         </Button>
       </div>
       <ErrorText error={save.error} />
-      <FormButtons pending={save.isPending} ready={ready} label={total <= 1 ? "Register the boon" : `Register ${total} boons`} onCancel={onDone} />
+      <FormButtons pending={save.isPending} ready={ready} label={total <= 1 ? "Register the boon" : `Register ${total} boons`} onCancel={onCancel} />
     </form>
   );
 }

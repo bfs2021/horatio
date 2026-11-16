@@ -18,7 +18,7 @@ const raw: { what: string; pattern: RegExp; max: number; use: string }[] = [
   {
     what: "<input",
     pattern: /<input\b/g,
-    max: 162,
+    max: 161,
     use: "`Input` (components/ui.tsx), or `Checkbox`, `Toggle`, `RadioList` or `Segmented` for a checkbox or radio",
   },
   { what: "<select", pattern: /<select\b/g, max: 7, use: "`Select` (components/ui.tsx)" },
@@ -26,7 +26,7 @@ const raw: { what: string; pattern: RegExp; max: number; use: string }[] = [
   {
     what: 'type="checkbox"',
     pattern: /type="checkbox"/g,
-    max: 102,
+    max: 101,
     use: "`Checkbox` (components/Checkbox.tsx) or `Toggle` (components/Toggle.tsx)",
   },
   {

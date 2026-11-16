@@ -7,13 +7,16 @@ const PHONE_FULL = "max-sm:m-0 max-sm:h-dvh max-sm:max-h-none max-sm:w-screen ma
  * Its content mounts only while open, so forms inside start fresh each time.
  * A wide one has room for a form of several columns; a `phoneFull` one fills a
  * phone's screen, with a Close button across its foot in place of the ×.
- * `actions` go in its header, beside the title (a menu, say). */
+ * `actions` go in its header, beside the title (a menu, say). One that `asksToClose`
+ * stays open until `open` turns false: Escape goes to `onClose` as the × does, for a
+ * form that asks before its changes are lost. */
 export function Dialog({
   title,
   open,
   onClose,
   wide = false,
   phoneFull = false,
+  asksToClose = false,
   actions,
   children,
 }: {
@@ -22,14 +25,18 @@ export function Dialog({
   onClose: () => void;
   wide?: boolean;
   phoneFull?: boolean;
+  asksToClose?: boolean;
   actions?: ReactNode;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  // Whether it is meant to be open, for a browser that closes it on Escape all the same.
+  const meant = useRef(open);
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
+    meant.current = open;
     if (open && !dialog.open) dialog.showModal();
     if (!open && dialog.open) dialog.close();
   }, [open]);
@@ -41,7 +48,15 @@ export function Dialog({
       // React passes a dialog's close up to the dialogs around it: a dialog opened
       // from another (Move from a person's Characters) closes only itself.
       onClose={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target !== e.currentTarget) return;
+        // Escape twice in a row can't be held back: it shows again, to ask.
+        if (asksToClose && meant.current) e.currentTarget.showModal();
+        onClose();
+      }}
+      onCancel={(e) => {
+        if (!asksToClose || e.target !== e.currentTarget) return;
+        e.preventDefault();
+        onClose();
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();

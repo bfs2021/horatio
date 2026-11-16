@@ -133,7 +133,7 @@ describe("ActionMenu", () => {
     const box = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ left: -120, right: 136, top: 0, bottom: 0, width: 256, height: 0, x: -120, y: 0, toJSON: () => ({}) });
     const { button, menu } = setup();
     fireEvent.click(button);
-    expect(menu()!.style.transform).toBe("translateX(128px)");
+    expect(menu()!.style.marginRight).toBe("-128px");
     width.mockRestore();
     box.mockRestore();
   });

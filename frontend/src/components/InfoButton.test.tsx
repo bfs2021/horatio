@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { InfoButton } from "./InfoButton";
 
 afterEach(cleanup);
@@ -61,6 +61,19 @@ describe("InfoButton", () => {
     fireEvent.pointerDown(document.body);
     expect(button.getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).not.toBe(button);
+  });
+
+  it("slides back on screen by its margins when it would open off the right edge of a phone (#1016)", () => {
+    const width = vi.spyOn(document.documentElement, "clientWidth", "get").mockReturnValue(375);
+    const box = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ left: 199, right: 455, top: 0, bottom: 0, width: 256, height: 0, x: 199, y: 0, toJSON: () => ({}) });
+    const { button, popover } = setup();
+    fireEvent.click(button);
+    // Not a transform, which the page would go on counting where it opened.
+    expect(popover()!.style.transform).toBe("");
+    expect(popover()!.style.marginLeft).toBe("-88px");
+    expect(popover()!.style.marginRight).toBe("88px");
+    width.mockRestore();
+    box.mockRestore();
   });
 
   it("ties the button to its popover", () => {

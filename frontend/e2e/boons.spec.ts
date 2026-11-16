@@ -41,7 +41,7 @@ function ledgerOf(page: Page) {
 }
 
 // The ledger's views (#976), by the value each has: side by side from lg up, a select on a phone.
-const VIEW_NAMES = { open: "Open", departed: "Departed", settled: "Settled", void: "Void", all: "All", review: "To review" } as const;
+const VIEW_NAMES = { open: "Open", departed: "Departed", settled: "Settled", void: "Void", all: "All" } as const;
 type LedgerView = keyof typeof VIEW_NAMES;
 const onPhone = () => test.info().project.name === "phone";
 
@@ -55,6 +55,16 @@ function viewOf(page: Page, view: LedgerView) {
 /** A number in the totals strip above the toolbar (#977), the whole ledger's, named "Open 4" or "Minor 2". */
 function totalOf(page: Page, label: string) {
   return page.getByRole("group", { name: "The whole ledger" }).getByRole("button", { name: new RegExp(`^${label} [\\d,]+$`) });
+}
+
+/** To review's number in the totals strip, which opens its tab (#982). */
+function reviewTotal(page: Page) {
+  return page.getByRole("group", { name: "The whole ledger" }).getByRole("link", { name: /^To review [\d,]+$/ });
+}
+
+/** A tab of the boons screen (#982): Ledger, To review, Standings, Statistics, Boonbreakers or Audits, with any count after it. */
+function boonTab(page: Page, name: string) {
+  return page.getByRole("navigation", { name: "Boons", exact: true }).getByRole("link", { name: new RegExp(`^${name}( \\d+ \\w+)?$`) });
 }
 
 async function showView(page: Page, view: LedgerView) {
@@ -365,6 +375,13 @@ test("the ledger shows a hundred boons a page, with Previous and Next, and the p
   await expect(boons.rows).toHaveCount(100);
   await expect(boons.row("Debtor of month 7 owes Hesper Calloway, minor")).toHaveCount(20);
   await expect(pages.getByRole("button", { name: "Previous" })).toBeDisabled();
+  // The ledger opens on its boons (#982): the first is in sight as the page opens, on a 375 px phone (as tall as
+  // layout.spec.ts's) as at 1280 px.
+  const screenSize = onPhone() ? { width: 375, height: 800 } : { width: 1280, height: 720 };
+  await l.setViewportSize(screenSize);
+  await l.screenshot({ ...shots("ledger-first-screen"), fullPage: false });
+  const first = (await boons.rows.first().boundingBox())!;
+  expect(first.y + first.height).toBeLessThanOrEqual(screenSize.height);
 
   // The next page has the oldest 40, and the URL says which page it is.
   await pages.getByRole("button", { name: "Next" }).click();
@@ -517,9 +534,15 @@ test("the ledger's toolbar searches the reason and conditions, picks kinds, filt
   await expect(boons.rows).toHaveCount(4);
   await totalOf(l, "Settled").click();
   await expect(l.getByText("None here.")).toBeVisible();
-  // To review, for staff, who review: the names only wait there, flagged.
-  await totalOf(l, "To review").click();
-  await expect(l).toHaveURL(/[?&]view=review\b/);
+  // To review, for staff, who review: the names only wait there, flagged, under a tab of its own (#982).
+  await expect(boonTab(l, "To review")).toHaveAccessibleName(/^To review \d+ waiting$/);
+  await reviewTotal(l).click();
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/boons/review$`));
+  await expect(l.getByRole("list", { name: "Boons to review" })).toBeVisible();
+  await expect(boonTab(l, "To review")).toHaveAttribute("aria-current", "page");
+  // An old link to the ledger's To review view opens the tab.
+  await l.goto(`/troupes/${troupe.id}/boons?view=review`);
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/boons/review$`));
   await expect(l.getByRole("list", { name: "Boons to review" })).toBeVisible();
 });
 
@@ -1102,7 +1125,7 @@ test("held for review, a player's report waits, flagged for its unlinked name, u
 
   // The lead sees it waiting, flagged for its name, and accepts it.
   await l.goto(`/troupes/${troupe.id}/boons`);
-  await showView(l, "review");
+  await boonTab(l, "To review").click();
   const row = l.getByRole("list", { name: "Boons to review" }).getByRole("listitem", { name: "To review: Mysterious Stranger owes Corvin Ashby, minor" });
   await expect(row).toContainText("Name not linked (debtor, Mysterious Stranger): No character in the troupe has this name.");
   await expect(row.getByText("Waits for review").first()).toBeVisible();
@@ -1113,9 +1136,11 @@ test("held for review, a player's report waits, flagged for its unlinked name, u
   await accept.getByRole("button", { name: "Accept it" }).click();
   await expect(l.getByText("Accepted: Mysterious Stranger owes Corvin Ashby.")).toBeVisible();
   await expect(l.getByText("Nothing waits for review, and no boon is flagged.")).toBeVisible();
+  // The troupe holds reports for review, so the tab stays, empty.
+  await expect(boonTab(l, "To review")).toHaveAccessibleName("To review");
 
   // It stands in the ledger, with its review in its log; and the report is gone from the player's tab.
-  await showView(l, "open");
+  await boonTab(l, "Ledger").click();
   await ledgerOf(l).row("Mysterious Stranger owes Corvin Ashby, minor").click();
   const log = ledgerOf(l).detail("Mysterious Stranger owes Corvin Ashby, minor").getByRole("list", { name: "Log of Mysterious Stranger owes Corvin Ashby" });
   await expect(log).toContainText("Reported for review");
@@ -1219,6 +1244,22 @@ test("the Harpy keeps the ledger from the Play View as their character, and neve
   await expect(atCourt.getByText("Dead", { exact: true })).toHaveCount(0);
   // Its totals strip too (#977): the boon is still open as the court knows it.
   await expect(totalOf(h, "Departed")).toHaveAccessibleName("Departed 0");
+
+  // Her ledger has staff's tabs, as far as she reaches (#982): To review holds the boon she named by name only,
+  // flagged for a link; Boonbreakers and Audits are hers too.
+  await boons.close();
+  await expect(boonTab(h, "Boonbreakers")).toBeVisible();
+  await expect(boonTab(h, "Audits")).toBeVisible();
+  await boonTab(h, "To review").click();
+  await expect(h).toHaveURL(new RegExp(`/play/characters/${philippa}/ledger/review$`));
+  await expect(h.getByRole("list", { name: "Boons to review" }).getByRole("listitem", { name: /^To review: Edric Thorne owes Lady Ashgrove/ })).toBeVisible();
+  // Given only the review queue, she sees just the queue: no tabs, no ledger.
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/boon-harpy`, { access: "submissions" });
+  await h.goto(`/play/characters/${philippa}/ledger`);
+  await expect(h.getByRole("heading", { name: "Boons to review" })).toBeVisible();
+  await expect(h.getByRole("list", { name: "Boons to review" })).toBeVisible();
+  await expect(h.getByRole("navigation", { name: "Boons", exact: true })).toHaveCount(0);
+  await expect(ledgerOf(h).table).toHaveCount(0);
 });
 
 test("the Harpy gives a Lesser Harpy add-only access: they register a boon as their character but can't edit it, then may settle but not correct it, and the Harpy, kept from it, doesn't see who did (#689, #984, #992)", async ({ browser }) => {
@@ -1294,9 +1335,11 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
   await row.getByLabel("Reason").fill("A word at court");
   await entry.getByRole("button", { name: "Register the boon" }).click();
   await expect(t.getByText("Registered a boon.")).toBeVisible();
-  // She doesn't review, so the totals strip has no To review (#977).
+  // She doesn't review, so the totals strip has no To review (#977); and with the ledger all she reaches (no
+  // review, audits or Boonbreakers, which are the Harpy's), there are no tabs (#982).
   await expect(totalOf(t, "Open")).toBeVisible();
-  await expect(totalOf(t, "To review")).toHaveCount(0);
+  await expect(reviewTotal(t)).toHaveCount(0);
+  await expect(t.getByRole("navigation", { name: "Boons", exact: true })).toHaveCount(0);
 
   // She can open it, but not edit, settle or void it: it has no Actions menu (#979).
   await ledgerOf(t).row("Wren Ashby owes Lady Morrow, minor").click();
@@ -1358,6 +1401,11 @@ test("staff declare a Boonbreaker: their open boons are made void, both ways, an
 
   await l.goto(`/troupes/${troupe.id}`);
   await troupeTab(l, "Boons");
+  // Boonbreakers are a tab of their own (#982), not on the ledger's front.
+  await expect(totalOf(l, "Open")).toHaveAccessibleName("Open 2");
+  await expect(l.getByRole("button", { name: "Declare a Boonbreaker" })).toHaveCount(0);
+  await boonTab(l, "Boonbreakers").click();
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/boons/boonbreakers$`));
   await expect(l.getByText("No Boonbreakers.")).toBeVisible();
 
   // Before declaring it, staff see what it makes void.
@@ -1372,6 +1420,8 @@ test("staff declare a Boonbreaker: their open boons are made void, both ways, an
   const mark = l.getByRole("list", { name: "Boonbreakers" }).getByRole("listitem", { name: "Ottavia Sterne, Boonbreaker" });
   await expect(mark).toContainText("2 boons made void · holds Disgraced for it");
   await expect(mark).toContainText("Refused: Ottavia Sterne owes Lucan Mireaux, major");
+  await expect(boonTab(l, "Boonbreakers")).toHaveAccessibleName("Boonbreakers 1 marked");
+  await boonTab(l, "Ledger").click();
   await expect(totalOf(l, "Open")).toHaveAccessibleName("Open 0");
   await showView(l, "void");
   const voided = ledgerOf(l).row("Ottavia Sterne owes Lucan Mireaux, major");
@@ -1416,9 +1466,11 @@ test("the Harpy audits a character's boons and gives it to another, whose player
   const debt = { debtor: { character_id: isolde }, creditor: { name: "Lady Morrow" }, kind: "major", made_on: "2026-10-03", reason: "A secret kept" };
   await send(lead.page, "POST", `/api/troupes/${troupe.id}/boons`, { boons: [debt], note: "" });
 
-  // Isolde's player, as the Harpy, audits Isolde's boons for Corin from the ledger.
+  // Isolde's player, as the Harpy, audits Isolde's boons for Corin from the ledger's Audits tab (#982).
   const h = harpy.page;
   await h.goto(`/play/characters/${isolde}/ledger`);
+  await boonTab(h, "Audits").click();
+  await expect(h).toHaveURL(new RegExp(`/play/characters/${isolde}/ledger/audits$`));
   await h.getByLabel("Audit", { exact: true }).selectOption({ label: "Isolde Fenwick" });
   await h.getByLabel("Give it to", { exact: true }).selectOption({ label: "Corin Halloway" });
   await h.getByRole("button", { name: "Make the audit" }).click();
@@ -1486,7 +1538,7 @@ test("where the troupe allows it, the Harpy reads the boon standings and statist
   const h = harpy.page;
   await h.goto(`/play/characters/${oriel}/ledger`);
   await expect(h.getByText(`As Harpy of Court Remembers ${run}.`)).toBeVisible();
-  await h.getByRole("group", { name: "Show" }).getByRole("button", { name: "Standings" }).click();
+  await boonTab(h, "Standings").click();
   await expect(h.getByText("Who has left is shown as the court knows it.")).toBeVisible();
   await h.getByRole("radio", { name: "Everyone" }).check();
   const standing = h.getByRole("table", { name: "Standing by character" });
@@ -1497,7 +1549,7 @@ test("where the troupe allows it, the Harpy reads the boon standings and statist
   await expect(h.getByRole("button", { name: "Edit the weights" })).toHaveCount(0);
   await h.screenshot(shots("harpy-standings"));
 
-  await h.getByRole("group", { name: "Show" }).getByRole("button", { name: "Statistics" }).click();
+  await boonTab(h, "Statistics").click();
   await expect(h.getByRole("heading", { name: "Boon statistics" })).toBeVisible();
   await expect(h.locator("main")).not.toContainText("Inactive");
 });

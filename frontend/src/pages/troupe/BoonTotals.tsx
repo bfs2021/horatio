@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import type { BoonTotalsOut } from "../../api/types";
 import { kindName, type BoonKind } from "../../boons";
 import { everyBoon, narrowed, type LedgerSearch } from "./boonSearch";
@@ -14,36 +15,37 @@ const SHOWN = [
 /**
  * The whole ledger at a glance (#977), above its toolbar, as the troupe's old sheet
  * opened its standings: how many boons are open, departed and settled, how many wait
- * under To review (`toReview`, or null for one who doesn't review), then the open
- * boons by kind. It counts the whole ledger, whatever the search, so it holds still
- * (the toolbar's views count within a search). Each number shows its boons: it sets
- * that view or kind, and clears the search and filters so the table holds just those.
+ * under To review (`review`: their number and the To review tab, #982; null for one
+ * who doesn't review), then the open boons by kind. It counts the whole ledger,
+ * whatever the search, so it holds still (the toolbar's views count within a search).
+ * Each number shows its boons: it sets that view or kind, and clears the search and
+ * filters so the table holds just those; To review's opens its tab.
  */
 export function BoonTotals({
   totals,
-  toReview,
+  review,
   search,
   show,
 }: {
   totals: BoonTotalsOut;
-  toReview: number | null;
+  review: { count: number; to: string } | null;
   search: LedgerSearch;
   show: (to: LedgerSearch) => void;
 }) {
   // Whether the table shows one of the strip's numbers now: nothing but a kind narrows it.
   const bare = !narrowed({ ...search, kinds: [] });
+  const look = (on: boolean) => `group inline-flex min-h-8 items-baseline gap-1.5 border-b-2 pt-1 pointer-coarse:min-h-10 ${on ? "border-gold" : "border-transparent hover:border-ash"}`;
+  const says = (label: string, n: number) => (
+    <>
+      <span className="text-xs text-mist group-hover:text-parchment">{label}</span>{" "}
+      <span className="font-semibold text-parchment tabular-nums">{count.format(n)}</span>
+    </>
+  );
   const item = (label: string, n: number, view: LedgerSearch["view"], kinds: BoonKind[] = []) => {
     const on = bare && search.view === view && search.kinds.join() === kinds.join();
     return (
-      <button
-        key={kinds[0] ?? view}
-        type="button"
-        aria-current={on || undefined}
-        onClick={() => show({ ...everyBoon(search), view, kinds })}
-        className={`group inline-flex min-h-8 items-baseline gap-1.5 border-b-2 pt-1 pointer-coarse:min-h-10 ${on ? "border-gold" : "border-transparent hover:border-ash"}`}
-      >
-        <span className="text-xs text-mist group-hover:text-parchment">{label}</span>{" "}
-        <span className="font-semibold text-parchment tabular-nums">{count.format(n)}</span>
+      <button key={kinds[0] ?? view} type="button" aria-current={on || undefined} onClick={() => show({ ...everyBoon(search), view, kinds })} className={look(on)}>
+        {says(label, n)}
       </button>
     );
   };
@@ -51,7 +53,11 @@ export function BoonTotals({
     <div role="group" aria-label="The whole ledger" className="flex flex-wrap items-baseline gap-x-6 text-sm">
       <div className="flex flex-wrap items-baseline gap-x-3 sm:gap-x-4">
         {SHOWN.map((v) => item(v.label, totals.views[v.view] ?? 0, v.view))}
-        {toReview !== null && item("To review", toReview, "review")}
+        {review && (
+          <Link to={review.to} className={look(false)}>
+            {says("To review", review.count)}
+          </Link>
+        )}
       </div>
       <div role="group" aria-label="Open boons by kind" className="flex flex-wrap items-baseline gap-x-3 sm:gap-x-4 lg:border-l lg:border-ash lg:pl-6">
         <span aria-hidden="true" className="text-xs text-mist max-sm:hidden">

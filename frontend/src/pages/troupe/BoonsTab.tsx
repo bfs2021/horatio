@@ -1,23 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { useContext, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router";
+import { Navigate, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { BoonOut } from "../../api/types";
 import { BOON_PAGE, kindName, stateText } from "../../boons";
 import { DataTable, type Column } from "../../components/DataTable";
+import { InfoButton } from "../../components/InfoButton";
 import { Pager } from "../../components/Pager";
 import { SidePanel, useSideBySide } from "../../components/SidePanel";
 import { SortHeading } from "../../components/SortHeading";
 import { useWidePage } from "../../components/widePage";
 import { Badge, Button, Card, Empty, ErrorText, Loading } from "../../components/ui";
 import { useDates } from "../../dates";
-import { AuditsCard } from "./BoonAudits";
 import { BoonDetail, boonLabel, BoonMarks, LEFT } from "./BoonDetail";
 import { QuickEntry } from "./BoonEntry";
 import { BoonExportMenu } from "./BoonExport";
-import { Boonbreakers } from "./Boonbreakers";
 import { HarpyMode, type LedgerKeeper } from "./boonKeeper";
-import { BoonReviewQueue } from "./BoonReview";
 import { ledgerQuery, narrowed, readLedger, sortBy, writeLedger, type LedgerSearch, type LedgerSort } from "./boonSearch";
 import { BoonToolbar } from "./BoonToolbar";
 import { BoonTotals } from "./BoonTotals";
@@ -29,41 +27,24 @@ export type { LedgerKeeper } from "./boonKeeper";
  * departed, settled, void, all), narrowed to a character or a name, a kind, or a span
  * of nights. Staff register boons, a whole game's at once, and open one to edit,
  * trade, pass on, settle, void or reopen it, each with its own log. Only shown while
- * the troupe keeps a ledger. Boons waiting for review, or flagged, are listed under
- * "To review" (#687), and each boon's detail has its review.
+ * the troupe keeps a ledger. Boons waiting for review, or flagged, are under the To
+ * review tab (#687, #982), at `review`, and each boon's detail has its review; an old
+ * link to the ledger's "To review" view (`?view=review`) goes there.
  */
-export function BoonsTab({ troupeId, harpy = null }: { troupeId: string; harpy?: LedgerKeeper | null }) {
+export function BoonsTab({ troupeId, harpy = null, review }: { troupeId: string; harpy?: LedgerKeeper | null; review?: string }) {
+  const [params] = useSearchParams();
+  if (review && params.get("view") === "review") return <Navigate to={review} replace />;
   return (
-    <HarpyMode.Provider value={harpy}>{harpy?.access === "submissions" ? <ReviewOnly troupeId={troupeId} /> : <Ledger troupeId={troupeId} />}</HarpyMode.Provider>
-  );
-}
-
-/** A Harpy given only the review queue (#688): the boons waiting for review or flagged, nothing else of the ledger. */
-function ReviewOnly({ troupeId }: { troupeId: string }) {
-  const review = useQuery({
-    queryKey: ["boon-review", troupeId],
-    queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/boon-review", { params: { path: { troupe_id: troupeId } } })),
-  });
-  if (review.isPending) return <Loading />;
-  if (review.error) return <ErrorText error={review.error} />;
-  const characters = review.data.characters ?? [];
-  return (
-    <div className="flex flex-col gap-4">
-      <Card title="To review">
-        <p className="text-sm text-mist">
-          Boons players reported that wait for review, and boons flagged for a ruling ({BOON_PAGE}). Accept each one, or don&apos;t, with a reason its player
-          sees; link a name to a character; clear a flag. The rest of the ledger is staff&apos;s.
-        </p>
-      </Card>
-      <BoonReviewQueue troupeId={troupeId} detail={(boonId) => <BoonDetail troupeId={troupeId} boonId={boonId} characters={characters} />} />
-    </div>
+    <HarpyMode.Provider value={harpy}>
+      <Ledger troupeId={troupeId} reviewTo={review} />
+    </HarpyMode.Provider>
   );
 }
 
 // A page of the ledger (#978): the boons the API sends at a time.
 const PAGE = 100;
 
-function Ledger({ troupeId }: { troupeId: string }) {
+function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string }) {
   const harpy = useContext(HarpyMode);
   // Room for the table at 1280 px and up (#975).
   useWidePage();
@@ -84,7 +65,6 @@ function Ledger({ troupeId }: { troupeId: string }) {
   // again from the first page.
   const search = readLedger(params);
   const update = (change: Partial<LedgerSearch>) => setParams((now) => writeLedger(now, { ...readLedger(now), ...change }), { replace: true });
-  const reviewing = search.view === "review";
   // The boon open in the side panel, in the URL as ?boon= so it can be linked, and Back
   // closes it (#979). A search or a page leaves it open.
   const opened = params.get("boon");
@@ -120,7 +100,7 @@ function Ledger({ troupeId }: { troupeId: string }) {
     queryKey: ["boon-characters", troupeId],
     queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/boon-characters", { params: { path: { troupe_id: troupeId } } })),
   });
-  const reviews = !harpy || harpy.review;
+  const reviews = (!harpy || harpy.review) && Boolean(reviewTo);
   const review = useQuery({
     queryKey: ["boon-review", troupeId],
     queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/boon-review", { params: { path: { troupe_id: troupeId } } })),
@@ -156,48 +136,56 @@ function Ledger({ troupeId }: { troupeId: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card
-        title="Boon ledger"
-        actions={
-          !adding &&
-          (!harpy || harpy.add) && (
-            <Button variant="secondary" onClick={() => setAdding(true)}>
-              Register boons
-            </Button>
-          )
-        }
-      >
-        <p className="text-sm text-mist">
-          The debts characters owe each other, registered with the Harpy ({BOON_PAGE}). Each boon keeps its own log; what each entry changed shows only to
-          storytellers and assistant storytellers. A boon made off the record isn&apos;t tracked here.
-          {harpy?.role === "harpy" && " You keep it as the troupe's Harpy: what you do is logged as your character. An NPC you can't pick is named by name, for staff to link."}
-          {harpy?.role === "talon" &&
-            ` You keep it as a ${harpy.word} of the troupe, as far as the Harpy lets you: what you do is logged as your character. An NPC you can't pick is named by name, for staff to link.`}
-        </p>
-        {adding && <QuickEntry troupeId={troupeId} characters={characters} onDone={() => setAdding(false)} />}
-      </Card>
-
-      {(!harpy || harpy.role === "harpy") && <Boonbreakers troupeId={troupeId} characters={characters} />}
+      {/* The ledger is its boons (#982): what it is, and how a Harpy keeps it, behind ⓘ. */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg text-gold">Boon ledger</h2>
+          <InfoButton label="About the boon ledger">
+            <span className="block">
+              The debts characters owe each other, registered with the Harpy ({BOON_PAGE}). Each boon keeps its own log; what each entry changed shows only to
+              storytellers and assistant storytellers. A boon made off the record isn&apos;t tracked here.
+            </span>
+            {harpy?.role === "harpy" && (
+              <span className="mt-1 block">
+                You keep it as the troupe&apos;s Harpy: what you do is logged as your character. An NPC you can&apos;t pick is named by name, for staff to link.
+              </span>
+            )}
+            {harpy?.role === "talon" && (
+              <span className="mt-1 block">
+                You keep it as a {harpy.word} of the troupe, as far as the Harpy lets you: what you do is logged as your character. An NPC you can&apos;t pick is named
+                by name, for staff to link.
+              </span>
+            )}
+          </InfoButton>
+        </div>
+        {!adding && (!harpy || harpy.add) && (
+          <Button variant="secondary" onClick={() => setAdding(true)}>
+            Register boons
+          </Button>
+        )}
+      </div>
+      {adding && (
+        <Card title="Register boons">
+          <QuickEntry troupeId={troupeId} characters={characters} onDone={() => setAdding(false)} />
+        </Card>
+      )}
 
       <div ref={top} className="flex scroll-mt-4 flex-col gap-3">
-        <BoonTotals totals={totals} toReview={reviews ? toReview : null} search={search} show={update} />
+        <BoonTotals totals={totals} review={reviews && reviewTo ? { count: toReview, to: reviewTo } : null} search={search} show={update} />
         <BoonToolbar
           search={search}
           update={update}
           counts={counts}
-          toReview={reviews ? toReview : null}
           characters={characters}
           games={games.data ?? []}
           // Exports (#986): this view, or the whole ledger; the Harpy's where the troupe lets them (#987).
-          end={(!harpy || harpy.export) && <BoonExportMenu troupeId={troupeId} query={reviewing ? null : query} />}
+          end={(!harpy || harpy.export) && <BoonExportMenu troupeId={troupeId} query={query} />}
         />
       </div>
 
       <div className={docked && opened ? "grid grid-cols-[minmax(0,1fr)_20rem] items-start gap-4 xl:grid-cols-[minmax(0,1fr)_26rem]" : ""}>
         <div className="flex min-w-0 flex-col gap-4">
-          {reviewing ? (
-            <BoonReviewQueue troupeId={troupeId} detail={(boonId) => <BoonDetail troupeId={troupeId} boonId={boonId} characters={characters} />} />
-          ) : total === 0 ? (
+          {total === 0 ? (
             <Empty>{narrowed(search) ? "No boons match." : search.view === "open" ? "No open boons yet." : "None here."}</Empty>
           ) : (
             <>
@@ -220,8 +208,6 @@ function Ledger({ troupeId }: { troupeId: string }) {
           />
         )}
       </div>
-
-      {(!harpy || harpy.audit) && <AuditsCard troupeId={troupeId} inPlay={!!harpy} />}
     </div>
   );
 }

@@ -91,11 +91,16 @@ function Audits({ characterId, name, online }: { characterId: string; name: stri
   );
 }
 
-/** For the troupe's Harpy (#688), or one of its Lesser Harpies (#689): a way to the ledger they keep, and how many boons wait for review. */
+/**
+ * For the troupe's Harpy (#688), or one of its Lesser Harpies (#689): a way to the
+ * ledger they keep, and how many boons wait for review, with a way to its To review
+ * tab (#982) while some do.
+ */
 function HarpyCard({ characterId, name, ledger, online }: { characterId: string; name: string; ledger: HarpyLedgerOut; online: boolean }) {
   const full = ledger.access === "full";
   const talon = ledger.role === "talon";
   const reviews = ledger.can_review ?? true;
+  const ledgerPage = `/play/characters/${characterId}/ledger`;
   const does = talon
     ? `You keep the troupe's boon ledger as far as the Harpy lets you: see it${ledger.can_add ? ", add boons" : ""}${ledger.can_edit ? ", edit and settle them, and review what players report" : ""}.`
     : full
@@ -108,9 +113,17 @@ function HarpyCard({ characterId, name, ledger, online }: { characterId: string;
         {reviews && (ledger.to_review > 0 ? ` ${ledger.to_review} to review.` : " Nothing waits for review.")}
       </p>
       {online ? (
-        <Link to={`/play/characters/${characterId}/ledger`} className="mt-2 inline-flex min-h-10 items-center text-sm text-gold underline hover:text-parchment">
-          {full ? "Open the boon ledger" : "Review boons"}
-        </Link>
+        <div className="mt-2 flex flex-wrap gap-x-4">
+          <Link to={ledgerPage} className="inline-flex min-h-10 items-center text-sm text-gold underline hover:text-parchment">
+            {full ? "Open the boon ledger" : "Review boons"}
+          </Link>
+          {/* Straight to the ledger's To review tab (#982), while something waits there. */}
+          {full && reviews && ledger.to_review > 0 && (
+            <Link to={`${ledgerPage}/review`} className="inline-flex min-h-10 items-center text-sm text-gold underline hover:text-parchment">
+              Review boons
+            </Link>
+          )}
+        </div>
       ) : (
         <p className="mt-2 text-xs text-mist">The ledger needs a signal.</p>
       )}

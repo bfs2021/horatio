@@ -11,8 +11,8 @@ export type Direction = "asc" | "desc";
 export type LedgerSearch = {
   /** Any part of either side's name, the reason or the conditions. */
   q: string;
-  /** One of the ledger's views, or the review queue (#687). */
-  view: BoonView | "review";
+  /** One of the ledger's views. The review queue (#687) has a tab of its own (#982). */
+  view: BoonView;
   /** None for every kind. */
   kinds: BoonKind[];
   /** A character on either side, by id. */
@@ -48,7 +48,7 @@ export function readLedger(params: URLSearchParams): LedgerSearch {
   const dir = params.get("dir");
   return {
     q: params.get("q") ?? "",
-    view: view === "review" || VIEWS.some((v) => v.value === view) ? (view as LedgerSearch["view"]) : "open",
+    view: VIEWS.some((v) => v.value === view) ? (view as BoonView) : "open",
     // In the order the kinds go, each once.
     kinds: KINDS.map((k) => k.value).filter((k) => kinds.includes(k)),
     character: params.get("character") ?? "",
@@ -100,10 +100,10 @@ export function narrowed(s: LedgerSearch): boolean {
   return Boolean(s.q.trim() || s.kinds.length || moreSet(s));
 }
 
-/** The ledger's query for the API, without its page. While reviewing, the counts are of the open view's filters. */
+/** The ledger's query for the API, without its page. */
 export function ledgerQuery(s: LedgerSearch) {
   return {
-    view: s.view === "review" ? ("open" as const) : s.view,
+    view: s.view,
     ...(s.q.trim() ? { q: s.q.trim() } : {}),
     ...(s.kinds.length ? { kind: s.kinds } : {}),
     ...(s.character ? { character_id: s.character } : {}),

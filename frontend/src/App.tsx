@@ -103,7 +103,7 @@ export const routes = createRoutesFromElements(
       {/* Found by tapping the clan symbol seven times (#537): no link leads here for a player. */}
       <Route path="/print/characters/:characterId/jyhad" element={<ForCharacter><JyhadCardPage /></ForCharacter>} />
       <Route path="/play/characters/:characterId" element={<ForCharacter><PlayPage /></ForCharacter>} />
-      <Route path="/play/characters/:characterId/ledger" element={<ForCharacter><HarpyLedgerPage /></ForCharacter>} />
+      <Route path="/play/characters/:characterId/ledger/*" element={<ForCharacter><HarpyLedgerPage /></ForCharacter>} />
       <Route path="/play/troupes/:troupeId/scenes" element={<ForTroupe><ScenesPage /></ForTroupe>} />
       <Route path="/play/troupes/:troupeId/scenes/:sceneId" element={<ForTroupe><ScenePage /></ForTroupe>} />
       {/* The one scene per troupe from before scenes were named (issue #231). */}

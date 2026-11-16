@@ -33,6 +33,7 @@ import { HEALTH_RULE, healthRows } from "../../health";
 import { useAction } from "../../hooks";
 import { pipsOf } from "../../ratings";
 import { PowerList } from "../play/ReferenceTabs";
+import { DisciplineDots } from "../../components/AboutTrait";
 import { useReference } from "../play/useReference";
 import { rulesLink } from "../rules/rulesBrowser";
 import { AddTraitPanel } from "./AddTraitPanel";
@@ -528,7 +529,16 @@ export function SheetTab({
                                 asked={askedOf(t) ? (askedOf(t)!.to_rating > askedOf(t)!.from_rating ? "adding" : "removing") : undefined}
                                 points={pointsOf(t)}
                                 about={aboutOf(t)}
-                                more={t.category === "disciplines" && !inCart(t) ? <SheetPowers characterId={character.id} discipline={t.name} /> : undefined}
+                                more={
+                                  t.category === "disciplines" && !inCart(t) ? (
+                                    <SheetPowers
+                                      characterId={character.id}
+                                      splat={character.splat}
+                                      discipline={t.name}
+                                      next={Math.max(t.rating ?? 0, plannedRating(lines, t) ?? 0) + 1}
+                                    />
+                                  ) : undefined
+                                }
                                 exception={exceptionOf(t)}
                                 planned={plannedRating(lines, t)}
                                 swappedTo={swappedTo(lines, t.category, t.name)}
@@ -1015,15 +1025,21 @@ function TraitRow({
 }
 
 /**
- * A discipline's powers, by dot, as the Play View lists them. Asked for only once
- * the discipline is opened, from the Play View's reference of the saved sheet.
+ * A discipline's powers, by dot, as the Play View lists them, and the power its
+ * `next` dot would give (#1000). Asked for only once the discipline is opened, from
+ * the Play View's reference of the saved sheet.
  */
-function SheetPowers({ characterId, discipline }: { characterId: string; discipline: string }) {
+function SheetPowers({ characterId, splat, discipline, next }: { characterId: string; splat: string; discipline: string; next: number }) {
   const { reference, loading, error } = useReference(characterId);
   if (loading) return <p>Loading its powers…</p>;
   if (!reference) return <ErrorText error={error} />;
   const found = reference.disciplines.find((d) => d.name === discipline);
-  return found?.powers.length ? <PowerList discipline={found} /> : null;
+  return (
+    <>
+      {found?.powers.length ? <PowerList discipline={found} /> : null}
+      <DisciplineDots splat={splat} discipline={discipline} from={next} test={false} />
+    </>
+  );
 }
 
 /**

@@ -4,8 +4,7 @@ import { useClanName } from "../../../components/ClanNames";
 import type { TraitOut } from "../../../api/types";
 import { Input, Rating } from "../../../components/ui";
 import { usePreferences } from "../../../hooks";
-import { HouseWording } from "../../../components/TroupeChange";
-import { bookSummary } from "../../../houseWording";
+import { AboutButton, AboutTrait, hasAbout } from "../../../components/AboutTrait";
 import { detailNeed } from "../fields";
 import { choose, clear, fieldProblems, move, picksLeft, seatPicks, traitOf, type Allowed, type Picks } from "./logic";
 import type { Held, RatingBar } from "./DotGrid";
@@ -54,11 +53,14 @@ export function SlotGrid({
   lost = [],
   bought = new Set(),
   misfits = new Set(),
+  splat,
 }: {
   title: string;
   showTitle?: boolean;
   traits: TraitOut[];
   allowed: Allowed;
+  /** The rule set's splat: a discipline's choice says what powers the slot's dots give. */
+  splat?: string;
   picks: Picks;
   onChange: (picks: Picks) => void;
   /** Group each slot's choices under headings, such as skills by attribute. */
@@ -225,6 +227,8 @@ export function SlotGrid({
                     choices={options(rating, key)}
                     locked={key && bought.has(key) ? undoFirst(key) : undefined}
                     onChoose={(value) => place(rating, i, key, value)}
+                    splat={splat}
+                    rating={rating}
                     onClear={key ? () => takeBack(key) : undefined}
                     pick={key}
                   >
@@ -384,8 +388,9 @@ function ClearButton({ label, onClear, disabled }: { label: string; onClear: () 
 /**
  * A slot's choice: a box that opens a list of the traits as soon as it is tapped,
  * typing narrowing it. Traits that can't be chosen stay listed, greyed, saying why;
- * each one's description opens from the list. The list fits the screen's width, so
- * it works on a phone.
+ * what each one does opens from the list, several at once, without choosing it (for a
+ * discipline, the powers the slot's `rating` gives, #1000). The list fits the
+ * screen's width, so it works on a phone.
  */
 export function TraitChoice({
   label,
@@ -399,6 +404,8 @@ export function TraitChoice({
   pick: held,
   locked,
   disabled = false,
+  splat,
+  rating,
 }: {
   label: string;
   placeholder: string;
@@ -414,8 +421,11 @@ export function TraitChoice({
   /** Why the pick in the slot can't change now: every other choice is greyed, saying so. */
   locked?: string;
   disabled?: boolean;
+  /** The rule set's splat, for a discipline's powers. */
+  splat?: string;
+  /** The slot's rating: the dots a discipline chosen here gives. */
+  rating?: number;
 }) {
-  const named = useClanName();
   const listId = useId();
   const inputId = `${listId}-box`;
   const list = useRef<HTMLDivElement>(null);
@@ -423,7 +433,8 @@ export function TraitChoice({
   // What is typed while the list is open; the choice shows otherwise.
   const [typed, setTyped] = useState<string | null>(null);
   const [active, setActive] = useState(-1);
-  const [about, setAbout] = useState<string | null>(null);
+  // The choices whose "about" is open: several at once.
+  const [about, setAbout] = useState<ReadonlySet<string>>(new Set());
   const [place, setPlace] = useState<CSSProperties>({});
   const closing = useRef<ReturnType<typeof setTimeout>>(undefined);
   const q = (typed ?? "").trim().toLowerCase();
@@ -440,7 +451,7 @@ export function TraitChoice({
     setOpen(false);
     setTyped(null);
     setActive(-1);
-    setAbout(null);
+    setAbout(new Set());
   };
   const pick = (c: Choice) => {
     if (c.disabled) return;
@@ -539,8 +550,8 @@ export function TraitChoice({
                     .map((c) => {
                       const index = pickable.indexOf(c);
                       const trait = c.trait;
-                      const described = !!trait && !!(bookSummary(trait.description, trait.changed) || trait.changed);
-                      const opened = about === c.value;
+                      const described = !!trait && hasAbout(trait, splat);
+                      const opened = about.has(c.value);
                       const aboutId = `${listId}-about-${c.value}`.replace(/\W+/g, "-");
                       const noteId = `${listId}-why-${c.value}`.replace(/\W+/g, "-");
                       const name = c.at === undefined ? c.label : `${c.label} (at ${c.at})`;
@@ -566,18 +577,17 @@ export function TraitChoice({
                             {c.hint && <span className="ml-2 text-xs text-mist">{c.hint}</span>}
                           </div>
                           {described && (
-                            <button
-                              type="button"
-                              aria-label={`About ${c.label}`}
-                              aria-expanded={opened}
-                              aria-controls={aboutId}
-                              onClick={() => setAbout(opened ? null : c.value)}
-                              className="mt-1 mr-1 grid h-8 w-8 place-items-center rounded text-mist hover:bg-ash hover:text-parchment pointer-coarse:h-10 pointer-coarse:w-10"
-                            >
-                              <svg viewBox="0 0 20 20" aria-hidden className={`h-4 w-4 transition-transform ${opened ? "rotate-90" : ""}`}>
-                                <path d="M7.5 4.5 13 10l-5.5 5.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </button>
+                            <AboutButton
+                              name={c.label}
+                              open={opened}
+                              controls={aboutId}
+                              onToggle={() => {
+                                const next = new Set(about);
+                                if (!next.delete(c.value)) next.add(c.value);
+                                setAbout(next);
+                              }}
+                              className="mt-1 mr-1"
+                            />
                           )}
                           {/* Beside the option, not in it: its links (to the step a refusal is because of) stay links. */}
                           {c.note && (
@@ -585,12 +595,7 @@ export function TraitChoice({
                               {c.note}
                             </p>
                           )}
-                          {opened && trait && (
-                            <div id={aboutId} className="basis-full px-3 pb-2 text-xs leading-relaxed text-mist">
-                              {bookSummary(trait.description, trait.changed) && <p>{named(trait.description!)}</p>}
-                              <HouseWording change={trait.changed} className="mt-1" />
-                            </div>
-                          )}
+                          {opened && trait && <AboutTrait id={aboutId} trait={trait} splat={splat} to={rating} className="basis-full px-3 pb-2" />}
                         </li>
                       );
                     })}

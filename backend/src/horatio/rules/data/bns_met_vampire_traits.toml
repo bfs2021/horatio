@@ -6670,138 +6670,206 @@ properties = { attribute = "Physical" }
 [[traits]]
 category = "techniques"
 name = "Abrupt Internment"
+description = "1 Blood, standard action, Social + Survival against Physical + Dodge: sink a target knee-deep into the ground, grappled while you act freely; escaping is a static Physical + Brawl or Melee test. Or a simple action to sink objects into the earth."
+page_reference = "Vol. 2 Issue 1, p. 56"
 
 [[traits]]
 category = "techniques"
 name = "Alchemical Attunement"
+description = "1 Blood and three standard actions: for an hour your skin becomes one of seven alchemical metals, each with its own benefit (copper, gold, iron, lead, quicksilver, silver or tin). A major transformation."
+page_reference = "Vol. 2 Issue 1, pp. 57-58"
 
 [[traits]]
 category = "techniques"
 name = "Alpha of the Pack"
+description = "Tame Spirit can call a second Beast Spirit, of stock rating half your Spiritus powers (rounded up); you and your spirits can talk across five miles."
+page_reference = "Vol. 2, p. 83"
 
 [[traits]]
 category = "techniques"
 name = "An Da Shealladh"
+description = "1 Blood, standard action, opposed Dementation test: learn the target's Archetype, derangements, current Beast traits and current Willpower."
+page_reference = "225"
 
 [[traits]]
 category = "techniques"
 name = "Animal Succulence"
+description = "Animal blood is as potent for you as human blood, and feeding on animals takes no downtime action."
+page_reference = "225"
 
 [[traits]]
 category = "techniques"
 name = "Animal Swarm"
+description = "With Shape of the Beast, become a swarm of your animal form, one animal per Celerity dot, each with its own actions, your Mental and Social traits and 5 health levels; lose 2 Blood for each one not taken back in when you reform."
+page_reference = "225"
 
 [[traits]]
 category = "techniques"
 name = "Armor of Darkness"
+description = "1 Blood on your initiative, no action, and 1 Blood a turn to keep it: immune to sunlight damage, and fire's aggravated damage is normal damage."
+page_reference = "225-226"
 
 [[traits]]
 category = "techniques"
 name = "Badger's Hide"
+description = "1 Blood, simple action: for 15 minutes, the next damage you take is 2 normal or 1 aggravated less, before Fortitude. A minor transformation."
+page_reference = "Vol. 2 Issue 1, p. 58"
 
 [[traits]]
 category = "techniques"
 name = "Banshee's Wail"
+description = "1 Blood, standard action: mark a willing ally; the next one to damage them is hit by your Voice of Madness, gaining a fear derangement on a success. Lasts until sunrise; one at a time."
+page_reference = "226"
 
 [[traits]]
 category = "techniques"
 name = "Beast's Vigor"
+description = "1 Blood, simple action: for five minutes, a simple action moves up to 3 damage to an animal ghoul Retainer within 15 steps, for a Beast trait each time."
+page_reference = "Vol. 2 Issue 1, p. 58"
 
 [[traits]]
 category = "techniques"
 name = "Bestial Allure"
+description = "Always on: within three steps of an animal you called with Beckoning, Awe costs no Blood, and once a turn the animal can assist you in a Social challenge."
+page_reference = "Vol. 2 Issue 1, p. 59"
 
 [[traits]]
 category = "techniques"
 name = "Black Mist"
+description = "2 Blood and two standard actions: a still Shroud of Night for an hour: a gloom that dazes mortals in a room, a haze that panics them on a floor, or an outdoor fog bank that halves sunlight damage."
+page_reference = "Vol. 2 Issue 1, pp. 59-60"
 
 [[traits]]
 category = "techniques"
 name = "Blind the Sun"
+description = "1 Blood, standard action: for eight hours it stays night in the one room you are in, so you stay awake there without penalty."
+page_reference = "226"
 
 [[traits]]
 category = "techniques"
 name = "Bliss"
+description = "Five standard actions in a trance before art of Crafts or Performance 3 or more: until sunrise, a free retest against your next frenzy; or give it to someone in sight about to frenzy."
+page_reference = "Vol. 2, p. 89"
 
 [[traits]]
 category = "techniques"
 name = "Blood Tempering"
+description = "1 Blood, standard action: for an hour, make old or damaged equipment work with two qualities of your choice, give an improvised weapon two weapon qualities, make the wrong tool fit, or make an item unbreakable."
+page_reference = "Vol. 2 Issue 1, pp. 60-61"
 
 [[traits]]
 category = "techniques"
 name = "Bonecraft Prodigy"
+description = "Your Bonecraft can also give Defensive Quills, Deformed, Elongated Gait or Second Stomach, each costing health levels and counting toward its limit."
+page_reference = "Vol. 2 Issue 1, pp. 61-62"
 
 [[traits]]
 category = "techniques"
 name = "Bull's Eye"
+description = "1 Blood, once a turn: a firearms attack on one target hits automatically, or turns a normal success into an exceptional one. Not with Automatic or Spray weapons."
+page_reference = "226"
 
 [[traits]]
 category = "techniques"
 name = "Bullet Time"
+description = "1 Blood, even before your Everyman initiative: +5 to Dodge tests for the rest of the turn, Celerity rounds included; ends if you spend an action moving."
+page_reference = "Vol. 2 Issue 1, p. 62"
 
 [[traits]]
 category = "techniques"
 name = "Call Upon the Changeling Soul"
+description = "While you follow Humanity at 3 or more, powers that read what you are show you as a changeling; with Lore: fae, as a kith of your choice."
+page_reference = "Vol. 2 Issue 1, p. 62"
 
 [[traits]]
 category = "techniques"
 name = "Catch a Whiff of Madness"
+description = "Always on: with Aura Perception, you can also ask whether the target is under a mind or emotion-altering power, though not whose or what."
+page_reference = "Vol. 2, p. 87"
 
 [[traits]]
 category = "techniques"
 name = "Control the Savage Beast"
+description = "1 Blood, standard action, no test: choose whom a vampire in natural frenzy near you attacks, feeds on or flees from. Not frenzy caused by Animalism."
+page_reference = "226-227"
 
 [[traits]]
 category = "techniques"
 name = "Crazy Like a Fox"
+description = "1 Blood, standard action: for an hour, no one has or can gain familiarity with you, and powers that need it fail; you gain Extreme Paranoia while it lasts."
+page_reference = "Vol. 2 Issue 1, pp. 62-63"
 
 [[traits]]
 category = "techniques"
 name = "Cunning Counselor"
+description = "After five minutes listening, 1 Blood and three standard actions of advice: a willing target gains up to 3 attribute dots (a Stock NPC 1 level) for up to 7 days, longer if they follow your advice."
+page_reference = "Vol. 2, p. 91"
 
 [[traits]]
 category = "techniques"
 name = "Death's Caress"
+description = "After a successful Brawl challenge, apply Withering without a grapple, Blood or action."
+page_reference = "Vol. 2 Issue 1, p. 63"
 
 [[traits]]
 category = "techniques"
 name = "Death's Grip"
+description = "When someone breaks your grapple after you used Thanatosis on them, they take 1 aggravated damage that can't be reduced."
+page_reference = "227"
 
 [[traits]]
 category = "techniques"
 name = "Denial of Aphrodite's Favor"
+description = "Ignore Awe automatically, and +3 to resist Dread Gaze and Entrancement."
+page_reference = "227"
 
 [[traits]]
 category = "techniques"
 name = "Devious Feint"
+description = "Spend 1 Blood instead of a Willpower to use a combat maneuver."
+page_reference = "227"
 
 [[traits]]
 category = "techniques"
 name = "Displacement Aura"
+description = "Always on, unless grappled: defend with Mental instead of Physical, and Stealth instead of Dodge."
+page_reference = "Vol. 2 Issue 1, p. 63"
 
 [[traits]]
 category = "techniques"
 name = "Distant Friend"
+description = "1 more Blood within a turn of a successful Entrancement: for a month, whenever the target speaks of you, by any means, they are entranced again."
+page_reference = "Vol. 2, p. 90"
 
 [[traits]]
 category = "techniques"
 name = "Dynamic Form"
+description = "2 Blood, standard action: take the fight or flight form of an animal between a bat and a lion, with Shape of the Beast's bonuses; 2 Blood and a standard action to change again. A major transformation."
+page_reference = "Vol. 2 Issue 1, pp. 63-64"
 
 [[traits]]
 category = "techniques"
 name = "Earworm"
+description = "1 Blood, standard action, Social + Subterfuge against Social + Willpower: the target has an Obsession derangement for your song for 10 minutes, plus 10 for each Performance: Singing dot."
+page_reference = "Vol. 2 Issue 1, p. 64"
 
 [[traits]]
 category = "techniques"
 name = "Echo Psychosis"
+description = "When someone spends Willpower against your Awe, target them with Passion at once; when someone fails to break your Majesty, target them with the Haunting. No Blood or action, but the tests as usual."
+page_reference = "227"
 
 [[traits]]
 category = "techniques"
 name = "Enervation of Psyche"
+description = "1 Blood, standard action, opposed Auspex test: 2 normal damage that can't be reduced, and the target loses a Willpower (or can't regain any for 10 minutes if they have none)."
+page_reference = "Vol. 2 Issue 1, p. 64"
 
 [[traits]]
 category = "techniques"
 name = "Enhance the Wild Ride"
+description = "1 Blood and three standard actions marking an animal: when you Subsume the Spirit into it next turn, it gains your Celerity, Fortitude or Potence powers, and your own body loses them meanwhile."
+page_reference = "Vol. 2 Issue 1, pp. 64-65"
 
 [[traits]]
 category = "techniques"
@@ -6812,90 +6880,134 @@ page_reference = "Vol. 2, p. 75"
 [[traits]]
 category = "techniques"
 name = "Escape Clause"
+description = "No action: when a power compels you (Dominate, Dread Gaze, Majesty, a Blood Contract), ignore it for a turn, taking 1 damage that can't be reduced, plus 1 for each earlier use this game."
+page_reference = "Vol. 2 Issue 1, p. 65"
 
 [[traits]]
 category = "techniques"
 name = "Evil Eye"
+description = "1 Blood, standard action, Mental + Medicine against Mental + Willpower: apply Withering or Necrosis with a glare, without a grapple."
+page_reference = "Vol. 2 Issue 1, p. 65"
 
 [[traits]]
 category = "techniques"
 name = "Eye of Unforgiving Heaven"
+description = "1 Blood, standard action, Mental + Investigation against Physical + Dodge: 3 aggravated damage and blindness, or 3 damage to up to three targets close together with only one blinded."
+page_reference = "Vol. 2 Issue 1, pp. 65-66"
 
 [[traits]]
 category = "techniques"
 name = "Familiar Faces"
+description = "1 Blood, simple action, blood on a statue's eyes: for 30 days, a simple action lets you see through them (with Heightened Senses too), but not your own surroundings."
+page_reference = "Vol. 2 Issue 1, p. 66"
 
 [[traits]]
 category = "techniques"
 name = "Fearful Blow"
+description = "1 Blood after a Brawl hit that does damage: use Dread Gaze on the target at once, an opposed Presence test, no action. Not in Celerity rounds."
+page_reference = "227"
 
 [[traits]]
 category = "techniques"
 name = "Feast of Shadow"
+description = "Simple and standard action: gain up to 10 Blood from the Abyss and +5 Blood pool for five minutes, but a Beast trait that lasts a game session or two weeks."
+page_reference = "227-228"
 
 [[traits]]
 category = "techniques"
 name = "Feed the Blighted Wolf"
+description = "Gain a Beast trait instead of spending Willpower to retest a Physical challenge; no more once it would cost you Humanity that game."
+page_reference = "Vol. 2 Issue 1, p. 67"
 
 [[traits]]
 category = "techniques"
 name = "Fenrir's Boon"
+description = "1 Blood, standard action: your animal Retainers and animals under your Animalism in sight get +2 to Brawl and do aggravated damage."
+page_reference = "228"
 
 [[traits]]
 category = "techniques"
 name = "Feral Ichor"
+description = "When you use Feral Claws or Shape of the Beast, coat your claws and fangs with Scorpion's Touch (or Baal's Bloody Talons) at no extra cost; 1 Blood replenishes it."
+page_reference = "Vol. 2 Issue 1, pp. 66-67"
 
 [[traits]]
 category = "techniques"
 name = "Final Strike"
+description = "1 Willpower when you are incapacitated, put in torpor or killed: take one standard action just before it happens. Again only after a full day's sleep."
+page_reference = "Vol. 2 Issue 1, pp. 67-68"
 
 [[traits]]
 category = "techniques"
 name = "Fist of Stone"
+description = "After a Brawl hit, trade damage for knockback: each point you give up pushes the target up to 2 steps."
+page_reference = "228"
 
 [[traits]]
 category = "techniques"
 name = "Flame's Bane"
+description = "1 Blood, simple action: for an hour, immune to fire damage and fire frenzy; Flaming and Incendiary weapons do normal damage."
+page_reference = "228"
 
 [[traits]]
 category = "techniques"
 name = "Give 'Em Hell"
+description = "1 Blood, standard action, Social + Leadership against Social + Willpower: for this turn and two more, you and allies who can hear you attack the target as if it were one size larger."
+page_reference = "Vol. 2 Issue 1, pp. 67-68"
 
 [[traits]]
 category = "techniques"
 name = "Guardian Lion"
+description = "1 Blood and three standard actions: animate an animal statue as a level 3 Retainer with Full Body, Hardened and Ballistic armor, until the next sunset. One at a time."
+page_reference = "228"
 
 [[traits]]
 category = "techniques"
 name = "Guardian's Vigil"
+description = "1 Blood and three standard actions: while you stay within three steps of the spot, sense anyone coming within five steps, even hidden, can't be surprised, and assist a defender once a turn without an action."
+page_reference = "Vol. 2 Issue 1, p. 68"
 
 [[traits]]
 category = "techniques"
 name = "Harbinger of Grace"
+description = "1 Blood, simple action: for 10 minutes you seem a divine messenger of mercy; Stock NPCs of 4 or less can't oppose you, and helpful powers on one blessed target cost no Blood. Auspex can see through it."
+page_reference = "Vol. 2 Issue 1, pp. 68-69"
 
 [[traits]]
 category = "techniques"
 name = "Harbinger of Vengeance"
+description = "1 Blood, simple action: for 10 minutes you seem a divine avenger; Stock NPCs of 4 or less can't oppose you, and powers aimed at one condemned target cost no Blood. Auspex can see through it."
+page_reference = "Vol. 2 Issue 1, p. 69"
 
 [[traits]]
 category = "techniques"
 name = "Healer's Intuition"
+description = "Always on: you and those in Telepathy with you get +3 against frenzy and degeneration; you can use Sense Vitality on them, and heal them with your own Blood, at any distance."
+page_reference = "Vol. 2 Issue 1, pp. 69-70"
 
 [[traits]]
 category = "techniques"
 name = "Illusory Augmentation"
+description = "1 Blood, simple action: for an hour, your weapon has one more melee or ranged quality of your choice, as an illusion; no use against someone who sees through it."
+page_reference = "Vol. 2 Issue 1, p. 70"
 
 [[traits]]
 category = "techniques"
 name = "Inertial Tampering"
+description = "1 Blood, standard action, Physical + Survival against Physical + Willpower: -2 initiative for each Temporis dot, power and technique you have, this turn and the next four."
+page_reference = "Vol. 2 Issue 1, p. 70"
 
 [[traits]]
 category = "techniques"
 name = "Instantaneous Transformation"
+description = "Once an hour, with Celerity active, a simple action takes on one of your major transformations without its Blood or action."
+page_reference = "Vol. 2, p. 90"
 
 [[traits]]
 category = "techniques"
 name = "Instinctive Command"
+description = "Use Command as your action in Celerity rounds."
+page_reference = "229"
 
 [[traits]]
 category = "techniques"
@@ -6906,86 +7018,128 @@ page_reference = "Vol. 2, p. 76"
 [[traits]]
 category = "techniques"
 name = "Ligeia's Lament"
+description = "Use Command or Mesmerism through Phantom Speaker, over a phone or across a noisy room, while the target is paying attention to you."
+page_reference = "229"
 
 [[traits]]
 category = "techniques"
 name = "Madman's Quill"
+description = "A work of art you make carries Passion, the Haunting or Voice of Madness against anyone who looks at it a full turn, for 60 days; as many at once as your Empathy dots."
+page_reference = "Vol. 2, p. 87"
 
 [[traits]]
 category = "techniques"
 name = "Manic Episode"
+description = "Always on: when you activate Celerity, add your Derangement traits to your initiative; you can gain a Derangement trait instead of spending Blood for Celerity 1 to 5."
+page_reference = "Vol. 2 Issue 1, p. 71"
 
 [[traits]]
 category = "techniques"
 name = "Martyr's Defiance"
+description = "1 Blood, simple action: for five turns, take all the damage from an attack on a willing ally within three steps, reducing it with your own Fortitude and the like."
+page_reference = "Vol. 2 Issue 1, p. 72"
 
 [[traits]]
 category = "techniques"
 name = "Mass Hypnosis"
+description = "Eyes of the Serpent on up to three supernatural targets whose Gaze and Focus you have, or twice your Subterfuge in mortals; one Willpower retest covers all. You must stay still; up to five minutes."
+page_reference = "Vol. 2 Issue 1, p. 71"
 
 [[traits]]
 category = "techniques"
 name = "Master of Illusion"
+description = "With Celerity active, use your standard action in the first Celerity round to direct an illusion or attack with Horrid Reality."
+page_reference = "Vol. 2 Issue 1, pp. 71-72"
 
 [[traits]]
 category = "techniques"
 name = "Maw of the Anaconda"
+description = "1 Blood, simple action: your bite gains Brutal and Deadly, and you drain 1 more Blood each action you feed. A minor transformation."
+page_reference = "Vol. 2 Issue 1, p. 72"
 
 [[traits]]
 category = "techniques"
 name = "Memory Rift"
+description = "After a successful Vanish from the Mind's Eye, a simple action uses Forgetful Mind on the same target, without Gaze and Focus, to erase the last 10 minutes of you, staying unseen. Not in Celerity rounds."
+page_reference = "Vol. 2, p. 88"
 
 [[traits]]
 category = "techniques"
 name = "Mercurial Vitality"
+description = "1 Blood, simple action: +1 Potence and +1 Fortitude for the turn, no higher than 5."
+page_reference = "229"
 
 [[traits]]
 category = "techniques"
 name = "Misleading Wounds"
+description = "Whenever you take damage or heal, choose how hurt you seem; Auspex can see through it as through Obfuscate."
+page_reference = "230"
 
 [[traits]]
 category = "techniques"
 name = "Misplaced Affection"
+description = "When you entrance someone, a willing ally becomes the one they are entranced by, and must keep the power's terms."
+page_reference = "229-230"
 
 [[traits]]
 category = "techniques"
 name = "Monologue"
+description = "1 Blood and start talking: for a turn per Subterfuge dot, anyone meaning to attack you must talk or leave. Ends if you attack, target someone with a power or move away; then not again for an hour."
+page_reference = "229"
 
 [[traits]]
 category = "techniques"
 name = "Mortal Terror"
+description = "With a successful Dread Gaze, the target also reacts to rage, fire and hunger as if they had 2 more Beast traits."
+page_reference = "Vol. 2 Issue 1, pp. 72-73"
 
 [[traits]]
 category = "techniques"
 name = "Mortician's Secret"
+description = "Always on: your Hag's Wrinkles give the Chest Plate quality and one of Ballistic, Hardened, Impact Absorption or Rugged. Once, turn an opponent's exceptional Physical success into a normal one; three standard actions to repair."
+page_reference = "Vol. 2 Issue 1, p. 73"
 
 [[traits]]
 category = "techniques"
 name = "Nightingale's Song"
+description = "1 Blood, standard action, opposed Mytherceria test: the target tells you a secret of their choosing, likely about what is on their mind. Once a night on each person."
+page_reference = "230"
 
 [[traits]]
 category = "techniques"
 name = "Ominous Premonition"
+description = "1 Blood and three standard actions: learn how many people with True Faith, followers of the Via Caeli or Salubri are within 100 feet, and whether holy relics are near; it also warns you of them entering your haven."
+page_reference = "Vol. 2 Issue 1, p. 73"
 
 [[traits]]
 category = "techniques"
 name = "Perfected Instincts"
+description = "Your Beast Spirit can buy a quality (Rancorous, Watchful or Indefatigable) that lets it use three techniques with your disciplines, paying Gnosis for Blood."
+page_reference = "Vol. 2, p. 83"
 
 [[traits]]
 category = "techniques"
 name = "Poisonous Thoughts"
+description = "With a successful Voice of Madness: while it lasts, each Derangement point the target gains also does 1 unsoakable aggravated damage, and a psychotic break costs them 3 Willpower."
+page_reference = "Vol. 2, p. 91"
 
 [[traits]]
 category = "techniques"
 name = "Poisonous Will"
+description = "When Quell the Beast or Dagon's Call succeeds, apply the other too, as a normal success."
+page_reference = "Vol. 2 Issue 1, p. 74"
 
 [[traits]]
 category = "techniques"
 name = "Predatory Senses"
+description = "1 Blood (none with Acute Sense), simple action: gain an animal sense such as sonar or thermal vision; with Heightened Senses, +2 to pierce concealment. A minor transformation."
+page_reference = "Vol. 2 Issue 1, p. 74"
 
 [[traits]]
 category = "techniques"
 name = "Press-Ganged Coven"
+description = "Acolytes conditioned with Mesmerism each spend a standard action to give +1 to your Thaumaturgy or Necromancy attacks, up to your Occult dots, and seem to share the spell's source."
+page_reference = "Vol. 2 Issue 1, p. 75"
 properties = { requires_specialization = true }
 
 [[traits]]
@@ -6997,160 +7151,238 @@ page_reference = "Vol. 2, p. 76"
 [[traits]]
 category = "techniques"
 name = "Primal Grace"
+description = "Always on: in Shape of the Beast's fight form, +3 to Leadership and Intimidation; in flight form, your Subterfuge dots as a bonus to Dodge."
+page_reference = "Vol. 2 Issue 1, pp. 74-75"
 
 [[traits]]
 category = "techniques"
 name = "Pulse of Undeath"
+description = "1 Blood, standard action, Mental + Investigation or Physical + Athletics against Mental + Willpower: learn whether the target has more Celerity, Fortitude and Potence than you, and gain their Gaze and Focus for five minutes."
+page_reference = "Vol. 2 Issue 1, pp. 75-76"
 
 [[traits]]
 category = "techniques"
 name = "Quick Hands, Quick Work"
+description = "Two more downtime actions, but no feeding or other Blood until the next game, which you start at half your Blood pool."
+page_reference = "Vol. 2 Issue 1, p. 76"
 
 [[traits]]
 category = "techniques"
 name = "Quickened Blood"
+description = "After 1 Blood on Celerity two turns running, use Celerity 1 to 5 without Blood for five minutes."
+page_reference = "230"
 
 [[traits]]
 category = "techniques"
 name = "Quicksilver Contemplation"
+description = "Always on: use Split Second outside your initiative, its actions can activate powers, and you can hold them into the turn's Celerity rounds."
+page_reference = "Vol. 2, p. 88"
 
 [[traits]]
 category = "techniques"
 name = "Radiant Gaze"
+description = "1 Blood after a successful Eyes of the Serpent: use Forgetful Mind or Mesmerism on the same target without speaking, an opposed Dominate test, no action."
+page_reference = "230"
 
 [[traits]]
 category = "techniques"
 name = "Reflection of Endurance"
+description = "Use the Valeren power Mens Sana, at its cost and with its focuses."
+page_reference = "231"
 
 [[traits]]
 category = "techniques"
 name = "Reflection of Mercy"
+description = "Use the Obeah power Corpore Sano, at its cost and with its focuses."
+page_reference = "231"
 
 [[traits]]
 category = "techniques"
 name = "Relentless Pursuit"
+description = "1 Blood, no action, once a turn: when someone you're in melee with moves away, move up to 12 steps after them."
+page_reference = "231"
 
 [[traits]]
 category = "techniques"
 name = "Rend Flesh"
+description = "1 Blood, simple action: a Brawl touch attack that tears flesh for 1 damage (2 on an exceptional success), more with Might or the Fleshcraft focus; it can't be reduced."
+page_reference = "Vol. 2 Issue 1, p. 76"
 
 [[traits]]
 category = "techniques"
 name = "Resplendence of Supple Form"
+description = "Vicissitude used on you costs at most 1 attribute dot or health level for each change."
+page_reference = "Vol. 2 Issue 1, pp. 76-77"
 
 [[traits]]
 category = "techniques"
 name = "Retain the Quick Blood"
+description = "Once a turn, when you spend Blood on a Quietus power, regain 1 of it; it doesn't count toward your Blood a turn."
+page_reference = "231"
 
 [[traits]]
 category = "techniques"
 name = "Sanguinary Expulsion"
+description = "1 Blood when you drink: hold the blood unabsorbed for up to 10 minutes, free of its effects (bonds, poison, Vaulderie), and spit it out with a standard action."
+page_reference = "Vol. 2, p. 90"
 
 [[traits]]
 category = "techniques"
 name = "Savage Provocation"
+description = "1 Blood, standard action, Social + Animal Ken or Leadership against Social + Willpower: for 10 minutes, the target can't start a challenge against anyone but you until they win one against you."
+page_reference = "Vol. 2 Issue 1, p. 77"
 
 [[traits]]
 category = "techniques"
 name = "Scalpel Tongue"
+description = "1 Blood, standard action, Social + Leadership against Social + Willpower, with their Gaze and Focus: for five minutes the target can hardly speak, though one-word powers, song and blood magic still work."
+page_reference = "Vol. 2 Issue 1, p. 77"
 
 [[traits]]
 category = "techniques"
 name = "Second Wind"
+description = "1 Blood and two full turns of concentration: all your aggravated damage becomes normal damage."
+page_reference = "231"
 
 [[traits]]
 category = "techniques"
 name = "Setting the Tempo"
+description = "1 Blood, standard action singing, Social + Subterfuge against Social + Willpower: for their next three everyman initiatives the target must move where you choose first, and has -2 to Dodge unless they can dance."
+page_reference = "Vol. 2 Issue 1, p. 78"
 
 [[traits]]
 category = "techniques"
 name = "Shadowcrafting"
+description = "1 Blood and a standard action for each hand's size (3 and three for person-sized): solid shadow objects with normal qualities plus Crystalline, until the night ends; lasting ones as downtime crafting."
+page_reference = "Vol. 2 Issue 1, p. 80"
 
 [[traits]]
 category = "techniques"
 name = "Sloughing the Serpent's Skin"
+description = "Once a game, ten standard actions: shed your skin for another to wear until the next sunset, giving them Skin of the Adder or your appearance. Wearing it is a major transformation."
+page_reference = "Vol. 2 Issue 1, p. 78"
 properties = { uses_per_game = 1 }
 
 [[traits]]
 category = "techniques"
 name = "Smile Through the Pain"
+description = "Once a turn, when a Physical attack targets you, take it as if you lost, then use Dread Gaze or Entrancement on the attacker at once, without an action but paying its cost."
+page_reference = "Vol. 2 Issue 1, pp. 78-79"
 
 [[traits]]
 category = "techniques"
 name = "Snake Den"
+description = "With Form of the Cobra, become a nest of snakes, one per Obfuscate power, each with its own actions and 5 health levels, biting for aggravated damage; harm to them hurts you when you reform. A major transformation."
+page_reference = "Vol. 2 Issue 1, pp. 79-80"
 
 [[traits]]
 category = "techniques"
 name = "Spawning Pool"
+description = "3 Blood and three standard actions bleeding into water: your Animal Retainers who drink it gain Rugged, and can grow a size category, for 30 days."
+page_reference = "Vol. 2 Issue 1, pp. 80-81"
 
 [[traits]]
 category = "techniques"
 name = "Stealth Vehicle"
+description = "1 Blood, standard action, while driving: for an hour, the vehicle is hard to recognise and follow, can look like another of its kind, and you gain the Drive specialization for it (or +5 to Drive and Streetwise)."
+page_reference = "Vol. 2 Issue 1, p. 81"
 
 [[traits]]
 category = "techniques"
 name = "Stony Retribution"
+description = "No action, when you are damaged assisting a defender (or with Bulwark): your next successful attack on whoever hurt you within 10 minutes is an exceptional success."
+page_reference = "Vol. 2 Issue 1, p. 81"
 
 [[traits]]
 category = "techniques"
 name = "Suck It Up"
+description = "Drain 2 Blood a standard action when you bite, and a simple action absorbs up to 3 Blood from a pool of blood by touch."
+page_reference = "Vol. 2, p. 89"
 
 [[traits]]
 category = "techniques"
 name = "Symbiotic Possession"
+description = "1 Blood and five standard actions: a minor demon lives in you for the game, giving an extra standard action each turn for Daimoinon 1 to 5 (its Blood not counted toward your limit); you gain an Obsession with one of the seven sins."
+page_reference = "Vol. 2 Issue 1, p. 82"
 
 [[traits]]
 category = "techniques"
 name = "Sympathetic Agony"
+description = "1 Blood, once a turn, when someone damages you, opposed Chimerstry test: -3 to their attack pools on their next initiative. Works in Celerity rounds."
+page_reference = "231"
 
 [[traits]]
 category = "techniques"
 name = "Telepathic Directive"
+description = "Give Command and Mesmerism through Telepathy, heard in the target's head; still needs their attention."
+page_reference = "231-232"
 
 [[traits]]
 category = "techniques"
 name = "Tempest Form"
+description = "In Form of Mist, Physical + Athletics or Firearms against Physical + Dodge: a gust knocks the target back, or does 3 normal damage to someone in mist, shadow or blood form; one more step for each move. A major transformation."
+page_reference = "Vol. 2 Issue 1, pp. 82-83"
 
 [[traits]]
 category = "techniques"
 name = "Terror of Tentacles"
+description = "1 Blood, simple action, up to three times: give your Arms of the Abyss melee qualities (Accurate, Brutal, Deadly, Reach and others) and let them move three steps."
+page_reference = "Vol. 2 Issue 1, p. 83"
 
 [[traits]]
 category = "techniques"
 name = "That Damn Cat"
+description = "While in an animal or in flight form, Social + Empathy or Animal Ken against Mental + Willpower: the target must follow you for 15 minutes (five combat rounds) and you gain their Gaze and Focus."
+page_reference = "Vol. 2 Issue 1, p. 83"
 properties = { requires_specialization = true }
 
 [[traits]]
 category = "techniques"
 name = "The Iron Glare"
+description = "Simple action, a show of strength: for 10 minutes, add your Brawl or Melee to your pool for exceptional successes with Command, Mesmerism, Dread Gaze and Entrancement against those who saw it."
+page_reference = "Vol. 2, p. 88"
 
 [[traits]]
 category = "techniques"
 name = "Translocation"
+description = "1 Blood, simple action: vanish and reappear up to nine steps away, in sight; works in Celerity rounds, not while grappled."
+page_reference = "Vol. 2 Issue 1, p. 84"
 
 [[traits]]
 category = "techniques"
 name = "Unlock the Hidden Talent"
+description = "1 Blood, standard action, in Telepathy with a willing ally: in static challenges each counts as skilled if either is, and one can give the other +3. Not for powers or combat."
+page_reference = "Vol. 2, p. 89"
 
 [[traits]]
 category = "techniques"
 name = "Unnatural Grace"
+description = "1 Blood, simple action: for an hour, walk on walls and tightropes (not ceilings), land silently, and take no falling damage up to a mile."
+page_reference = "232"
 
 [[traits]]
 category = "techniques"
 name = "Vanishing Act"
+description = "On an exceptional success with a Chimerstry power, use Unseen Presence at once without an action; those you beat count as not looking at you."
+page_reference = "Vol. 2 Issue 1, p. 84"
 
 [[traits]]
 category = "techniques"
 name = "Venomous Beast"
+description = "1 Blood, standard action: an animal Retainer or animal you control can use your Scorpion's Touch, Baal's Caress or Taste of Death once, until sunrise."
+page_reference = "Vol. 2 Issue 1, p. 84"
 
 [[traits]]
 category = "techniques"
 name = "Vexing Hecklers"
+description = "1 Blood, standard action, Mental + Academics against Mental + Willpower, with their Gaze and Focus: for an hour, each opposed challenge the target loses gives -1 to that attribute, up to -5."
+page_reference = "Vol. 2 Issue 1, p. 85"
 
 [[traits]]
 category = "techniques"
 name = "Visions of the True Form"
+description = "Standard action, Mental + Investigation against Mental + Willpower: see the true form of someone changed by a transformation or by Fleshcraft."
+page_reference = "232"
 
 [[traits]]
 category = "techniques"
@@ -7161,18 +7393,26 @@ page_reference = "Vol. 2, p. 76"
 [[traits]]
 category = "techniques"
 name = "Warrior's Bond"
+description = "Always on: those in Telepathy with you get +3 initiative, can be read with your Sense Vitality at any distance, and may spend your Willpower to retest."
+page_reference = "Vol. 2 Issue 1, p. 85"
 
 [[traits]]
 category = "techniques"
 name = "Weakness of Steel"
+description = "1 Blood, standard action, with a special Scorpion's Touch on your weapon: your next hit on the target destroys one item they carry instead of doing damage."
+page_reference = "Vol. 2 Issue 1, pp. 85-86"
 
 [[traits]]
 category = "techniques"
 name = "Will to Survive"
+description = "With damage in your Injured track, heal 1 normal damage a turn, or 1 aggravated every three turns, without Blood or action. Not in Celerity rounds."
+page_reference = "232"
 
 [[traits]]
 category = "techniques"
 name = "Wolf's Blood"
+description = "While you follow Humanity at 3 or more, your Protean wolf and war forms pass as a werewolf's, even to supernatural powers."
+page_reference = "232-233"
 
 [[traits]]
 category = "influence_elite_specializations"

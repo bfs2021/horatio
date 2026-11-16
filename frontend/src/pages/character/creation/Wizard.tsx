@@ -727,6 +727,7 @@ function StepView({
               title={nameOf(category)}
               showTitle={step.categories.length > 1}
               traits={traits}
+              splat={character.splat}
               allowed={allowedFor(creation, category)}
               picks={mine}
               onChange={set}

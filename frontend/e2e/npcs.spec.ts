@@ -800,6 +800,22 @@ test("storytellers give an NPC powers, and one out of order is marked until it i
   await slowly(p.getByRole("checkbox", { name: "Animalism: Crimson Fury" })).toBeChecked();
   await slowly(p.getByText("Marked: A Neonate's or Ancilla's blood is too thin for elder powers.")).toBeVisible();
 
+  // What each does opens under its row, several at once, without taking it or giving it up (#1000):
+  // a technique's and an elder power's own line, and the power a discipline's next dot gives.
+  await p.getByLabel("Search Techniques").fill("Second Wind");
+  await p.getByRole("button", { name: "About Second Wind" }).click();
+  await expect(p.getByText("all your aggravated damage becomes normal damage")).toBeVisible();
+  await expect(p.getByText("MET: VTM p. 231")).toBeVisible();
+  await expect(p.getByRole("checkbox", { name: "Second Wind" })).not.toBeChecked();
+  await p.getByRole("button", { name: "About Animalism: Crimson Fury" }).click();
+  await expect(p.getByText("flees in a fear frenzy Willpower can't stop")).toBeVisible();
+  await expect(p.getByText("all your aggravated damage becomes normal damage")).toBeVisible();
+  await expect(p.getByRole("checkbox", { name: "Animalism: Crimson Fury" })).toBeChecked();
+  await p.getByLabel("Search Disciplines").fill("");
+  await p.getByRole("button", { name: "About Dementation" }).click();
+  await expect(p.getByText("Dot 4 gives:")).toBeVisible();
+  await expect(p.getByText("Voice of Madness", { exact: true })).toBeVisible();
+
   await p.getByLabel("Search Rituals").fill("Abyssal Ichor");
   await p.getByRole("checkbox", { name: "Abyssal: Abyssal Ichor" }).click();
   await slowly(p.getByRole("checkbox", { name: "Abyssal: Abyssal Ichor" })).toBeChecked();

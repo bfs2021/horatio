@@ -49,7 +49,7 @@ The steps follow the book's order. A troupe's house rules can add a step (for a 
 3. **Focuses.** One focus for each attribute. Merits that give more show below.
 4. **Skills.** Tap the dot for each skill's rating. The counters show what is left to place. Crafts, Performance and Science ask for their field.
 5. **Backgrounds.** The same, for Allies, Contacts, Resources and the rest. Generation is a background: a vampire needs at least one dot of it to go on.
-6. **Disciplines.** Your starting dots go on in-clan disciplines; the step says how many at each rating. Some merits change this, and say so.
+6. **Disciplines.** Your starting dots go on in-clan disciplines; the step says how many at each rating. Some merits change this, and say so. In a slot's list, the chevron beside a discipline opens what it does and the powers the slot's dots would give, without choosing it.
 7. **Merits & flaws.** As the book has it (MET: VTM pp. 85, 106), merits are bought with the character's starting XP, up to 7 points of them, and flaws add their points to it, up to 7 XP; both are optional. A line at the top keeps count, such as *30 XP to start, 6 on merits, 7 from flaws: 31 left*, and the rest is yours to spend once creation is finished. Merits the clan needs are already taken from the merit points, and cost their XP too; they're shown as the clan's. Taking a merit back refunds its XP, and taking a flaw back takes back what it gave; if you've already spent that XP, Horatio says so and asks you to undo something first. Flaws can go past 7 points with your Storyteller's OK, but give no more XP (*9 points, 7 XP paid out*); your sheet flags them for staff to see. A troupe can set its own budgets for merits and flaws.
 8. **Review.** A summary of the character, with anything left to do: **Picks left** (each with **Go to** the step), **Still to settle** (for example a rule the sheet breaks), and fields still to give. When everything is placed, **Finish creation** is ready.
 
@@ -137,7 +137,7 @@ In a Sabbat troupe the same card shows your character's **Vinculum** ratings, to
 
 ### Trait details
 
-Tap a trait's name to open a short panel under it: what the trait does, in Horatio's own summary, and the book page. A discipline also lists its powers by dot. Several can be open at once. A ⓘ beside a part or category heading explains that part.
+Tap a trait's name to open a short panel under it: what the trait does, in Horatio's own summary, and the book page. A discipline also lists its powers by dot, and the power its next dot would give. Several can be open at once. A ⓘ beside a part or category heading explains that part.
 
 Marks you may see beside a trait:
 
@@ -178,7 +178,7 @@ The cart lives on this device: if you leave the page with changes in it, your br
 ### Raising and lowering traits
 
 - **+** and **−** beside a rating raise or lower it, into the cart.
-- **Add**, at the top right of a part, opens a list of what you can add to it, with a search and a filter (for example only what the character can take now). Choose a trait, its rating and any detail it needs, then **Add to cart**. The panel says what it costs.
+- **Add**, at the top right of a part, opens a list of what you can add to it, with a search and a filter (for example only what the character can take now). Choose a trait, its rating and any detail it needs, then **Add to cart**. The panel says what it costs. The chevron at the start of a row opens what the trait does under it without choosing it, even one greyed out: for a technique or an elder power, its cost, action, test and effect with the book's page; for a discipline, the power its next dot gives. Several can be open at once.
 - **Swap**, beside a focus, trades it for another, for the XP the rules charge.
 - **×** beside a merit or flaw removes it.
 

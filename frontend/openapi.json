@@ -8071,6 +8071,56 @@
         "title": "BoonPlayersIn",
         "type": "object"
       },
+      "BoonReportsToldIn": {
+        "properties": {
+          "on": {
+            "title": "On",
+            "type": "boolean"
+          },
+          "role": {
+            "enum": [
+              "staff",
+              "keeper"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "on",
+          "role"
+        ],
+        "title": "BoonReportsToldIn",
+        "type": "object"
+      },
+      "BoonReportsToldOut": {
+        "properties": {
+          "keeper": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keeper"
+          },
+          "staff": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff"
+          }
+        },
+        "title": "BoonReportsToldOut",
+        "type": "object"
+      },
       "BoonReviewIn": {
         "properties": {
           "hold": {
@@ -17236,6 +17286,53 @@
           "amount"
         ],
         "title": "DisciplineRaise",
+        "type": "object"
+      },
+      "DisciplineTestOut": {
+        "description": "A discipline's test pool and note, as the Play View's Pools tab shows them: its\npool \"against\" another (None where the book has no standard one).",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "pool": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pool"
+          },
+          "versus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Versus"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "DisciplineTestOut",
         "type": "object"
       },
       "DiscordAccount": {
@@ -39926,6 +40023,30 @@
           "note"
         ],
         "title": "PowerNote",
+        "type": "object"
+      },
+      "PowerNotesOut": {
+        "properties": {
+          "disciplines": {
+            "items": {
+              "$ref": "#/components/schemas/DisciplineTestOut"
+            },
+            "title": "Disciplines",
+            "type": "array"
+          },
+          "powers": {
+            "items": {
+              "$ref": "#/components/schemas/DisciplinePowerOut"
+            },
+            "title": "Powers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "disciplines",
+          "powers"
+        ],
+        "title": "PowerNotesOut",
         "type": "object"
       },
       "PowerOut": {
@@ -82698,6 +82819,49 @@
         ]
       }
     },
+    "/api/rules/{splat}/powers": {
+      "get": {
+        "description": "What each dot of the rule set's disciplines gives, a line for each power, and\neach discipline's test pool: read when someone opens a discipline in a list to\nchoose from, to see the power its next dot would give before taking it (#1000).\nRead from the power reference, which no troupe changes; its ETag is the rules'.",
+        "operationId": "power_notes_api_rules__splat__powers_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "splat",
+            "required": true,
+            "schema": {
+              "title": "Splat",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PowerNotesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Power Notes",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
     "/api/setting-presets": {
       "get": {
         "description": "The book's sample themes (p. 325) and moods (pp. 325-326), to start an entry\nfrom: their descriptions are in our own words.",
@@ -87129,6 +87293,102 @@
           }
         },
         "summary": "Set Boon Players",
+        "tags": [
+          "boons"
+        ]
+      }
+    },
+    "/api/troupes/{troupe_id}/boon-reports-told": {
+      "get": {
+        "description": "Whether you are told of each boon the troupe's players report, as staff and as\nits Harpy or a Lesser Harpy.",
+        "operationId": "get_boon_reports_told_api_troupes__troupe_id__boon_reports_told_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "troupe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Troupe Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoonReportsToldOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Boon Reports Told",
+        "tags": [
+          "boons"
+        ]
+      },
+      "put": {
+        "description": "Choose whether you are told of each boon the troupe's players report: as its\nrunning staff (off to start with), or as its Harpy or a Lesser Harpy who approves\nreported boons (on to start with).",
+        "operationId": "set_boon_reports_told_api_troupes__troupe_id__boon_reports_told_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "troupe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Troupe Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BoonReportsToldIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoonReportsToldOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Boon Reports Told",
         "tags": [
           "boons"
         ]

@@ -281,6 +281,20 @@ def kind_of(text: str) -> str | None:
     return word if word in boons.KINDS else None
 
 
+def odd_dates(entered_at: datetime | None, closed_at: datetime | None, today: date) -> list[str]:
+    """What looks wrong in a row's dates, likely a typo, for the custodian to check: an
+    Input Date or a settled day still to come, or a settled day before its Input Date.
+    The row is imported as it is (#1020)."""
+    found: list[str] = []
+    if entered_at is not None and entered_at.date() > today:
+        found.append("its Input Date is in the future")
+    if closed_at is not None and closed_at.date() > today:
+        found.append("its Settled Date is in the future")
+    if entered_at is not None and closed_at is not None and closed_at.date() < entered_at.date():
+        found.append("its Settled Date is before its Input Date")
+    return found
+
+
 def read_lines(book: Workbook, zone: ZoneInfo) -> tuple[list[Line], list[RowNote]]:
     """Master's rows as boons, and the rows skipped with why. A blank row is neither."""
     comments: dict[str, str] = {}
@@ -291,6 +305,7 @@ def read_lines(book: Workbook, zone: ZoneInfo) -> tuple[list[Line], list[RowNote
     lines: list[Line] = []
     skipped: list[RowNote] = []
     seen: dict[str, int] = {}
+    today = datetime.now(zone).date()
     for row in book.master:
         if not any(row.text(c) for c in CONTENT):
             continue
@@ -341,6 +356,7 @@ def read_lines(book: Workbook, zone: ZoneInfo) -> tuple[list[Line], list[RowNote
             )
         elif settled_notes:
             staff_note = "\n\n".join(t for t in (staff_note, settled_notes) if t)
+        notes += odd_dates(entered_at, closed_at, today)
         flag = None
         if ticked(row.cells.get(FLAG)):
             flag = cut(comments.get(ref, FLAGGED_NOTE), "the review comment", notes)

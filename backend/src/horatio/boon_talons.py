@@ -216,6 +216,9 @@ def give(
         talon.can_export,
     ) == (add, edit, settle, review, audits, export):
         return talon
+    # Given the right to approve reported boons, they are told of them again (#1018).
+    if review and not talon.can_review:
+        talon.told_of_reports = True
     talon.can_add, talon.can_edit, talon.can_settle = add, edit, settle
     talon.can_review, talon.can_audit, talon.can_export = review, audits, export
     if by is not None:

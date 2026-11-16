@@ -189,3 +189,115 @@ def test_pending_boons_are_left_out() -> None:
 
     assert found.by_entered == []
     assert found.links == []
+
+
+def test_a_boon_settled_before_it_was_entered_counts_its_settling_when_it_was() -> None:
+    # Typed in long after it was settled, as an imported sheet can have it (#1020).
+    found = compute(
+        ledger(
+            owes(
+                "agnes",
+                "bram",
+                entered=date(2026, 9, 5),
+                state="settled",
+                closed=date(2026, 7, 20),
+            ),
+        ),
+        DEFAULT_WEIGHTS,
+        today=TODAY,
+    ).by_entered
+
+    assert [m.month for m in found if m.kind == "minor"] == [
+        "2026-07",
+        "2026-08",
+        "2026-09",
+        "2026-10",
+        "2026-11",
+    ]
+    assert line(found, "2026-07").settled == 1
+    assert line(found, "2026-09").registered == 1
+    # Settled before it went in, so it never stood at a month's end.
+    assert all(m.open == 0 for m in found)
+
+
+def test_a_boon_entered_in_the_future_counts_as_entered_this_month() -> None:
+    found = compute(
+        ledger(
+            owes("agnes", "bram", entered=date(2026, 9, 5)),
+            owes("cora", "bram", entered=date(2027, 2, 1)),
+            owes(
+                "bram",
+                "cora",
+                entered=date(2028, 1, 1),
+                state="settled",
+                closed=date(2028, 3, 1),
+            ),
+        ),
+        DEFAULT_WEIGHTS,
+        today=TODAY,
+    ).by_entered
+
+    assert [m.month for m in found if m.kind == "minor"] == ["2026-09", "2026-10", "2026-11"]
+    november = line(found, "2026-11")
+    # Both future boons went in this month as far as the chart goes; the one settled
+    # in the future still stands today.
+    assert (november.registered, november.settled, november.open) == (2, 0, 3)
+
+
+def test_a_settled_date_before_every_entered_one_starts_the_months() -> None:
+    found = compute(
+        ledger(
+            owes(
+                "agnes",
+                "bram",
+                entered=date(2025, 6, 1),
+                state="settled",
+                closed=date(2024, 3, 1),
+            ),
+        ),
+        DEFAULT_WEIGHTS,
+        today=TODAY,
+    ).by_entered
+
+    months = [m.month for m in found if m.kind == "minor"]
+    assert (months[0], months[-1]) == ("2024-03", "2026-11")
+    assert line(found, "2024-03").settled == 1
+
+
+def test_naive_times_count_as_utc() -> None:
+    night = date(2026, 10, 3)
+    game = Game(uuid.uuid4(), at(night, 19), at(night, 19) + timedelta(hours=5))
+    naive = owes("agnes", "bram", entered=night, state="settled", closed=night)
+    imported = Row(
+        "agnes",
+        "bram",
+        "minor",
+        "settled",
+        night,
+        "called_in",
+        night,
+        datetime(2026, 10, 3, 21),
+        datetime(2026, 10, 3, 22),
+    )
+
+    found = compute(ledger(naive, imported), DEFAULT_WEIGHTS, [game], today=TODAY)
+
+    assert (found.games[0].registered, found.games[0].settled) == (2, 2)
+
+
+def test_a_kind_without_a_weight_is_left_out() -> None:
+    weights = {k: w for k, w in DEFAULT_WEIGHTS.items() if k != "life"}
+    night = date(2026, 10, 3)
+    game = Game(uuid.uuid4(), at(night, 19), at(night, 19) + timedelta(hours=5))
+
+    found = compute(
+        ledger(owes("agnes", "bram", "life", entered=night), owes("agnes", "bram", entered=night)),
+        weights,
+        [game],
+        today=TODAY,
+    )
+
+    assert {m.kind for m in found.by_entered} == set(weights)
+    assert [(m.kind, m.registered) for m in found.by_night] == [("minor", 1)]
+    assert [(link.count, link.weight) for link in found.links] == [(1, 1.0)]
+    assert found.games[0].registered == 1

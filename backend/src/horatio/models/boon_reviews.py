@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from horatio.models.base import Record
@@ -40,3 +40,17 @@ class BoonFlag(Record):
     cleared_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     cleared_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     cleared_note: Mapped[str] = mapped_column(default="", server_default="")
+
+
+class BoonReportStaff(Record):
+    """One of a troupe's storytellers or assistant storytellers who asked to be told of
+    each boon its players report (horatio.boon_reports_told, #1018). Their own choice,
+    off to start with: no row, not told. Only counts while they are its running staff."""
+
+    __tablename__ = "boon_report_staff"
+    __table_args__ = (UniqueConstraint("troupe_id", "user_id"),)
+
+    troupe_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("troupes.id"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )

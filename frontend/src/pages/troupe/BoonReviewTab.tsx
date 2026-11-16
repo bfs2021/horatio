@@ -8,6 +8,7 @@ import { ApprovalSettings, WaitingForApproval } from "./BoonApproval";
 import { approvalSummary } from "./boonApproval";
 import { BoonDetail } from "./BoonDetail";
 import { HarpyMode } from "./boonKeeper";
+import { ToldOfReports } from "./BoonReportsTold";
 import { BoonReviewQueue } from "./BoonReview";
 
 /**
@@ -44,6 +45,7 @@ export function BoonReviewTab({ troupeId }: { troupeId: string }) {
         </p>
         {held && sets && <ApprovalSettings troupeId={troupeId} kinds={kinds} />}
       </div>
+      {harpy && <ToldOfReports troupeId={troupeId} as="keeper" />}
       {boons.length === 0 && !held ? (
         <Empty>Nothing waits for review, and no boon is flagged.</Empty>
       ) : (

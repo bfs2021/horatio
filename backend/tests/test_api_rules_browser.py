@@ -143,3 +143,30 @@ def test_an_archived_or_unknown_troupe_is_not_found(troupe: Troupe) -> None:
 
 def test_signed_out_visitors_cannot_browse(client_for: Callable[[], TestClient]) -> None:
     assert client_for().get("/rules/vampire/browse").status_code == 401
+
+
+def test_each_dot_of_a_discipline_and_its_test_pool_to_read_before_taking_it(
+    troupe: Troupe,
+) -> None:
+    """Issue #1000: the power the next dot gives, opened in a list to choose from."""
+    response = troupe.player.client.get("/rules/vampire/powers")
+    assert response.status_code == 200, response.text
+    read = response.json()
+
+    auspex = [(p["level"], p["name"]) for p in read["powers"] if p["discipline"] == "Auspex"]
+    assert auspex[0] == (1, "Heightened Senses")
+    assert [level for level, _ in auspex] == [1, 2, 3, 4, 5]
+    tests = {d["name"]: d for d in read["disciplines"]}
+    assert (tests["Auspex"]["pool"], tests["Auspex"]["versus"]) == (
+        "Mental + Investigation",
+        "Mental + Willpower",
+    )
+    # No standard test pool: its note says so, and nothing empty is sent.
+    assert "pool" not in tests["Celerity"]
+    assert "No standard test pool" in tests["Celerity"]["note"]
+    # The same again is 304 Not Modified.
+    again = troupe.player.client.get(
+        "/rules/vampire/powers", headers={"If-None-Match": response.headers["ETag"]}
+    )
+    assert again.status_code == 304
+    assert troupe.client_for().get("/rules/vampire/powers").status_code == 401

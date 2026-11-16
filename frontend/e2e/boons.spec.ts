@@ -1454,6 +1454,76 @@ test("the Harpy approves reported boons: a ticked kind goes straight in, the res
   await expect(reports.getByText("In the ledger.")).toHaveCount(2);
 });
 
+test("staff choose to be told when a player reports a boon, and the Harpy, told from the start, may stop it (#1018)", async ({ browser }) => {
+  const custodian = await person(browser, "btold-custodian");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "btold-lead");
+  const harpy = await person(browser, "btold-harpy");
+  const player = await person(browser, "btold-player");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Debts Heralded ${run}`, lead_handle: lead.handle });
+  await backstoryOptional(custodian.page, troupe.id);
+  const build = { ...ATTRIBUTES_AND_FOCUSES, backgrounds: [["Fame", 3], ["Herd", 2], ["Generation", 1]] as [string, number][], disciplines: [["Celerity", 2], ["Potence", 1], ["Presence", 1]] as [string, number][] };
+  const home = async (page: Page, name: string) => {
+    const id = await builtVampire(page, name, "Brujah", build);
+    await send(page, "PUT", `/api/characters/${id}/traits`, { category: "sect", name: "Camarilla", rating: null });
+    const asked = await send(page, "POST", `/api/characters/${id}/home-troupe`, { troupe_id: troupe.id });
+    await send(lead.page, "POST", `/api/approvals/${asked.id}/approve`);
+    return id;
+  };
+  const marguerite = await home(harpy.page, "Marguerite Sallow");
+  const tobias = await home(player.page, "Tobias Wren");
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/boon-ledger`, { on: true });
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/boon-review`, { hold: true });
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/boon-harpy`, { access: "full" });
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/characters/${marguerite}/titles`, { titles: ["Harpy"] });
+
+  // The lead asks to be told, just for them, in the Boons settings: off to begin with.
+  const l = lead.page;
+  await l.goto(`/troupes/${troupe.id}/boons#settings`);
+  const settings = await tabSettings(l, "Boons");
+  const mine = settings.getByRole("switch", { name: "Tell me when a player reports a boon" });
+  await expect(mine).not.toBeChecked();
+  await mine.check();
+  await expect(l.getByText("You'll be told when a player reports a boon.")).toBeVisible();
+  await expect(mine).toBeChecked();
+  await l.screenshot(shots("boon-reports-told-staff"));
+
+  // The Harpy is told from the start, and turns it off on their ledger's To review tab.
+  const h = harpy.page;
+  await h.goto(`/play/characters/${marguerite}/ledger/review`);
+  const theirs = h.getByRole("switch", { name: "Tell me when a player reports a boon" });
+  await expect(theirs).toBeChecked();
+  await h.screenshot(shots("boon-reports-told-harpy"));
+  await theirs.uncheck();
+  await expect(h.getByText("You won't be told when a player reports a boon.")).toBeVisible();
+  await expect(theirs).not.toBeChecked();
+
+  // Tobias's player reports a boon; the lead is told, and the word opens To review.
+  await send(player.page, "POST", `/api/characters/${tobias}/play-boons`, {
+    other: { character_id: marguerite },
+    direction: "owes",
+    kind: "minor",
+    made_on: "2026-10-03",
+    reason: "A door left unlocked",
+  });
+  await l.goto(`/troupes/${troupe.id}`);
+  await l.getByRole("button", { name: /^Notifications, \d+ waiting$/ }).click();
+  await l.getByRole("button", { name: /Tobias Wren reported a minor boon to the ledger: Tobias Wren owes Marguerite Sallow/ }).click();
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/boons/review$`));
+  await expect(l.getByRole("table", { name: "Waiting for approval" }).getByRole("row", { name: "Tobias Wren owes Marguerite Sallow, minor" })).toBeVisible();
+
+  // The Harpy, who turned it off, isn't.
+  const word = await (await h.request.get("/api/notifications")).json();
+  expect(word.items.filter((n: { kind: string }) => n.kind === "boon.reported")).toEqual([]);
+});
+
 test("the Harpy keeps the ledger from the Play View as their character, and never sees what an edit changed (#688)", async ({ browser }) => {
   const custodian = await person(browser, "bharpy-custodian");
   makeCustodian(custodian.email);

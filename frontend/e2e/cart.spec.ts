@@ -701,6 +701,64 @@ test("a Neonate Crusader with Hard as Steel buys one Fortitude elder power throu
   await expect(part("Merits and Flaws").getByText("opened Fortitude: Personal Armor")).toBeVisible();
 });
 
+test("in the picker, a technique, an elder power and a discipline open to say what they do, greyed or not, choosing none", async ({ browser }) => {
+  const { page: p } = await person(browser, "power-reader");
+  // A Neonate, whose blood is too thin for elder powers: they are greyed, but can still be read (#1000).
+  const id = await builtVampire(p, "Wilhelmina", "Brujah", {
+    ...ATTRIBUTES_AND_FOCUSES,
+    backgrounds: [["Herd", 3], ["Fame", 2], ["Generation", 1]],
+    disciplines: [["Potence", 2], ["Celerity", 1], ["Presence", 1]],
+  });
+  await p.goto(`/characters/${id}`);
+  const part = (title: string) => p.locator("section").filter({ has: p.getByRole("heading", { name: title, exact: true }) });
+  const disciplines = part("Disciplines");
+  const chips = p.getByRole("navigation", { name: "Categories" });
+
+  // Two techniques open at once, each under its own row, and neither is chosen.
+  await disciplines.getByRole("button", { name: "Add" }).click();
+  await chips.getByRole("button", { name: /^Techniques/ }).click();
+  await p.getByLabel("Show").selectOption({ label: "Everything" });
+  await p.getByLabel("Search Techniques").fill("Re");
+  await p.getByRole("button", { name: "About Relentless Pursuit" }).click();
+  await expect(p.getByText("when someone you're in melee with moves away, move up to 12 steps after them")).toBeVisible();
+  await expect(p.getByText("MET: VTM p. 231")).toBeVisible();
+  await p.getByRole("button", { name: "About Retain the Quick Blood" }).click();
+  await expect(p.getByText("when you spend Blood on a Quietus power, regain 1 of it")).toBeVisible();
+  await expect(p.getByText("when someone you're in melee with moves away, move up to 12 steps after them")).toBeVisible();
+  await expect(p.getByRole("button", { name: "Add to cart" })).toHaveCount(0);
+  // Closed again with the same chevron.
+  await p.getByRole("button", { name: "About Retain the Quick Blood" }).click();
+  await expect(p.getByText("when you spend Blood on a Quietus power, regain 1 of it")).toHaveCount(0);
+
+  // On a phone: an elder power the rules refuse is greyed, and still opens.
+  await p.setViewportSize({ width: 375, height: 800 });
+  await chips.getByRole("button", { name: /^Elder Disciplines/ }).click();
+  await p.getByLabel("Show").selectOption({ label: "Everything" });
+  await p.getByLabel("Search Elder Disciplines").fill("Crimson Fury");
+  await expect(p.getByRole("button", { name: /^Animalism: Crimson Fury/ })).toBeDisabled();
+  await p.getByRole("button", { name: "About Animalism: Crimson Fury" }).click();
+  await expect(p.getByText("flees in a fear frenzy Willpower can't stop")).toBeVisible();
+  await expect(p.getByText("MET: VTM p. 212")).toBeVisible();
+  await expect(p.getByRole("button", { name: "Add to cart" })).toHaveCount(0);
+  // Nothing runs off the side of the screen.
+  expect(await p.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+
+  // A discipline not held yet: the power its first dot gives, and its test.
+  await chips.getByRole("button", { name: /^Disciplines/ }).click();
+  await p.getByLabel("Show").selectOption({ label: "Everything" });
+  await p.getByLabel("Search Disciplines").fill("Auspex");
+  await p.getByRole("button", { name: "About Auspex" }).click();
+  await expect(p.getByText("Dot 1 gives:")).toBeVisible();
+  await expect(p.getByText("Heightened Senses", { exact: true })).toBeVisible();
+  await expect(p.getByText("Test: Mental + Investigation against Mental + Willpower.")).toBeVisible();
+  await p.screenshot(shots("power-info"));
+
+  // A held one says, under its name on the sheet, what its next dot would give.
+  await disciplines.getByRole("button", { name: "Close" }).click();
+  await disciplines.getByRole("button", { name: "Potence", exact: true }).click();
+  await expect(disciplines.getByText("Dot 3 gives:")).toBeVisible();
+});
+
 test("in the cart, a second Retainer and a second Alternate Identity are each bought on their own, by name", async ({ browser }) => {
   const { page: p } = await person(browser, "twofold-player");
   const headers = { "X-Horatio": "1" };
@@ -740,7 +798,7 @@ test("in the cart, a second Retainer and a second Alternate Identity are each bo
   // And a second identity, by its own name.
   await part("Backgrounds").getByRole("button", { name: "Add" }).click();
   await p.getByLabel("Search Backgrounds").fill("Alternate");
-  await p.getByRole("button", { name: "Alternate Identity" }).first().click();
+  await p.getByRole("button", { name: /^Alternate Identity/ }).first().click();
   await p.getByPlaceholder("Such as Dr. Ellen Marsh, coroner").fill("Father Kell");
   await p.getByRole("button", { name: "Add to cart" }).click();
   await expect(cart.getByText("Add Alternate Identity: Father Kell 1 · 1 XP")).toBeVisible();

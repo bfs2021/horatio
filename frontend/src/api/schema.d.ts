@@ -7332,6 +7332,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/rules/{splat}/powers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Power Notes
+         * @description What each dot of the rule set's disciplines gives, a line for each power, and
+         *     each discipline's test pool: read when someone opens a discipline in a list to
+         *     choose from, to see the power its next dot would give before taking it (#1000).
+         *     Read from the power reference, which no troupe changes; its ETag is the rules'.
+         */
+        get: operations["power_notes_api_rules__splat__powers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/setting-presets": {
         parameters: {
             query?: never;
@@ -8844,6 +8867,33 @@ export interface paths {
          *     boon's creditor's player may mark it settled there.
          */
         put: operations["set_boon_players_api_troupes__troupe_id__boon_players_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/troupes/{troupe_id}/boon-reports-told": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Boon Reports Told
+         * @description Whether you are told of each boon the troupe's players report, as staff and as
+         *     its Harpy or a Lesser Harpy.
+         */
+        get: operations["get_boon_reports_told_api_troupes__troupe_id__boon_reports_told_get"];
+        /**
+         * Set Boon Reports Told
+         * @description Choose whether you are told of each boon the troupe's players report: as its
+         *     running staff (off to start with), or as its Harpy or a Lesser Harpy who approves
+         *     reported boons (on to start with).
+         */
+        put: operations["set_boon_reports_told_api_troupes__troupe_id__boon_reports_told_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -16938,6 +16988,23 @@ export interface components {
             /** Settle */
             settle: boolean;
         };
+        /** BoonReportsToldIn */
+        BoonReportsToldIn: {
+            /** On */
+            on: boolean;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "staff" | "keeper";
+        };
+        /** BoonReportsToldOut */
+        BoonReportsToldOut: {
+            /** Keeper */
+            keeper?: boolean | null;
+            /** Staff */
+            staff?: boolean | null;
+        };
         /** BoonReviewIn */
         BoonReviewIn: {
             /** Hold */
@@ -20276,6 +20343,21 @@ export interface components {
              * @default 0
              */
             to: number;
+        };
+        /**
+         * DisciplineTestOut
+         * @description A discipline's test pool and note, as the Play View's Pools tab shows them: its
+         *     pool "against" another (None where the book has no standard one).
+         */
+        DisciplineTestOut: {
+            /** Name */
+            name: string;
+            /** Note */
+            note?: string | null;
+            /** Pool */
+            pool?: string | null;
+            /** Versus */
+            versus?: string | null;
         };
         /** DiscordAccount */
         DiscordAccount: {
@@ -29306,6 +29388,13 @@ export interface components {
              * @default []
              */
             uses: components["schemas"]["PowerUse"][];
+        };
+        /** PowerNotesOut */
+        PowerNotesOut: {
+            /** Disciplines */
+            disciplines: components["schemas"]["DisciplineTestOut"][];
+            /** Powers */
+            powers: components["schemas"]["DisciplinePowerOut"][];
         };
         /**
          * PowerOut
@@ -51636,6 +51725,37 @@ export interface operations {
             };
         };
     };
+    power_notes_api_rules__splat__powers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                splat: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PowerNotesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     read_setting_presets_api_setting_presets_get: {
         parameters: {
             query?: never;
@@ -54494,6 +54614,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TroupeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_boon_reports_told_api_troupes__troupe_id__boon_reports_told_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                troupe_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoonReportsToldOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_boon_reports_told_api_troupes__troupe_id__boon_reports_told_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                troupe_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BoonReportsToldIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoonReportsToldOut"];
                 };
             };
             /** @description Validation Error */

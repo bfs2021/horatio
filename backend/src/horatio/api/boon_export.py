@@ -67,11 +67,12 @@ def chosen(
     order: str,
 ) -> list[Boon]:
     """The troupe's boons in the view, narrowed and sorted as the ledger's list has them
-    for `keeper` (horatio.boon_ledger, #978), every page of it at once. Staff see who
+    for `keeper` (horatio.boon_ledger, #978), every page of it at once, but never one
+    still waiting for approval (#993), which isn't in the ledger yet. Staff see who
     has left as it is; a Harpy, as the court knows it."""
     where = boon_ledger.narrowing(troupe.id, filters)
     left = boon_ledger.gone(db, troupe.id, keeper.court)
-    query = select(Boon).where(*where, boon_ledger.in_view(view, left))
+    query = select(Boon).where(*where, boon_ledger.in_view(view, left), Boon.state != "pending")
     return list(db.scalars(boon_ledger.ordered(query, sort, order)))
 
 
@@ -247,9 +248,10 @@ def ids_in(
     filters: boon_ledger.Filters | None = None,
 ) -> set[uuid.UUID]:
     """The troupe's boons in one of the ledger's views (horatio.boon_ledger), given who
-    is gone, narrowed by `filters`."""
+    is gone, narrowed by `filters`: never one still waiting for approval (#993)."""
     where = boon_ledger.narrowing(troupe.id, filters or boon_ledger.Filters())
-    return set(db.scalars(select(Boon.id).where(*where, boon_ledger.in_view(view, left))))
+    found = select(Boon.id).where(*where, boon_ledger.in_view(view, left), Boon.state != "pending")
+    return set(db.scalars(found))
 
 
 def standings_tab(db: DbSession, user: User, troupe: Troupe) -> Tab | None:

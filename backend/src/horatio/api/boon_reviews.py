@@ -1,6 +1,7 @@
 """Reviewing boons (horatio.boon_reviews, #687): the troupe's review setting, the
 review queue for its running staff, accepting and rejecting boons that wait for
-review, flags raised and cleared, and linking a name to a character."""
+review, flags raised and cleared, and linking a name to a character; and the kinds
+that go straight into the ledger, which whoever runs the queue sets (#993)."""
 
 import uuid
 from typing import Literal
@@ -11,6 +12,7 @@ from pydantic import BaseModel, Field
 from horatio import boon_harpy, boon_reviews, boons
 from horatio.api.boons import (
     BoonOut,
+    Kind,
     boon_out,
     characters_of,
     choices_for,
@@ -40,11 +42,39 @@ class BoonReviewIn(BaseModel):
 
 class BoonReviewOut(BaseModel):
     # Every boon waiting for review or with a flag raised, oldest first, each with its
-    # flags.
+    # flags, and the character it was reported as (`reported_as`).
     boons: list[BoonOut]
     # The characters the reviewer may link a name to (a Harpy, #688, only those
     # players may know).
     characters: list[CharacterChoice] = []
+    # The troupe holds the boons its players report for review.
+    held: bool = False
+    # The kinds a player reports that go straight into the ledger all the same (#993),
+    # lightest first.
+    auto_accept: list[Kind] = []
+    # The caller may change them: staff, or the Harpy, never a Lesser Harpy.
+    sets_approval: bool = False
+
+
+class AutoAcceptIn(BaseModel):
+    # The kinds a player reports that go straight into the ledger; none, every one waits.
+    kinds: list[Kind] = Field(max_length=len(boons.KINDS))
+
+
+class BoonApprovalOut(BaseModel):
+    held: bool
+    auto_accept: list[Kind]
+
+
+class AcceptAllIn(BaseModel):
+    # The boons to accept, as shown: any that no longer waits is left as it is.
+    boon_ids: list[uuid.UUID] = Field(min_length=1, max_length=boons.MOST_ROWS)
+    note: str = Note
+
+
+class AcceptAllOut(BaseModel):
+    # How many were accepted.
+    accepted: int
 
 
 class AcceptIn(BaseModel):
@@ -85,8 +115,9 @@ def review_troupe(
 ) -> tuple[Troupe, Keeper]:
     """The troupe, for those who review its boons, while it keeps a ledger, and who
     `user` reviews as: its running staff, a Harpy given the review queue (#688), or a
-    Lesser Harpy who may settle boons (#984). To `link` a name to a character, which
-    corrects a boon, a Lesser Harpy needs to be let correct boons instead."""
+    Lesser Harpy who may approve reported boons (#993). To `link` a name to a
+    character, which corrects a boon, a Lesser Harpy needs to be let correct boons
+    instead."""
     troupe = db.get(Troupe, troupe_id)
     keeper = boon_harpy.keeper(db, user, troupe, "submissions") if troupe is not None else None
     if link and troupe is not None and (keeper is None or keeper.role == "talon"):
@@ -117,13 +148,44 @@ def review_queue(troupe_id: uuid.UUID, db: DbSession, user: CurrentUser) -> Boon
     flags = boon_reviews.raised(db, [b.id for b in found])
     users = users_of(db, [*(b.submitted_by for b in found), *(f.raised_by for f in flags)])
     characters = characters_of(db, found)
+    reporters = boon_reviews.reported_as(db, [b.id for b in found])
     out: list[BoonOut] = []
     for b in found:
         row = boon_out(b, characters, users, keeper=keeper)
         # Who raised a flag is for staff (#992).
         row.flags = [flag_out(f, users if keeper.staff else {}) for f in flags if f.boon_id == b.id]
+        row.flagged = bool(row.flags)
+        by = reporters.get(b.id)
+        row.reported_as = by.name if by is not None else None
         out.append(row)
-    return BoonReviewOut(boons=out, characters=choices_for(db, troupe, keeper))
+    return BoonReviewOut(
+        boons=out,
+        characters=choices_for(db, troupe, keeper),
+        held=boon_reviews.held(troupe),
+        auto_accept=boon_reviews.auto_accepts(troupe),  # type: ignore[arg-type]  # boons.KINDS
+        sets_approval=keeper.role != "talon",
+    )
+
+
+@router.put("/troupes/{troupe_id}/boon-auto-accept")
+def set_auto_accept(
+    troupe_id: uuid.UUID, body: AutoAcceptIn, db: DbSession, user: CurrentUser
+) -> BoonApprovalOut:
+    """The kinds of boon a player reports that go straight into the ledger while the
+    troupe holds reports for review (#993): for whoever runs the queue, its running
+    staff or a Harpy given the queue or the full ledger, as their character; never a
+    Lesser Harpy. Boons already waiting stay waiting. Logged."""
+    troupe, keeper = review_troupe(db, user, troupe_id)
+    if keeper.role == "talon":
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, "The Harpy says which boons go straight in, or staff."
+        )
+    boon_reviews.set_auto_accept(db, user, troupe, body.kinds, keeper.character)
+    db.commit()
+    return BoonApprovalOut(
+        held=boon_reviews.held(troupe),
+        auto_accept=boon_reviews.auto_accepts(troupe),  # type: ignore[arg-type]  # boons.KINDS
+    )
 
 
 @router.post("/troupes/{troupe_id}/boons/{boon_id}/accept")
@@ -136,6 +198,19 @@ def accept(
     boon_reviews.accept(db, user, boon, body.note, keeper.character)
     db.commit()
     return full_out(db, user, troupe, boon, keeper)
+
+
+@router.post("/troupes/{troupe_id}/boons/accept")
+def accept_all(
+    troupe_id: uuid.UUID, body: AcceptAllIn, db: DbSession, user: CurrentUser
+) -> AcceptAllOut:
+    """Accept several boons waiting for review at once: "Accept all shown" in the
+    queue (#993). Any that no longer waits is left as it is."""
+    troupe, keeper = review_troupe(db, user, troupe_id)
+    found = [troupe_boon(db, troupe, i) for i in dict.fromkeys(body.boon_ids)]
+    done = boon_reviews.accept_all(db, user, found, body.note, keeper.character)
+    db.commit()
+    return AcceptAllOut(accepted=done)
 
 
 @router.post("/troupes/{troupe_id}/boons/{boon_id}/reject")

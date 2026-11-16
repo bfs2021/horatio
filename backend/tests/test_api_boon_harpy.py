@@ -60,7 +60,7 @@ def hold(court: Court) -> None:
     )
 
 
-def report(court: Court, character: str, player: Person, other: str) -> Any:
+def report(court: Court, character: str, player: Person, other: str, **body: Any) -> Any:
     return ok(
         player.client.post(
             f"/characters/{character}/play-boons",
@@ -70,6 +70,7 @@ def report(court: Court, character: str, player: Person, other: str) -> Any:
                 "kind": "minor",
                 "made_on": "2026-10-03",
                 "reason": "Discretion",
+                **body,
             },
         ),
         201,

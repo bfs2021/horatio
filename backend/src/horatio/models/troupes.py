@@ -188,6 +188,10 @@ class Troupe(Imported, Record):
     # Boons its players report wait for review by its running staff (and the Harpy,
     # #688) before they stand (horatio.boon_reviews, #687); off, they stand at once.
     boon_review: Mapped[bool] = mapped_column(default=False, server_default="false")
+    # The kinds of boon a player reports that go straight into the ledger while reports
+    # wait for review (horatio.boon_reviews, #993): "trivial", "minor"... Empty, every
+    # one waits.
+    boon_auto_accept: Mapped[list[str]] = mapped_column(JSONB, default=list, server_default="[]")
     # The Harpy's access to the ledger (horatio.boon_harpy, #688): "none"; "submissions",
     # the review queue and word of each boon its players report; or "full", the whole
     # ledger, to register, edit and settle boons like its staff.

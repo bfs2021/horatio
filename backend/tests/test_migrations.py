@@ -890,6 +890,70 @@ def test_the_setting_migration_makes_each_tone_a_mood_and_back(
             connection.execute(text("delete from users where id = :id"), {"id": user})
 
 
+def test_the_boon_approval_migration_keeps_who_reviews(
+    engine: Engine, alembic_config: Config
+) -> None:
+    """Migration 0237 (#993): a Lesser Harpy who could settle boons reviewed reported
+    ones too, so may still approve them; one who couldn't, can't. No kind goes straight
+    in to start with."""
+    command.downgrade(alembic_config, "0236")
+    user, troupe = uuid.uuid4(), uuid.uuid4()
+    settles, corrects = uuid.uuid4(), uuid.uuid4()
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "insert into users (id, email, display_name, handle)"
+                    " values (:id, 'approval@example.com', 'Approval', 'approval-993')"
+                ),
+                {"id": user},
+            )
+            connection.execute(
+                text("insert into troupes (id, name, lead_user_id) values (:id, 'Court', :lead)"),
+                {"id": troupe, "lead": user},
+            )
+            for character, name in ((settles, "Iris"), (corrects, "Hugo")):
+                connection.execute(
+                    text(
+                        "insert into characters (id, player_id, splat, name, home_troupe_id)"
+                        " values (:id, :player, 'vampire', :name, :troupe)"
+                    ),
+                    {"id": character, "player": user, "name": name, "troupe": troupe},
+                )
+            connection.execute(
+                text(
+                    "insert into boon_talons (troupe_id, character_id, can_settle, can_edit)"
+                    " values (:t, :s, true, false), (:t, :c, false, true)"
+                ),
+                {"t": troupe, "s": settles, "c": corrects},
+            )
+
+        command.upgrade(alembic_config, "head")
+
+        with engine.connect() as connection:
+            reviews = dict(
+                connection.execute(
+                    text("select character_id, can_review from boon_talons where troupe_id = :t"),
+                    {"t": troupe},
+                ).all()
+            )
+            kinds = connection.execute(
+                text("select boon_auto_accept from troupes where id = :id"), {"id": troupe}
+            ).scalar()
+        assert reviews == {settles: True, corrects: False}
+        assert kinds == []
+    finally:
+        command.upgrade(alembic_config, "head")
+        with engine.begin() as connection:
+            for table, column, value in (
+                ("boon_talons", "troupe_id", troupe),
+                ("characters", "home_troupe_id", troupe),
+                ("troupes", "id", troupe),
+                ("users", "id", user),
+            ):
+                connection.execute(text(f"delete from {table} where {column} = :id"), {"id": value})
+
+
 def test_the_boon_log_migration_sorts_who_each_line_was_done_as(
     engine: Engine, alembic_config: Config
 ) -> None:

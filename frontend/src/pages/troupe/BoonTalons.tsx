@@ -10,7 +10,7 @@ import { type Dates, useDates } from "../../dates";
 import { useAction } from "../../hooks";
 
 type Word = NonNullable<TroupeOut["boon_talon_word"]>;
-type Can = { can_add: boolean; can_edit: boolean; can_settle: boolean; can_audit: boolean; can_export: boolean };
+type Can = { can_add: boolean; can_edit: boolean; can_settle: boolean; can_review: boolean; can_audit: boolean; can_export: boolean };
 
 /** One of them, as "a Lesser Harpy". */
 export function oneOf(word: string) {
@@ -26,9 +26,9 @@ export function givenText(talon: Pick<TalonOut, "given_by" | "given_at">, dates:
   return `${talon.given_by ? `Given by ${talon.given_by}` : "Given"}, ${dates.date(talon.given_at)}`;
 }
 
-const NONE: Can = { can_add: false, can_edit: false, can_settle: false, can_audit: false, can_export: false };
+const NONE: Can = { can_add: false, can_edit: false, can_settle: false, can_review: false, can_audit: false, can_export: false };
 
-/** What the Harpy may let each do (#984), as the API's `describe()` says it. */
+/** What the Harpy may let each do (#984, #993), as the API's `describe()` says it. */
 const ABILITIES: { key: keyof Can; label: string; hint: string; verb: string }[] = [
   { key: "can_add", label: "Add boons", hint: "Register boons in the ledger.", verb: "adds" },
   {
@@ -40,10 +40,17 @@ const ABILITIES: { key: keyof Can; label: string; hint: string; verb: string }[]
   {
     key: "can_settle",
     label: "Settle and move boons",
-    hint: "Trade, pass on, settle, make void and reopen boons, and review what players report.",
+    hint: "Trade, pass on, settle, make void and reopen boons.",
     verb: "settles",
   },
 ];
+
+/** Reviewing, a right of its own (#993): with no one given it, the Harpy approves alone. */
+const REVIEW = {
+  key: "can_review",
+  label: "Approve reported boons",
+  hint: "Accept what players report, or don't, and raise and clear flags, under To review. With no one given this, you approve alone.",
+} as const;
 
 const AUDITS = { key: "can_audit", label: "Perform audits", hint: "Audit a character's boons, and give the audit to a character." } as const;
 
@@ -61,6 +68,7 @@ const EXPORT = {
 export function what(t: Can, exports: boolean) {
   const parts = ["sees the ledger"];
   for (const a of ABILITIES) if (t[a.key]) parts.push(`${a.verb} ${parts.length > 1 ? "them" : "boons"}`);
+  if (t.can_review) parts.push("approves reported boons");
   if (t.can_audit) parts.push("performs audits");
   if (t.can_export && exports) parts.push("exports the ledger");
   return parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
@@ -118,7 +126,7 @@ export function TalonsSetting({ troupe }: { troupe: TroupeOut }) {
           The Harpy may give others access to the ledger
           <span className="block text-xs text-mist">
             {full
-              ? "The Harpy chooses who, from the troupe's player characters, and whether each may add boons, correct them, settle and move them, and perform audits. They work from their Play View, as their character, and see what the Harpy sees."
+              ? "The Harpy chooses who, from the troupe's player characters, and whether each may add boons, correct them, settle and move them, approve reported boons, and perform audits. They work from their Play View, as their character, and see what the Harpy sees."
               : "Only while the Harpy has the full ledger."}
           </span>
         </span>
@@ -174,7 +182,7 @@ function StaffTalons({ troupeId }: { troupeId: string }) {
 function Rights({ label, can, exports, disabled, onChange }: { label: string; can: Can; exports: boolean; disabled?: boolean; onChange: (next: Can) => void }) {
   return (
     <div role="group" aria-label={label} className="mt-1 flex flex-col">
-      {[...ABILITIES, AUDITS, ...(exports ? [EXPORT] : [])].map((a) => (
+      {[...ABILITIES, REVIEW, AUDITS, ...(exports ? [EXPORT] : [])].map((a) => (
         <Checkbox key={a.key} label={a.label} hint={a.hint} checked={can[a.key]} disabled={disabled} onChange={(on) => onChange({ ...can, [a.key]: on })} />
       ))}
     </div>
@@ -187,6 +195,7 @@ function TalonRow({ troupeId, talon, word, exports, manage }: { troupeId: string
     can_add: talon.can_add,
     can_edit: talon.can_edit,
     can_settle: talon.can_settle,
+    can_review: talon.can_review ?? false,
     can_audit: talon.can_audit,
     can_export: talon.can_export ?? false,
   });
@@ -210,7 +219,7 @@ function TalonRow({ troupeId, talon, word, exports, manage }: { troupeId: string
         <div className="min-w-0">
           <p>
             <span className="text-parchment">{talon.name}</span>
-            <span className="text-mist"> {what({ ...talon, can_export: talon.can_export ?? false }, exports)}</span>
+            <span className="text-mist"> {what({ ...talon, can_review: talon.can_review ?? false, can_export: talon.can_export ?? false }, exports)}</span>
           </p>
           <p className="text-xs text-mist">
             {givenText(talon, dates)}
@@ -273,7 +282,7 @@ export function TalonsCard({ troupeId }: { troupeId: string }) {
   return (
     <Card title={word}>
       <p className="mb-3 text-sm text-mist">
-        Give others access to the ledger as {word}: each sees it as you do, and may add boons, correct them, settle and move them,{" "}
+        Give others access to the ledger as {word}: each sees it as you do, and may add boons, correct them, settle and move them, approve reported boons,{" "}
         {exports ? "perform audits and export it" : "and perform audits"}, as you choose. They work from their Play View, as their character. Staff see who has what.
       </p>
       {list.length === 0 ? (

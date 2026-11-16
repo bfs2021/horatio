@@ -1,4 +1,4 @@
-import { useQueries, useQuery, type Query, type QueryKey } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { Fragment, useContext, useEffect, useRef, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
@@ -130,6 +130,12 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
   const offline = harpy !== null && !online;
   // The top of the list, brought back into sight when paging from its foot.
   const top = useRef<HTMLDivElement>(null);
+  // What each list last showed, to show dimmed while the next view, search, sort, page
+  // or group comes, so the toolbar and the table stay put (#1031). `placeholderData`
+  // can't keep it alone: `useQueries` makes a new observer for each new key, and a new
+  // observer has nothing before it. A character's page keeps its sections' rows only
+  // while it shows, so it doesn't open on another's; the whole ledger keeps its own.
+  const kept = useRef(new Map<string, TroupeBoonsOut>());
   const queryOf = (s: Section) => ({
     ...ledgerQuery(search),
     ...(s.side ? { side: s.side, sort: sideSort(search, s.side) } : {}),
@@ -147,9 +153,7 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
               params: { path: { troupe_id: troupeId }, query },
             }),
           ),
-        // The page before, while the next comes: of the same list only.
-        placeholderData: (previous: TroupeBoonsOut | undefined, before?: Query<TroupeBoonsOut, Error, TroupeBoonsOut, QueryKey>) =>
-          (before?.queryKey[2] as { side?: BoonSide } | undefined)?.side === s.side ? previous : undefined,
+        placeholderData: kept.current.get(s.page),
       };
     }),
   });
@@ -169,9 +173,8 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
               params: { path: { troupe_id: troupeId }, query },
             }),
           ),
-        enabled: grouping && Boolean(lists[i]?.data) && !complete(s, lists[i]!),
-        placeholderData: (previous: TroupeBoonsOut | undefined, before?: Query<TroupeBoonsOut, Error, TroupeBoonsOut, QueryKey>) =>
-          (before?.queryKey[2] as { side?: BoonSide } | undefined)?.side === s.side ? previous : undefined,
+        enabled: grouping && Boolean(lists[i]?.data) && !lists[i]!.isPlaceholderData && !complete(s, lists[i]!),
+        placeholderData: kept.current.get(`group ${s.page}`),
       };
     }),
   });
@@ -202,8 +205,28 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
   useEffect(() => {
     for (const p of past) if (p) setPage(p.s.page, Math.max(1, Math.ceil(p.total / PAGE)), true);
   });
+  useEffect(() => {
+    const now = new Map<string, TroupeBoonsOut>();
+    const keep = (key: string, shown: { data?: TroupeBoonsOut; isPlaceholderData: boolean }) => {
+      const data = shown.data && !shown.isPlaceholderData ? shown.data : kept.current.get(key);
+      if (data) now.set(key, data);
+    };
+    sections.forEach((s, i) => {
+      keep(s.page, lists[i]!);
+      if (grouping) keep(`group ${s.page}`, complete(s, lists[i]!) ? lists[i]! : everyRow[i]!);
+    });
+    const ledger = kept.current.get(PAGES.ledger);
+    if (party && ledger) now.set(PAGES.ledger, ledger);
+    kept.current = now;
+  });
   const whole = lists[0]!;
-  if (choices.isPending || (!party && whole.isPending)) return <Loading />;
+  // <Loading/> only the first time the ledger loads: after, the toolbar stays (#1031).
+  const ready = !choices.isPending && (party !== null || !whole.isPending);
+  const [drawn, setDrawn] = useState(ready);
+  useEffect(() => {
+    if (ready) setDrawn(true);
+  }, [ready]);
+  if (choices.isPending || (!party && whole.isPending && !drawn)) return <Loading />;
   const failed = [...lists, ...everyRow].find((l) => l.error);
   if (failed) return <ErrorText error={failed.error} />;
   if (choices.error) return <ErrorText error={choices.error} />;
@@ -237,7 +260,22 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
   const empty = narrowed({ ...search, character: "", name: "" }) ? "No boons match." : search.view === "open" ? "None open." : "None here.";
   // A list grouped (#981), from its every row: on a party's page, by the other side.
   const groupedTable = (s: Section, list: (typeof lists)[number], every: (typeof everyRow)[number]) => {
-    if (!every.data) return <Loading compact />;
+    if (every.isPlaceholderData && every.fetchStatus === "paused") return <Empty>These come with a signal.</Empty>;
+    // Before every row comes the first time, the page's own, dimmed.
+    if (!every.data)
+      return (
+        <BoonTable
+          key={search.view}
+          label={s.label ?? "Boons"}
+          boons={list.data?.boons ?? []}
+          busy
+          sorting={sorting(s.side)}
+          party={s.side}
+          partyTo={partyTo}
+          opened={opened}
+          onOpen={open}
+        />
+      );
     const by = s.side ? sideGroup(search.group, s.side) : search.group;
     const groups = groupBoons(every.data.boons, by as BoonSide | "night", every.data.weights, s.side ? sideSort(search, s.side) : search.sort, search.direction);
     return (
@@ -309,7 +347,10 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
           {sections.map((s, i) => {
             const list = lists[i]!;
             const total = list.data?.total ?? 0;
-            const body = list.isPending ? (
+            // Not read yet; or what showed before, while this can't come without a signal, or
+            // when it was empty: a dimmed "None here." would still read as this view's.
+            const coming = list.isPending || (list.isPlaceholderData && (list.fetchStatus === "paused" || total === 0));
+            const body = coming ? (
               list.fetchStatus === "paused" ? (
                 <Empty>These come with a signal.</Empty>
               ) : (
@@ -348,7 +389,7 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
               <section key={s.page} aria-labelledby={headingId} className="flex flex-col gap-2">
                 <SectionLabel as="h3" id={headingId}>
                   {s.label}
-                  {list.data && ` (${count.format(total)})`}
+                  {list.data && !list.isPlaceholderData && ` (${count.format(total)})`}
                 </SectionLabel>
                 {body}
               </section>

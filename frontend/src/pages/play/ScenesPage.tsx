@@ -77,7 +77,7 @@ export function ScenesPage() {
 
   return (
     <div className="min-h-screen bg-night pb-16 text-parchment">
-      <header className="sticky top-0 z-10 border-b border-ash bg-night/95 backdrop-blur">
+      <header className="play-header">
         <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-x-1.5 px-4 py-1">
           <Breadcrumb crumbs={atGameCrumbs(troupeId, troupe.data?.name)} />
           <h1 className="text-lg">Scenes</h1>

@@ -75,7 +75,7 @@ export function HarpyLedgerPage() {
   return (
     // The sticky header's height, which a boon's side panel stays below (#985).
     <div className="min-h-screen bg-night pb-16 text-parchment [--sticky-top:3.625rem]">
-      <header className="sticky top-0 z-10 border-b border-ash bg-night/95 backdrop-blur">
+      <header className="play-header">
         <div className={`mx-auto flex ${page.width} items-center justify-between gap-3 px-4 py-2`}>
           <BackLink label="Play View" to={`/play/characters/${characterId}?tab=boons`} />
           <h1 className="text-lg">{heading}</h1>

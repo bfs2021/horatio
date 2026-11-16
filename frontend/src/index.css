@@ -63,6 +63,18 @@ html[data-theme="ultragoth"] .hover\:bg-blood-bright:hover:not(:disabled) {
   }
 }
 
+/* The Play View's fixed header (#1036), on every screen but the tracker: a bevel in
+   the theme's highlight along its foot, a gold line over a soft glow that falls into
+   shadow, so on a phone it's plain where the header ends and the scrolling page
+   begins. The line is one pixel, as border-ash was, so the ledger's --sticky-top
+   (#985) still holds; the glow and shadow take no room. */
+@utility play-header {
+  @apply sticky top-0 z-10 border-b border-gold bg-night/95 backdrop-blur;
+  box-shadow:
+    0 1px 4px color-mix(in oklab, var(--color-gold) 35%, transparent),
+    0 6px 14px -2px color-mix(in oklab, var(--color-night) 90%, transparent);
+}
+
 @layer base {
   html {
     background: var(--color-night);

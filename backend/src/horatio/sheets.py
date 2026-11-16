@@ -907,13 +907,14 @@ def refusals(
                 if (rated or t.category != category)
                 and not (at is not None and t.category == category and t.name == name)
             ] + [candidate]
-            trial_context = check_context(
-                db,
-                character,
-                trial,
-                None if {(category, name), (category, None)} & moves_grants else priced,
-                domitor,
-            )
+            trial_priced = priced
+            if {(category, name), (category, None)} & moves_grants:
+                # Tried holding what its grants give, as the cart would leave it: a
+                # house merit's free Resources meet its own "needs Resources 1" (#1032).
+                given = effects(grants, trial, rule_set)
+                trial = [t for _, t in granted(rules, trial, given).values()]
+                trial_priced = given.in_clan_priced
+            trial_context = check_context(db, character, trial, trial_priced, domitor)
             same_clan = (trial_context.in_clan, trial_context.native) == (
                 context.in_clan,
                 context.native,
@@ -1209,6 +1210,44 @@ def regrant(
         granted_rating=granted,
         made_free=made_free,
     )
+
+
+def granted(
+    rules: TroupeRules, sheet: Sequence[SheetTrait], found: Effects
+) -> dict[tuple[str, str, str], tuple[int, SheetTrait]]:
+    """Each trait as apply_grants would hold it under these grants, with how many
+    dots bought there the grants would make free (and refund)."""
+    held: dict[tuple[str, str, str], tuple[int, SheetTrait]] = {
+        (t.category, t.name, t.detail): (0, t) for t in sheet
+    }
+    keys = (
+        set(found.added)
+        | set(found.free_up_to)
+        | {k for k, (_, t) in held.items() if t.granted_rating}
+    )
+    for key in keys:
+        trait = held[key][1] if key in held else SheetTrait(key[0], key[1], 0, 0, key[2])
+        free_up_to = found.free_up_to.get(key, 0)
+        # A merit is given whole, at its value.
+        whole = fixed_rating(rules, sheet, key[0], key[1]) if free_up_to else None
+        free_up_to = whole if whole is not None else free_up_to
+        now = regrant(
+            trait.rating or 0,
+            trait.free_rating,
+            trait.granted_rating,
+            found.added.get(key, 0),
+            free_up_to,
+        )
+        held[key] = (
+            now.made_free,
+            replace(
+                trait,
+                rating=now.rating,
+                free_rating=now.free_rating,
+                granted_rating=now.granted_rating,
+            ),
+        )
+    return held
 
 
 def apply_grants(

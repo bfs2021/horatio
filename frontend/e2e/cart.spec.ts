@@ -577,9 +577,8 @@ test("changes on the sheet wait in a cart, and only Spend XP makes them, all or 
   await p.getByLabel("Search Flaws").fill("Archaic");
   await p.getByRole("button", { name: /^Archaic/ }).click();
   await p.getByRole("button", { name: "Add to cart" }).click();
-  // With Archaic in the cart, the Skills panel leaves Computer out once its answer of
-  // what the cart allows comes. Picked before then, as on a slow connection: that
-  // answer waits until Computer is in the cart, so the click no longer races it.
+  // With Archaic in the cart, the Skills panel lists nothing to take until its answer of
+  // what the cart allows comes, as on a slow connection (#1032), then leaves Computer out.
   let release = () => {};
   const held = new Promise<void>((resolve) => (release = resolve));
   await p.route("**/api/characters/*/unavailable", async (route) => {
@@ -588,10 +587,21 @@ test("changes on the sheet wait in a cart, and only Spend XP makes them, all or 
   });
   await part("Skills").getByRole("button", { name: "Add" }).click();
   await p.getByLabel("Search Skills").fill("Computer");
-  await p.getByRole("button", { name: /^Computer/ }).click();
-  await p.getByRole("button", { name: "Add to cart" }).click();
+  await expect(p.getByRole("status", { name: "Checking what Wren can take…" })).toBeVisible();
+  await expect(p.getByRole("button", { name: /^Computer/ })).toHaveCount(0);
   release();
   await p.unrouteAll({ behavior: "wait" });
+  await expect(p.getByText("None you can take. 1 you can't:")).toBeVisible();
+  await expect(p.getByRole("button", { name: /^Computer/ })).toHaveCount(0);
+  await part("Skills").getByRole("button", { name: "Close", exact: true }).click();
+  // Computer goes in from another tab, as a cart kept in this browser can: the cart refuses the pair.
+  const tab = await p.context().newPage();
+  await tab.goto("/");
+  await tab.evaluate((key) => {
+    const lines = JSON.parse(localStorage.getItem(key) ?? "[]");
+    localStorage.setItem(key, JSON.stringify([...lines, { kind: "set", category: "skills", name: "Computer", detail: "", from: 0, to: 1 }]));
+  }, `horatio.cart.${id}`);
+  await tab.close();
   await expect(cart.getByRole("listitem").filter({ hasText: "Add Archaic" })).toContainText("An Archaic character cannot have Computer");
   await expect(cart.getByRole("listitem").filter({ hasText: "Add Computer 1" })).not.toContainText("cannot have");
   await expect(p.getByRole("button", { name: "Spend XP" })).toBeDisabled();
@@ -798,6 +808,8 @@ test("in the cart, a second Retainer and a second Alternate Identity are each bo
   // And a second identity, by its own name.
   await part("Backgrounds").getByRole("button", { name: "Add" }).click();
   await p.getByLabel("Search Backgrounds").fill("Alternate");
+  // The panel lists it once checked; until then the only match is the one held on the sheet.
+  await expect(p.getByLabel("Search Backgrounds")).toHaveAttribute("placeholder", /you can take/);
   await p.getByRole("button", { name: /^Alternate Identity/ }).first().click();
   await p.getByPlaceholder("Such as Dr. Ellen Marsh, coroner").fill("Father Kell");
   await p.getByRole("button", { name: "Add to cart" }).click();

@@ -133,3 +133,26 @@ export function summary(offers: FreeChoicesOut[], picks: FreePick[]): string {
     .map(describePick)
     .join(", ");
 }
+
+/**
+ * What a merit's saved choices still wait on, in a few words ("6 to choose"), for
+ * the line that stands for them closed (the NPC builder's, #1037); null when nothing
+ * does. The picks left of every grant are counted together (Chosen of Cappadocius
+ * gives three grants of two). A budget of points is done with any pick, as the API counts it.
+ */
+export function stillToChoose(offers: FreeChoicesOut[]): string | null {
+  let picks = 0;
+  const rest: string[] = [];
+  for (const offer of offers) {
+    if (offer.dots != null) {
+      const placedNow = offer.picks.reduce((sum, p) => sum + p.amount, 0);
+      if (placedNow < offer.dots) rest.push(`${offer.dots - placedNow} to place`);
+      if (placedNow > offer.dots) rest.push(`Morality rose: ${placedNow - offer.dots} to give up`);
+    } else if (offer.points != null) {
+      if (!offer.picks.length) rest.push(`up to ${offer.points} ${offer.points === 1 ? "point" : "points"} to choose`);
+    } else {
+      picks += Math.max(0, (offer.places?.length ?? offer.count ?? 1) - offer.picks.length);
+    }
+  }
+  return [...(picks ? [`${picks} to choose`] : []), ...rest].join(", ") || null;
+}

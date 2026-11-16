@@ -20,6 +20,7 @@ import {
   setDetail,
   setDots,
   slot,
+  stillToChoose,
   toggle,
   toSend,
   type FreePick,
@@ -198,8 +199,10 @@ function Budget({ offer, picks, onChange }: Part) {
  * Under a merit on the sheet: the free traits its player chose, and until a home
  * troupe accepts the character, a way to choose or change them. On an NPC its
  * staff choose them at any time (#577), unless its creation picks place them.
+ * `folded`, it is one line of what was given and what is left to choose, the
+ * choices opening under it on demand (the NPC builder's, #1037).
  */
-export function FreeChoicesRow({ character, trait, editable }: { character: CharacterOut; trait: SheetTraitOut; editable: boolean }) {
+export function FreeChoicesRow({ character, trait, editable, folded = false }: { character: CharacterOut; trait: SheetTraitOut; editable: boolean; folded?: boolean }) {
   const offers = trait.free_choices ?? [];
   const saved = offers.flatMap((o) => o.picks.map((p) => ({ grant: o.grant, name: p.name, detail: p.detail, amount: p.amount })));
   const [draft, setDraft] = useState<FreePick[] | null>(null);
@@ -220,9 +223,54 @@ export function FreeChoicesRow({ character, trait, editable }: { character: Char
   // An NPC's fitted creation picks place the merit's dots (Ventrue Royalty's): nothing to choose here.
   const placedElsewhere = character.kind === "npc" && !!locked;
 
+  const shown = offers.filter((o) => !placedElsewhere || o.picks.length > 0);
+  const choose = draft === null && open && !nothingToPlace && (
+    <Button
+      variant="ghost"
+      className="min-h-7 px-1 py-0 text-xs text-gold"
+      aria-label={`${done ? "Edit" : "Choose"} the free traits for ${trait.name}`}
+      aria-expanded={folded ? false : undefined}
+      onClick={() => setDraft(saved)}
+    >
+      {done ? (folded ? "Change" : "Edit") : "Choose"}
+    </Button>
+  );
+  // Folded, the line stays while the choices are open, its button closing them.
+  const close = folded && draft !== null && (
+    <Button
+      variant="ghost"
+      className="min-h-7 px-1 py-0 text-xs text-gold"
+      aria-label={`Close the free traits for ${trait.name}`}
+      aria-expanded
+      onClick={() => {
+        save.reset();
+        setDraft(null);
+      }}
+    >
+      Close
+    </Button>
+  );
+  const given = shown.flatMap((o) => o.picks.map(describePick));
+  const left = stillToChoose(shown);
+
   return (
     <div className="mb-1 ml-3 border-l border-ash pl-3 text-xs" data-free-choices={trait.name}>
-      {offers.filter((o) => !placedElsewhere || o.picks.length > 0).map((o) => (
+      {folded && shown.length > 0 && (
+        <p className="flex flex-wrap items-center gap-x-1.5">
+          <span className="text-mist">Given free:</span>
+          {given.length > 0 && <span className="text-parchment">{given.join(", ")}</span>}
+          {left && (
+            <span className="text-gold">
+              {given.length > 0 ? "· " : ""}
+              {left}
+            </span>
+          )}
+          {given.length === 0 && !left && <span className="text-mist">none yet</span>}
+          {choose}
+          {close}
+        </p>
+      )}
+      {!folded && shown.map((o) => (
         <p key={o.grant} className="flex flex-wrap items-center gap-1.5">
           <span className={o.picks.length === 0 && o.dots !== 0 ? "text-gold" : "text-mist"}>
             {o.dots != null ? "Bonus dots, one for each dot of Morality below 5:" : `${o.category_name.replace(/^./, (c) => c.toUpperCase())} given free:`}
@@ -236,16 +284,7 @@ export function FreeChoicesRow({ character, trait, editable }: { character: Char
           {o.dots != null && o.picks.length > 0 && <DotsLeft offer={o} />}
         </p>
       ))}
-      {draft === null && open && !nothingToPlace && (
-        <Button
-          variant="ghost"
-          className="min-h-7 px-1 py-0 text-xs text-gold"
-          aria-label={`${done ? "Edit" : "Choose"} the free traits for ${trait.name}`}
-          onClick={() => setDraft(saved)}
-        >
-          {done ? "Edit" : "Choose"}
-        </Button>
-      )}
+      {!folded && choose}
       {locked && (saved.length > 0 || placedElsewhere) && <p className="text-mist">{locked}</p>}
       {draft !== null && (
         <form

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FreeChoicesOut } from "../../api/types";
-import { dotsAllowed, dotsOn, dotsPlaced, fill, heading, later, place, placed, pointsUsed, rule, sayable, setDetail, setDots, summary, toggle, toSend } from "./freeChoices";
+import { dotsAllowed, dotsOn, dotsPlaced, fill, heading, later, place, placed, pointsUsed, rule, sayable, setDetail, setDots, stillToChoose, summary, toggle, toSend } from "./freeChoices";
 
 const offer = (extra: Partial<FreeChoicesOut>): FreeChoicesOut => ({
   grant: "merits/Ventrue Royalty/1",
@@ -143,5 +143,26 @@ describe("the cart's words", () => {
   it("lists the picks", () => {
     const picks = place(place([], ROYALTY, 4, "Resources"), ROYALTY, 3, "Herd");
     expect(summary([ROYALTY], picks)).toBe("Resources 4, Herd 3");
+  });
+});
+
+describe("what is still to choose", () => {
+  const pick = (name: string, amount = 0) => ({ name, detail: "", amount });
+  it("counts the places and picks left over every grant, and says nothing once all are made", () => {
+    expect(stillToChoose([ROYALTY])).toBe("3 to choose");
+    expect(stillToChoose([{ ...ROYALTY, picks: [pick("Resources", 4)] }])).toBe("2 to choose");
+    expect(stillToChoose([{ ...ROYALTY, picks: [pick("Resources", 4), pick("Herd", 3), pick("Allies", 2)] }])).toBeNull();
+    expect(stillToChoose([offer({ count: 2, picks: [pick("Allies")] }), offer({ grant: "other", count: 2 })])).toBe("3 to choose");
+  });
+
+  it("asks for a budget of points until one is picked", () => {
+    expect(stillToChoose([offer({ points: 3 })])).toBe("up to 3 points to choose");
+    expect(stillToChoose([offer({ points: 3, picks: [pick("Allies")] })])).toBeNull();
+  });
+
+  it("says how many bonus dots are left to place, or to give up", () => {
+    expect(stillToChoose([offer({ dots: 2, picks: [pick("Physical", 1)] })])).toBe("1 to place");
+    expect(stillToChoose([offer({ dots: 1, picks: [pick("Physical", 2)] })])).toBe("Morality rose: 1 to give up");
+    expect(stillToChoose([offer({ dots: 0 })])).toBeNull();
   });
 });

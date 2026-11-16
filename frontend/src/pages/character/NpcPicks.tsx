@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { api, unwrap } from "../../api/client";
 import type { CharacterOut, NpcPicksOut as PicksOut, NpcPoolOut as PoolOut } from "../../api/types";
 import { useClanName } from "../../components/ClanNames";
+import { InfoButton } from "../../components/InfoButton";
+import { Chevron } from "../../components/TraitInfo";
 import { Badge, Button, Card, ErrorText, Rating, Select } from "../../components/ui";
 import { useAction } from "../../hooks";
 import { seatPicks } from "./creation/logic";
@@ -21,7 +23,8 @@ const shown = (name: string, detail: string) => (detail ? `${name}: ${detail}` :
  * a trait stays off, and the rest are fitted around them. The picks show in the
  * wizard's slots, a row for each rating. The free dots a merit it holds places are
  * fitted with them (#566): Ventrue Royalty's 4, 3 and 2, and the Path a Path merit
- * converts from Humanity, each in slots of its own.
+ * converts from Humanity, each in slots of its own. Each part is closed to a line of
+ * what it holds and what is left to choose, and opens on demand, one at a time (#1037).
  */
 export function NpcPicks({ character }: { character: CharacterOut }) {
   const path = { params: { path: { character_id: character.id } } };
@@ -30,6 +33,8 @@ export function NpcPicks({ character }: { character: CharacterOut }) {
   const off = useAction((body: Body) => unwrap(api.POST("/api/characters/{character_id}/npc/picks/off", { ...path, body })));
   const refit = useAction(() => unwrap(api.POST("/api/characters/{character_id}/npc/picks/refit", path)));
   const named = useClanName();
+  // The part open, by its title: one at a time.
+  const [open, setOpen] = useState<string | null>(null);
   const data: PicksOut | undefined = picks.data;
   if (!data?.fitted) return null;
   const byHand = data.kept_off.length > 0 || data.pools.some((p) => p.placed.some((x) => x.by === "staff"));
@@ -41,9 +46,21 @@ export function NpcPicks({ character }: { character: CharacterOut }) {
   const grants = [...new Set(shownPools.flatMap((p) => (p.grant ? [p.grant] : [])))];
   const keptOff = (kind: "pick" | "place") => data.kept_off.filter((k) => k.kind === kind).map((k) => named(shown(k.name, k.detail)));
 
+  const fold = (title: string, pools: PoolOut[], children: ReactNode) => (
+    <Fold key={title} title={title} pools={pools} named={named} open={open === title} onToggle={() => setOpen(open === title ? null : title)}>
+      {children}
+    </Fold>
+  );
+
   return (
     <Card
+      dense
       title="Creation picks"
+      info={
+        <InfoButton label="About creation picks">
+          Fitted to the sheet so its creation dots are free, as a player character&apos;s are, and so are the free dots its merits place. Where its player picked otherwise, set the pick here: picks set by hand stay put, and the rest fit around them. An empty slot is a pick the fitting found no trait for.
+        </InfoButton>
+      }
       actions={
         byHand && (
           <Button variant="secondary" disabled={busy} onClick={() => refit.mutate(undefined)} className="min-h-8 px-3">
@@ -52,40 +69,98 @@ export function NpcPicks({ character }: { character: CharacterOut }) {
         )
       }
     >
-      <p className="mb-3 text-xs text-mist">
-        Fitted to the sheet so its creation dots are free, as a player character&apos;s are, and so are the free dots its merits place. Where its player picked otherwise, set the pick here: picks set by hand stay put, and the rest fit around them. An empty slot is a pick the fitting found no trait for.
-      </p>
-      <div className="flex flex-col gap-5">
-        {categories.map((category) => (
-          <PickSlots
-            key={category}
-            pools={shownPools.filter((p) => p.category === category && !p.grant)}
-            busy={busy}
-            named={named}
-            place={(b) => place.mutate(b)}
-            off={(b) => off.mutate(b)}
-          />
-        ))}
+      <div className="flex flex-col gap-1">
+        {categories.map((category) => {
+          const pools = shownPools.filter((p) => p.category === category && !p.grant);
+          return fold(
+            pools[0]!.category_name,
+            pools,
+            <PickSlots pools={pools} busy={busy} named={named} place={(b) => place.mutate(b)} off={(b) => off.mutate(b)} />,
+          );
+        })}
         {shownPools
           .filter((pool) => pool.kind === "points")
-          .map((pool) => (
-            <Budget key={pool.category} pool={pool} busy={busy} named={named} place={(b) => place.mutate(b)} off={(b) => off.mutate(b)} />
-          ))}
-        {grants.map((grant) => (
-          <PickSlots
-            key={grant}
-            pools={shownPools.filter((p) => p.grant === grant)}
-            busy={busy}
-            named={named}
-            place={(b) => place.mutate(b)}
-            off={(b) => off.mutate(b)}
-          />
-        ))}
+          .map((pool) => fold(pool.category_name, [pool], <Budget pool={pool} busy={busy} named={named} place={(b) => place.mutate(b)} off={(b) => off.mutate(b)} />))}
+        {grants.map((grant) => {
+          const pools = shownPools.filter((p) => p.grant === grant);
+          return fold(
+            pools[0]!.merit ?? pools[0]!.category_name,
+            pools,
+            <PickSlots pools={pools} busy={busy} named={named} place={(b) => place.mutate(b)} off={(b) => off.mutate(b)} />,
+          );
+        })}
       </div>
       {keptOff("pick").length > 0 && <p className="mt-3 text-xs text-mist">Kept without a pick: {keptOff("pick").join(", ")}.</p>}
       {keptOff("place").length > 0 && <p className="mt-3 text-xs text-mist">Kept without a merit&apos;s free dots: {keptOff("place").join(", ")}.</p>}
       <ErrorText error={place.error ?? off.error ?? refit.error} />
     </Card>
+  );
+}
+
+/**
+ * One part of the picks (a category's, a budget of points, a merit's places), closed
+ * to its title and a line of what it holds: the traits with the rating each pick is
+ * at, and the slots still empty, which stand out so they aren't missed while closed.
+ * Opening it shows its slots (#1037).
+ */
+function Fold({
+  title,
+  pools,
+  named,
+  open,
+  onToggle,
+  children,
+}: {
+  title: string;
+  pools: PoolOut[];
+  named: (name: string) => string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  const id = useId();
+  const points = pools.find((p) => p.kind === "points");
+  const placed = pools.flatMap((pool) => pool.placed.map((p) => `${named(shown(p.name, p.detail))} ${points ? `(${p.pick})` : pool.rating}`));
+  const picks = pools.filter((p) => p.kind === "picks");
+  const empty = picks.reduce((n, p) => n + Math.max(0, p.allowed - p.placed.length), 0);
+  const over = picks.reduce((n, p) => n + Math.max(0, p.placed.length - p.allowed), 0);
+  return (
+    <div className="border-b border-ash/60 last:border-b-0">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        aria-labelledby={`${id}-title`}
+        aria-describedby={`${id}-says`}
+        onClick={onToggle}
+        className="flex w-full items-start gap-1.5 rounded py-1.5 text-left hover:bg-ash/40 pointer-coarse:py-2.5"
+      >
+        <span className="mt-1 text-mist">
+          <Chevron open={open} />
+        </span>
+        <span className="min-w-0">
+          <span id={`${id}-title`} className="block text-sm text-gold">
+            {title}
+          </span>
+          <span id={`${id}-says`} className="block text-xs text-mist">
+            {points && `${points.placed.reduce((n, p) => n + p.pick, 0)} of ${points.allowed} points${placed.length ? ": " : ""}`}
+            {placed.length ? <span className="text-parchment">{placed.join(", ")}</span> : !points && !empty && "none"}
+            {empty > 0 && (
+              <span className="text-gold">
+                {placed.length ? " · " : ""}
+                {empty} to choose
+              </span>
+            )}
+            {over > 0 && <span className="text-blood-bright"> · {over} with no pick now</span>}
+          </span>
+        </span>
+      </button>
+      {open && (
+        <div id={id} className="pt-1 pb-3">
+          {children}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -176,7 +251,7 @@ function PickSlots({ pools, busy, named, place, off }: Actions & { pools: PoolOu
     <SlotRows
       title={title}
       label={`${title} ${what}s`}
-      heading={false}
+      showTitle={false}
       widest={widest}
       rows={pools
         .filter((pool) => pool.kind === "picks")
@@ -227,7 +302,6 @@ function ByHand({ placed }: { placed?: Placed }) {
 
 /** A budget of points (merits, flaws): the traits it pays for, and what else it could. */
 function Budget({ pool, busy, named, place, off }: Props) {
-  const used = pool.placed.reduce((n, p) => n + p.pick, 0);
   // Fitted ones make way for one added by hand; those placed by hand don't.
   const byHand = pool.placed.reduce((n, p) => n + (p.by === "staff" ? p.pick : 0), 0);
   const placed = new Set(pool.placed.map((p) => key(p.name, p.detail)));
@@ -235,9 +309,6 @@ function Budget({ pool, busy, named, place, off }: Props) {
   const label = pool.category_name;
   return (
     <div>
-      <p className="mb-1 text-xs tracking-wide text-mist uppercase">
-        {label}: {used} of {pool.allowed} points
-      </p>
       <ul className="flex flex-col gap-1">
         {pool.placed.map((p) => (
           <li key={key(p.name, p.detail)} className="flex items-center justify-between gap-2 text-sm">

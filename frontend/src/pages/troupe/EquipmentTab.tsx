@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router";
+import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { EquipmentItemOut, EquipmentOut, EquipmentHolderOut } from "../../api/types";
 import { ActionMenu, MenuGroup, MenuItem } from "../../components/ActionMenu";
@@ -12,6 +12,7 @@ import { InfoButton } from "../../components/InfoButton";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Notice, Select } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
+import { useSearchParamsUpdate } from "../../useSearchParamsUpdate";
 import { DiscardForm, GiveForm } from "../character/ItemActions";
 import { cyclePath } from "./cycles";
 import { EquipmentEditor, useEquipmentRules, useTroupeTemplates } from "./EquipmentEditor";
@@ -44,9 +45,11 @@ const SORT_NAMES: Record<Sort, string> = { holder: "Holder", name: "Name", date:
  */
 export function EquipmentTab({ troupeId, troupeName }: { troupeId: string; troupeName: string }) {
   const dates = useDates();
-  const [params, setParams] = useSearchParams();
+  const [params, setParams] = useSearchParamsUpdate();
   const search = readSearch(params);
-  const update = (change: Partial<ItemSearch>) => setParams(writeSearch({ ...search, ...change }), { replace: true });
+  // Built on the address as it now is: the search box's wait can end just after a
+  // filter is chosen, before the page has caught up, and would undo it (#1030).
+  const update = (change: Partial<ItemSearch>) => setParams((now) => writeSearch({ ...readSearch(now), ...change }), { replace: true });
   const [giving, setGiving] = useState(false);
   const [given, setGiven] = useState("");
   const query = searchQuery(search, (day) => dates.fromInput(`${day}T00:00`));

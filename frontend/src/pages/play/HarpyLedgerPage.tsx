@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, type ReactNode } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router";
 import { api, unwrap } from "../../api/client";
 import { Empty, ErrorText, Loading, Select } from "../../components/ui";
 import { BackLink } from "../../components/BackLink";
+import { usePageWidth, WidePages } from "../../components/widePage";
+import { useOnline } from "../../offline/connection";
 import { AuditsCard } from "../troupe/BoonAudits";
 import { BoonbreakersTab } from "../troupe/Boonbreakers";
 import { HarpyMode } from "../troupe/boonKeeper";
@@ -27,7 +29,9 @@ const BoonStatisticsPage = lazy(() => import("../troupe/BoonStatisticsPage").the
  * who has left as the court knows it. Each part is a tab, as on staff's boons screen
  * (#982): Ledger, To review, Standings, Statistics, Boonbreakers (the Harpy's, not a
  * Lesser Harpy's) and Audits, as far as each reaches; with only the review queue and
- * no standings, the queue alone.
+ * no standings, the queue alone. The page is as narrow as the Play View, and as wide
+ * as staff's from lg up while the ledger's table asks (#985), so a boon opens beside
+ * it there. Offline, what shows is as it was, and nothing can be done with it.
  */
 export function HarpyLedgerPage() {
   const { characterId = "" } = useParams();
@@ -64,16 +68,20 @@ export function HarpyLedgerPage() {
 
   const heading = shown?.access === "submissions" ? "Boons to review" : "The boon ledger";
   useTitle(heading);
+  // The Play View's width, and staff's from lg up for the ledger's table (#975, #985).
+  const page = usePageWidth("max-w-3xl", "max-w-3xl lg:max-w-7xl");
+  const online = useOnline();
 
   return (
-    <div className="min-h-screen bg-night pb-16 text-parchment">
+    // The sticky header's height, which a boon's side panel stays below (#985).
+    <div className="min-h-screen bg-night pb-16 text-parchment [--sticky-top:3.625rem]">
       <header className="sticky top-0 z-10 border-b border-ash bg-night/95 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-2">
+        <div className={`mx-auto flex ${page.width} items-center justify-between gap-3 px-4 py-2`}>
           <BackLink label="Play View" to={`/play/characters/${characterId}?tab=boons`} />
           <h1 className="text-lg">{heading}</h1>
         </div>
       </header>
-      <main className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pt-3">
+      <main className={`mx-auto flex ${page.width} flex-col gap-4 px-4 pt-3`}>
         {ledgers.isPending ? (
           <Loading />
         ) : ledgers.error ? (
@@ -96,18 +104,25 @@ export function HarpyLedgerPage() {
             <p className="text-sm text-mist">
               As {keeper?.role === "talon" ? `a ${keeper.word}` : "Harpy"} of {shown.troupe_name}.
             </p>
-            <HarpyMode.Provider value={keeper}>
-              <BoonTabs key={shown.troupe_id} troupeId={shown.troupe_id} base={base} parts={parts} holdsReview={!full} />
-              <Routes>
-                {parts.map((part) => {
-                  const element = partOf(part, shown.troupe_id, keeper!, shown.gives_access ?? false, partTo(base, parts, "review"));
-                  const path = partPath(parts, part);
-                  return path ? <Route key={part} path={path} element={element} /> : <Route key={part} index element={element} />;
-                })}
-                {/* A part this troupe's ledger doesn't give, as after picking another troupe. */}
-                <Route path="*" element={<Navigate to={base} replace />} />
-              </Routes>
-            </HarpyMode.Provider>
+            {!online && (
+              <p role="status" className="text-sm text-blood-bright">
+                The ledger needs a signal. What shows is as it was; you can act on it again once you have signal.
+              </p>
+            )}
+            <WidePages ask={page.ask}>
+              <HarpyMode.Provider value={keeper}>
+                <BoonTabs key={shown.troupe_id} troupeId={shown.troupe_id} base={base} parts={parts} holdsReview={!full} />
+                <Routes>
+                  {parts.map((part) => {
+                    const element = partOf(part, shown.troupe_id, keeper!, shown.gives_access ?? false, partTo(base, parts, "review"), online);
+                    const path = partPath(parts, part);
+                    return path ? <Route key={part} path={path} element={element} /> : <Route key={part} index element={element} />;
+                  })}
+                  {/* A part this troupe's ledger doesn't give, as after picking another troupe. */}
+                  <Route path="*" element={<Navigate to={base} replace />} />
+                </Routes>
+              </HarpyMode.Provider>
+            </WidePages>
           </>
         )}
       </main>
@@ -115,18 +130,39 @@ export function HarpyLedgerPage() {
   );
 }
 
+/**
+ * What the keeper does in a part, which offline can't be done (#985): its buttons and
+ * fields disabled, its links still links. The ledger disables its own actions.
+ */
+function Acts({ online, className = "", children }: { online: boolean; className?: string; children: ReactNode }) {
+  return (
+    <fieldset disabled={!online} className={`flex min-w-0 flex-col gap-4 ${className}`}>
+      {children}
+    </fieldset>
+  );
+}
+
 /** A part of the ledger the Harpy keeps, for its tab: each keyed by troupe, so picking another starts it afresh. */
-function partOf(part: BoonPart, troupeId: string, keeper: LedgerKeeper, givesAccess: boolean, reviewTo: string) {
+function partOf(part: BoonPart, troupeId: string, keeper: LedgerKeeper, givesAccess: boolean, reviewTo: string, online: boolean) {
   switch (part) {
     case "ledger":
       return (
         <>
           <BoonsTab key={troupeId} troupeId={troupeId} harpy={keeper} review={keeper.review ? reviewTo : undefined} />
-          {givesAccess && <TalonsCard key={`talons-${troupeId}`} troupeId={troupeId} />}
+          {/* A form: at the Play View's width while the page is wide for the table. */}
+          {givesAccess && (
+            <Acts online={online} className="max-w-3xl">
+              <TalonsCard key={`talons-${troupeId}`} troupeId={troupeId} />
+            </Acts>
+          )}
         </>
       );
     case "review":
-      return <BoonReviewTab key={troupeId} troupeId={troupeId} />;
+      return (
+        <Acts online={online}>
+          <BoonReviewTab key={troupeId} troupeId={troupeId} />
+        </Acts>
+      );
     case "standings":
       return <BoonStandingsTab key={troupeId} troupeId={troupeId} harpy />;
     case "statistics":
@@ -136,8 +172,16 @@ function partOf(part: BoonPart, troupeId: string, keeper: LedgerKeeper, givesAcc
         </Suspense>
       );
     case "boonbreakers":
-      return <BoonbreakersTab key={troupeId} troupeId={troupeId} />;
+      return (
+        <Acts online={online}>
+          <BoonbreakersTab key={troupeId} troupeId={troupeId} />
+        </Acts>
+      );
     case "audits":
-      return <AuditsCard key={troupeId} troupeId={troupeId} inPlay />;
+      return (
+        <Acts online={online}>
+          <AuditsCard key={troupeId} troupeId={troupeId} inPlay />
+        </Acts>
+      );
   }
 }

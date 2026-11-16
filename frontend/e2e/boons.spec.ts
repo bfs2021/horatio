@@ -1556,7 +1556,7 @@ test("in the Play View the Harpy keeps the ledger at a phone's width and a desk'
   await fits(h);
   await about(
     h,
-    "As the troupe's Harpy you may register boons, correct them, settle and move them, review what players report, perform audits and export the ledger. What you do is logged as your character.",
+    "As the troupe's Harpy you may register boons, correct them, settle and move them, approve what players report, perform audits and export the ledger. What you do is logged as your character.",
   );
 
   // She searches, opens the boon, corrects it and settles it.
@@ -1591,15 +1591,17 @@ test("in the Play View the Harpy keeps the ledger at a phone's width and a desk'
   // A Lesser Harpy sees only what the Harpy lets them do: each right in turn.
   const t = talon.page;
   await narrow(t);
-  const rights: { can: Record<string, boolean>; note: string; actions: string[]; register: boolean; exports: boolean }[] = [
-    { can: { can_edit: true }, note: "As a Lesser Harpy you may correct boons.", actions: ["Edit"], register: false, exports: false },
-    { can: { can_settle: true }, note: "As a Lesser Harpy you may settle and move boons and review what players report.", actions: ["Trade", "Settle"], register: false, exports: false },
-    { can: { can_export: true }, note: "As a Lesser Harpy you may export the ledger.", actions: [], register: false, exports: true },
-    { can: { can_add: true }, note: "As a Lesser Harpy you may register boons.", actions: [], register: true, exports: false },
+  const rights: { can: Record<string, boolean>; note: string; actions: string[]; register: boolean; exports: boolean; reviews: boolean }[] = [
+    { can: { can_edit: true }, note: "As a Lesser Harpy you may correct boons.", actions: ["Edit"], register: false, exports: false, reviews: false },
+    { can: { can_settle: true }, note: "As a Lesser Harpy you may settle and move boons.", actions: ["Trade", "Settle"], register: false, exports: false, reviews: false },
+    // Approving reported boons is a right of its own (#993): the To review tab, and nothing to do in the ledger.
+    { can: { can_review: true }, note: "As a Lesser Harpy you may approve what players report.", actions: [], register: false, exports: false, reviews: true },
+    { can: { can_export: true }, note: "As a Lesser Harpy you may export the ledger.", actions: [], register: false, exports: true, reviews: false },
+    { can: { can_add: true }, note: "As a Lesser Harpy you may register boons.", actions: [], register: true, exports: false, reviews: false },
   ];
   const seat = "Isolde Penhallow owes Tobiah Quarrel, trivial";
   for (const right of rights) {
-    const none = { can_add: false, can_edit: false, can_settle: false, can_audit: false, can_export: false };
+    const none = { can_add: false, can_edit: false, can_settle: false, can_review: false, can_audit: false, can_export: false };
     await send(h, "PUT", `/api/troupes/${troupe.id}/boon-talons/${tobiah}`, { ...none, ...right.can });
     await t.goto(`/play/characters/${tobiah}/ledger`);
     const theirs = ledgerOf(t);
@@ -1608,6 +1610,7 @@ test("in the Play View the Harpy keeps the ledger at a phone's width and a desk'
     await about(t, right.note);
     await expect(t.getByRole("button", { name: "Register boons" })).toHaveCount(right.register ? 1 : 0);
     await expect(t.getByRole("button", { name: "More for the ledger" })).toHaveCount(right.exports ? 1 : 0);
+    await expect(reviewTotal(t)).toHaveCount(right.reviews ? 1 : 0);
     await theirs.open(seat);
     await opened(t, "Isolde Penhallow owes Tobiah Quarrel");
     if (right.actions.length === 0) {
@@ -1621,13 +1624,25 @@ test("in the Play View the Harpy keeps the ledger at a phone's width and a desk'
     }
   }
 
-  // Given only the review queue, the Harpy's page is the queue alone, at the Play View's width.
+  // Given only the review queue, the Harpy's page is the queue alone, at the Play View's width. With reports held
+  // for approval (#993), one of Tobiah's waits there; offline, none of it can be accepted or not, nor its settings changed.
   await send(l, "PUT", `/api/troupes/${troupe.id}/boon-harpy`, { access: "submissions" });
+  await send(l, "PUT", `/api/troupes/${troupe.id}/boon-review`, { hold: true });
+  await send(t, "POST", `/api/characters/${tobiah}/play-boons`, { other: { character_id: isolde }, direction: "owes", kind: "minor", made_on: "2026-10-17", reason: "A word at the gate" });
   await h.goto(`/play/characters/${isolde}/ledger`);
   await expect(h.getByRole("heading", { name: "Boons to review" })).toBeVisible();
-  await expect(h.getByRole("list", { name: "Boons to review" })).toBeVisible();
   await expect(ledgerOf(h).table).toHaveCount(0);
+  const accept = h.getByRole("button", { name: "Accept: Tobiah Quarrel owes Isolde Penhallow", exact: true });
+  await expect(accept).toBeEnabled();
   await fits(h);
+  await h.context().setOffline(true);
+  await expect(h.getByRole("status").filter({ hasText: "The ledger needs a signal." })).toBeVisible();
+  await expect(accept).toBeDisabled();
+  await expect(h.getByRole("button", { name: "Don't accept: Tobiah Quarrel owes Isolde Penhallow" })).toBeDisabled();
+  await expect(h.getByRole("button", { name: /^Accept all shown/ })).toBeDisabled();
+  await expect(h.getByRole("button", { name: "Approval settings" })).toBeDisabled();
+  await h.context().setOffline(false);
+  await expect(accept).toBeEnabled();
 });
 
 test("staff declare a Boonbreaker: their open boons are made void, both ways, and they hold Disgraced while the mark stands (#717)", async ({ browser }) => {

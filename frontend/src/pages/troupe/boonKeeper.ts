@@ -45,7 +45,7 @@ export function keeperNote(keeper: LedgerKeeper): string {
   const deeds = [keeper.add && "register", keeper.edit && "correct", keeper.settle && "settle and move"]
     .filter((d): d is string => Boolean(d))
     .map((d, i) => `${d} ${i === 0 ? "boons" : "them"}`);
-  if (keeper.review) deeds.push("review what players report");
+  if (keeper.review) deeds.push("approve what players report");
   if (keeper.audit) deeds.push("perform audits");
   if (keeper.export) deeds.push("export the ledger");
   if (deeds.length === 0) return `${who} you may read the ledger; the Harpy hasn't let you change it.`;

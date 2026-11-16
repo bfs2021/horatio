@@ -101,11 +101,12 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   await expect(l.getByText("Boons: switched on.")).toBeVisible();
   await expect(keep).toHaveAttribute("aria-checked", "true");
 
-  // Under Court, the Boons screen: register a game's boons at once.
+  // Under Court, the Boons screen: register a game's boons at once, in a dialog from the toolbar (#983).
   await troupeTab(l, "Boons");
   await expect(l.getByText("No open boons yet.")).toBeVisible();
   await l.getByRole("button", { name: "Register boons" }).click();
-  const entry = l.getByRole("form", { name: "Register boons" });
+  const dialog = l.getByRole("dialog", { name: "Register boons" });
+  const entry = dialog.getByRole("form", { name: "Register boons" });
   await entry.getByLabel("Date for new rows").fill("2026-10-03");
   await entry.getByLabel("Where they come from (optional)").fill("Elysium, 3 October");
   const pick = async (row: ReturnType<Page["getByRole"]>, side: "Debtor" | "Creditor", typed: string, option: RegExp) => {
@@ -114,6 +115,12 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   };
   const first = entry.getByRole("listitem", { name: "Boon 1" });
   await pick(first, "Debtor", "Mireille", /Mireille Dauvin/);
+  // Leaving with a row started asks first; Cancel keeps the form as it was.
+  await l.keyboard.press("Escape");
+  const discard = l.getByRole("dialog", { name: "Discard these boons?" });
+  await discard.getByRole("button", { name: "Cancel" }).click();
+  await expect(discard).toBeHidden();
+  await expect(first.getByRole("combobox", { name: "Debtor" })).toHaveValue(/Mireille Dauvin/);
   await pick(first, "Creditor", "Anselm", /Anselm Roque/);
   await first.getByLabel("How many").fill("3");
   await first.getByLabel("Reason").fill("Secret");
@@ -125,6 +132,7 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   await second.getByLabel("Reason").fill("Introduction");
   await entry.getByRole("button", { name: "Register 4 boons" }).click();
   await expect(l.getByText("Registered 4 boons.")).toBeVisible();
+  await expect(dialog).toBeHidden();
 
   const boons = ledgerOf(l);
   await expect(boons.row("Mireille Dauvin owes Anselm Roque, minor")).toHaveCount(3);
@@ -569,11 +577,12 @@ test("staff write a passage of story on a side of a boon, cut to a line, and its
   // 600 characters of the plot where the debtor's name would be.
   const story = "The debt was written in silver on the night the river froze, and sealed. ".repeat(9).slice(0, 600).trim();
 
-  // The lead registers it: the picker's last choice is someone not in Horatio, which takes any text.
+  // The lead registers it, with the ledger narrowed to trivial boons: the picker's last choice is someone not in
+  // Horatio, which takes any text.
   const l = lead.page;
-  await l.goto(`/troupes/${troupe.id}/boons`);
+  await l.goto(`/troupes/${troupe.id}/boons?kind=trivial`);
   await l.getByRole("button", { name: "Register boons" }).click();
-  const entry = l.getByRole("form", { name: "Register boons" });
+  const entry = l.getByRole("dialog", { name: "Register boons" }).getByRole("form", { name: "Register boons" });
   const row = entry.getByRole("listitem", { name: "Boon 1" });
   await row.getByRole("combobox", { name: "Debtor" }).click();
   await row.getByRole("listbox", { name: "Characters" }).getByRole("option", { name: "Someone not in Horatio…" }).click();
@@ -587,6 +596,10 @@ test("staff write a passage of story on a side of a boon, cut to a line, and its
   await row.getByLabel("Reason").fill("Passage across the frozen river");
   await entry.getByRole("button", { name: "Register the boon" }).click();
   await expect(l.getByText("Registered a boon.")).toBeVisible();
+  // A minor boon, which the filter hides (#983): the toast shows it, clearing the filter.
+  await expect(entry).toBeHidden();
+  await l.getByRole("button", { name: "Show it" }).click();
+  await expect(l).not.toHaveURL(/kind=/);
 
   // In the ledger, one line, in italics as a name only, all of it on hover (#975); its detail has it in full, and
   // opened to edit, it is there to change.
@@ -1195,8 +1208,10 @@ test("the Harpy keeps the ledger from the Play View as their character, and neve
   await h.getByRole("link", { name: "Open the boon ledger" }).click();
   await expect(h.getByRole("heading", { name: "The boon ledger" })).toBeVisible();
   await expect(h.getByText(`As Harpy of Debts Kept ${run}.`)).toBeVisible();
+  // Two rows at once, in the dialog (#983).
   await h.getByRole("button", { name: "Register boons" }).click();
-  const entry = h.getByRole("form", { name: "Register boons" });
+  const dialog = h.getByRole("dialog", { name: "Register boons" });
+  const entry = dialog.getByRole("form", { name: "Register boons" });
   await entry.getByLabel("Date for new rows").fill("2026-10-03");
   const row = entry.getByRole("listitem", { name: "Boon 1" });
   await row.getByRole("combobox", { name: "Debtor" }).fill("Edric");
@@ -1204,8 +1219,18 @@ test("the Harpy keeps the ledger from the Play View as their character, and neve
   await row.getByRole("combobox", { name: "Creditor" }).fill("Lady Ashgrove");
   await row.getByRole("listbox", { name: "Characters" }).getByRole("option", { name: /name only/ }).click();
   await row.getByLabel("Reason").fill("Safe passage");
-  await entry.getByRole("button", { name: "Register the boon" }).click();
-  await expect(h.getByText("Registered a boon.")).toBeVisible();
+  await entry.getByRole("button", { name: "Add a row" }).click();
+  const another = entry.getByRole("listitem", { name: "Boon 2" });
+  await another.getByRole("combobox", { name: "Debtor" }).fill("Edric");
+  await another.getByRole("listbox", { name: "Characters" }).getByRole("option", { name: /Edric Thorne/ }).click();
+  await another.getByRole("combobox", { name: "Creditor" }).fill("Philippa");
+  await another.getByRole("listbox", { name: "Characters" }).getByRole("option", { name: /Philippa Quill/ }).click();
+  await another.getByLabel("Kind").selectOption("trivial");
+  await another.getByLabel("Reason").fill("A word at Elysium");
+  await entry.getByRole("button", { name: "Register 2 boons" }).click();
+  await expect(h.getByText("Registered 2 boons.")).toBeVisible();
+  await expect(dialog).toBeHidden();
+  await expect(ledgerOf(h).row("Edric Thorne owes Philippa Quill, trivial")).toBeVisible();
 
   // She corrects it, with a note: her log shows the edit as hers, not what it changed.
   const boons = ledgerOf(h);

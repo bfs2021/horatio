@@ -168,7 +168,7 @@ describe.each(Object.entries(THEMES))("%s's colours", (theme, c) => {
       expect(contrast(c.blood!, ground), `a Blood box on ${name}`).toBeGreaterThanOrEqual(3);
       expect(contrast(c.mist!, ground), `a mist box on ${name}`).toBeGreaterThanOrEqual(3);
       expect(contrast(over(c.gold!, 0.7, ground), ground), `a gold/70 box on ${name}`).toBeGreaterThanOrEqual(3);
-      expect(contrast(c.gold!, ground), `the focus ring on ${name}`).toBeGreaterThanOrEqual(3);
+      expect(contrast(c.gold!, ground), `the focus ring, and the Play View header's edge (#1036), on ${name}`).toBeGreaterThanOrEqual(3);
     }
   });
 

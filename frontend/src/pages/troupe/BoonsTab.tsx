@@ -13,10 +13,11 @@ import { SectionLabel } from "../../components/Headings";
 import { useWidePage } from "../../components/widePage";
 import { Badge, Empty, ErrorText, Loading } from "../../components/ui";
 import { useDates } from "../../dates";
+import { useOnline } from "../../offline/connection";
 import { BoonDetail, boonLabel, BoonMarks, LEFT } from "./BoonDetail";
 import { RegisterBoons, type Reveal } from "./BoonEntry";
 import { BoonExportMenu } from "./BoonExport";
-import { HarpyMode, type LedgerKeeper } from "./boonKeeper";
+import { HarpyMode, keeperNote, type LedgerKeeper } from "./boonKeeper";
 import {
   ledgerQuery,
   narrowed,
@@ -113,9 +114,12 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
       },
       { replace: !boonId },
     );
-  // Beside the table from lg up; a dialog on a phone, and in the Play View's narrow
-  // page for a Harpy (#985 looks at that page).
-  const docked = useSideBySide() && !harpy;
+  // Beside the table from lg up, where the Play View's page is wide too (#985); a
+  // dialog on a phone.
+  const docked = useSideBySide();
+  // Offline in the Play View, the Harpy can't act on the ledger: what shows is as it was (#985).
+  const online = useOnline();
+  const offline = harpy !== null && !online;
   // The top of the list, brought back into sight when paging from its foot.
   const top = useRef<HTMLDivElement>(null);
   const queryOf = (s: Section) => ({
@@ -192,9 +196,9 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
   };
   // Boons just registered that the search hides: "Show them" clears it (#983).
   const reveal: Reveal = (made, game) => (made.every((b) => shows(search, b, game)) ? null : () => update(showing(search, made)));
-  const register = (!harpy || harpy.add) && <RegisterBoons troupeId={troupeId} characters={characters} reveal={reveal} />;
+  const register = (!harpy || harpy.add) && <RegisterBoons troupeId={troupeId} characters={characters} reveal={reveal} disabled={offline} />;
   // Exports (#986): this view, or the whole ledger; the Harpy's where the troupe lets them (#987).
-  const exports = (!harpy || harpy.export) && <BoonExportMenu troupeId={troupeId} query={ledgerQuery(search)} />;
+  const exports = (!harpy || harpy.export) && <BoonExportMenu troupeId={troupeId} query={ledgerQuery(search)} disabled={offline} />;
   const turn = (key: string, to: number) => {
     setPage(key, to);
     const list = top.current;
@@ -209,28 +213,24 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
         <div className="flex items-center gap-2">
           <h2 className="text-lg text-gold">Boon ledger</h2>
           <InfoButton label="About the boon ledger">
+            {/* First, for the Harpy or a Lesser Harpy: what they may do, logged as their character (#985). */}
+            {harpy && (
+              <span className="mb-1 block">
+                {keeperNote(harpy)}
+                {(harpy.add || harpy.edit) && " An NPC you can't pick is named by name, for staff to link."}
+              </span>
+            )}
             <span className="block">
               The debts characters owe each other, registered with the Harpy ({BOON_PAGE}). Each boon keeps its own log; what each entry changed shows only to
               storytellers and assistant storytellers. A boon made off the record isn&apos;t tracked here.
             </span>
-            {harpy?.role === "harpy" && (
-              <span className="mt-1 block">
-                You keep it as the troupe&apos;s Harpy: what you do is logged as your character. An NPC you can&apos;t pick is named by name, for staff to link.
-              </span>
-            )}
-            {harpy?.role === "talon" && (
-              <span className="mt-1 block">
-                You keep it as a {harpy.word} of the troupe, as far as the Harpy lets you: what you do is logged as your character. An NPC you can&apos;t pick is named
-                by name, for staff to link.
-              </span>
-            )}
           </InfoButton>
         </div>
       </div>
 
       <div ref={top} className="flex scroll-mt-4 flex-col gap-3">
         {party ? (
-          <BoonPartyHeader troupeId={troupeId} party={party} back={`?${writeLedger(params, { ...search, character: "", name: "" })}`} auditTo="audits" />
+          <BoonPartyHeader troupeId={troupeId} party={party} back={`?${writeLedger(params, { ...search, character: "", name: "" })}`} auditTo="audits" offline={offline} />
         ) : (
           whole.data && <BoonTotals totals={whole.data.totals} review={reviews && reviewTo ? { count: toReview, to: reviewTo } : null} search={search} show={update} />
         )}
@@ -258,7 +258,11 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
             const list = lists[i]!;
             const total = list.data?.total ?? 0;
             const body = list.isPending ? (
-              <Loading compact />
+              list.fetchStatus === "paused" ? (
+                <Empty>These come with a signal.</Empty>
+              ) : (
+                <Loading compact />
+              )
             ) : total === 0 ? (
               <Empty>{s.side ? empty : narrowed(search) ? "No boons match." : search.view === "open" ? "No open boons yet." : "None here."}</Empty>
             ) : (

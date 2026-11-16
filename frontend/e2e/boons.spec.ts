@@ -1213,25 +1213,28 @@ test("held for review, a player's report waits, flagged for its unlinked name, u
   await report.getByLabel("Their name").fill("Mysterious Stranger");
   await report.getByLabel("Reason").fill("A ride across the river");
   await report.getByRole("button", { name: "Report the boon" }).click();
-  await expect(p.getByText(`Sent to Debts Weighed ${run}'s staff for review: Mysterious Stranger owes Corvin Ashby a minor boon.`)).toBeVisible();
+  // The troupe gives its Harpy no access, so staff approve it (#993).
+  await expect(p.getByText("Waiting for staff's approval: Mysterious Stranger owes Corvin Ashby a minor boon.")).toBeVisible();
   const reports = tab.getByRole("list", { name: "Your reports" });
   await expect(reports).toContainText("Mysterious Stranger owes Corvin Ashby a minor boon");
-  await expect(reports).toContainText(`Waiting for Debts Weighed ${run}'s staff to review it.`);
+  await expect(reports).toContainText("Waiting for staff's approval.");
 
-  // The lead sees it waiting, flagged for its name, and accepts it.
+  // The lead sees it waiting for approval, flagged for its name, opens it from its row and accepts it with a note.
   await l.goto(`/troupes/${troupe.id}/boons`);
   await boonTab(l, "To review").click();
-  const row = l.getByRole("list", { name: "Boons to review" }).getByRole("listitem", { name: "To review: Mysterious Stranger owes Corvin Ashby, minor" });
-  await expect(row).toContainText("Name not linked (debtor, Mysterious Stranger): No character in the troupe has this name.");
-  await expect(row.getByText("Waits for review").first()).toBeVisible();
-  await row.getByRole("button", { name: "Review" }).click();
-  await row.getByRole("button", { name: "Accept", exact: true }).click();
-  const accept = row.getByRole("form", { name: "Accept: Mysterious Stranger owes Corvin Ashby" });
+  const waiting = l.getByRole("table", { name: "Waiting for approval" });
+  const row = waiting.getByRole("row", { name: "Mysterious Stranger owes Corvin Ashby, minor" });
+  await expect(row.getByText("Flagged").filter({ visible: true })).toBeVisible();
+  await row.getByRole("button", { name: "Details: Mysterious Stranger owes Corvin Ashby, minor" }).click();
+  const review = waiting.getByRole("group", { name: "Review" });
+  await expect(review).toContainText("Mysterious Stranger: No character in the troupe has this name.");
+  await review.getByRole("button", { name: "Accept", exact: true }).click();
+  const accept = review.getByRole("form", { name: "Accept: Mysterious Stranger owes Corvin Ashby" });
   await accept.getByLabel("Note (optional)").fill("Confirmed with the Harpy");
   await accept.getByRole("button", { name: "Accept it" }).click();
   await expect(l.getByText("Accepted: Mysterious Stranger owes Corvin Ashby.")).toBeVisible();
-  await expect(l.getByText("Nothing waits for review, and no boon is flagged.")).toBeVisible();
-  // The troupe holds reports for review, so the tab stays, empty.
+  // The troupe holds reports for review, so the tab stays, and says nothing waits.
+  await expect(l.getByText("Nothing waits for approval.")).toBeVisible();
   await expect(boonTab(l, "To review")).toHaveAccessibleName("To review");
 
   // It stands in the ledger, with its review in its log; and the report is gone from the player's tab.
@@ -1241,9 +1244,94 @@ test("held for review, a player's report waits, flagged for its unlinked name, u
   await expect(log).toContainText("Reported for review");
   await expect(log).toContainText("Accepted");
   await expect(log).toContainText("Confirmed with the Harpy");
+  // The player's report says it's in the ledger now (#993).
   await p.reload();
   await expect(p.getByRole("region", { name: "Boons" }).getByRole("form", { name: "Report a boon" })).toBeVisible();
-  await expect(p.getByRole("list", { name: "Your reports" })).toHaveCount(0);
+  await expect(p.getByRole("list", { name: "Your reports" })).toContainText("In the ledger.");
+});
+
+test("the Harpy approves reported boons: a ticked kind goes straight in, the rest wait, accepted or not from their rows (#993)", async ({ browser }) => {
+  const custodian = await person(browser, "bappr-custodian");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "bappr-lead");
+  const harpy = await person(browser, "bappr-harpy");
+  const player = await person(browser, "bappr-player");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Debts Approved ${run}`, lead_handle: lead.handle });
+  await backstoryOptional(custodian.page, troupe.id);
+  const build = { ...ATTRIBUTES_AND_FOCUSES, backgrounds: [["Fame", 3], ["Herd", 2], ["Generation", 1]] as [string, number][], disciplines: [["Celerity", 2], ["Potence", 1], ["Presence", 1]] as [string, number][] };
+  const home = async (page: Page, name: string) => {
+    const id = await builtVampire(page, name, "Brujah", build);
+    await send(page, "PUT", `/api/characters/${id}/traits`, { category: "sect", name: "Camarilla", rating: null });
+    const asked = await send(page, "POST", `/api/characters/${id}/home-troupe`, { troupe_id: troupe.id });
+    await send(lead.page, "POST", `/api/approvals/${asked.id}/approve`);
+    return id;
+  };
+  const seraphine = await home(harpy.page, "Seraphine Vey");
+  const lucan = await home(player.page, "Lucan Marsh");
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/boon-ledger`, { on: true });
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/boon-review`, { hold: true });
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/boon-harpy`, { access: "submissions" });
+  await send(lead.page, "PUT", `/api/troupes/${troupe.id}/characters/${seraphine}/titles`, { titles: ["Harpy"] });
+
+  // The Harpy lets trivial boons go straight in, from Approval settings on the queue.
+  const h = harpy.page;
+  await h.goto(`/play/characters/${seraphine}/ledger`);
+  await expect(h.getByText("Every boon players report waits for approval.")).toBeVisible();
+  await h.getByRole("button", { name: "Approval settings" }).click();
+  const settings = h.getByRole("dialog", { name: "Approval settings" });
+  await settings.getByRole("checkbox", { name: "Trivial" }).check();
+  await settings.getByRole("button", { name: "Save" }).click();
+  await expect(h.getByText("Saved. Trivial boons players report go straight into the ledger; the rest wait.")).toBeVisible();
+  await expect(settings).toBeHidden();
+
+  // Lucan's player reports a trivial boon and two major ones: the trivial one is in the ledger, the others wait for the Harpy.
+  const p = player.page;
+  await p.goto(`/play/characters/${lucan}?tab=boons`);
+  const tab = p.getByRole("region", { name: "Boons" });
+  const report = tab.getByRole("form", { name: "Report a boon" });
+  await report.getByLabel("Who").selectOption({ label: "Seraphine Vey" });
+  await report.getByLabel("Kind").selectOption("trivial");
+  await report.getByLabel("Reason").fill("A word in the right ear");
+  await report.getByRole("button", { name: "Report the boon" }).click();
+  await expect(p.getByText(`Reported to Debts Approved ${run}'s ledger: Lucan Marsh owes Seraphine Vey a trivial boon.`)).toBeVisible();
+  const reported = (kind: string, reason: string) =>
+    send(p, "POST", `/api/characters/${lucan}/play-boons`, { other: { character_id: seraphine }, direction: "owed", kind, made_on: "2026-10-03", reason });
+  await reported("major", "Safe passage");
+  await reported("major", "A secret kept");
+  await p.reload();
+  const reports = p.getByRole("list", { name: "Your reports" });
+  await expect(reports.getByRole("listitem").filter({ hasText: "A word in the right ear" })).toContainText("In the ledger.");
+  await expect(reports.getByRole("listitem").filter({ hasText: "Safe passage" })).toContainText("Waiting for the Harpy's approval.");
+
+  // The Harpy doesn't accept one, from its row, with why; then narrows the rest to major boons and accepts all shown.
+  await h.reload();
+  const waiting = h.getByRole("table", { name: "Waiting for approval" });
+  await expect(waiting.getByRole("row", { name: "Seraphine Vey owes Lucan Marsh, major" })).toHaveCount(2);
+  await expect(waiting).not.toContainText("A word in the right ear");
+  await h.screenshot(shots("harpy-approval"));
+  await waiting.getByRole("button", { name: "Don't accept: Seraphine Vey owes Lucan Marsh" }).first().click();
+  const refuse = h.getByRole("dialog", { name: "Don't accept: Seraphine Vey owes Lucan Marsh" });
+  await refuse.getByLabel("Why").fill("No one saw it struck");
+  await refuse.getByRole("button", { name: "Don't accept it" }).click();
+  await expect(h.getByText("Not accepted: Seraphine Vey owes Lucan Marsh.")).toBeVisible();
+  await expect(waiting.getByRole("row", { name: "Seraphine Vey owes Lucan Marsh, major" })).toHaveCount(1);
+  await h.getByRole("group", { name: "Narrow the boons waiting" }).getByLabel("Kind").selectOption("major");
+  await h.getByRole("button", { name: "Accept all shown (1)" }).click();
+  await h.getByRole("dialog", { name: "Accept 1 boon?" }).getByRole("button", { name: "Accept them" }).click();
+  await expect(h.getByText("Accepted 1 boon.")).toBeVisible();
+  await expect(h.getByText("Nothing waits for approval.")).toBeVisible();
+
+  // The player reads what happened to each.
+  await p.reload();
+  await expect(reports.getByText("Not accepted", { exact: false })).toContainText("No one saw it struck");
+  await expect(reports.getByText("In the ledger.")).toHaveCount(2);
 });
 
 test("the Harpy keeps the ledger from the Play View as their character, and never sees what an edit changed (#688)", async ({ browser }) => {
@@ -1475,6 +1563,186 @@ test("the Harpy gives a Lesser Harpy add-only access: they register a boon as th
   await expect(menu.getByRole("menuitem", { name: "Settle" })).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: "Trade" })).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: "Edit" })).toHaveCount(0);
+});
+
+test("in the Play View the Harpy keeps the ledger at a phone's width and a desk's: searches, opens a boon beside the table or over it, edits and settles it; each Lesser Harpy sees only their rights; offline nothing can be done (#985)", async ({ browser }) => {
+  const custodian = await person(browser, "pvledger-cust");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "pvledger-lead");
+  const harpy = await person(browser, "pvledger-harpy");
+  const talon = await person(browser, "pvledger-talon");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Ledger at Hand ${run}`, lead_handle: lead.handle });
+  await backstoryOptional(custodian.page, troupe.id);
+  const build = { ...ATTRIBUTES_AND_FOCUSES, backgrounds: [["Fame", 3], ["Herd", 2], ["Generation", 1]] as [string, number][], disciplines: [["Celerity", 2], ["Potence", 1], ["Presence", 1]] as [string, number][] };
+  const home = async (page: Page, name: string) => {
+    const id = await builtVampire(page, name, "Brujah", build);
+    await send(page, "PUT", `/api/characters/${id}/traits`, { category: "sect", name: "Camarilla", rating: null });
+    const asked = await send(page, "POST", `/api/characters/${id}/home-troupe`, { troupe_id: troupe.id });
+    await send(lead.page, "POST", `/api/approvals/${asked.id}/approve`);
+    return id;
+  };
+  const isolde = await home(harpy.page, "Isolde Penhallow");
+  const tobiah = await home(talon.page, "Tobiah Quarrel");
+  const l = lead.page;
+  await send(l, "PUT", `/api/troupes/${troupe.id}/boon-ledger`, { on: true });
+  await send(l, "PUT", `/api/troupes/${troupe.id}/boon-harpy`, { access: "full", export: true });
+  await send(l, "PUT", `/api/troupes/${troupe.id}/boon-talons-setting`, { on: true, word: "Lesser Harpies" });
+  await send(l, "PUT", `/api/troupes/${troupe.id}/characters/${isolde}/titles`, { titles: ["Harpy"] });
+  await send(l, "POST", `/api/troupes/${troupe.id}/boons`, {
+    boons: [
+      { debtor: { character_id: tobiah }, creditor: { name: "Lady Merrow" }, kind: "minor", made_on: "2026-10-03", reason: "Silence at the masque" },
+      { debtor: { character_id: isolde }, creditor: { character_id: tobiah }, kind: "trivial", made_on: "2026-10-10", reason: "A seat at court" },
+    ],
+    note: "",
+  });
+
+  // At a game it is a phone: 375 px wide. At a desk, 1280.
+  const narrow = async (page: Page) => {
+    if (onPhone()) await page.setViewportSize({ width: 375, height: 800 });
+  };
+  /** Nothing on the page runs off its side. */
+  const fits = (page: Page) => expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
+  /** A boon opened from the table: beside it from lg up, as on staff's page, and over the whole page on a phone. */
+  const opened = async (page: Page, title: string) => {
+    if (onPhone()) {
+      await expect(page.getByRole("dialog", { name: title })).toBeVisible();
+    } else {
+      await expect(page.getByRole("complementary", { name: title })).toBeVisible();
+      await expect(page.locator("dialog[open]")).toHaveCount(0);
+      await expect(ledgerOf(page).table).toBeVisible();
+    }
+    await fits(page);
+  };
+  /** The ⓘ at the top of the ledger says what they may do, all of it on the screen. */
+  const about = async (page: Page, note: string) => {
+    await page.getByRole("button", { name: "About the boon ledger" }).click();
+    const said = page.getByText(note);
+    await expect(said).toBeVisible();
+    await expect.poll(async () => ((box) => (box ? box.x + box.width : Infinity))(await said.boundingBox())).toBeLessThanOrEqual(page.viewportSize()!.width);
+    await page.keyboard.press("Escape");
+  };
+
+  // Isolde's player opens the ledger from her Play View: the ⓘ says what she may do, and that it's logged as Isolde.
+  const h = harpy.page;
+  await narrow(h);
+  await h.goto(`/play/characters/${isolde}/ledger`);
+  const boons = ledgerOf(h);
+  await expect(boons.rows).toHaveCount(2);
+  await fits(h);
+  await about(
+    h,
+    "As the troupe's Harpy you may register boons, correct them, settle and move them, approve what players report, perform audits and export the ledger. What you do is logged as your character.",
+  );
+
+  // She searches, opens the boon, corrects it and settles it.
+  await h.getByRole("searchbox", { name: "Search the ledger" }).fill("masque");
+  await expect(boons.rows).toHaveCount(1);
+  await boons.open("Tobiah Quarrel owes Lady Merrow, minor");
+  await opened(h, "Tobiah Quarrel owes Lady Merrow");
+  await boons.act("Tobiah Quarrel owes Lady Merrow, minor", "Edit");
+  const edit = boons.detail("Tobiah Quarrel owes Lady Merrow, minor").getByRole("form", { name: "Edit: Tobiah Quarrel owes Lady Merrow" });
+  await edit.getByLabel("Kind").selectOption("major");
+  await edit.getByLabel("Why the edit").fill("Misheard at the masque");
+  await edit.getByRole("button", { name: "Save", exact: true }).click();
+  const debt = boons.detail("Tobiah Quarrel owes Lady Merrow, major");
+  await expect(debt.getByRole("list", { name: "Log of Tobiah Quarrel owes Lady Merrow" })).toContainText("Isolde Penhallow");
+  await boons.act("Tobiah Quarrel owes Lady Merrow, major", "Settle");
+  await debt.getByRole("form", { name: "Settle: Tobiah Quarrel owes Lady Merrow" }).getByRole("button", { name: "Settle it" }).click();
+  await expect(debt).toContainText("Settled: called in");
+  await fits(h);
+  await h.screenshot(shots("harpy-ledger-play"));
+
+  // Offline, what shows stays, but nothing can be done with it, and the page says why.
+  await h.context().setOffline(true);
+  await expect(h.getByRole("status").filter({ hasText: "The ledger needs a signal." })).toBeVisible();
+  await expect(boons.actions("Tobiah Quarrel owes Lady Merrow, major")).toBeDisabled();
+  await boons.close();
+  await expect(h.getByRole("button", { name: "Register boons" })).toBeDisabled();
+  await expect(h.getByRole("button", { name: "More for the ledger" })).toBeDisabled();
+  await h.context().setOffline(false);
+  await expect(h.getByRole("button", { name: "Register boons" })).toBeEnabled();
+  await expect(h.getByText("The ledger needs a signal.")).toHaveCount(0);
+
+  // A name in a boon's detail opens their own page of the ledger (#980), the boon still beside it from lg up; offline, an audit waits.
+  await h.getByRole("searchbox", { name: "Search the ledger" }).fill("");
+  await boons.open("Isolde Penhallow owes Tobiah Quarrel, trivial");
+  await boons.detail("Isolde Penhallow owes Tobiah Quarrel, trivial").getByRole("link", { name: "Tobiah Quarrel" }).click();
+  const whose = h.getByRole("region", { name: "Whose boons" });
+  await expect(whose.getByRole("heading", { name: "Tobiah Quarrel" })).toBeVisible();
+  await expect(whose).toContainText("Owes 0 (weight 0) · Is owed 1 (weight 0.5)");
+  await expect(h.getByRole("table", { name: "Is owed", exact: true }).getByRole("button", { name: /^Details: / })).toHaveCount(1);
+  if (onPhone()) await expect(h.locator("dialog[open]")).toHaveCount(0);
+  else await expect(h.getByRole("complementary", { name: "Isolde Penhallow owes Tobiah Quarrel" })).toBeVisible();
+  await expect(whose.getByRole("link", { name: "Character sheet" })).toHaveCount(0);
+  await expect(whose.getByRole("link", { name: "Make an audit" })).toBeVisible();
+  await fits(h);
+  await h.context().setOffline(true);
+  await expect(whose.getByRole("button", { name: "Make an audit" })).toBeDisabled();
+  await h.context().setOffline(false);
+  await expect(whose.getByRole("link", { name: "Make an audit" })).toBeVisible();
+
+  // A Lesser Harpy sees only what the Harpy lets them do: each right in turn.
+  const t = talon.page;
+  await narrow(t);
+  const rights: { can: Record<string, boolean>; note: string; actions: string[]; register: boolean; exports: boolean; reviews: boolean }[] = [
+    { can: { can_edit: true }, note: "As a Lesser Harpy you may correct boons.", actions: ["Edit"], register: false, exports: false, reviews: false },
+    { can: { can_settle: true }, note: "As a Lesser Harpy you may settle and move boons.", actions: ["Trade", "Settle"], register: false, exports: false, reviews: false },
+    // Approving reported boons is a right of its own (#993): the To review tab, and nothing to do in the ledger.
+    { can: { can_review: true }, note: "As a Lesser Harpy you may approve what players report.", actions: [], register: false, exports: false, reviews: true },
+    { can: { can_export: true }, note: "As a Lesser Harpy you may export the ledger.", actions: [], register: false, exports: true, reviews: false },
+    { can: { can_add: true }, note: "As a Lesser Harpy you may register boons.", actions: [], register: true, exports: false, reviews: false },
+  ];
+  const seat = "Isolde Penhallow owes Tobiah Quarrel, trivial";
+  for (const right of rights) {
+    const none = { can_add: false, can_edit: false, can_settle: false, can_review: false, can_audit: false, can_export: false };
+    await send(h, "PUT", `/api/troupes/${troupe.id}/boon-talons/${tobiah}`, { ...none, ...right.can });
+    await t.goto(`/play/characters/${tobiah}/ledger`);
+    const theirs = ledgerOf(t);
+    await expect(theirs.row(seat)).toBeVisible();
+    await fits(t);
+    await about(t, right.note);
+    await expect(t.getByRole("button", { name: "Register boons" })).toHaveCount(right.register ? 1 : 0);
+    await expect(t.getByRole("button", { name: "More for the ledger" })).toHaveCount(right.exports ? 1 : 0);
+    await expect(reviewTotal(t)).toHaveCount(right.reviews ? 1 : 0);
+    await theirs.open(seat);
+    await opened(t, "Isolde Penhallow owes Tobiah Quarrel");
+    if (right.actions.length === 0) {
+      await expect(theirs.actions(seat)).toHaveCount(0);
+    } else {
+      await theirs.actions(seat).click();
+      const menu = t.getByRole("menu", { name: `Actions: ${seat}` });
+      for (const action of ["Edit", "Trade", "Settle"])
+        await expect(menu.getByRole("menuitem", { name: action, exact: true })).toHaveCount(right.actions.includes(action) ? 1 : 0);
+      await t.keyboard.press("Escape");
+    }
+  }
+
+  // Given only the review queue, the Harpy's page is the queue alone, at the Play View's width. With reports held
+  // for approval (#993), one of Tobiah's waits there; offline, none of it can be accepted or not, nor its settings changed.
+  await send(l, "PUT", `/api/troupes/${troupe.id}/boon-harpy`, { access: "submissions" });
+  await send(l, "PUT", `/api/troupes/${troupe.id}/boon-review`, { hold: true });
+  await send(t, "POST", `/api/characters/${tobiah}/play-boons`, { other: { character_id: isolde }, direction: "owes", kind: "minor", made_on: "2026-10-17", reason: "A word at the gate" });
+  await h.goto(`/play/characters/${isolde}/ledger`);
+  await expect(h.getByRole("heading", { name: "Boons to review" })).toBeVisible();
+  await expect(ledgerOf(h).table).toHaveCount(0);
+  const accept = h.getByRole("button", { name: "Accept: Tobiah Quarrel owes Isolde Penhallow", exact: true });
+  await expect(accept).toBeEnabled();
+  await fits(h);
+  await h.context().setOffline(true);
+  await expect(h.getByRole("status").filter({ hasText: "The ledger needs a signal." })).toBeVisible();
+  await expect(accept).toBeDisabled();
+  await expect(h.getByRole("button", { name: "Don't accept: Tobiah Quarrel owes Isolde Penhallow" })).toBeDisabled();
+  await expect(h.getByRole("button", { name: /^Accept all shown/ })).toBeDisabled();
+  await expect(h.getByRole("button", { name: "Approval settings" })).toBeDisabled();
+  await h.context().setOffline(false);
+  await expect(accept).toBeEnabled();
 });
 
 test("staff declare a Boonbreaker: their open boons are made void, both ways, and they hold Disgraced while the mark stands (#717)", async ({ browser }) => {

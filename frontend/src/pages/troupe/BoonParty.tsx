@@ -6,7 +6,7 @@ import { shortName, standingName } from "../../boons";
 import { BackLink } from "../../components/BackLink";
 import { CardHeading } from "../../components/Headings";
 import { LinkButton } from "../../components/LinkButton";
-import { Badge, ErrorText, Loading } from "../../components/ui";
+import { Badge, Button, ErrorText, Loading } from "../../components/ui";
 import type { LedgerParty } from "./boonSearch";
 
 const count = new Intl.NumberFormat("en-GB");
@@ -26,7 +26,20 @@ function owingText(owes: BoonOwingOut, owed: BoonOwingOut): string {
  * too. Then the ways on: back to the whole ledger (`back`), making an audit of them
  * (`auditTo`, for those who may) and, for staff, their character sheet.
  */
-export function BoonPartyHeader({ troupeId, party, back, auditTo }: { troupeId: string; party: LedgerParty; back: string; auditTo: string }) {
+export function BoonPartyHeader({
+  troupeId,
+  party,
+  back,
+  auditTo,
+  offline = false,
+}: {
+  troupeId: string;
+  party: LedgerParty;
+  back: string;
+  auditTo: string;
+  // In the Play View with no signal (#985): what was read before shows, an audit waits.
+  offline?: boolean;
+}) {
   const found = useQuery({
     queryKey: ["troupe-boons", troupeId, "party", party],
     queryFn: () =>
@@ -41,17 +54,21 @@ export function BoonPartyHeader({ troupeId, party, back, auditTo }: { troupeId: 
     <section aria-label="Whose boons" className="flex flex-col gap-2">
       <BackLink label="The whole ledger" to={back} className="self-start" />
       {found.isPending ? (
-        <Loading compact />
+        found.fetchStatus === "paused" ? (
+          <p className="text-sm text-mist">Their totals come with a signal.</p>
+        ) : (
+          <Loading compact />
+        )
       ) : found.error ? (
         <ErrorText error={found.error} />
       ) : (
-        <Head found={found.data} auditTo={auditTo} />
+        <Head found={found.data} auditTo={auditTo} offline={offline} />
       )}
     </section>
   );
 }
 
-function Head({ found, auditTo }: { found: BoonPartyLedgerOut; auditTo: string }) {
+function Head({ found, auditTo, offline }: { found: BoonPartyLedgerOut; auditTo: string; offline: boolean }) {
   const { party } = found;
   const left = standingName(party);
   // Only where someone on their boons has left: otherwise the same again.
@@ -75,11 +92,16 @@ function Head({ found, auditTo }: { found: BoonPartyLedgerOut; auditTo: string }
       </div>
       {id && (found.can_audit || found.sheet) && (
         <div className="flex flex-wrap items-center gap-2">
-          {found.can_audit && (
-            <LinkButton variant="secondary" to={`${auditTo}?character=${id}`}>
-              Make an audit
-            </LinkButton>
-          )}
+          {found.can_audit &&
+            (offline ? (
+              <Button variant="secondary" disabled>
+                Make an audit
+              </Button>
+            ) : (
+              <LinkButton variant="secondary" to={`${auditTo}?character=${id}`}>
+                Make an audit
+              </LinkButton>
+            ))}
           {found.sheet && (
             <Link to={`/characters/${id}`} className="inline-flex min-h-10 items-center text-sm text-mist underline hover:text-parchment">
               Character sheet

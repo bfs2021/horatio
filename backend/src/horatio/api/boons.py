@@ -245,6 +245,9 @@ class BoonOut(BaseModel):
     # Gallant offered for its debtor, for the caller to answer (#693): only on a single
     # boon, for staff or a Harpy with the full ledger.
     gallant: GallantOut | None = None
+    # The character a player reported it as, in the Play View (#993): only in the
+    # review queue.
+    reported_as: str | None = None
 
 
 class BoonKindCount(BaseModel):
@@ -1097,8 +1100,9 @@ class PlayBoonOut(BaseModel):
 
 class PlayReportOut(BaseModel):
     """A boon the character's player reported that waits for review, or that wasn't
-    accepted lately, with the reason (#687). Shown to its player whatever else the
-    troupe lets them see: they reported it."""
+    accepted lately, with the reason (#687); or, while the troupe holds reports, one
+    that went into the ledger lately, accepted or straight in (#993). Shown to its
+    player whatever else the troupe lets them see: they reported it."""
 
     id: uuid.UUID
     # The character owes the other side, or is owed by it.
@@ -1107,7 +1111,8 @@ class PlayReportOut(BaseModel):
     kind: Kind
     made_on: date
     reason: str
-    state: Literal["pending", "rejected"]
+    # Waiting for approval, in the ledger, or not accepted.
+    state: Literal["pending", "accepted", "rejected"]
     # Why it wasn't accepted, and when.
     rejected_because: str
     rejected_at: datetime | None
@@ -1133,6 +1138,7 @@ class HarpyLedgerOut(BaseModel):
     can_edit: bool = True
     # Settle and move boons: trade, pass on, settle, void and reopen them (#984).
     can_settle: bool = True
+    # Approve reported boons: accept or reject them, in the review queue (#993).
     can_review: bool = True
     can_audit: bool = True
     # Export the ledger as they see it (#987): the troupe lets the Harpy, and a Lesser
@@ -1160,8 +1166,12 @@ class PlayBoonsOut(BaseModel):
     # named by name.
     characters: list[CharacterChoice]
     # Its boons reported here that wait for review, or weren't accepted in the last
-    # REJECTED_SHOWN days (#687).
+    # REJECTED_SHOWN days (#687), or, while the troupe holds reports, went into the
+    # ledger in that time (#993).
     reports: list[PlayReportOut] = []
+    # Who approves what players report, as a player is told (#993): "harpy" where the
+    # troupe gives its Harpy the review queue or more, else "staff".
+    approver: Literal["harpy", "staff"] = "staff"
     # The ledgers its player keeps as the Harpy (#688), for the character's player.
     harpy: list[HarpyLedgerOut] = []
     # The character itself is marked a Boonbreaker in this ledger now (#717).
@@ -1220,7 +1230,8 @@ REJECTED_SHOWN = 30
 
 def reports_of(db: DbSession, troupe: Troupe, character: Character) -> list[PlayReportOut]:
     """The boons reported as the character that wait for review, or weren't accepted
-    lately, newest first."""
+    lately; and those it reported for review that went into the ledger lately,
+    accepted or straight in (#993). Newest first."""
     reported = select(BoonEvent.boon_id).where(
         BoonEvent.kind.in_(("submitted", "registered")),
         BoonEvent.as_character_id == character.id,
@@ -1228,28 +1239,35 @@ def reports_of(db: DbSession, troupe: Troupe, character: Character) -> list[Play
     found = list(
         db.scalars(
             select(Boon)
-            .where(
-                Boon.troupe_id == troupe.id,
-                Boon.id.in_(reported),
-                Boon.state.in_(("pending", "void")),
-            )
+            .where(Boon.troupe_id == troupe.id, Boon.id.in_(reported))
             .order_by(Boon.created_at.desc(), Boon.id.desc())
         )
     )
-    rejections = {
-        e.boon_id: e
+    since = datetime.now(UTC) - timedelta(days=REJECTED_SHOWN)
+    # What was decided on each: not accepted, or accepted (by someone, or at once).
+    decided = {
+        (e.boon_id, e.kind): e
         for e in db.scalars(
-            select(BoonEvent).where(
-                BoonEvent.boon_id.in_([b.id for b in found]), BoonEvent.kind == "rejected"
+            select(BoonEvent)
+            .where(
+                BoonEvent.boon_id.in_([b.id for b in found]),
+                BoonEvent.kind.in_(("rejected", "accepted")),
             )
+            .order_by(BoonEvent.created_at, BoonEvent.id)
         )
     }
-    since = datetime.now(UTC) - timedelta(days=REJECTED_SHOWN)
     others = characters_of(db, found)
     out: list[PlayReportOut] = []
     for b in found:
-        rejected = rejections.get(b.id)
-        if b.state == "void" and (rejected is None or rejected.created_at < since):
+        rejected = decided.get((b.id, "rejected"))
+        accepted = decided.get((b.id, "accepted"))
+        if b.state == "pending":
+            state = "pending"
+        elif b.state == "void" and rejected is not None and rejected.created_at >= since:
+            state = "rejected"
+        elif b.state != "void" and accepted is not None and accepted.created_at >= since:
+            state = "accepted"
+        else:
             continue
         owes = b.debtor_id == character.id
         other_id, other_name = (
@@ -1264,9 +1282,9 @@ def reports_of(db: DbSession, troupe: Troupe, character: Character) -> list[Play
                 kind=b.kind,  # type: ignore[arg-type]  # checked by the database
                 made_on=b.made_on,
                 reason=b.reason,
-                state="pending" if b.state == "pending" else "rejected",
-                rejected_because=rejected.note if rejected is not None else "",
-                rejected_at=rejected.created_at if rejected is not None else None,
+                state=state,
+                rejected_because=rejected.note if state == "rejected" and rejected else "",
+                rejected_at=rejected.created_at if state == "rejected" and rejected else None,
             )
         )
     return out
@@ -1343,6 +1361,7 @@ def play_out(
         owed=side(False) if sees == "owed" else None,
         characters=play_choices(db, troupe, character) if playing else [],
         reports=reports_of(db, troupe, character),
+        approver=boon_reviews.approver(troupe),  # type: ignore[arg-type]  # harpy or staff
         harpy=harpy_ledgers(db, user, character),
         boonbreaker=character.id in marks,
     )
@@ -1379,13 +1398,13 @@ def harpy_ledgers(db: DbSession, user: User, character: Character) -> list[Harpy
                 troupe_id=t.id,
                 troupe_name=t.name,
                 access="full",
-                to_review=len(boon_reviews.queue(db, t)) if talon.can_settle else 0,
+                to_review=len(boon_reviews.queue(db, t)) if talon.can_review else 0,
                 role="talon",
                 talon_word=boon_talons.ONE[t.boon_talon_word],
                 can_add=talon.can_add,
                 can_edit=talon.can_edit,
                 can_settle=talon.can_settle,
-                can_review=talon.can_settle,
+                can_review=talon.can_review,
                 can_audit=talon.can_audit,
                 can_export=talon.can_export and boon_harpy.exports(t),
                 sees_standings=boon_harpy.reads_standings(t),
@@ -1419,7 +1438,8 @@ def report_boon(
 ) -> PlayBoonsOut:
     """A player reports a boon for their character, which goes in the troupe's ledger
     as theirs, done as the character: standing, or waiting for review where the troupe
-    holds reports for review (#687)."""
+    holds reports for review (#687), unless its kind goes straight in or a Lesser
+    Harpy is on it (#993)."""
     character, troupe = play_ledger(db, user, character_id)
     if not in_play(db, troupe, character):
         raise HTTPException(
@@ -1440,7 +1460,7 @@ def report_boon(
         conditions=body.conditions,
         notify_on_trade=body.notify_on_trade,
     )
-    made = boons.register(
+    made = boon_reviews.report(
         db,
         user,
         troupe,
@@ -1449,8 +1469,7 @@ def report_boon(
         terms,
         body.count,
         "Reported in the Play View.",
-        as_character=character,
-        pending=boon_reviews.held(troupe),
+        character,
     )
     boon_reviews.flag_new(db, troupe, made)
     boon_harpy.tell(db, troupe, made, character)

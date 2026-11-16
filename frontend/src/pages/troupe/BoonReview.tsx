@@ -1,31 +1,23 @@
-import { useQuery } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { api, unwrap } from "../../api/client";
 import type { BoonOut, CharacterChoice } from "../../api/types";
 import { FLAG_NAMES, flagBody, flagText, kindName, owes, partyName, shortName, type BoonFlag } from "../../boons";
 import { OneLine } from "../../components/OneLine";
 import { useToast } from "../../components/Toast";
-import { Badge, Button, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
+import { Badge, Button, Empty, ErrorText, Field, Input, Select } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
 
 /**
- * The review queue (#687): every boon waiting for review, as its troupe holds the
- * boons its players report, and every boon with a flag raised: a name that links to
- * no character, a likely duplicate, or a flag for a ruling. Each opens as in the
- * ledger, with its review below.
+ * The boons in the review queue (#687) with a flag raised: a name that links to no
+ * character, a likely duplicate, or a flag for a ruling. Since #993 those waiting for
+ * approval come first, in a table of their own, and this lists the rest. Each opens
+ * under its row, as in the ledger, with its review below.
  */
-export function BoonReviewQueue({ troupeId, detail }: { troupeId: string; detail: (boonId: string) => ReactNode }) {
+export function BoonReviewQueue({ boons, detail }: { boons: BoonOut[]; detail: (boonId: string) => ReactNode }) {
   const dates = useDates();
   const [open, setOpen] = useState<string | null>(null);
-  const queue = useQuery({
-    queryKey: ["boon-review", troupeId],
-    queryFn: () => unwrap(api.GET("/api/troupes/{troupe_id}/boon-review", { params: { path: { troupe_id: troupeId } } })),
-  });
-  if (queue.isPending) return <Loading />;
-  if (queue.error) return <ErrorText error={queue.error} />;
-  const { boons } = queue.data;
-  if (boons.length === 0) return <Empty>Nothing waits for review, and no boon is flagged.</Empty>;
+  if (boons.length === 0) return <Empty>No boon is flagged.</Empty>;
   return (
     <ul aria-label="Boons to review" className="flex flex-col gap-2">
       {boons.map((boon) => (

@@ -6,8 +6,10 @@ ledger (horatio.boon_harpy), and calls them "Lesser Harpies" or "Talons"
 (`boon_talon_word`). For each one, the Harpy chooses whether they may:
 - add boons (register them);
 - correct boons: edit what one says, and link a name on it to a character;
-- settle and move boons: trade, pass on, settle, void and reopen them, answer a
-  status loss or Gallant, and review what players report (#984);
+- settle and move boons: trade, pass on, settle, void and reopen them, and answer a
+  status loss or Gallant (#984);
+- approve reported boons: accept or reject what players report, in the review queue
+  (#993). With none given it, the Harpy approves alone;
 - perform audits of a character's boons (#690);
 - export the ledger as they see it (#987), while the troupe lets the Harpy export it.
 Everyone given access sees the ledger, as a Harpy does: never what an edit changed,
@@ -52,7 +54,9 @@ def can(talon: BoonTalon) -> frozenset[str]:
     if talon.can_edit:
         found.add("edit")
     if talon.can_settle:
-        found |= {"settle", "submissions"}
+        found.add("settle")
+    if talon.can_review:
+        found.add("submissions")
     if talon.can_audit:
         found.add("audit")
     if talon.can_export:
@@ -62,7 +66,7 @@ def can(talon: BoonTalon) -> frozenset[str]:
 
 def describe(talon: BoonTalon) -> str:
     """What they may do, in words: "see the ledger, add boons, correct them, settle
-    them and export it"."""
+    them, approve reported boons and export it"."""
     parts = ["see the ledger"]
     for on, verb in (
         (talon.can_add, "add"),
@@ -71,6 +75,8 @@ def describe(talon: BoonTalon) -> str:
     ):
         if on:
             parts.append(f"{verb} {'them' if len(parts) > 1 else 'boons'}")
+    if talon.can_review:
+        parts.append("approve reported boons")
     if talon.can_audit:
         parts.append("perform audits")
     if talon.can_export:
@@ -181,6 +187,7 @@ def give(
     audits: bool,
     by: Character | None,
     export: bool = False,
+    review: bool = False,
 ) -> BoonTalon:
     """Give the character access to the ledger, or change what it allows. Logged."""
     if character.kind != "pc" or not in_play(db, troupe, character):
@@ -200,16 +207,17 @@ def give(
             given_by_id=by.id if by is not None else None,
         )
         db.add(talon)
-    elif (talon.can_add, talon.can_edit, talon.can_settle, talon.can_audit, talon.can_export) == (
-        add,
-        edit,
-        settle,
-        audits,
-        export,
-    ):
+    elif (
+        talon.can_add,
+        talon.can_edit,
+        talon.can_settle,
+        talon.can_review,
+        talon.can_audit,
+        talon.can_export,
+    ) == (add, edit, settle, review, audits, export):
         return talon
     talon.can_add, talon.can_edit, talon.can_settle = add, edit, settle
-    talon.can_audit, talon.can_export = audits, export
+    talon.can_review, talon.can_audit, talon.can_export = review, audits, export
     if by is not None:
         talon.given_by_id = by.id
     db.flush()

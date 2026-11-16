@@ -35,8 +35,10 @@ class TalonIn(BaseModel):
     can_add: bool = False
     # Correct boons: edit what one says, and link a name to a character.
     can_edit: bool = False
-    # Settle and move boons, and review what players report (#984).
+    # Settle and move boons (#984).
     can_settle: bool = False
+    # Approve reported boons: accept or reject what players report (#993).
+    can_review: bool = False
     can_audit: bool = False
     # Export the ledger as they see it, while the troupe lets the Harpy (#987).
     can_export: bool = False
@@ -48,6 +50,7 @@ class TalonOut(BaseModel):
     can_add: bool
     can_edit: bool
     can_settle: bool
+    can_review: bool = False
     can_audit: bool
     can_export: bool = False
     # The Harpy who gave it, by their character's name; empty when staff did.
@@ -112,6 +115,7 @@ def talons_out(db: DbSession, troupe: Troupe, harpy: Character | None) -> BoonTa
                 can_add=t.talon.can_add,
                 can_edit=t.talon.can_edit,
                 can_settle=t.talon.can_settle,
+                can_review=t.talon.can_review,
                 can_audit=t.talon.can_audit,
                 can_export=t.talon.can_export,
                 given_by=t.given_by,
@@ -178,6 +182,7 @@ def give_talon(
         audits=body.can_audit,
         by=harpy,
         export=body.can_export,
+        review=body.can_review,
     )
     db.commit()
     return talons_out(db, troupe, harpy)

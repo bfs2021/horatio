@@ -334,9 +334,10 @@ def acting_as(db: Session, troupe_id: uuid.UUID, as_character: Character | None)
     return boon_harpy.acting_as(db, troupe, as_character)
 
 
-def log(db: Session, user: User, action: str, boon: Boon, **data: Any) -> None:
+def log(db: Session, user: User | None, action: str, boon: Boon, **data: Any) -> None:
     """Into the troupe's log, for its running staff. Never a character's own log,
-    which its player reads: a player sees only what the troupe lets them (#686)."""
+    which its player reads: a player sees only what the troupe lets them (#686). No
+    `user` for what Horatio did itself (#993)."""
     debtor, creditor = parties(db, boon)
     audit.record(
         db,

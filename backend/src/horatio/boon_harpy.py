@@ -284,13 +284,17 @@ def keeper(db: Session, user: User, troupe: Troupe, need: str = "view") -> Keepe
 
 def tell(db: Session, troupe: Troupe, made: Sequence[Boon], reporter: Character) -> None:
     """Word to each Harpy's player of boons a player just reported, where the troupe
-    gives the Harpy the review queue or more. Not to the reporter's own player."""
+    gives the Harpy the review queue or more. Not to the reporter's own player. It
+    links to the ledger's To review tab while the boons wait there (#1011)."""
     if not made or not boons.tracked(troupe) or troupe.boon_harpy == "none":
         return
     first = made[0]
     debtor, creditor = boons.parties(db, first)
     waits = " It waits for review." if first.state == "pending" else ""
     what = boons.a_boon(first.kind, len(made))
+    # The ledger's first tab is at its own address: the ledger with the full ledger,
+    # else To review, the only one (HarpyLedgerPage).
+    tab = "/review" if waits and reaches(troupe, "full") else ""
     for harpy in harpies(db, troupe):
         if harpy.kind != "pc" or harpy.player_id is None or harpy.player_id == reporter.player_id:
             continue
@@ -300,7 +304,7 @@ def tell(db: Session, troupe: Troupe, made: Sequence[Boon], reporter: Character)
             "boon.reported",
             f"{reporter.name} reported {what} to the ledger: {debtor.shown} owes"
             f" {creditor.shown} ({boons.when(first.made_on)}).{waits}",
-            f"/play/characters/{harpy.id}/ledger",
+            f"/play/characters/{harpy.id}/ledger{tab}",
             troupe_id=troupe.id,
             character_id=harpy.id,
         )

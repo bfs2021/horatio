@@ -88,3 +88,16 @@ def test_a_harpy_s_totals_go_by_what_the_court_knows(gone: Gone, session: Sessio
         staff["views"]["open"] + staff["views"]["departed"]
     )
     the_same_as_the_statistics(gone, theirs, harpy)
+
+
+def test_the_ledger_weighs_each_kind_as_the_troupe_does(gone: Gone) -> None:
+    """Beside each page, what each kind weighs, for the table grouped (#981): the
+    defaults, then the troupe's own, for staff and a Harpy alike, one who doesn't read
+    the standings too: their own page of the ledger weighs their boons already."""
+    ok(gone.option("full", False))
+    defaults = {"trivial": 0.5, "minor": 1, "major": 3, "blood": 5, "life": 10}
+    assert gone.ledger("open")["weights"] == defaults
+    own = {"trivial": 0.25, "minor": 2, "major": 4, "blood": 6, "life": 12}
+    ok(gone.troupe.storyteller.client.put(f"/troupes/{gone.troupe.id}/boon-weights", json=own))
+    assert gone.ledger("open")["weights"] == own
+    assert gone.ledger("all", by=gone.harpy_player)["weights"] == own

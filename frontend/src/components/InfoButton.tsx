@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 /**
  * A popover opened by a button: pressing the button again, pressing anywhere
  * outside, or Escape closes it. Put `root` on what holds both, `button` on the
- * button and `popover` on the popover, and `shift` as its translateX: it opens
+ * button and `popover` on the popover, and `style` on the popover too: it opens
  * beside the button, then slides back inside the screen if it runs off an edge
  * (a phone). `Root` and `Pop` are the elements `root` and `popover` go on: spans
  * unless said otherwise. `close` shuts it from inside, as a menu does once a choice
@@ -51,7 +51,12 @@ export function usePopover<Root extends HTMLElement = HTMLSpanElement, Pop exten
     setOpen(!open);
   };
   const close = useCallback(() => setOpen(false), []);
-  return { open, toggle, close, id, root, button, popover, style: shift ? { transform: `translateX(${shift}px)` } : undefined };
+  // Slid by its margins, not a transform: Chrome goes on counting a transformed popover
+  // where it was first laid out, so the page could scroll sideways to where it isn't (#1016).
+  // One margin moves it whichever side it hangs from; the other takes back what that
+  // gives, so the room it has, and with it its width, stays the same.
+  const style = shift ? { marginLeft: shift, marginRight: -shift } : undefined;
+  return { open, toggle, close, id, root, button, popover, style };
 }
 
 /**

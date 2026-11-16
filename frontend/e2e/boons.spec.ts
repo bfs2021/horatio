@@ -285,6 +285,23 @@ test("a boon opens in a side panel from its row or a link, facts first, what to 
   await l.goBack();
   await expect(detail).toHaveCount(0);
   await expect(boons.rows).toHaveCount(1);
+  // A phone's dialog says it has closed a moment after it goes: a view chosen in that moment is kept, and the boon
+  // stays closed (#1025). Here the view changes, then the dialog says it closed, before the page has caught up.
+  if (onPhone()) {
+    await boons.open(oriel);
+    await expect(detail).toBeVisible();
+    await l.evaluate(() => {
+      const views = document.querySelector<HTMLSelectElement>('select[aria-label="Ledger views"]')!;
+      views.value = "all";
+      views.dispatchEvent(new Event("change", { bubbles: true }));
+      const dialog = document.querySelector("dialog[open]")!;
+      dialog.close();
+      dialog.dispatchEvent(new Event("close"));
+    });
+    await expect(l).toHaveURL((url) => url.searchParams.get("view") === "all" && !url.searchParams.has("boon"));
+    await expect(detail).toHaveCount(0);
+    await showView(l, "open");
+  }
 
   // Each action is in its Actions menu, Make void apart at its foot, and shows its form in the panel.
   await boons.open(oriel);
@@ -553,6 +570,126 @@ test("the ledger's toolbar searches the reason and conditions, picks kinds, filt
   await l.goto(`/troupes/${troupe.id}/boons?view=review`);
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/boons/review$`));
   await expect(l.getByRole("list", { name: "Boons to review" })).toBeVisible();
+});
+
+test("the ledger groups its rows by debtor, creditor or night under headings with their count and weight, past the first five closed, kept in the URL; over 500 boons it waits for a narrower search (#981)", async ({ browser }) => {
+  const custodian = await person(browser, "bgroup-custodian");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "bgroup-lead");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Ledger in Groups ${run}`, lead_handle: lead.handle });
+  const l = lead.page;
+  await send(l, "PUT", `/api/troupes/${troupe.id}/boon-ledger`, { on: true });
+  // Seven debtors owe Isaura minor and major boons; 500 trivial ones from the filler make 509 open.
+  const owed = (debtor: string, kind: string, made_on: string) => ({ debtor: { name: debtor }, creditor: { name: "Isaura Penhallow" }, kind, made_on, reason: `Owed by ${debtor}` });
+  await send(l, "POST", `/api/troupes/${troupe.id}/boons`, {
+    boons: [
+      owed("Aldric Vane", "major", "2026-03-07"),
+      owed("Aldric Vane", "minor", "2026-03-07"),
+      owed("Beatrix Moll", "minor", "2026-03-07"),
+      owed("Cassius Thorn", "minor", "2026-03-07"),
+      owed("Delphine Arkwright", "minor", "2026-02-07"),
+      owed("Edmund Reyes", "minor", "2026-02-07"),
+      owed("Fenella Grist", "minor", "2026-02-07"),
+      owed("Gideon Hart", "minor", "2026-02-07"),
+      owed("Gideon Hart", "minor", "2026-01-03"),
+    ],
+    note: "",
+  });
+  const filler = Array.from({ length: 25 }, (_, i) => ({
+    debtor: { name: "Ledger filler" },
+    creditor: { name: "Isaura Penhallow" },
+    kind: "trivial",
+    made_on: `2025-0${(i % 9) + 1}-1${i % 10}`,
+    reason: `Filler ${i}`,
+    count: 20,
+  }));
+  await send(l, "POST", `/api/troupes/${troupe.id}/boons`, { boons: filler, note: "" });
+
+  // At a phone's 375 px and a desk's 1280 px.
+  const width = onPhone() ? 375 : 1280;
+  await l.setViewportSize({ width, height: onPhone() ? 800 : 720 });
+  await l.goto(`/troupes/${troupe.id}/boons`);
+  const boons = ledgerOf(l);
+  const pages = l.getByRole("navigation", { name: "Pages of boons" });
+  const groupBy = l.getByRole("combobox", { name: "Group by" });
+  const heading = (name: string) => boons.table.getByRole("button", { name, exact: true });
+  // 509 open boons: too many to group until the search is narrower.
+  await expect(pages).toContainText("1 to 100 of 509");
+  await expect(groupBy).toBeDisabled();
+  await expect(groupBy).toHaveAccessibleDescription("Over 500 boons: narrow the search to group them.");
+
+  // Minor and major boons only: nine, grouped by debtor, A to Z, the first five open.
+  const kinds = l.getByRole("group", { name: "Kinds" });
+  await kinds.getByRole("button", { name: "Minor" }).click();
+  await kinds.getByRole("button", { name: "Major" }).click();
+  await expect(boons.rows).toHaveCount(9);
+  await expect(groupBy).toBeEnabled();
+  await groupBy.selectOption({ label: "Debtor" });
+  await expect(l).toHaveURL(/[?&]group=debtor\b/);
+  const headings = boons.table.getByRole("rowheader");
+  await expect(headings).toHaveText([
+    /^Aldric Vane\s*2 boons · weight 4$/,
+    /^Beatrix Moll\s*1 boon · weight 1$/,
+    /^Cassius Thorn\s*1 boon · weight 1$/,
+    /^Delphine Arkwright\s*1 boon · weight 1$/,
+    /^Edmund Reyes\s*1 boon · weight 1$/,
+    /^Fenella Grist\s*1 boon · weight 1$/,
+    /^Gideon Hart\s*2 boons · weight 2$/,
+  ]);
+  await expect(heading("Aldric Vane 2 boons · weight 4")).toHaveAttribute("aria-expanded", "true");
+  await expect(heading("Fenella Grist 1 boon · weight 1")).toHaveAttribute("aria-expanded", "false");
+  await expect(boons.rows).toHaveCount(6);
+  await expect(boons.row("Aldric Vane owes Isaura Penhallow, major")).toHaveCount(1);
+  await expect(boons.row("Gideon Hart owes Isaura Penhallow, minor")).toHaveCount(0);
+  // A closed group opens from its heading, and an open one closes.
+  await heading("Gideon Hart 2 boons · weight 2").click();
+  await expect(boons.row("Gideon Hart owes Isaura Penhallow, minor")).toHaveCount(2);
+  await heading("Aldric Vane 2 boons · weight 4").click();
+  await expect(boons.row("Aldric Vane owes Isaura Penhallow, major")).toHaveCount(0);
+  await expect(boons.rows).toHaveCount(6);
+  // A row in a group opens as any row does.
+  await boons.open("Beatrix Moll owes Isaura Penhallow, minor");
+  await expect(boons.detail("Beatrix Moll owes Isaura Penhallow, minor")).toBeVisible();
+  await boons.close();
+  // Nothing sideways on a phone.
+  expect(await l.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  await l.screenshot(shots("boon-ledger-grouped"));
+
+  // A reload keeps the grouping; there is no pager, every row is there.
+  await l.reload();
+  await expect(headings).toHaveCount(7);
+  await expect(groupBy).toHaveValue("debtor");
+  await expect(pages).toHaveCount(0);
+  // By creditor, one group; by night, newest first.
+  await groupBy.selectOption({ label: "Creditor" });
+  await expect(headings).toHaveText([/^Isaura Penhallow\s*9 boons · weight 11$/]);
+  await expect(boons.rows).toHaveCount(9);
+  await groupBy.selectOption({ label: "Night" });
+  await expect(headings).toHaveText([/^7 March 2026\s*4 boons · weight 6$/, /^7 February 2026\s*4 boons · weight 4$/, /^3 January 2026\s*1 boon · weight 1$/]);
+
+  // Trivial only: 500, as many as can be grouped, read at once past the first page.
+  await groupBy.selectOption({ label: "Debtor" });
+  await kinds.getByRole("button", { name: "Minor" }).click();
+  await kinds.getByRole("button", { name: "Major" }).click();
+  await kinds.getByRole("button", { name: "Trivial" }).click();
+  await expect(headings).toHaveText([/^Ledger filler\s*500 boons · weight 250$/]);
+  await expect(boons.rows).toHaveCount(500);
+
+  // Every boon again: 509, too many; the pages come back, the choice kept for a narrower search.
+  await l.getByRole("button", { name: "Show every boon" }).click();
+  await expect(groupBy).toBeDisabled();
+  await expect(groupBy).toHaveValue("");
+  await expect(headings).toHaveCount(0);
+  await expect(pages).toContainText("1 to 100 of 509");
+  await expect(boons.rows).toHaveCount(100);
+  await expect(l).toHaveURL(/[?&]group=debtor\b/);
 });
 
 test("a name on a boon goes to their own page: what they owe and are owed, totalled as the standings count them, with ways to audit them and to their sheet (#980)", async ({ browser }) => {
@@ -1695,7 +1832,7 @@ test("in the Play View the Harpy keeps the ledger at a phone's width and a desk'
     await page.getByRole("button", { name: "About the boon ledger" }).click();
     const said = page.getByText(note);
     await expect(said).toBeVisible();
-    await expect.poll(async () => ((box) => (box ? box.x + box.width : Infinity))(await said.boundingBox())).toBeLessThanOrEqual(page.viewportSize()!.width);
+    await fits(page);
     await page.keyboard.press("Escape");
   };
 

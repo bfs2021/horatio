@@ -13,7 +13,7 @@ afterEach(() => {
 
 const characters = [{ id: "c1", name: "Agnes Thorne", kind: "pc" }] as CharacterChoice[];
 
-function Toolbar({ start = "" }: { start?: string }) {
+function Toolbar({ start = "", groupable }: { start?: string; groupable?: boolean }) {
   const [search, setSearch] = useState<LedgerSearch>(readLedger(new URLSearchParams(start)));
   return (
     <QueryClientProvider client={new QueryClient()}>
@@ -23,6 +23,7 @@ function Toolbar({ start = "" }: { start?: string }) {
         counts={{ open: 1234, departed: 1, settled: 2, void: 0, pending: 0, all: 1237 }}
         characters={characters}
         games={[]}
+        groupable={groupable}
       />
       <output>{JSON.stringify(search)}</output>
     </QueryClientProvider>
@@ -96,6 +97,31 @@ describe("BoonToolbar (#976)", () => {
     rerender(toolbar("kind=major"));
     expect((screen.getByRole("searchbox") as HTMLInputElement).value).toBe("");
     expect((screen.getByRole("combobox", { name: "Character or name" }) as HTMLInputElement).value).toBe("");
+  });
+
+  it("groups the table by a side or the night, kept with the search (#981)", () => {
+    render(<Toolbar />);
+    const group = screen.getByRole("combobox", { name: "Group by" }) as HTMLSelectElement;
+    expect([...group.options].map((o) => o.textContent)).toEqual(["None", "Debtor", "Creditor", "Night"]);
+    fireEvent.change(group, { target: { value: "creditor" } });
+    expect(shown().group).toBe("creditor");
+    fireEvent.click(screen.getByRole("button", { name: "Major" }));
+    expect(shown().group).toBe("creditor");
+  });
+
+  it("over 500 boons, can't group them until the search is narrower (#981)", () => {
+    render(<Toolbar start="group=debtor" groupable={false} />);
+    const group = screen.getByRole("combobox", { name: "Group by" }) as HTMLSelectElement;
+    expect(group.disabled).toBe(true);
+    expect(group.value).toBe("");
+    expect(group.getAttribute("aria-describedby")).toBe(screen.getByText("Over 500 boons: narrow the search to group them.").id);
+  });
+
+  it("on a party's own page, groups by the other side (#980, #981)", () => {
+    render(<Toolbar start="character=c1&group=creditor" />);
+    const group = screen.getByRole("combobox", { name: "Group by" }) as HTMLSelectElement;
+    expect([...group.options].map((o) => o.textContent)).toEqual(["None", "The other side", "Night"]);
+    expect(group.value).toBe("debtor");
   });
 
   it("leaves At a game out where the troupe has no games", () => {

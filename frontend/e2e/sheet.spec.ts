@@ -241,6 +241,33 @@ test("the sheet says what a trait does, under its name, and what a heading is, i
   await expect(p.getByText("In-clan disciplines: Celerity, Potence, Presence.")).toHaveCount(0);
 });
 
+test("an ⓘ opened near a phone's right edge slides onto the screen, and the page doesn't scroll sideways (#1016)", async ({ browser }) => {
+  const { page: p } = await person(browser, "sidewaysinfo");
+  await p.setViewportSize({ width: 375, height: 800 });
+  await p.getByLabel("Name").fill("Sidelong");
+  await p.getByRole("button", { name: "Create" }).click();
+  await expect(p.getByRole("heading", { name: "Concept" })).toBeVisible();
+  const id = new URL(p.url()).pathname.split("/")[2]!;
+  const response = await p.request.put(`/api/characters/${id}/traits`, { headers: { "X-Horatio": "1" }, data: { category: "clan", name: "Brujah", rating: null } });
+  expect(response.status(), await response.text()).toBe(200);
+  await p.goto(`/characters/${id}/sheet`);
+
+  // The clan's ⓘ in the page title sits mid-screen, so its popover would run off the right: it slides back on.
+  const clan = p.getByRole("button", { name: "About Brujah" });
+  await clan.click();
+  await expect(p.getByText("In-clan disciplines: Celerity, Potence, Presence.")).toBeVisible();
+  const popover = (await p.locator(`[id="${await clan.getAttribute("aria-controls")}"]`).boundingBox())!;
+  expect(popover.x).toBeLessThan((await clan.boundingBox())!.x);
+  expect(popover.x).toBeGreaterThanOrEqual(0);
+  expect(popover.x + popover.width).toBeLessThanOrEqual(375);
+  // Nor does the page count it where it opened: nothing to scroll sideways to, and a phone's layout
+  // doesn't widen to fit it (#914). Against 375 itself, as innerWidth would widen with it.
+  expect(await p.evaluate(() => document.documentElement.scrollWidth)).toBe(375);
+  expect(await p.evaluate(() => innerWidth)).toBe(375);
+  await p.keyboard.press("Escape");
+  await expect(p.getByText("In-clan disciplines: Celerity, Potence, Presence.")).toHaveCount(0);
+});
+
 test("the sheet shows XP first on a phone, lists a discipline's powers, counts health and says the merit limit plainly (#362)", async ({ browser }) => {
   const { page: p } = await person(browser, "power-lister");
   const id = await builtVampire(p, "Perpetua", "Toreador", {

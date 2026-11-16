@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BoonOut } from "../../api/types";
-import { everyBoon, ledgerQuery, moreSet, narrowed, onParty, partyOf, readLedger, showing, shows, sideSort, sortBy, viewOf, writeLedger } from "./boonSearch";
+import { everyBoon, ledgerQuery, moreSet, narrowed, onParty, partyOf, readLedger, showing, shows, sideGroup, sideSort, sortBy, viewOf, writeLedger } from "./boonSearch";
 
 const read = (query: string) => readLedger(new URLSearchParams(query));
 
@@ -13,7 +13,7 @@ describe("the boon ledger's search in the URL (#976)", () => {
   });
 
   it("keeps everything it asks across a reload", () => {
-    const search = read("q=elysium&view=settled&kind=major,trivial&name=The+Moon&from=2026-10-01&to=2026-10-31&flagged=1&game=g1&sort=kind&dir=desc");
+    const search = read("q=elysium&view=settled&kind=major,trivial&name=The+Moon&from=2026-10-01&to=2026-10-31&flagged=1&game=g1&sort=kind&dir=desc&group=night");
     expect(search).toEqual({
       q: "elysium",
       view: "settled",
@@ -27,6 +27,7 @@ describe("the boon ledger's search in the URL (#976)", () => {
       game: "g1",
       sort: "kind",
       direction: "desc",
+      group: "night",
     });
     expect(readLedger(writeLedger(new URLSearchParams(), search))).toEqual(search);
     expect(moreSet(search)).toBe(5);
@@ -42,7 +43,7 @@ describe("the boon ledger's search in the URL (#976)", () => {
   });
 
   it("ignores what it doesn't know", () => {
-    expect(read("view=lost&kind=huge&sort=colour&dir=up")).toMatchObject({ view: "open", kinds: [], sort: "date", direction: "desc" });
+    expect(read("view=lost&kind=huge&sort=colour&dir=up&group=clan")).toMatchObject({ view: "open", kinds: [], sort: "date", direction: "desc", group: "" });
     // The review queue is a tab of its own now (#982): the ledger reads an old link as the open view.
     expect(read("view=review").view).toBe("open");
   });
@@ -52,9 +53,9 @@ describe("the boon ledger's search in the URL (#976)", () => {
     expect(writeLedger(new URLSearchParams(), { ...read(""), direction: "asc" }).toString()).toBe("dir=asc");
   });
 
-  it("shows every boon by clearing all but the view and the order", () => {
-    const search = read("q=x&view=all&kind=life&character=c1&flagged=1&sort=creditor");
-    expect(everyBoon(search)).toEqual({ ...read("view=all&sort=creditor") });
+  it("shows every boon by clearing all but the view, the order and the grouping", () => {
+    const search = read("q=x&view=all&kind=life&character=c1&flagged=1&sort=creditor&group=debtor");
+    expect(everyBoon(search)).toEqual({ ...read("view=all&sort=creditor&group=debtor") });
   });
 });
 
@@ -108,6 +109,15 @@ describe("a party's own page (#980)", () => {
       expect(sideSort(read(`sort=${sort}`), "creditor")).toBe("debtor");
     }
     expect(sideSort(read("sort=kind"), "debtor")).toBe("kind");
+  });
+
+  it("groups each section by the other side, where grouped by a side (#981)", () => {
+    for (const group of ["debtor", "creditor"] as const) {
+      expect(sideGroup(group, "debtor")).toBe("creditor");
+      expect(sideGroup(group, "creditor")).toBe("debtor");
+    }
+    expect(sideGroup("night", "debtor")).toBe("night");
+    expect(sideGroup("", "creditor")).toBe("");
   });
 });
 

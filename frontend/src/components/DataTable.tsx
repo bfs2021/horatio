@@ -57,11 +57,15 @@ const AT: Record<Breakpoint, { head: string; wide: string; narrow: string; title
  * With `select` instead, a click on a row, or its chevron, picks it, to show it
  * elsewhere (a side panel, #979): the picked row is marked, and when it is let go its
  * chevron has the focus again.
+ *
+ * With `groups` in place of `rows`, the rows come in groups (#981), each under a
+ * heading row across the table, a button that opens and closes it.
  */
 export function DataTable<T>({
   label,
   columns,
-  rows,
+  rows = [],
+  groups,
   rowKey,
   rowLabel,
   stackBelow = "sm",
@@ -75,7 +79,9 @@ export function DataTable<T>({
   /** The table's name, for screen readers. */
   label: string;
   columns: Column<NoInfer<T>>[];
-  rows: T[];
+  rows?: T[];
+  /** The rows in groups, in place of `rows`: each under its `heading`, shown while `open`. */
+  groups?: DataGroup<T>[];
   rowKey: (row: T) => string;
   /** A row's name, for screen readers and tests, when its title cell alone isn't it. */
   rowLabel?: (row: T) => string;
@@ -152,6 +158,79 @@ export function DataTable<T>({
     );
   };
 
+  // A row, and the row opened under it.
+  const line = (row: T) => {
+    const key = rowKey(row);
+    const open = opened.has(key);
+    const openedId = `${id}-${key}`;
+    const isPicked = picked === key;
+    const onRow = select ? () => select.onSelect(row) : expand?.wholeRow ? () => toggle(key) : undefined;
+    return (
+      <Fragment key={key}>
+        <tr
+          aria-label={rowLabel?.(row)}
+          className={`${open ? "border-b-0" : ""} ${onRow ? "cursor-pointer hover:bg-ash/30" : ""} ${isPicked ? "bg-ash/40" : ""}`}
+          onClick={onRow ? (e) => !ownClick(e.target) && onRow() : undefined}
+        >
+          {/* Dense, the chevron is no taller than a line of text, so a row stays one line high. */}
+          {expand && (
+            <td className={`w-px pr-1 align-top ${dense ? "py-0" : "py-1"}`}>
+              <Button
+                type="button"
+                variant="ghost"
+                className={`px-1.5 ${dense ? "min-h-8!" : "min-h-8"}`}
+                aria-label={expand.label(row)}
+                aria-expanded={open}
+                aria-controls={open ? openedId : undefined}
+                onClick={() => toggle(key)}
+              >
+                <Chevron open={open} />
+              </Button>
+            </td>
+          )}
+          {select && (
+            <td className={`w-px pr-1 align-top ${dense ? "py-0" : "py-1"}`}>
+              <Button
+                ref={(button) => {
+                  if (button) chevrons.current.set(key, button);
+                  else chevrons.current.delete(key);
+                }}
+                type="button"
+                variant="ghost"
+                className={`px-1.5 ${dense ? "min-h-8!" : "min-h-8"} ${isPicked ? "text-gold" : ""}`}
+                aria-label={select.label(row)}
+                aria-current={isPicked || undefined}
+                onClick={() => select.onSelect(row)}
+              >
+                <Chevron open={false} />
+              </Button>
+            </td>
+          )}
+          {columns.map((c) => (
+            <td key={c.key} {...c.cellProps?.(row)} className={`${place(c)} ${c.className ?? ""}`}>
+              {/* The title's own content in a box of its own, apart from the fold, so its text reads as it did. */}
+              {c.phone === "title" ? (
+                <>
+                  <div>{c.cell(row)}</div>
+                  {fold(row)}
+                </>
+              ) : (
+                c.cell(row)
+              )}
+            </td>
+          ))}
+        </tr>
+        {expand && open && (
+          <tr id={openedId}>
+            <td colSpan={span} className={`pb-3 ${at.opened}`}>
+              {expand.render(row)}
+            </td>
+          </tr>
+        )}
+      </Fragment>
+    );
+  };
+
   return (
     <table aria-label={label} aria-busy={busy || undefined} className={`w-full text-sm ${className}`}>
       <thead className={at.head}>
@@ -172,82 +251,45 @@ export function DataTable<T>({
           ))}
         </tr>
       </thead>
-      <tbody className="divide-y divide-ash">
-        {rows.map((row) => {
-          const key = rowKey(row);
-          const open = opened.has(key);
-          const openedId = `${id}-${key}`;
-          const isPicked = picked === key;
-          const onRow = select ? () => select.onSelect(row) : expand?.wholeRow ? () => toggle(key) : undefined;
+      {groups ? (
+        groups.map((g, i) => {
+          const groupId = `${id}-group-${i}`;
           return (
-            <Fragment key={key}>
-              <tr
-                aria-label={rowLabel?.(row)}
-                className={`${open ? "border-b-0" : ""} ${onRow ? "cursor-pointer hover:bg-ash/30" : ""} ${isPicked ? "bg-ash/40" : ""}`}
-                onClick={onRow ? (e) => !ownClick(e.target) && onRow() : undefined}
-              >
-                {/* Dense, the chevron is no taller than a line of text, so a row stays one line high. */}
-                {expand && (
-                  <td className={`w-px pr-1 align-top ${dense ? "py-0" : "py-1"}`}>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className={`px-1.5 ${dense ? "min-h-8!" : "min-h-8"}`}
-                      aria-label={expand.label(row)}
-                      aria-expanded={open}
-                      aria-controls={open ? openedId : undefined}
-                      onClick={() => toggle(key)}
-                    >
-                      <Chevron open={open} />
-                    </Button>
-                  </td>
-                )}
-                {select && (
-                  <td className={`w-px pr-1 align-top ${dense ? "py-0" : "py-1"}`}>
-                    <Button
-                      ref={(button) => {
-                        if (button) chevrons.current.set(key, button);
-                        else chevrons.current.delete(key);
-                      }}
-                      type="button"
-                      variant="ghost"
-                      className={`px-1.5 ${dense ? "min-h-8!" : "min-h-8"} ${isPicked ? "text-gold" : ""}`}
-                      aria-label={select.label(row)}
-                      aria-current={isPicked || undefined}
-                      onClick={() => select.onSelect(row)}
-                    >
-                      <Chevron open={false} />
-                    </Button>
-                  </td>
-                )}
-                {columns.map((c) => (
-                  <td key={c.key} {...c.cellProps?.(row)} className={`${place(c)} ${c.className ?? ""}`}>
-                    {/* The title's own content in a box of its own, apart from the fold, so its text reads as it did. */}
-                    {c.phone === "title" ? (
-                      <>
-                        <div>{c.cell(row)}</div>
-                        {fold(row)}
-                      </>
-                    ) : (
-                      c.cell(row)
-                    )}
-                  </td>
-                ))}
+            <tbody key={g.key} id={groupId} className="divide-y divide-ash border-b border-ash">
+              <tr>
+                <th scope="rowgroup" colSpan={span} className="bg-dusk p-0 text-left font-normal">
+                  <button
+                    type="button"
+                    aria-expanded={g.open}
+                    aria-controls={g.open ? groupId : undefined}
+                    onClick={g.onToggle}
+                    className="flex min-h-10 w-full items-center gap-2 px-2 py-1.5 text-left hover:text-gold"
+                  >
+                    <Chevron open={g.open} />
+                    {g.heading}
+                  </button>
+                </th>
               </tr>
-              {expand && open && (
-                <tr id={openedId}>
-                  <td colSpan={span} className={`pb-3 ${at.opened}`}>
-                    {expand.render(row)}
-                  </td>
-                </tr>
-              )}
-            </Fragment>
+              {g.open && g.rows.map(line)}
+            </tbody>
           );
-        })}
-      </tbody>
+        })
+      ) : (
+        <tbody className="divide-y divide-ash">{rows.map(line)}</tbody>
+      )}
     </table>
   );
 }
+
+/** A group of a table's rows (#981), under a heading row that opens and closes it. */
+export type DataGroup<T> = {
+  key: string;
+  /** What its heading row says after the chevron, such as its name and how many it holds. */
+  heading: ReactNode;
+  rows: T[];
+  open: boolean;
+  onToggle: () => void;
+};
 
 /**
  * A click a row leaves alone: on something of its own (the chevron, a link, a

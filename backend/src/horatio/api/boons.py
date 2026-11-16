@@ -274,6 +274,9 @@ class TroupeBoonsOut(BaseModel):
     counts: dict[str, int]
     # The same for the whole ledger, and its open boons by kind (#977).
     totals: BoonTotalsOut
+    # What each kind weighs in the troupe (horatio.boon_standings), to weigh each group
+    # of the table grouped (#981).
+    weights: dict[str, float]
 
 
 class BoonOwingOut(BaseModel):
@@ -676,7 +679,7 @@ def troupe_boons(
     newest first for the date, A to Z or trivial to life otherwise), ties newest
     first, then by id. `limit` boons from `offset` (#978). With them, `totals`: the
     whole ledger's views counted, whatever the filters, and its open boons by kind
-    (#977)."""
+    (#977); and the troupe's `weights` for each kind (#981)."""
     troupe, keeper = ledger_troupe(db, user, troupe_id)
     filters = boon_ledger.Filters(
         character_id=character_id,
@@ -716,6 +719,7 @@ def troupe_boons(
                 for k, n in whole.open_by_kind.items()
             ],
         ),
+        weights=boon_standings.weights_of(troupe),
     )
 
 

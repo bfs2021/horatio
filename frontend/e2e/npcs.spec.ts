@@ -34,10 +34,18 @@ test("storytellers build an NPC quickly and give it a title", async ({ browser }
   await p.getByRole("button", { name: "Quick build" }).click();
   await expect(p.getByRole("heading", { name: "Prince Vasquez" })).toBeVisible();
 
-  await p.getByLabel("Clan", { exact: true }).selectOption("Ventrue");
+  // Each choice is a drop-down that searches as one types and says what each option is (#1039):
+  // a clan, its in-clan disciplines, under its name and in the detail of the one highlighted.
+  await p.getByRole("combobox", { name: "Clan", exact: true }).fill("ventr");
+  const ventrue = p.getByRole("option", { name: "Ventrue", exact: true });
+  await expect(ventrue).toHaveAccessibleDescription(/In-clan: Dominate, Fortitude, Presence/);
+  await ventrue.hover();
+  await expect(p.getByText("In-clan disciplines: Dominate, Fortitude, Presence.")).toBeVisible();
+  await p.screenshot(shots("npc-clan-choice"));
+  await ventrue.click();
   await expect(p.getByLabel("Clan", { exact: true })).toHaveValue("Ventrue");
   // A Prince must be Camarilla: a title of a sect goes only to its characters.
-  await p.getByLabel("Sect", { exact: true }).selectOption("Camarilla");
+  await choose(p, "Sect", "Camarilla");
   await expect(p.getByLabel("Sect", { exact: true })).toHaveValue("Camarilla");
   // Creation picks are fitted to an NPC built quickly, so its creation dots are free as a
   // player character's are (#527): Social takes the attribute pick at 7, and its eighth
@@ -46,9 +54,9 @@ test("storytellers build an NPC quickly and give it a title", async ({ browser }
   await expect(p.getByText("3 XP", { exact: true })).toBeVisible();
   // Each attribute's focus is chosen beside it, one of three; choosing again swaps it.
   await expect(p.getByRole("heading", { name: "Focuses" })).toHaveCount(0);
-  await p.getByLabel("Social focus", { exact: true }).selectOption("Charisma");
+  await choose(p, "Social focus", "Charisma");
   await expect(p.getByLabel("Social focus", { exact: true })).toHaveValue("Charisma");
-  await p.getByLabel("Social focus", { exact: true }).selectOption("Manipulation");
+  await choose(p, "Social focus", "Manipulation");
   await expect(p.getByLabel("Social focus", { exact: true })).toHaveValue("Manipulation");
   await expect(p.getByText("3 XP", { exact: true })).toBeVisible(); // focuses are free
   // The skill pick at 4, and the fifth dot bought: 5 at Generation 1's × 1.
@@ -58,7 +66,8 @@ test("storytellers build an NPC quickly and give it a title", async ({ browser }
   await expect(p.getByLabel("Morality", { exact: true })).toHaveValue("Humanity");
   await p.getByRole("button", { name: "Humanity 4", exact: true }).click();
   await expect(p.getByRole("button", { name: "Humanity 4", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await p.getByLabel("Morality", { exact: true }).selectOption("Caine");
+  await choose(p, "Morality", "Path of Caine");
+  await expect(p.getByLabel("Morality", { exact: true })).toHaveValue("Path of Caine");
   await expect(p.getByRole("button", { name: "Caine 4", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(p.getByRole("button", { name: /^Humanity \d+$/ })).toHaveCount(0);
   await expect(p.getByText("8 XP", { exact: true })).toBeVisible();
@@ -155,6 +164,14 @@ test("a quick NPC's creation picks are fitted, and staff move one by hand", asyn
   // only Brawl's fifth dot is bought. The picks show in the wizard's slots.
   const card = p.getByRole("region", { name: "Skills picks" });
   await expect(p.getByRole("heading", { name: "Creation picks" })).toBeVisible();
+  // Each part of the picks is closed to a line of what it holds and what is left (#1037),
+  // and opens on demand, one at a time.
+  const skills = p.getByRole("button", { name: "Skills", exact: true });
+  await expect(skills).toHaveAttribute("aria-expanded", "false");
+  await expect(skills).toHaveAccessibleDescription("Brawl 4, Occult 3 · 8 to choose");
+  await expect(card).toHaveCount(0);
+  await skills.click();
+  await expect(skills).toHaveAttribute("aria-expanded", "true");
   await expect(card.getByRole("combobox", { name: "Skills at 4", exact: true })).toHaveValue("Brawl");
   await expect(card.getByRole("combobox", { name: "Skills at 3, pick 1 of 2" })).toHaveValue("Occult");
   await expect(p.getByText("5 XP", { exact: true })).toBeVisible();
@@ -204,6 +221,9 @@ test("a quick NPC's Ventrue Royalty places its free backgrounds, and staff take 
   // The merit's 4, 3 and 2 are fitted where they save the most (#566): only Resources' fifth
   // dot is bought, beside Brawl's, and the merit's own 2 XP, as a player's (#657).
   const royalty = p.getByRole("region", { name: "Ventrue Royalty places" });
+  const royaltyFold = p.getByRole("button", { name: "Ventrue Royalty", exact: true });
+  await expect(royaltyFold).toHaveAccessibleDescription("Resources 4, Haven 3, Allies 2");
+  await royaltyFold.click();
   await expect(royalty.getByRole("combobox", { name: "Ventrue Royalty at 4", exact: true })).toHaveValue("Resources");
   await expect(royalty.getByRole("combobox", { name: "Ventrue Royalty at 3", exact: true })).toHaveValue("Haven");
   await expect(royalty.getByRole("combobox", { name: "Ventrue Royalty at 2", exact: true })).toHaveValue("Allies");
@@ -214,10 +234,15 @@ test("a quick NPC's Ventrue Royalty places its free backgrounds, and staff take 
   await royalty.getByRole("button", { name: "Take Haven off" }).click();
   await expect(p.getByText("Kept without a merit's free dots: Haven.")).toBeVisible();
   await expect(royalty.getByRole("combobox", { name: "Ventrue Royalty at 3", exact: true })).toHaveValue("");
+  await expect(royaltyFold).toHaveAccessibleDescription("Resources 4, Allies 2 · 1 to choose");
+  // Opening another part closes this one.
+  await p.getByRole("button", { name: "Backgrounds", exact: true }).click();
+  await expect(royalty).toHaveCount(0);
   await expect(p.getByRole("region", { name: "Backgrounds picks" }).getByRole("combobox", { name: "Backgrounds at 3", exact: true })).toHaveValue("Haven");
 
   // Fitting all again puts it back.
   await p.getByRole("button", { name: "Fit all again" }).click();
+  await royaltyFold.click();
   await expect(royalty.getByRole("combobox", { name: "Ventrue Royalty at 3", exact: true })).toHaveValue("Haven");
   await expect(p.getByText("Kept without a merit's free dots: Haven.")).toHaveCount(0);
 });
@@ -308,17 +333,34 @@ test("staff choose what a quick NPC's Piece That Remains gives on its sheet, and
   await p.locator("main").getByRole("link", { name: "Build", exact: true }).click();
   await expect(p.getByText("12 XP", { exact: true })).toBeVisible();
   const royalty = p.getByRole("region", { name: "Ventrue Royalty places" });
+  await p.getByRole("button", { name: "Ventrue Royalty", exact: true }).click();
   await expect(royalty.getByRole("combobox", { name: "Ventrue Royalty at 4", exact: true })).toHaveValue("Resources");
 
-  // Changed under the merit in the builder: Royalty goes, with its places, and the price with it.
+  // In the builder the merit's free traits are one line (#1037), opening into the choices and closing again.
   const built = p.locator('[data-free-choices="Piece That Remains"]');
-  await built.getByRole("button", { name: "Edit the free traits for Piece That Remains" }).click();
+  await expect(built).toHaveText(/^Given free:\s*Ventrue Royalty/);
+  await expect(built.getByRole("combobox")).toHaveCount(0);
+  const change = built.getByRole("button", { name: "Edit the free traits for Piece That Remains" });
+  await expect(change).toHaveAttribute("aria-expanded", "false");
+  await change.click();
+  await expect(built.getByRole("combobox")).toHaveValue("Ventrue Royalty");
+  await built.getByRole("button", { name: "Close the free traits for Piece That Remains" }).click();
+  await expect(built.getByRole("combobox")).toHaveCount(0);
+
+  // Changed under the merit in the builder: Royalty goes, with its places, and the price with it.
+  await change.click();
   await built.getByRole("combobox").selectOption("Aura of Command");
   await built.getByRole("button", { name: "Save" }).click();
-  await expect(built).toContainText("Aura of Command");
+  await expect(built).toHaveText(/^Given free:\s*Aura of Command/);
   await expect(p.getByText("21 XP", { exact: true })).toBeVisible();
   await expect(royalty).toHaveCount(0);
 });
+
+/** Choose `option` from one of the NPC builder's drop-downs (#1039). */
+async function choose(p: Page, label: string, option: string) {
+  await p.getByRole("combobox", { name: label, exact: true }).click();
+  await p.getByRole("listbox", { name: label }).getByRole("option", { name: option, exact: true }).click();
+}
 
 /** A troupe led by `lead`, made by the custodian, with a sheeted vampire NPC built in it. */
 async function troupeWithNpc(custodian: Page, lead: string, troupe: string, npc: string): Promise<{ troupeId: string; npcId: string }> {
@@ -791,56 +833,74 @@ test("storytellers give an NPC powers, and one out of order is marked until it i
   await p.goto(`/characters/${npc}`);
   await slowly(p.getByRole("heading", { name: "Techniques", exact: true })).toBeVisible();
 
-  // A technique is found by search and added at once; its disciplines are missing, so it is marked.
-  await p.getByLabel("Search Techniques").fill("Da Shealladh");
-  await p.getByRole("checkbox", { name: "An Da Shealladh" }).click();
-  await slowly(p.getByRole("checkbox", { name: "An Da Shealladh" })).toBeChecked();
-  await p.getByLabel("Search Techniques").fill("");
+  // A technique is found by typing part of its name in the drop-down, which says what each one
+  // does (#1039); its disciplines are missing, but staff add it all the same, and it is marked.
+  const techniques = p.getByRole("combobox", { name: "Search Techniques" });
+  await techniques.fill("Da Shealladh");
+  await p.getByRole("option", { name: "An Da Shealladh", exact: true }).click();
   await slowly(p.getByRole("checkbox", { name: "An Da Shealladh" })).toBeChecked();
   await slowly(p.getByText("Marked: An Da Shealladh needs Dementation 3 and Auspex 2.")).toBeVisible();
 
-  // Adding the disciplines clears the mark.
-  await p.getByLabel("Search Disciplines").fill("Dementation");
+  // A discipline: part of its name typed, the one highlighted shows what its dots give, and Enter takes it.
+  const disciplines = p.getByRole("combobox", { name: "Search Disciplines" });
+  await disciplines.fill("demen");
+  await expect(p.getByRole("option")).toHaveCount(1);
+  await disciplines.press("ArrowDown");
+  await expect(p.getByText("Dots 1 to 5 give:")).toBeVisible();
+  await expect(p.getByText("Voice of Madness", { exact: true })).toBeVisible();
+  await p.screenshot(shots("npc-discipline-choice"));
+  await disciplines.press("Enter");
+  await slowly(p.getByRole("button", { name: "Dementation 1", exact: true })).toHaveAttribute("aria-pressed", "true");
   await p.getByRole("button", { name: "Dementation 3", exact: true }).click();
   await slowly(p.getByRole("button", { name: "Dementation 3", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await p.getByLabel("Search Disciplines").fill("Auspex");
+  // The clan's own disciplines are marked in-clan; another's are not.
+  await disciplines.fill("Au");
+  await expect(p.getByRole("option", { name: "Auspex", exact: true })).toHaveAccessibleDescription(/^in-clan /);
+  await expect(p.getByRole("option", { name: "Dominate", exact: true })).toHaveCount(0);
+  await disciplines.fill("Dominate");
+  await expect(p.getByRole("option", { name: "Dominate", exact: true })).not.toHaveAccessibleDescription(/in-clan/);
+  await disciplines.fill("Auspex");
+  await p.getByRole("option", { name: "Auspex", exact: true }).click();
+  await slowly(p.getByRole("button", { name: "Auspex 1", exact: true })).toHaveAttribute("aria-pressed", "true");
   await p.getByRole("button", { name: "Auspex 2", exact: true }).click();
   await slowly(p.getByRole("button", { name: "Auspex 2", exact: true })).toHaveAttribute("aria-pressed", "true");
+  // Adding the disciplines clears the technique's mark.
   await slowly(p.getByText("Marked: An Da Shealladh")).toHaveCount(0);
   await slowly(p.getByRole("checkbox", { name: "An Da Shealladh" })).toBeChecked();
 
   // An elder power, a ritual (shown with its level) and an extra in-clan discipline.
-  await p.getByLabel("Search Elder & luminary powers").fill("Crimson Fury");
-  await p.getByRole("checkbox", { name: "Animalism: Crimson Fury" }).click();
+  await p.getByRole("combobox", { name: "Search Elder & luminary powers" }).fill("Crimson Fury");
+  await p.getByRole("option", { name: "Animalism: Crimson Fury", exact: true }).click();
   await slowly(p.getByRole("checkbox", { name: "Animalism: Crimson Fury" })).toBeChecked();
   await slowly(p.getByText("Marked: A Neonate's or Ancilla's blood is too thin for elder powers.")).toBeVisible();
 
-  // What each does opens under its row, several at once, without taking it or giving it up (#1000):
-  // a technique's and an elder power's own line, and the power a discipline's next dot gives.
-  await p.getByLabel("Search Techniques").fill("Second Wind");
-  await p.getByRole("button", { name: "About Second Wind" }).click();
+  // What one not held does is read in the drop-down, from its chevron as on a phone, without taking it.
+  await techniques.fill("Second Wind");
+  await p.getByRole("listbox", { name: "Search Techniques" }).getByRole("button", { name: "About Second Wind" }).click();
   await expect(p.getByText("all your aggravated damage becomes normal damage")).toBeVisible();
-  await expect(p.getByText("MET: VTM p. 231")).toBeVisible();
-  await expect(p.getByRole("checkbox", { name: "Second Wind" })).not.toBeChecked();
+  await expect(p.getByText("MET: VTM p. 231").first()).toBeVisible();
+  await techniques.press("Escape");
+  await expect(p.getByRole("listbox")).toHaveCount(0);
+  await expect(p.getByRole("checkbox", { name: "Second Wind" })).toHaveCount(0);
+  // What one held does opens under its row (#1000): an elder power's own line, and the power a
+  // discipline's next dot gives.
   await p.getByRole("button", { name: "About Animalism: Crimson Fury" }).click();
   await expect(p.getByText("flees in a fear frenzy Willpower can't stop")).toBeVisible();
-  await expect(p.getByText("all your aggravated damage becomes normal damage")).toBeVisible();
   await expect(p.getByRole("checkbox", { name: "Animalism: Crimson Fury" })).toBeChecked();
-  await p.getByLabel("Search Disciplines").fill("");
   await p.getByRole("button", { name: "About Dementation" }).click();
   await expect(p.getByText("Dot 4 gives:")).toBeVisible();
   await expect(p.getByText("Voice of Madness", { exact: true })).toBeVisible();
 
-  await p.getByLabel("Search Rituals").fill("Abyssal Ichor");
-  await p.getByRole("checkbox", { name: "Abyssal: Abyssal Ichor" }).click();
+  await p.getByRole("combobox", { name: "Search Rituals" }).fill("Abyssal Ichor");
+  await p.getByRole("option", { name: "Abyssal: Abyssal Ichor", exact: true }).click();
   await slowly(p.getByRole("checkbox", { name: "Abyssal: Abyssal Ichor" })).toBeChecked();
   // A ritual says what it does too (#1024).
   await p.getByRole("button", { name: "About Abyssal: Abyssal Ichor" }).click();
   await expect(p.getByText("used as ink only the supernatural can read")).toBeVisible();
   await expect(p.getByText("Vol. 2, p. 100")).toBeVisible();
 
-  await p.getByLabel("Search Extra in-clan disciplines").fill("Fortitude");
-  await p.getByRole("checkbox", { name: "Fortitude", exact: true }).click();
+  await p.getByRole("combobox", { name: "Search Extra in-clan disciplines" }).fill("Fortitude");
+  await p.getByRole("option", { name: "Fortitude", exact: true }).click();
   await slowly(p.getByRole("checkbox", { name: "Fortitude", exact: true })).toBeChecked();
 
   // They are on the sheet, and stay after a reload; one tap takes a power off.

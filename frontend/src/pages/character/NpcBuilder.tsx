@@ -5,7 +5,7 @@ import { HouseMark } from "../../components/HouseMark";
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { api, unwrap } from "../../api/client";
 import type { CatalogueOut, CharacterOut, SheetOut, TraitOut } from "../../api/types";
-import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
+import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading } from "../../components/ui";
 import { useAction, usePreferences, useUnavailable } from "../../hooks";
 import { PrintAndBadge } from "./Badge";
 import { NpcPicks } from "./NpcPicks";
@@ -20,6 +20,7 @@ import { MORALITY, heldMorality, moralityLabel, moralityOptions, moveMorality, w
 import { useCatalogue } from "../../catalogue";
 import { SectionLabel } from "../../components/Headings";
 import { AboutButton, AboutTrait, hasAbout } from "../../components/AboutTrait";
+import { ChoiceBox, type BoxChoice } from "../../components/ChoiceBox";
 
 type Change = { category: string; name: string; detail?: string; rating: number | null };
 /** A held trait's detail changed in place: a merit's choice, a skill's field (#570). */
@@ -34,6 +35,12 @@ const ATTRIBUTES: [string, string][] = [
   ["Social", "focus_socials"],
   ["Mental", "focus_mentals"],
 ];
+
+/** A focus's choice when none is held. */
+const NO_FOCUS = "No focus";
+
+/** A card that spans both columns, as the sheet's long parts do. */
+const WIDE = "md:col-span-2";
 
 /** Sections of the quick builder after attributes, in sheet order. Long lists get a search box. */
 const SECTIONS: { title: string; categories: string[]; split?: boolean; powers?: boolean }[] = [
@@ -72,15 +79,30 @@ export function NpcBuilder({ character }: { character: CharacterOut }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_16rem]">
-      <div className="flex flex-col gap-4">
-        {hasDomitor && <DomitorCard character={character} sheet={sheet.data} catalogue={catalogue.data} canChange />}
-        <Identity sheet={sheet.data} catalogue={catalogue.data} withoutClan={!!hasDomitor} onChange={(c) => set.mutate(c)} />
-        <Attributes sheet={sheet.data} catalogue={catalogue.data} onChange={(c) => set.mutate(c)} />
+      {/* As on the sheet: small cards sit side by side, long ones span the width. */}
+      <div className="grid content-start gap-4 md:grid-cols-2">
+        {hasDomitor && (
+          <div className={WIDE}>
+            <DomitorCard character={character} sheet={sheet.data} catalogue={catalogue.data} canChange />
+          </div>
+        )}
+        {/* Who it is and its Morality, small, side by side; then the long parts in sheet order. */}
+        <Identity
+          sheet={sheet.data}
+          catalogue={catalogue.data}
+          troupeId={rulesTroupe(character)}
+          withoutClan={!!hasDomitor}
+          wide={panels?.morality === false}
+          onChange={(c) => set.mutate(c)}
+        />
+        {panels?.morality !== false && <Morality sheet={sheet.data} catalogue={catalogue.data} troupeId={rulesTroupe(character)} onChange={(c) => set.mutate(c)} />}
+        <Attributes sheet={sheet.data} catalogue={catalogue.data} troupeId={rulesTroupe(character)} onChange={(c) => set.mutate(c)} />
         {SECTIONS.map((section) => (
           <Section
             key={section.title}
             {...section}
             noGeneration={panels?.generation === false}
+            inClan={inClanOf(sheet.data, catalogue.data)}
             character={character}
             sheet={sheet.data}
             catalogue={catalogue.data}
@@ -89,8 +111,11 @@ export function NpcBuilder({ character }: { character: CharacterOut }) {
             busy={set.isPending || rename.isPending}
           />
         ))}
-        {panels?.morality !== false && <Morality sheet={sheet.data} catalogue={catalogue.data} onChange={(c) => set.mutate(c)} />}
-        <ErrorText error={set.error ?? rename.error} />
+        {(set.error ?? rename.error) && (
+          <div className={WIDE}>
+            <ErrorText error={set.error ?? rename.error} />
+          </div>
+        )}
       </div>
       <aside className="flex flex-col gap-4 lg:sticky lg:top-4 lg:self-start">
         {/* Only the troupe's staff see an NPC, and they all print its badge. */}
@@ -116,27 +141,56 @@ export function NpcBuilder({ character }: { character: CharacterOut }) {
   );
 }
 
-function Identity({ sheet, catalogue, withoutClan, onChange }: { sheet: SheetOut; catalogue: CatalogueOut; withoutClan: boolean; onChange: (c: Change) => void }) {
+/**
+ * The NPC's in-clan disciplines: its clan's, and the extra ones it holds. A ghoul's
+ * come from its domitor, which the sheet doesn't say here, so it has none marked.
+ */
+function inClanOf(sheet: SheetOut, catalogue: CatalogueOut): Set<string> {
+  const clan = sheet.traits.find((t) => t.category === "clan")?.name;
+  const own = catalogue.traits.find((t) => t.category === "clan" && t.name === clan)?.in_clan ?? [];
+  const extra = sheet.traits.filter((t) => t.category === "extra_in_clan_disciplines" && (t.rating ?? 0) > 0).map((t) => t.name);
+  return new Set([...own, ...extra]);
+}
+
+/** Whether a discipline, or an elder power of one ("Animalism: Crimson Fury"), is in-clan. */
+function isInClan(trait: TraitOut, inClan: Set<string>): boolean {
+  if (trait.category === "disciplines") return inClan.has(trait.name);
+  if (trait.category === "elder_disciplines") return inClan.has(trait.name.split(":")[0]!.trim());
+  return false;
+}
+
+function Identity({
+  sheet,
+  catalogue,
+  troupeId,
+  withoutClan,
+  wide,
+  onChange,
+}: {
+  sheet: SheetOut;
+  catalogue: CatalogueOut;
+  troupeId?: string;
+  withoutClan: boolean;
+  /** Spanning the width, with no Morality card beside it. */
+  wide: boolean;
+  onChange: (c: Change) => void;
+}) {
   const choices = identityChoices(catalogue, sheet).filter((c) => !(withoutClan && c.key === "clan"));
-  const named = useClanName();
   return (
-    <Card title="Who">
-      <div className="grid gap-3 sm:grid-cols-2">
+    <Card dense title="Who" className={wide ? WIDE : undefined}>
+      <div className={`grid gap-3 sm:grid-cols-2 ${wide ? "" : "md:grid-cols-1"}`}>
         {choices.map((c) => (
           <Field key={c.key} label={c.name}>
-            <Select
+            <ChoiceBox
+              label={c.name}
+              placeholder="Choose…"
               value={sheet.traits.find((t) => t.category === c.key)?.name ?? ""}
-              onChange={(e) => e.target.value && onChange({ category: c.key, name: e.target.value, rating: null })}
-            >
-              <option value="">Choose…</option>
-              {catalogue.traits
+              choices={catalogue.traits
                 .filter((t) => t.category === c.key && t.name !== CUSTOM_ARCHETYPE)
-                .map((t) => (
-                  <option key={t.name} value={t.name}>
-                    {named(t.name)}
-                  </option>
-                ))}
-            </Select>
+                .map((t): BoxChoice => ({ value: t.name, label: t.name, trait: t }))}
+              troupeId={troupeId}
+              onChoose={(name) => onChange({ category: c.key, name, rating: null })}
+            />
           </Field>
         ))}
       </div>
@@ -145,11 +199,11 @@ function Identity({ sheet, catalogue, withoutClan, onChange }: { sheet: SheetOut
 }
 
 /** Attributes, each with its focus beside it: one of three, chosen like a PC's. */
-function Attributes({ sheet, catalogue, onChange }: { sheet: SheetOut; catalogue: CatalogueOut; onChange: (c: Change) => void }) {
+function Attributes({ sheet, catalogue, troupeId, onChange }: { sheet: SheetOut; catalogue: CatalogueOut; troupeId?: string; onChange: (c: Change) => void }) {
   const max = catalogue.categories.find((c) => c.key === "attributes")?.max_rating ?? 10;
   return (
-    <Card title="Attributes">
-      <ul>
+    <Card dense title="Attributes" className={WIDE}>
+      <ul className="@container">
         {ATTRIBUTES.map(([name, focusCategory]) => {
           const trait = catalogue.traits.find((t) => t.category === "attributes" && t.name === name);
           if (!trait) return null;
@@ -165,23 +219,21 @@ function Attributes({ sheet, catalogue, onChange }: { sheet: SheetOut; catalogue
               onChange={onChange}
               aside={
                 options.length > 0 && (
-                  <Select
-                    aria-label={`${name} focus`}
-                    value={focus}
-                    onChange={(e) =>
-                      onChange(
-                        e.target.value
-                          ? { category: focusCategory, name: e.target.value, rating: 1 }
-                          : { category: focusCategory, name: focus, rating: 0 },
-                      )
-                    }
-                    className="h-8 w-40 py-0 text-sm"
-                  >
-                    <option value="">No focus</option>
-                    {options.map((o) => (
-                      <option key={o.name}>{o.name}</option>
-                    ))}
-                  </Select>
+                  <ChoiceBox
+                    label={`${name} focus`}
+                    placeholder="No focus"
+                    value={focus || NO_FOCUS}
+                    choices={[
+                      { value: "", label: NO_FOCUS, summary: "None of the three: it can be chosen later." },
+                      ...options.map((o): BoxChoice => ({ value: o.name, label: o.name, trait: o })),
+                    ]}
+                    troupeId={troupeId}
+                    onChoose={(chosen) => {
+                      if (chosen === focus) return;
+                      onChange(chosen ? { category: focusCategory, name: chosen, rating: 1 } : { category: focusCategory, name: focus, rating: 0 });
+                    }}
+                    className="w-full @lg:w-44"
+                  />
                 )
               }
             />
@@ -197,7 +249,7 @@ function Attributes({ sheet, catalogue, onChange }: { sheet: SheetOut; catalogue
  * another moves the NPC to it, keeping the rating. Willpower and health levels
  * follow as dots.
  */
-function Morality({ sheet, catalogue, onChange }: { sheet: SheetOut; catalogue: CatalogueOut; onChange: (c: Change) => void }) {
+function Morality({ sheet, catalogue, troupeId, onChange }: { sheet: SheetOut; catalogue: CatalogueOut; troupeId?: string; onChange: (c: Change) => void }) {
   // With no Morality held, the choice waits here for its first dot.
   const [chosen, setChosen] = useState<string | null>(null);
   const options = moralityOptions(catalogue);
@@ -208,8 +260,8 @@ function Morality({ sheet, catalogue, onChange }: { sheet: SheetOut; catalogue: 
   const maxOf = (category: string) => catalogue.categories.find((c) => c.key === category)?.max_rating ?? 5;
   if (!trait && !rest.length) return null;
   return (
-    <Card title="Morality & willpower">
-      <ul>
+    <Card dense title="Morality & willpower">
+      <ul className="@container">
         {trait && (
           <Row
             trait={trait}
@@ -218,22 +270,20 @@ function Morality({ sheet, catalogue, onChange }: { sheet: SheetOut; catalogue: 
             max={maxOf(MORALITY)}
             onChange={onChange}
             aside={
-              <Select
-                aria-label="Morality"
-                value={name}
-                onChange={(e) => {
-                  const move = moveMorality(held, e.target.value);
+              <ChoiceBox
+                label="Morality"
+                placeholder="Humanity or a Path"
+                value={moralityLabel(name)}
+                choices={options.map((o): BoxChoice => ({ value: o.name, label: moralityLabel(o.name), trait: o }))}
+                troupeId={troupeId}
+                onChoose={(chosen) => {
+                  if (chosen === name) return;
+                  const move = moveMorality(held, chosen);
                   if (move) onChange(move);
-                  else setChosen(e.target.value);
+                  else setChosen(chosen);
                 }}
-                className="h-8 w-56 py-0 text-sm"
-              >
-                {options.map((o) => (
-                  <option key={o.name} value={o.name}>
-                    {moralityLabel(o.name)}
-                  </option>
-                ))}
-              </Select>
+                className="w-full @lg:w-56"
+              />
             }
           />
         )}
@@ -258,6 +308,7 @@ function Section({
   split,
   powers,
   noGeneration,
+  inClan,
   sheet,
   catalogue,
   onChange,
@@ -265,6 +316,8 @@ function Section({
   busy,
 }: {
   character: CharacterOut;
+  /** The NPC's in-clan disciplines, marked in the list to add from. */
+  inClan?: Set<string>;
   /** Leave the Generation background out: the NPC's kind has none. */
   noGeneration?: boolean;
   title: string;
@@ -279,20 +332,25 @@ function Section({
   busy: boolean;
 }) {
   const [query, setQuery] = useState("");
-  // Why each power not held is out of reach (worked out only while searching, as it is slow), and
-  // from the sheet's problems, why each held one is out of order.
-  const searching = !!powers && query.trim() !== "";
-  const refusedFirst = useUnavailable(character.id, categories[0] ?? "", searching);
-  const refusedSecond = useUnavailable(character.id, categories[1] ?? "", searching && categories.length > 1);
-  const marks = useMemo(() => {
+  // Whether the list to add from is open: why each trait not held is out of reach is
+  // asked only then, as it is slow (#1039).
+  const [adding, setAdding] = useState(false);
+  const refusedFirst = useUnavailable(character.id, categories[0] ?? "", adding);
+  const refusedSecond = useUnavailable(character.id, categories[1] ?? "", adding && categories.length > 1);
+  const refused = useMemo(() => {
     const found = new Map<string, string>();
-    if (!powers) return found;
     categories.forEach((category, i) => {
       for (const [name, reason] of Object.entries((i === 0 ? refusedFirst.data : refusedSecond.data) ?? {})) found.set(`${category}/${name}`, reason);
     });
+    return found;
+  }, [categories, refusedFirst.data, refusedSecond.data]);
+  // From the sheet's problems, why each power held is out of order.
+  const marks = useMemo(() => {
+    const found = new Map<string, string>();
+    if (!powers) return found;
     for (const p of sheet.problems) if (categories.includes(p.category)) found.set(`${p.category}/${p.name}`, p.message);
     return found;
-  }, [powers, categories, refusedFirst.data, refusedSecond.data, sheet.problems]);
+  }, [powers, categories, sheet.problems]);
   // Each trait held, once for each detail it is held with (Crafts: Painting and Crafts: Pottery).
   const held = useMemo(() => {
     const found = new Map<string, { detail: string; rating: number }[]>();
@@ -314,28 +372,62 @@ function Section({
       !(t.house?.archived && !ratings.get(`${t.category}/${t.name}`)),
   );
   const q = query.trim().toLowerCase();
-  // Long lists show what the NPC has, plus whatever the search finds.
+  // Long lists show what the NPC has, and the rest are added from a drop-down that
+  // says what each does (#1039); a shorter one lists every trait, a search narrowing it.
   const long = traits.length > 30;
-  const shown = traits.filter((t) => (q ? withClanNames(t.name).toLowerCase().includes(q) : !long || ratings.get(`${t.category}/${t.name}`)));
+  const shown = traits.filter((t) => (long ? ratings.get(`${t.category}/${t.name}`) : !q || withClanNames(t.name).toLowerCase().includes(q)));
+  const categoryName = (key: string) => catalogue.categories.find((c) => c.key === key)?.name ?? key;
+  const toAdd = long
+    ? traits
+        .filter((t) => !ratings.get(`${t.category}/${t.name}`))
+        .map(
+          (t): BoxChoice => ({
+            value: `${t.category}/${t.name}`,
+            label: t.name,
+            trait: t,
+            group: present.length > 1 ? categoryName(t.category) : null,
+            mark: inClan && isInClan(t, inClan) ? "in-clan" : undefined,
+            note: refused.get(`${t.category}/${t.name}`),
+          }),
+        )
+    : [];
   const groups = new Map<string, TraitOut[]>();
   for (const t of shown) {
     const heading = split ? (t.attribute ?? "Other") : (catalogue.categories.find((c) => c.key === t.category)?.name ?? t.category);
     groups.set(heading, [...(groups.get(heading) ?? []), t]);
   }
   const order = split ? ["Physical", "Social", "Mental", "Other"] : [...groups.keys()];
+  // As on the sheet: a few rows of one kind make a small card, beside another; more, or a
+  // search under way, span the width, and a long list of one kind flows into two columns.
+  const wide = q !== "" || groups.size > 1 || shown.length > 5;
+  const add = (key: string) => {
+    const trait = traits.find((t) => `${t.category}/${t.name}` === key);
+    if (trait) onChange({ category: trait.category, name: trait.name, rating: trait.fixed_rating ?? 1 });
+  };
 
   return (
-    <Card title={title}>
-      {(long || traits.length > 12) && (
-        <Input aria-label={`Search ${title}`} placeholder={long ? `Search ${traits.length} to add…` : "Search…"} value={query} onChange={(e) => setQuery(e.target.value)} className="mb-3" />
+    <Card dense title={title} className={wide ? WIDE : undefined}>
+      {long ? (
+        <ChoiceBox
+          label={`Search ${title}`}
+          placeholder={`Search ${toAdd.length} to add…`}
+          choices={toAdd}
+          onChoose={add}
+          onOpen={setAdding}
+          splat={character.splat}
+          troupeId={rulesTroupe(character)}
+          className="mb-3"
+        />
+      ) : (
+        traits.length > 12 && <Input aria-label={`Search ${title}`} placeholder="Search…" value={query} onChange={(e) => setQuery(e.target.value)} className="mb-3" />
       )}
-      <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+      <div className={groups.size > 1 ? "grid gap-x-6 gap-y-3 sm:grid-cols-2" : undefined}>
         {order
           .filter((h) => groups.has(h))
           .map((heading) => (
             <div key={heading}>
               {(groups.size > 1 || split) && <SectionLabel className="mb-1">{heading}</SectionLabel>}
-              <ul>
+              <ul className={wide && groups.size === 1 ? "gap-x-6 sm:columns-2" : undefined}>
                 {groups.get(heading)!.map((t) => (
                   <Held
                     key={`${t.category}/${t.name}`}
@@ -356,7 +448,7 @@ function Section({
             </div>
           ))}
       </div>
-      {long && !q && shown.length === 0 && <Empty>None yet. Search to add some.</Empty>}
+      {long && shown.length === 0 && <Empty>None yet. Search to add some.</Empty>}
     </Card>
   );
 }
@@ -409,9 +501,9 @@ function Row({
     const on = rating > 0;
     const level = trait.fixed_rating ?? 1;
     return (
-      <li className="py-1 text-sm">
+      <li className="break-inside-avoid py-1 text-sm">
         <div className="flex items-center justify-between gap-2">
-          <span className="flex flex-wrap items-center gap-2">
+          <span className="flex min-w-0 flex-wrap items-center gap-2">
             {chevron}
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={on} onChange={() => onChange({ category: trait.category, name: trait.name, detail, rating: on ? 0 : level })} />
@@ -420,7 +512,7 @@ function Row({
             </label>
             {nameAside}
           </span>
-          {trait.fixed_rating && <Badge>{trait.fixed_rating}</Badge>}
+          {trait.fixed_rating && <Badge className="shrink-0">{trait.fixed_rating}</Badge>}
         </div>
         {mark && (
           <p className="ml-6 text-xs text-blood-bright" data-testid="power-mark">
@@ -447,18 +539,21 @@ function Row({
       : dot <= rating
         ? "text-blood-bright"
         : "text-mist/60";
+  // The rating at the right of the row, as on the sheet, so a card reads as a table: a long
+  // name wraps rather than push it down a line. A picker beside the name (a focus,
+  // Morality's path) goes under it where the card is narrow (a phone).
   return (
-    <li className={`text-sm ${aside ? "py-1.5" : "py-0.5"}`}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="flex flex-wrap items-center gap-3">
-          <span className="flex items-center">
+    <li className={`break-inside-avoid text-sm ${aside ? "py-1.5" : "py-0.5"}`}>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 @lg:flex-none">
+          <span className="flex min-w-0 items-center">
             {chevron}
             <span className={`${aside ? "w-16" : ""} ${rating ? "text-parchment" : "text-mist"}`}>{label ?? named(shown)}</span>
           </span>
-          {aside}
           {nameAside}
         </span>
-        <span className="flex">
+        {aside && <span className="order-last basis-full @lg:order-none @lg:basis-auto">{aside}</span>}
+        <span className="ml-auto flex shrink-0">
           {Array.from({ length: dots }, (_, i) => i + 1).map((dot) => (
             <button
               key={dot}
@@ -565,7 +660,7 @@ function Held({
                 onCancel={missing ? undefined : () => setEditing(null)}
               />
             )}
-            {!!onSheet?.free_choices?.length && <FreeChoicesRow character={character} trait={onSheet} editable={character.status !== "retired"} />}
+            {!!onSheet?.free_choices?.length && <FreeChoicesRow character={character} trait={onSheet} editable={character.status !== "retired"} folded />}
           </Row>
         );
       })}

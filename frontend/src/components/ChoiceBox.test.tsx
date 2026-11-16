@@ -1,0 +1,89 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { TraitOut } from "../api/types";
+import { ChoiceBox, oneLine, type BoxChoice } from "./ChoiceBox";
+
+afterEach(cleanup);
+
+function client() {
+  const found = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  found.setQueryData(["me"], null);
+  found.setQueryData(["power-notes", "vampire"], {
+    disciplines: [{ name: "Auspex", pool: "Mental + Investigation", versus: "Mental + Willpower" }],
+    powers: [{ discipline: "Auspex", level: 1, name: "Heightened Senses", note: "Sharper senses." }],
+  });
+  return found;
+}
+
+const auspex: TraitOut = { category: "disciplines", name: "Auspex", description: "Heightened senses and psychic insight.", page_reference: "128" };
+const dementation: TraitOut = { category: "disciplines", name: "Dementation", description: "Madness, passed on.", page_reference: "142" };
+const choices: BoxChoice[] = [
+  { value: "disciplines/Auspex", label: "Auspex", trait: auspex, mark: "in-clan" },
+  { value: "disciplines/Dementation", label: "Dementation", trait: dementation, note: "A Neonate can't learn it without a teacher." },
+];
+
+function box(onChoose = vi.fn(), value?: string) {
+  render(
+    <MemoryRouter>
+      <QueryClientProvider client={client()}>
+        <ChoiceBox label="Search Disciplines" placeholder="Search to add…" value={value} choices={choices} onChoose={onChoose} splat="vampire" />
+      </QueryClientProvider>
+    </MemoryRouter>,
+  );
+  return screen.getByRole("combobox", { name: "Search Disciplines" });
+}
+
+describe("ChoiceBox", () => {
+  it("lists each choice with what it does in a line, and narrows the list as one types", () => {
+    const input = box();
+    fireEvent.focus(input);
+    expect(screen.getAllByRole("option")).toHaveLength(2);
+    expect(screen.getByRole("option", { name: "Auspex" }).textContent).toContain("Heightened senses and psychic insight.");
+    expect(screen.getByRole("option", { name: "Auspex" }).textContent).toContain("in-clan");
+    fireEvent.change(input, { target: { value: "demen" } });
+    expect(screen.getAllByRole("option")).toHaveLength(1);
+  });
+
+  it("shows the highlighted one's detail, and chooses it with Enter", () => {
+    const onChoose = vi.fn();
+    const input = box(onChoose);
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    expect(input.getAttribute("aria-activedescendant")).toBe(screen.getAllByRole("option")[0]!.id);
+    expect(screen.getByText("Dots 1 to 5 give:")).toBeTruthy();
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onChoose).toHaveBeenCalledWith("disciplines/Auspex");
+    expect(screen.queryByRole("listbox")).toBeNull();
+  });
+
+  it("greys one the character can't usually take, saying why, and lets staff choose it", () => {
+    const onChoose = vi.fn();
+    const input = box(onChoose);
+    fireEvent.focus(input);
+    const option = screen.getByRole("option", { name: "Dementation" });
+    expect(option.textContent).toContain("A Neonate can't learn it without a teacher.");
+    fireEvent.click(screen.getByRole("button", { name: "About Dementation" }));
+    expect(screen.getByText(/Staff can give it all the same\./)).toBeTruthy();
+    expect(onChoose).not.toHaveBeenCalled();
+    fireEvent.click(option);
+    expect(onChoose).toHaveBeenCalledWith("disciplines/Dementation");
+  });
+
+  it("shows the choice made, highlighted when the list opens", () => {
+    const input = box(vi.fn(), "Auspex") as HTMLInputElement;
+    expect(input.value).toBe("Auspex");
+    fireEvent.focus(input);
+    expect(screen.getByRole("option", { name: "Auspex" }).getAttribute("aria-selected")).toBe("true");
+    expect(input.getAttribute("aria-activedescendant")).toBe(screen.getByRole("option", { name: "Auspex" }).id);
+  });
+});
+
+describe("oneLine", () => {
+  it("is a clan's in-clan disciplines, else the troupe's summary, else the book's", () => {
+    expect(oneLine({ category: "clan", name: "Ventrue", in_clan: ["Dominate", "Fortitude", "Presence"] })).toBe("In-clan: Dominate, Fortitude, Presence");
+    expect(oneLine(auspex)).toBe("Heightened senses and psychic insight.");
+    expect(oneLine(undefined)).toBeNull();
+  });
+});

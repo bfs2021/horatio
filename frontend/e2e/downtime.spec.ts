@@ -142,7 +142,7 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   const cart = p.getByRole("list", { name: "Changes in the cart" });
   await part("Backgrounds").getByRole("button", { name: "Add" }).click();
   await p.getByLabel("Search Backgrounds").fill("Elite");
-  await p.getByRole("button", { name: "Influences: The Elite" }).click();
+  await p.getByRole("button", { name: "Influences: The Elite", exact: true }).click();
   await p.getByRole("button", { name: "Add to cart" }).click();
   await expect(cart.getByText("Add Influences: The Elite 1 · 1 XP")).toBeVisible();
   // A focus can be changed after creation, for 10 XP.
@@ -160,7 +160,7 @@ test("a troupe's month, from new character to downtime results", async ({ browse
   await part("Merits and Flaws").getByRole("button", { name: "Add" }).click();
   // Every Ventrue merit, though Agnes is Brujah and cannot take them.
   await p.getByLabel("Show").selectOption({ label: "For Ventrue" });
-  await expect(p.getByRole("button", { name: /Aura of Command/ })).toBeDisabled();
+  await expect(p.getByRole("button", { name: /^Aura of Command/ })).toBeDisabled();
   await p.getByLabel("Show").selectOption({ label: "What this character can take" });
   await p.getByLabel("Search Merits").fill("Rugged");
   await p.getByRole("button", { name: /^Rugged/ }).click();

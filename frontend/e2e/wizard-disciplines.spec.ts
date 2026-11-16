@@ -510,6 +510,18 @@ test("a fourth in-clan discipline from a merit shows on Disciplines as taking no
   await expect(auspex.getByRole("option")).toHaveAttribute("aria-disabled", "true");
   await expect(auspex).toContainText("Additional Common Discipline: Auspex starts without a free dot.");
   await expect(at1.getByRole("option", { name: "Celerity", exact: true })).not.toHaveAttribute("aria-disabled");
+
+  // What each does opens from the list, greyed or not, several at once, choosing none (#1000):
+  // the power the slot's dot gives, and the discipline's test.
+  await auspex.getByRole("button", { name: "About Auspex" }).click();
+  await expect(auspex).toContainText("Dot 1 gives:");
+  await expect(auspex).toContainText("Heightened Senses");
+  await expect(auspex).toContainText("Test: Mental + Investigation against Mental + Willpower.");
+  const celerity = choiceIn(at1, "Celerity");
+  await celerity.getByRole("button", { name: "About Celerity" }).click();
+  await expect(celerity).toContainText("Alacrity");
+  await expect(auspex).toContainText("Heightened Senses");
+  await expect(slotsAt(p, "Disciplines", 1).getByRole("combobox").first()).toHaveValue("");
 });
 
 test("a Tremere takes Thaumaturgic Expertise from the Disciplines step, and the path it prices in-clan can take a starting dot", async ({ browser }) => {

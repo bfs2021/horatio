@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { CatalogueOut, CharacterOut, SheetTraitOut, TraitOut } from "../../api/types";
@@ -21,6 +21,7 @@ import { rulesTroupe } from "./rules";
 import { applyFilter, byKind, countOf, filterChoices, quickPicks } from "./traitFilter";
 import { CategoryMark, HouseWording } from "../../components/TroupeChange";
 import { bookSummary } from "../../houseWording";
+import { AboutButton, AboutTrait, DisciplineDots, hasAbout } from "../../components/AboutTrait";
 
 /** A new trait for the cart. */
 export type NewTrait = {
@@ -187,6 +188,9 @@ export function AddTraitPanel({
             chosen={t.name === name}
             refused={unavailable[t.name]}
             opened={current?.opened?.[t.name]}
+            splat={character.splat}
+            troupeId={rulesTroupe(character)}
+            next={(held.find((h) => h.category === t.category && h.name === t.name)?.rating ?? 0) + 1}
             onChoose={() => choose(t)}
             onAsk={
               character.home_troupe_id
@@ -255,6 +259,12 @@ export function AddTraitPanel({
           </p>
           {bookSummary(trait.description, trait.changed) && <p className="text-xs leading-relaxed text-mist">{named(trait.description)}</p>}
           <HouseWording change={trait.changed} />
+          {/* The powers the dots chosen would give. */}
+          {category === "disciplines" && (
+            <div className="text-xs leading-relaxed text-mist">
+              <DisciplineDots splat={character.splat} discipline={trait.name} from={1} to={Math.max(1, fixed ?? rating)} />
+            </div>
+          )}
           {trait.house_rule && <Notice>House rule: {trait.house_rule}</Notice>}
           {!!trait.written_rules?.length && rulesTroupe(character) && (
             <p className="text-xs text-mist">
@@ -353,13 +363,18 @@ function useQuote(characterId: string, enabled: boolean, body: { category: strin
 
 /**
  * One trait in the list: chosen, or greyed with why the rules refuse it, and then
- * (given `onAsk`) a way to ask staff for it as an exception.
+ * (given `onAsk`) a way to ask staff for it as an exception. Its chevron opens what
+ * it does under it without choosing it, greyed or not (#1000): for a discipline,
+ * with the power its `next` dot gives.
  */
 function TraitChoice({
   trait,
   chosen,
   refused,
   opened,
+  splat,
+  troupeId,
+  next,
   onChoose,
   onAsk,
 }: {
@@ -368,33 +383,48 @@ function TraitChoice({
   refused?: string;
   /** Opened past the character's Generation by a merit: "Hard as Steel: 20 XP". */
   opened?: string;
+  splat: string;
+  /** The troupe whose written rules about it are linked. */
+  troupeId?: string | null;
+  /** The dot taking it would give: a discipline's next. */
+  next: number;
   onChoose: () => void;
   onAsk?: () => void;
 }) {
   const named = useClanName();
+  const [open, setOpen] = useState(false);
+  const aboutId = useId();
   return (
     <li>
-      <button
-        type="button"
-        disabled={!!refused}
-        onClick={onChoose}
-        className={`flex w-full flex-col rounded px-2 py-1.5 text-left text-sm ${chosen ? "bg-ash/60" : "hover:bg-ash/40"} ${refused ? "opacity-50" : ""}`}
-      >
-        <span>
-          {named(trait.name)}
-          {trait.fixed_rating ? <span className="text-gold"> ({trait.fixed_rating})</span> : null}
-          {trait.requirement && <span className="ml-2 text-xs text-mist">{named(trait.requirement)}</span>}
-          {trait.house && <HouseMark label={trait.house.label} />}
-        </span>
-        <HouseSummary summary={trait.house?.summary} />
-        {refused && <span className="text-xs text-blood-bright">{named(refused)}</span>}
-        {!refused && opened && <span className="text-xs text-gold">{opened}</span>}
-      </button>
+      <div className="flex items-start">
+        {hasAbout(trait, splat) ? (
+          <AboutButton name={named(trait.name)} open={open} controls={aboutId} onToggle={() => setOpen(!open)} className="mt-0.5" />
+        ) : (
+          <span aria-hidden className="w-7 shrink-0 pointer-coarse:w-10" />
+        )}
+        <button
+          type="button"
+          disabled={!!refused}
+          onClick={onChoose}
+          className={`flex min-w-0 flex-1 flex-col rounded px-2 py-1.5 text-left text-sm ${chosen ? "bg-ash/60" : "hover:bg-ash/40"} ${refused ? "opacity-50" : ""}`}
+        >
+          <span>
+            {named(trait.name)}
+            {trait.fixed_rating ? <span className="text-gold"> ({trait.fixed_rating})</span> : null}
+            {trait.requirement && <span className="ml-2 text-xs text-mist">{named(trait.requirement)}</span>}
+            {trait.house && <HouseMark label={trait.house.label} />}
+          </span>
+          <HouseSummary summary={trait.house?.summary} />
+          {refused && <span className="text-xs text-blood-bright">{named(refused)}</span>}
+          {!refused && opened && <span className="text-xs text-gold">{opened}</span>}
+        </button>
+      </div>
       {refused && onAsk && (
-        <button type="button" className="ml-2 text-xs text-gold underline" onClick={onAsk}>
+        <button type="button" className="ml-9 text-xs text-gold underline pointer-coarse:ml-12" onClick={onAsk}>
           Ask staff
         </button>
       )}
+      {open && <AboutTrait id={aboutId} trait={trait} splat={splat} from={next} troupeId={troupeId} className="pt-1 pr-2 pb-2 pl-9 pointer-coarse:pl-12" />}
     </li>
   );
 }

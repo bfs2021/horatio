@@ -10,6 +10,7 @@ import { ChoiceSelect } from "../ChoiceSelect";
 import { canTapDots, clear, fieldProblems, keysOf, traitOf, nextCopy, pastBudgetText, pointsText, spent, tapDots, togglePoints, type Picks } from "./logic";
 import { HouseWording } from "../../../components/TroupeChange";
 import { bookSummary } from "../../../houseWording";
+import { AboutButton, AboutTrait, hasAbout } from "../../../components/AboutTrait";
 import { CardHeading, SectionLabel } from "../../../components/Headings";
 
 // Long lists get a search box.
@@ -56,9 +57,12 @@ export function DotGrid({
   barredAt = {},
   held = {},
   budget,
+  splat,
 }: {
   title: string;
   showTitle?: boolean;
+  /** The rule set's splat: a discipline's row says what each dot's power is. */
+  splat?: string;
   /** Split the rows under headings, such as skills by attribute. Traits no
    * section claims go last, under "Other". */
   sections?: { order: string[]; of: (trait: TraitOut) => string | null | undefined };
@@ -117,7 +121,7 @@ export function DotGrid({
     const gift = rating || copy ? undefined : held[trait.name];
     const bars = copy ? [] : (barredAt[trait.name] ?? []);
     const marked = rating && !copy ? marks[trait.name] : undefined;
-    const about = !copy && trait.description ? `about-${title}-${trait.name}`.replace(/\W+/g, "-") : undefined;
+    const about = !copy && hasAbout(trait, splat) ? `about-${title}-${trait.name}`.replace(/\W+/g, "-") : undefined;
     const shown = open.has(trait.name);
     const need = detailNeed(trait);
     const fielded = need && onDetail && (rating > 0 || copy);
@@ -131,18 +135,9 @@ export function DotGrid({
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
             {about ? (
-              <button
-                type="button"
-                aria-expanded={shown}
-                aria-controls={about}
-                aria-label={`About ${named(trait.name)}`}
-                onClick={() => toggle(trait.name)}
-                className="-ml-1 grid h-7 w-6 place-items-center rounded text-mist hover:bg-ash hover:text-parchment"
-              >
-                <Chevron open={shown} />
-              </button>
+              <AboutButton name={named(trait.name)} open={shown} controls={about} onToggle={() => toggle(trait.name)} className="-ml-1" />
             ) : (
-              <span className="w-5" aria-hidden />
+              <span className="w-6 pointer-coarse:w-9" aria-hidden />
             )}
             <span className={rating ? "text-parchment" : barred ? "text-line" : "text-mist"}>{named(trait.name)}</span>
             {label && <span className="text-xs text-gold">{label}</span>}
@@ -211,12 +206,8 @@ export function DotGrid({
         ))}
         {marked && <p className="mt-0.5 pl-6 text-xs text-blood-bright">{named(marked)} Clear it and place it on another.</p>}
         {problems[key] && <p className="mt-0.5 pl-6 text-xs text-blood-bright">{problems[key].message}</p>}
-        {about && (
-          <div id={about} hidden={!shown} className="mt-1 pl-6 text-xs leading-relaxed text-mist">
-            {bookSummary(trait.description, trait.changed) && <p>{named(trait.description)}</p>}
-            <HouseWording change={trait.changed} className="mt-1" />
-          </div>
-        )}
+        {/* For a discipline, what each dot it can take here gives. */}
+        {about && shown && <AboutTrait id={about} trait={trait} splat={splat} to={budget.max} className="mt-1 pl-6" />}
       </div>
     );
   };
@@ -419,15 +410,6 @@ export function PointsList({
         })}
       </ul>
     </section>
-  );
-}
-
-/** Points right when closed, down when open. */
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden className={`h-4 w-4 transition-transform ${open ? "rotate-90" : ""}`}>
-      <path d="M7.5 4.5 13 10l-5.5 5.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }
 

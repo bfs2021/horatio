@@ -265,12 +265,15 @@ test("the sheet shows XP first on a phone, lists a discipline's powers, counts h
   }
   await p.screenshot(shots("sheet-xp-first"));
 
-  // Opening Auspex lists the powers its two dots give, as the Play View does.
+  // Opening Auspex lists the powers its two dots give, as the Play View does, then the
+  // power its next dot would give (#1000), and none past it.
   const disciplines = part("Disciplines");
   await disciplines.getByRole("button", { name: "Auspex", exact: true }).click();
   await expect(disciplines.getByText("Heightened Senses")).toBeVisible();
   await expect(disciplines.getByText("Aura Perception")).toBeVisible();
-  await expect(disciplines.getByText("Spirit's Touch")).toHaveCount(0);
+  await expect(disciplines.getByText("Dot 3 gives:")).toBeVisible();
+  await expect(disciplines.getByText("Spirit's Touch")).toBeVisible();
+  await expect(disciplines.getByText("Telepathy", { exact: true })).toHaveCount(0);
   await p.screenshot(shots("sheet-powers"));
 
   // Health is a count of each level, not boxes to tick: damage is tracked on Play.
@@ -394,7 +397,7 @@ test("the sheet points to the techniques and elder powers a character can take",
   // What this character can take, by default: Celerity's elder powers, not Animalism's.
   await expect(p.getByLabel("Show")).toHaveValue("can");
   await expect(p.getByPlaceholder(/you can take…$/)).toBeVisible();
-  await expect(p.getByRole("button", { name: "Celerity: Projectile" })).toBeVisible();
+  await expect(p.getByRole("button", { name: "Celerity: Projectile", exact: true })).toBeVisible();
   await expect(p.getByRole("button", { name: /^Animalism: / })).toHaveCount(0);
   await expect(p.getByText(/^\d+ more you can't take:/)).toBeVisible();
   await p.getByLabel("Show").selectOption({ label: "Everything" });
@@ -425,7 +428,7 @@ test("the sheet points to the techniques and elder powers a character can take",
   // A Pretender Elder learns one elder power: with one in the cart, none are left to take.
   await disciplines.getByRole("button", { name: "Add" }).click();
   await chips.getByRole("button", { name: /^Elder Disciplines/ }).click();
-  await p.getByRole("button", { name: "Celerity: Projectile" }).click();
+  await p.getByRole("button", { name: "Celerity: Projectile", exact: true }).click();
   await p.getByRole("button", { name: "Add to cart" }).click();
   await disciplines.getByRole("button", { name: "Add" }).click();
   await chips.getByRole("button", { name: /^Elder Disciplines/ }).click();

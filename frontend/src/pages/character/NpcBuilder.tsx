@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { withClanNames } from "../../clanNames";
 import { useClanName } from "../../components/ClanNames";
 import { HouseMark } from "../../components/HouseMark";
-import { useMemo, useState, type ReactNode } from "react";
+import { useId, useMemo, useState, type ReactNode } from "react";
 import { api, unwrap } from "../../api/client";
 import type { CatalogueOut, CharacterOut, SheetOut, TraitOut } from "../../api/types";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, Select } from "../../components/ui";
@@ -19,6 +19,7 @@ import { CUSTOM_ARCHETYPE, identityChoices } from "./creation/logic";
 import { MORALITY, heldMorality, moralityLabel, moralityOptions, moveMorality, willpowerAndHealth } from "./morality";
 import { useCatalogue } from "../../catalogue";
 import { SectionLabel } from "../../components/Headings";
+import { AboutButton, AboutTrait, hasAbout } from "../../components/AboutTrait";
 
 type Change = { category: string; name: string; detail?: string; rating: number | null };
 /** A held trait's detail changed in place: a merit's choice, a skill's field (#570). */
@@ -371,6 +372,7 @@ function Row({
   power,
   mark,
   nameAside,
+  splat,
   children,
 }: {
   trait: TraitOut;
@@ -391,10 +393,18 @@ function Row({
   nameAside?: ReactNode;
   /** Shown under the row, such as the box its detail is set in. */
   children?: ReactNode;
+  /** The rule set's splat, given where the row's chevron opens what the trait does (#1000): for a discipline, with the power its next dot gives. */
+  splat?: string;
 }) {
   const named = useClanName();
   const shown = detail ? `${trait.name}: ${detail}` : trait.name;
   const numbers = usePreferences().ratings === "numbers";
+  const [reading, setReading] = useState(false);
+  const aboutId = useId();
+  const chevron = splat !== undefined && hasAbout(trait, splat) && (
+    <AboutButton name={named(shown)} open={reading} controls={aboutId} onToggle={() => setReading(!reading)} className="-ml-1" />
+  );
+  const about = reading && <AboutTrait id={aboutId} trait={trait} splat={splat} from={rating + 1} className="pb-1 pl-6" />;
   if (trait.fixed_rating || power) {
     const on = rating > 0;
     const level = trait.fixed_rating ?? 1;
@@ -402,6 +412,7 @@ function Row({
       <li className="py-1 text-sm">
         <div className="flex items-center justify-between gap-2">
           <span className="flex flex-wrap items-center gap-2">
+            {chevron}
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={on} onChange={() => onChange({ category: trait.category, name: trait.name, detail, rating: on ? 0 : level })} />
               <span className={on ? "text-parchment" : "text-mist"}>{named(shown)}</span>
@@ -417,6 +428,7 @@ function Row({
             {named(mark)}
           </p>
         )}
+        {about}
         {children}
       </li>
     );
@@ -439,7 +451,10 @@ function Row({
     <li className={`text-sm ${aside ? "py-1.5" : "py-0.5"}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="flex flex-wrap items-center gap-3">
-          <span className={`${aside ? "w-16" : ""} ${rating ? "text-parchment" : "text-mist"}`}>{label ?? named(shown)}</span>
+          <span className="flex items-center">
+            {chevron}
+            <span className={`${aside ? "w-16" : ""} ${rating ? "text-parchment" : "text-mist"}`}>{label ?? named(shown)}</span>
+          </span>
           {aside}
           {nameAside}
         </span>
@@ -458,6 +473,7 @@ function Row({
           ))}
         </span>
       </div>
+      {about}
       {children}
     </li>
   );
@@ -518,6 +534,7 @@ function Held({
             onChange={onChange}
             power={power}
             mark={mark}
+            splat={character.splat}
             nameAside={
               detailed &&
               h.rating > 0 &&

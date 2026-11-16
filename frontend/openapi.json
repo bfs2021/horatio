@@ -17288,6 +17288,53 @@
         "title": "DisciplineRaise",
         "type": "object"
       },
+      "DisciplineTestOut": {
+        "description": "A discipline's test pool and note, as the Play View's Pools tab shows them: its\npool \"against\" another (None where the book has no standard one).",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "pool": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pool"
+          },
+          "versus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Versus"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "DisciplineTestOut",
+        "type": "object"
+      },
       "DiscordAccount": {
         "properties": {
           "available": {
@@ -39976,6 +40023,30 @@
           "note"
         ],
         "title": "PowerNote",
+        "type": "object"
+      },
+      "PowerNotesOut": {
+        "properties": {
+          "disciplines": {
+            "items": {
+              "$ref": "#/components/schemas/DisciplineTestOut"
+            },
+            "title": "Disciplines",
+            "type": "array"
+          },
+          "powers": {
+            "items": {
+              "$ref": "#/components/schemas/DisciplinePowerOut"
+            },
+            "title": "Powers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "disciplines",
+          "powers"
+        ],
+        "title": "PowerNotesOut",
         "type": "object"
       },
       "PowerOut": {
@@ -82737,6 +82808,49 @@
         "summary": "Check",
         "tags": [
           "equipment"
+        ]
+      }
+    },
+    "/api/rules/{splat}/powers": {
+      "get": {
+        "description": "What each dot of the rule set's disciplines gives, a line for each power, and\neach discipline's test pool: read when someone opens a discipline in a list to\nchoose from, to see the power its next dot would give before taking it (#1000).\nRead from the power reference, which no troupe changes; its ETag is the rules'.",
+        "operationId": "power_notes_api_rules__splat__powers_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "splat",
+            "required": true,
+            "schema": {
+              "title": "Splat",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PowerNotesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Power Notes",
+        "tags": [
+          "rules"
         ]
       }
     },

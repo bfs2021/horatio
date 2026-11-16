@@ -127,3 +127,22 @@ def test_each_merit_and_flaw_is_listed_once_as_the_book_spells_it() -> None:
         ("merits", "No Place Like.Home"),
     ):
         assert misspelt not in names
+
+
+def test_every_technique_elder_and_luminary_power_says_what_it_does_and_where() -> None:
+    """A player reads what a power does before taking it (issue #1000): its cost,
+    action, test and effect in a line of our own, and the book's page."""
+    with TRAITS_FILE.open("rb") as f:
+        powers = [
+            t
+            for t in tomllib.load(f)["traits"]
+            if t["category"] in ("techniques", "elder_disciplines", "luminary_disciplines")
+        ]
+
+    unsaid = sorted(
+        f"{t['category']}: {t['name']}"
+        for t in powers
+        if not (t.get("description") or "").strip()
+        or not PAGE.fullmatch(t.get("page_reference", ""))
+    )
+    assert unsaid == []

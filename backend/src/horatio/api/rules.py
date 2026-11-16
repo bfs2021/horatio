@@ -457,6 +457,52 @@ def browse(
     )
 
 
+class DisciplineTestOut(Lean):
+    """A discipline's test pool and note, as the Play View's Pools tab shows them: its
+    pool "against" another (None where the book has no standard one)."""
+
+    name: str
+    pool: str | None = None
+    versus: str | None = None
+    note: str | None = None
+
+
+class PowerNotesOut(Lean):
+    disciplines: list[DisciplineTestOut]
+    powers: list[DisciplinePowerOut]
+
+
+@router.get("/{splat}/powers", response_model_exclude_defaults=True)
+def power_notes(
+    splat: str, request: Request, response: Response, db: DbSession, user: CurrentUser
+) -> PowerNotesOut:
+    """What each dot of the rule set's disciplines gives, a line for each power, and
+    each discipline's test pool: read when someone opens a discipline in a list to
+    choose from, to see the power its next dot would give before taking it (#1000).
+    Read from the power reference, which no troupe changes; its ETag is the rules'."""
+    revalidate(request, response, "powers", splat, rules_tag(db, splat, None))
+    rule_set = read_troupe_rules(db, splat, None).rule_set
+    names = sorted(name for category, name in rule_set.traits if category == "disciplines")
+    found = power_catalogue()
+    return PowerNotesOut(
+        disciplines=[
+            DisciplineTestOut(
+                name=d,
+                pool=found.disciplines[d].get("pool"),
+                versus=found.disciplines[d].get("versus"),
+                note=found.disciplines[d].get("note"),
+            )
+            for d in names
+            if d in found.disciplines
+        ],
+        powers=[
+            DisciplinePowerOut(discipline=d, level=p["level"], name=p["name"], note=p["note"])
+            for d in names
+            for p in found.powers.get(d, [])
+        ],
+    )
+
+
 def unit_of(rule_set: RuleSetData, category: str) -> str:
     return "point" if rule_set.categories[category].points_limit is not None else "dot"
 

@@ -21389,6 +21389,8 @@ export interface components {
             character_kind: string;
             /** Character Name */
             character_name: string;
+            /** Character Npc Form */
+            character_npc_form?: string | null;
             /** Crafted */
             crafted: boolean;
             /** Description */
@@ -21459,6 +21461,8 @@ export interface components {
             character_kind: string;
             /** Character Name */
             character_name: string;
+            /** Character Npc Form */
+            character_npc_form?: string | null;
             /** Crafted */
             crafted: boolean;
             /** Description */
@@ -28820,6 +28824,11 @@ export interface components {
             splat: string;
             status?: components["schemas"]["PlayStatusOut"] | null;
             stock?: components["schemas"]["StockNpcOut"] | null;
+            /**
+             * Stock Items
+             * @default []
+             */
+            stock_items: components["schemas"]["EquipmentItemOut"][];
             /**
              * Summons
              * @default []

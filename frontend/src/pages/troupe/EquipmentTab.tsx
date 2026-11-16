@@ -314,7 +314,7 @@ function Results({
   // On a phone or a narrow window each row folds into a block under the item's name (DataTable).
   const columns: Column<EquipmentItemOut>[] = [
     { key: "item", header: "Item", phone: "title", cell: (item) => <ItemName item={item} rules={rules} /> },
-    { key: "held-by", header: "Held by", phone: "shown", cell: (item) => <HeldBy item={item} /> },
+    { key: "held-by", header: "Held by", phone: "shown", cell: (item) => <HeldBy item={item} troupeId={troupeId} /> },
     { key: "kind", header: "Kind", phone: "shown", cell: (item) => item.kind_name },
     {
       key: "qualities",
@@ -390,11 +390,12 @@ function ItemName({ item, rules }: { item: EquipmentItemOut; rules: EquipmentOut
   );
 }
 
-/** Who holds an item, or last held it, and whose they are. */
-function HeldBy({ item }: { item: EquipmentItemOut }) {
+/** Who holds an item, or last held it, and whose they are; a Stock NPC's name opens its own page (#1043). */
+function HeldBy({ item, troupeId }: { item: EquipmentItemOut; troupeId: string }) {
+  const to = item.character_npc_form === "stock" ? `/troupes/${troupeId}/npcs/${item.character_id}` : `/characters/${item.character_id}`;
   return (
     <>
-      <Link to={`/characters/${item.character_id}`} className="hover:text-gold">
+      <Link to={to} className="hover:text-gold">
         {item.character_name}
       </Link>
       <span className="text-xs whitespace-nowrap text-mist">{item.character_kind === "npc" ? " (NPC)" : item.player_name ? ` (${item.player_name})` : ""}</span>

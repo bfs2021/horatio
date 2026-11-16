@@ -717,6 +717,61 @@ test("storytellers build a Stock NPC from the NPCs tab and see the book's stat b
   await expect(p.getByRole("listitem", { name: "Melee" })).toHaveCount(0);
 });
 
+test("a storyteller gives a Stock NPC a weapon from its page, and its Play View and Scene card show what it does (#1043)", async ({ browser }) => {
+  const custodian = await person(browser, "stockeq-cust");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "stockeq-lead");
+  const headers = { "X-Horatio": "1" };
+  const made = await custodian.page.request.post("/api/troupes", { headers, data: { name: `Court of Talons ${run}`, lead_handle: lead.handle } });
+  expect(made.status(), await made.text()).toBe(201);
+  const troupeId = (await made.json()).id;
+  const p = lead.page;
+  const stock = await p.request.post(`/api/troupes/${troupeId}/npcs`, {
+    headers,
+    data: { name: "Tears-the-Veil", npc_kind: "mortal", npc_form: "stock", stock: { rating: 3, specializations: [{ type: "skill", name: "Melee" }] } },
+  });
+  expect(stock.status(), await stock.text()).toBe(201);
+  const npc = (await stock.json()).id as string;
+
+  // From its page, on a phone: the book's Silver Dagger, given as to anyone.
+  await p.setViewportSize({ width: 375, height: 800 });
+  await p.goto(`/troupes/${troupeId}/npcs/${npc}`);
+  const card = p.locator("section").filter({ has: p.getByRole("heading", { name: "Equipment", exact: true }) });
+  await expect(card.getByText("No equipment yet.")).toBeVisible();
+  await card.getByRole("button", { name: "Give equipment" }).click();
+  const form = p.getByRole("dialog").getByRole("form", { name: "Give equipment" });
+  await form.getByLabel("Start from").selectOption({ label: "Silver Dagger" });
+  await expect(form.getByLabel("What it is")).toHaveText("1 hand · 1 damage · range 2 steps");
+  await form.getByRole("button", { name: "Give to Tears-the-Veil" }).click();
+  await expect(p.getByText("Gave Tears-the-Veil Silver Dagger.")).toBeVisible();
+  const dagger = card.getByRole("listitem", { name: "Silver Dagger" });
+  await expect(dagger).toContainText("Concealable");
+  await expect(dagger.getByRole("button", { name: "Give" })).toBeVisible();
+  await expect(card.getByText("Items don't change its test pool")).toBeVisible();
+  // Its pool is still rating × 2.
+  await expect(p.getByRole("list", { name: "Stat block" }).getByText("Test pool 6 in most challenges")).toBeVisible();
+
+  // Its Play View lists it with what it does, at 375 and at 1280 px.
+  await p.goto(`/play/characters/${npc}`);
+  for (const width of [375, 1280]) {
+    await p.setViewportSize({ width, height: 900 });
+    const item = p.getByRole("listitem", { name: "Silver Dagger" });
+    await expect(item).toContainText("1 hand · 1 damage · range 2 steps");
+    await expect(item).toContainText("Silver: Aggravated damage to werewolves");
+    await expect(p.getByText("Items don't change its test pool: add what an item gives when it's used.")).toBeVisible();
+    await expect(p.getByRole("list", { name: "Stat block" }).getByText("Test pool 6 in most challenges")).toBeVisible();
+    expect(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await p.screenshot(shots(`stock-equipment-play-${width}`));
+  }
+
+  // Its Scene card carries it too.
+  const scene = await p.request.post(`/api/troupes/${troupeId}/scenes`, { headers, data: { name: "Ambush at the docks", characters: [npc] } });
+  expect(scene.status(), await scene.text()).toBe(201);
+  await p.goto(`/play/troupes/${troupeId}/scenes/${(await scene.json()).id}`);
+  const carries = p.getByRole("article", { name: "Tears-the-Veil" }).getByRole("list", { name: "Carries" });
+  await expect(carries.getByRole("listitem", { name: "Silver Dagger" })).toContainText("1 hand · 1 damage");
+});
+
 test("a storyteller makes a Stock werewolf a full sheet, which plays with Rage and no Beast", async ({ browser }) => {
   const custodian = await person(browser, "tosheet-cust");
   makeCustodian(custodian.email);

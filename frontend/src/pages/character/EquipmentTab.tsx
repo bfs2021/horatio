@@ -41,28 +41,31 @@ export function useCharacterEquipment(characterId: string) {
  * and where it came from. Weapons first, then armour, as on the Play View, and
  * Vampiric Texts last (#341). Its
  * player and its home troupe's staff give each item to another character, or
- * discard it (#282).
+ * discard it (#282). A Stock NPC's page shows it `inCard` (#1043).
  */
-export function EquipmentTab({ character }: { character: CharacterOut }) {
+export function EquipmentTab({ character, inCard = false }: { character: CharacterOut; inCard?: boolean }) {
   const held = useCharacterEquipment(character.id);
   const [done, setDone] = useState("");
   if (held.isPending) return <Loading />;
   if (held.error) return <ErrorText error={held.error} />;
   const { items, can_give, can_pass, receivers } = held.data;
   const notice = done && <Notice>{done}</Notice>;
-  if (items.length === 0)
+  if (items.length === 0) {
+    // Inside a card already (a Stock NPC's page, #1043), it isn't framed again.
+    const empty = (
+      <EmptyState title="No equipment yet.">
+        {can_give && character.status === "active"
+          ? "Give it with Give equipment, above."
+          : "Your storytellers give equipment. Weapons, armour, other gear and Vampiric Texts show here once given."}
+      </EmptyState>
+    );
     return (
       <div className="flex flex-col gap-3">
         {notice}
-        <Card>
-          <EmptyState title="No equipment yet.">
-            {can_give && character.status === "active"
-              ? "Give it with Give equipment, above."
-              : "Your storytellers give equipment. Weapons, armour, other gear and Vampiric Texts show here once given."}
-          </EmptyState>
-        </Card>
+        {inCard ? empty : <Card>{empty}</Card>}
       </div>
     );
+  }
   return (
     <div className="flex flex-col gap-3">
       {notice}

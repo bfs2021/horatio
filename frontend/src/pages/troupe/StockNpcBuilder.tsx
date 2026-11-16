@@ -7,6 +7,8 @@ import { Dialog } from "../../components/Dialog";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Loading, PageTitle, Select, Textarea } from "../../components/ui";
 import { BackLink } from "../../components/BackLink";
 import { useAction } from "../../hooks";
+import { EquipmentTab } from "../character/EquipmentTab";
+import { GiveEquipment } from "../character/GiveEquipment";
 import { CharacterPicture } from "../character/Picture";
 import { type NpcKind, groupedKinds, kindPages, resourceText } from "./npcKinds";
 import { allowedPowers, expandPower, INFERNAL_INVESTMENT } from "./stockNpcs";
@@ -231,6 +233,7 @@ function Builder({
               </form>
             </div>
           </Card>
+          <StockEquipment character={character} />
           <Card title="Notes">
             <Textarea aria-label="Notes" rows={4} maxLength={10000} value={notes} onChange={(e) => setNotes(e.target.value)} onBlur={() => notes !== stock.notes && save.mutate({ notes })} />
           </Card>
@@ -242,6 +245,24 @@ function Builder({
         </div>
       </div>
     </>
+  );
+}
+
+/**
+ * What it carries (#1043): given, passed to another character and discarded as any
+ * character's items are, from the character page's Equipment tab; changed and taken
+ * back from the troupe's. The book has no rule for a Stock NPC's items: its sample
+ * Stock NPCs list their equipment beside a test pool that is still rating × 2
+ * (Vol. 2 pp. 319–325), so items leave the stat block alone and each says what it does.
+ */
+function StockEquipment({ character }: { character: components["schemas"]["CharacterOut"] }) {
+  return (
+    <Card title="Equipment" actions={character.status === "active" && <GiveEquipment character={character} />}>
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-mist">Items don't change its test pool: each says what it does, to add when it's used.</p>
+        <EquipmentTab character={character} inCard />
+      </div>
+    </Card>
   );
 }
 

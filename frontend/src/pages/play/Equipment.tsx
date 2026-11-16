@@ -37,28 +37,37 @@ const GROUPS: { title: string; kinds: string[] }[] = [
  * With `view` and `tap`, its player (or staff) gives an item to another character
  * or discards it, as a tap (#282): it leaves the tab at once, even with no signal,
  * and the game's gives and discards are listed with Undo, as in the game's log.
+ *
+ * `kept`: the items as the Play View has them (a Stock NPC's, #1043), shown when
+ * there is no signal to ask for the tab's own; `empty`, what it says with none.
  */
 export function EquipmentTab({
   characterId,
   actions,
   view,
   tap,
+  kept,
+  empty = NO_EQUIPMENT,
 }: {
   characterId: string;
   actions?: (item: EquipmentItemOut) => ReactNode;
   view?: Shown;
   tap?: (what: Parameters<typeof makeTap>[0]) => void;
+  kept?: EquipmentItemOut[];
+  empty?: ReactNode;
 }) {
   const { equipment, error } = useEquipment(characterId);
-  if (!equipment)
+  const held = equipment?.items ?? kept;
+  if (!held)
     return error ? (
       <ErrorText error={error} />
     ) : (
       <Loader />
     );
   const going = view ? itemsGoing(view.log) : new Set<string>();
-  const items = combatFirst(equipment.items.filter((i) => !going.has(i.id)));
-  const passing = tap && equipment.can_pass;
+  const items = combatFirst(held.filter((i) => !going.has(i.id)));
+  // Giving and discarding need the tab's own answer: who may, and to whom.
+  const passing = tap && equipment?.can_pass ? equipment : null;
   const itemTap = (item: EquipmentItemOut, note: string, to?: { id: string; name: string }) =>
     tap?.({
       kind: "change",
@@ -71,7 +80,7 @@ export function EquipmentTab({
   if (items.length === 0)
     return (
       <div className="flex flex-col gap-4">
-        <p className="py-8 text-center text-mist">{NO_EQUIPMENT}</p>
+        <p className="py-8 text-center text-mist">{empty}</p>
         {passed}
       </div>
     );
@@ -95,7 +104,7 @@ export function EquipmentTab({
                         <div className="mt-2">
                           <ItemActions
                             item={item}
-                            receivers={equipment.receivers}
+                            receivers={passing.receivers}
                             give={(to, note) => itemTap(item, note, to)}
                             discard={(note) => itemTap(item, note)}
                           />
@@ -110,6 +119,34 @@ export function EquipmentTab({
         );
       })}
       {passed}
+    </div>
+  );
+}
+
+/**
+ * What a Stock NPC carries, at a glance on its Scene card (#1043): weapons first,
+ * each with its facts and what each quality does at the table. Nothing for none.
+ */
+export function CarriedItems({ items }: { items: EquipmentItemOut[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="text-sm">
+      <p className="text-gold">Carries</p>
+      <ul aria-label="Carries" className="flex flex-col gap-0.5">
+        {combatFirst(items).map((item) => {
+          const does = [
+            factsText(item.facts),
+            ...item.qualities.map(playText),
+            ...item.effects.map((e) => `★ ${e.name}`),
+          ].filter(Boolean);
+          return (
+            <li key={item.id} aria-label={item.name}>
+              {item.name}
+              {does.length > 0 && <span className="text-mist"> · {does.join(" · ")}</span>}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

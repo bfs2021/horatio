@@ -29,6 +29,8 @@ from horatio.models import Boon, BoonFlag, Character
 # What the ledger sorts by: the night it was made (newest first by default), either
 # side's name, or its kind by weight, trivial to life.
 SORTS = ("date", "debtor", "creditor", "kind")
+# A boon's sides.
+SIDES = ("debtor", "creditor")
 DIRECTIONS = ("asc", "desc")
 # A page of the ledger: as many boons as asked for, at most `LONGEST_PAGE`.
 PAGE = 100
@@ -41,6 +43,8 @@ class Filters:
 
     - `character_id`: boons the character is on, either side;
     - `name`: boons a name only is on, either side, the whole name, ignoring case;
+    - `side`: with either of those, only boons they are on this side of, "debtor" or
+      "creditor": what they owe, or are owed (#980);
     - `q`: boons whose debtor's or creditor's name (a character's or a name only),
       reason or conditions hold the text, ignoring case: never the staff note, which a
       Harpy doesn't see;
@@ -52,6 +56,7 @@ class Filters:
 
     character_id: uuid.UUID | None = None
     name: str = ""
+    side: str | None = None
     q: str = ""
     kinds: Collection[str] = ()
     made_from: date | None = None
@@ -64,13 +69,14 @@ def narrowing(troupe_id: uuid.UUID, filters: Filters) -> list[ColumnElement[bool
     """The troupe's boons that pass the filters, as conditions on Boon."""
     f = filters
     found: list[ColumnElement[bool]] = [Boon.troupe_id == troupe_id]
+    sides: tuple[str, ...] = (f.side,) if f.side is not None and f.side in SIDES else SIDES
     if f.character_id is not None:
-        found.append(or_(Boon.debtor_id == f.character_id, Boon.creditor_id == f.character_id))
+        ids = {"debtor": Boon.debtor_id, "creditor": Boon.creditor_id}
+        found.append(or_(*(ids[side] == f.character_id for side in sides)))
     name = f.name.strip().lower()
     if name:
-        found.append(
-            or_(func.lower(Boon.debtor_name) == name, func.lower(Boon.creditor_name) == name)
-        )
+        names = {"debtor": Boon.debtor_name, "creditor": Boon.creditor_name}
+        found.append(or_(*(func.lower(names[side]) == name for side in sides)))
     text = f.q.strip()
     if text:
         found.append(holding(text))
@@ -173,6 +179,25 @@ def open_by_kind(
     for kind, every in rows:
         found[kind] = every
     return found
+
+
+def standing_by_kind(
+    db: Session, where: list[ColumnElement[bool]], left: frozenset[uuid.UUID]
+) -> tuple[dict[str, int], dict[str, int]]:
+    """How many of the boons stand of each kind (every kind, lightest first): those
+    with everyone on them in play (the open view), and those naming someone `gone`
+    (the departed view). For one side of a party (#980), with `Filters.side`."""
+    open_: dict[str, int] = dict.fromkeys(boons.KINDS, 0)
+    departed: dict[str, int] = dict.fromkeys(boons.KINDS, 0)
+    rows = db.execute(
+        select(Boon.kind, func.count(), func.count().filter(naming(left)))
+        .where(*where, Boon.state == "registered")
+        .group_by(Boon.kind)
+    )
+    for kind, every, named in rows:
+        open_[kind] = every - named
+        departed[kind] = named
+    return open_, departed
 
 
 @dataclass(frozen=True)

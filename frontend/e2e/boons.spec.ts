@@ -193,13 +193,14 @@ test("staff keep the boon ledger: a game's boons at once, then a settling, an ed
   const traded = boons.detail("Mireille Dauvin owes Elder Varga, minor");
   await expect(traded.getByRole("list", { name: "Log of Mireille Dauvin owes Elder Varga" })).toContainText("Creditor: Anselm Roque → Elder Varga");
 
-  // On Mireille's sheet, staff see what she owes and is owed, with a way into the ledger.
+  // On Mireille's sheet, staff see what she owes and is owed, with a way into the ledger: her own page of it (#980).
   await l.goto(`/characters/${mireille}`);
   const card = l.getByRole("listitem", { name: `Boons in Ledger of Debts ${run}` });
   await expect(card).toContainText("Owes: 2 minor");
   await expect(card).toContainText("Is owed: 1 minor");
   await card.getByRole("link", { name: "In the boon ledger" }).click();
-  await expect(ledgerOf(l).rows).toHaveCount(3);
+  await expect(l.getByRole("table", { name: "Owes", exact: true }).getByRole("button", { name: /^Details: / })).toHaveCount(2);
+  await expect(l.getByRole("table", { name: "Is owed", exact: true }).getByRole("button", { name: /^Details: / })).toHaveCount(1);
 
   // Her player isn't shown her boons (that comes with #686), and can't open the ledger.
   const p = player.page;
@@ -552,6 +553,87 @@ test("the ledger's toolbar searches the reason and conditions, picks kinds, filt
   await l.goto(`/troupes/${troupe.id}/boons?view=review`);
   await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/boons/review$`));
   await expect(l.getByRole("list", { name: "Boons to review" })).toBeVisible();
+});
+
+test("a name on a boon goes to their own page: what they owe and are owed, totalled as the standings count them, with ways to audit them and to their sheet (#980)", async ({ browser }) => {
+  const custodian = await person(browser, "bparty-custodian");
+  makeCustodian(custodian.email);
+  const lead = await person(browser, "bparty-lead");
+  const headers = { "X-Horatio": "1" };
+  const send = async (page: Page, method: "POST" | "PUT", url: string, data: object = {}) => {
+    const response = await page.request.fetch(url, { method, headers, data });
+    expect(response.status(), await response.text()).toBeLessThan(300);
+    return response.json();
+  };
+  await custodian.page.reload();
+  const troupe = await send(custodian.page, "POST", "/api/troupes", { name: `Own Pages ${run}`, lead_handle: lead.handle });
+  const l = lead.page;
+  const ottoline = await send(l, "POST", `/api/troupes/${troupe.id}/npcs`, { name: "Ottoline Brascombe" });
+  await send(l, "PUT", `/api/troupes/${troupe.id}/boon-ledger`, { on: true });
+  const owes = (debtor: object, creditor: object, kind: string, made_on: string) => ({ debtor, creditor, kind, made_on, reason: "" });
+  const her = { character_id: ottoline.id };
+  await send(l, "POST", `/api/troupes/${troupe.id}/boons`, {
+    boons: [
+      owes(her, { name: "Gaspard Lindqvist" }, "minor", "2026-03-01"),
+      owes(her, { name: "Gaspard Lindqvist" }, "trivial", "2026-04-01"),
+      owes({ name: "Perpetua Quill" }, her, "major", "2026-05-01"),
+      owes({ name: "Gaspard Lindqvist" }, { name: "Perpetua Quill" }, "life", "2026-06-01"),
+    ],
+    note: "",
+  });
+
+  // Her name in the table goes to her page; on a phone, where a tap opens the row, her name in the boon's detail does.
+  await l.goto(`/troupes/${troupe.id}/boons`);
+  const boons = ledgerOf(l);
+  await expect(boons.rows).toHaveCount(4);
+  if (onPhone()) {
+    await boons.open("Perpetua Quill owes Ottoline Brascombe, major");
+    await boons.detail("Perpetua Quill owes Ottoline Brascombe, major").getByRole("link", { name: "Ottoline Brascombe" }).click();
+    await expect(l.locator("dialog[open]")).toHaveCount(0);
+  } else {
+    await boons.row("Perpetua Quill owes Ottoline Brascombe, major").getByRole("link", { name: "Ottoline Brascombe" }).click();
+  }
+  await expect(l).toHaveURL(new RegExp(`[?&]character=${ottoline.id}`));
+  const head = l.getByRole("region", { name: "Whose boons" });
+  await expect(head.getByRole("heading", { name: "Ottoline Brascombe" })).toBeVisible();
+  // By the troupe's weights: minor 1 and trivial 0.5 owed by her, a major (3) to her.
+  await expect(head).toContainText("Owes 2 (weight 1.5) · Is owed 1 (weight 3)");
+  const owesList = l.getByRole("table", { name: "Owes", exact: true });
+  const owedList = l.getByRole("table", { name: "Is owed", exact: true });
+  await expect(owesList.getByRole("button", { name: /^Details: / })).toHaveCount(2);
+  await expect(owedList.getByRole("button", { name: /^Details: / })).toHaveCount(1);
+  await expect(owedList.getByRole("row", { name: "Perpetua Quill owes Ottoline Brascombe, major" })).toHaveCount(1);
+  // Each section names only the other side.
+  if (!onPhone()) {
+    await expect(owesList.getByRole("columnheader", { name: "Debtor" })).toHaveCount(0);
+    await expect(owesList.getByRole("columnheader", { name: "Creditor" })).toHaveCount(1);
+    await expect(owedList.getByRole("columnheader", { name: "Debtor" })).toHaveCount(1);
+  }
+  // The kinds narrow both sections; the totals stay.
+  await l.getByRole("group", { name: "Kinds" }).getByRole("button", { name: "Major" }).click();
+  await expect(owesList).toHaveCount(0);
+  await expect(l.getByRole("region", { name: /^Owes/ })).toContainText("No boons match.");
+  await expect(owedList.getByRole("button", { name: /^Details: / })).toHaveCount(1);
+  await expect(head).toContainText("Owes 2 (weight 1.5) · Is owed 1 (weight 3)");
+  await l.getByRole("group", { name: "Kinds" }).getByRole("button", { name: "Major" }).click();
+  await l.screenshot(shots("boon-party"));
+
+  // For staff, her sheet; and an audit of her, from the Audits tab, with her picked.
+  await expect(head.getByRole("link", { name: "Character sheet" })).toHaveAttribute("href", `/characters/${ottoline.id}`);
+  await head.getByRole("link", { name: "Make an audit" }).click();
+  await expect(l).toHaveURL(new RegExp(`/troupes/${troupe.id}/boons/audits\\?character=${ottoline.id}$`));
+  await expect(l.getByLabel("Audit", { exact: true })).toHaveValue(ottoline.id);
+
+  // A name only works the same, matched on the whole name, any case: no sheet, no audit.
+  await l.goto(`/troupes/${troupe.id}/boons?name=gaspard+lindqvist`);
+  await expect(head.getByRole("heading", { name: "Gaspard Lindqvist" })).toBeVisible();
+  await expect(head).toContainText("(name only)");
+  await expect(head).toContainText("Owes 1 (weight 10) · Is owed 2 (weight 1.5)");
+  await expect(head.getByRole("link")).toHaveCount(1);
+  // Back to the whole ledger.
+  await head.getByRole("link", { name: "The whole ledger" }).click();
+  await expect(boons.rows).toHaveCount(4);
+  await expect(l).not.toHaveURL(/name=/);
 });
 
 test("staff write a passage of story on a side of a boon, cut to a line, and its other side's player reads it as written (#990)", async ({ browser }) => {
@@ -1587,6 +1669,24 @@ test("in the Play View the Harpy keeps the ledger at a phone's width and a desk'
   await h.context().setOffline(false);
   await expect(h.getByRole("button", { name: "Register boons" })).toBeEnabled();
   await expect(h.getByText("The ledger needs a signal.")).toHaveCount(0);
+
+  // A name in a boon's detail opens their own page of the ledger (#980), the boon still beside it from lg up; offline, an audit waits.
+  await h.getByRole("searchbox", { name: "Search the ledger" }).fill("");
+  await boons.open("Isolde Penhallow owes Tobiah Quarrel, trivial");
+  await boons.detail("Isolde Penhallow owes Tobiah Quarrel, trivial").getByRole("link", { name: "Tobiah Quarrel" }).click();
+  const whose = h.getByRole("region", { name: "Whose boons" });
+  await expect(whose.getByRole("heading", { name: "Tobiah Quarrel" })).toBeVisible();
+  await expect(whose).toContainText("Owes 0 (weight 0) · Is owed 1 (weight 0.5)");
+  await expect(h.getByRole("table", { name: "Is owed", exact: true }).getByRole("button", { name: /^Details: / })).toHaveCount(1);
+  if (onPhone()) await expect(h.locator("dialog[open]")).toHaveCount(0);
+  else await expect(h.getByRole("complementary", { name: "Isolde Penhallow owes Tobiah Quarrel" })).toBeVisible();
+  await expect(whose.getByRole("link", { name: "Character sheet" })).toHaveCount(0);
+  await expect(whose.getByRole("link", { name: "Make an audit" })).toBeVisible();
+  await fits(h);
+  await h.context().setOffline(true);
+  await expect(whose.getByRole("button", { name: "Make an audit" })).toBeDisabled();
+  await h.context().setOffline(false);
+  await expect(whose.getByRole("link", { name: "Make an audit" })).toBeVisible();
 
   // A Lesser Harpy sees only what the Harpy lets them do: each right in turn.
   const t = talon.page;

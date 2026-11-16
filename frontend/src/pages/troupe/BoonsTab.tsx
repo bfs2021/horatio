@@ -1,14 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
-import { useContext, useEffect, useRef } from "react";
-import { Navigate, useSearchParams } from "react-router";
+import { useQueries, useQuery, type Query, type QueryKey } from "@tanstack/react-query";
+import { Fragment, useContext, useEffect, useRef } from "react";
+import { Link, Navigate, useSearchParams } from "react-router";
 import { api, unwrap } from "../../api/client";
-import type { BoonOut } from "../../api/types";
-import { BOON_PAGE, kindName, stateText } from "../../boons";
+import type { BoonOut, TroupeBoonsOut } from "../../api/types";
+import { BOON_PAGE, kindName, stateText, type BoonView } from "../../boons";
 import { DataTable, type Column } from "../../components/DataTable";
 import { InfoButton } from "../../components/InfoButton";
 import { Pager } from "../../components/Pager";
 import { SidePanel, useSideBySide } from "../../components/SidePanel";
 import { SortHeading } from "../../components/SortHeading";
+import { SectionLabel } from "../../components/Headings";
 import { useWidePage } from "../../components/widePage";
 import { Badge, Empty, ErrorText, Loading } from "../../components/ui";
 import { useDates } from "../../dates";
@@ -17,11 +18,29 @@ import { BoonDetail, boonLabel, BoonMarks, LEFT } from "./BoonDetail";
 import { RegisterBoons, type Reveal } from "./BoonEntry";
 import { BoonExportMenu } from "./BoonExport";
 import { HarpyMode, keeperNote, type LedgerKeeper } from "./boonKeeper";
-import { ledgerQuery, narrowed, readLedger, showing, shows, sortBy, writeLedger, type LedgerSearch, type LedgerSort } from "./boonSearch";
+import {
+  ledgerQuery,
+  narrowed,
+  onParty,
+  PAGES,
+  partyOf,
+  readLedger,
+  showing,
+  shows,
+  sideSort,
+  sortBy,
+  writeLedger,
+  type BoonSide,
+  type LedgerSearch,
+  type LedgerSort,
+} from "./boonSearch";
+import { BoonPartyHeader } from "./BoonParty";
 import { BoonToolbar } from "./BoonToolbar";
 import { BoonTotals } from "./BoonTotals";
 
 export type { LedgerKeeper } from "./boonKeeper";
+
+const count = new Intl.NumberFormat("en-GB");
 
 /**
  * The troupe's boon ledger, for its running staff (#685): every boon, by view (open,
@@ -45,19 +64,31 @@ export function BoonsTab({ troupeId, harpy = null, review }: { troupeId: string;
 // A page of the ledger (#978): the boons the API sends at a time.
 const PAGE = 100;
 
+/**
+ * A list of the ledger's boons, with its page in the URL (`page`): the whole ledger's,
+ * or on a party's own page (#980) one of its two sections, what they owe (as the
+ * debtor) and what they are owed (as the creditor), each with a page of its own.
+ */
+type Section = { page: string; side?: BoonSide; label?: string };
+const WHOLE: Section[] = [{ page: PAGES.ledger }];
+const PARTY: Section[] = [
+  { page: PAGES.debtor, side: "debtor", label: "Owes" },
+  { page: PAGES.creditor, side: "creditor", label: "Is owed" },
+];
+
 function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string }) {
   const harpy = useContext(HarpyMode);
   // Room for the table at 1280 px and up (#975).
   useWidePage();
   const [params, setParams] = useSearchParams();
-  // The page, from 1, in the URL as ?page= so a reload or a link keeps it (#978).
-  const page = Math.max(1, Math.floor(Number(params.get("page"))) || 1);
-  const setPage = (to: number, replace = false) =>
+  // A page, from 1, in the URL as ?page= so a reload or a link keeps it (#978).
+  const pageOf = (key: string) => Math.max(1, Math.floor(Number(params.get(key))) || 1);
+  const setPage = (key: string, to: number, replace = false) =>
     setParams(
       (now) => {
         const next = new URLSearchParams(now);
-        if (to > 1) next.set("page", String(to));
-        else next.delete("page");
+        if (to > 1) next.set(key, String(to));
+        else next.delete(key);
         return next;
       },
       { replace },
@@ -66,6 +97,10 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
   // again from the first page.
   const search = readLedger(params);
   const update = (change: Partial<LedgerSearch>) => setParams((now) => writeLedger(now, { ...readLedger(now), ...change }), { replace: true });
+  // Narrowed to a character or a name, it is their own page (#980): what they owe and
+  // what they are owed, in two sections, under a head with their totals.
+  const party = partyOf(search);
+  const sections = party ? PARTY : WHOLE;
   // The boon open in the side panel, in the URL as ?boon= so it can be linked, and Back
   // closes it (#979). A search or a page leaves it open.
   const opened = params.get("boon");
@@ -87,16 +122,28 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
   const offline = harpy !== null && !online;
   // The top of the list, brought back into sight when paging from its foot.
   const top = useRef<HTMLDivElement>(null);
-  const query = { ...ledgerQuery(search), limit: PAGE, offset: (page - 1) * PAGE };
-  const ledger = useQuery({
-    queryKey: ["troupe-boons", troupeId, query],
-    queryFn: () =>
-      unwrap(
-        api.GET("/api/troupes/{troupe_id}/boons", {
-          params: { path: { troupe_id: troupeId }, query },
-        }),
-      ),
-    placeholderData: (previous) => previous,
+  const queryOf = (s: Section) => ({
+    ...ledgerQuery(search),
+    ...(s.side ? { side: s.side, sort: sideSort(search, s.side) } : {}),
+    limit: PAGE,
+    offset: (pageOf(s.page) - 1) * PAGE,
+  });
+  const lists = useQueries({
+    queries: sections.map((s) => {
+      const query = queryOf(s);
+      return {
+        queryKey: ["troupe-boons", troupeId, query],
+        queryFn: () =>
+          unwrap(
+            api.GET("/api/troupes/{troupe_id}/boons", {
+              params: { path: { troupe_id: troupeId }, query },
+            }),
+          ),
+        // The page before, while the next comes: of the same list only.
+        placeholderData: (previous: TroupeBoonsOut | undefined, before?: Query<TroupeBoonsOut, Error, TroupeBoonsOut, QueryKey>) =>
+          (before?.queryKey[2] as { side?: BoonSide } | undefined)?.side === s.side ? previous : undefined,
+      };
+    }),
   });
   // Who may be named on a boon: read once, not with every page (#978).
   const choices = useQuery({
@@ -117,30 +164,47 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
     enabled: !harpy,
   });
   // Past the last page (boons settled, or an old link): go to the last there is.
-  const total = ledger.data?.total ?? 0;
-  const past = ledger.isSuccess && !ledger.isPlaceholderData && page > 1 && (page - 1) * PAGE >= total;
-  useEffect(() => {
-    if (past) setPage(Math.max(1, Math.ceil(total / PAGE)), true);
+  const past = sections.map((s, i) => {
+    const list = lists[i];
+    const total = list?.data?.total ?? 0;
+    return list?.isSuccess && !list.isPlaceholderData && pageOf(s.page) > 1 && (pageOf(s.page) - 1) * PAGE >= total ? { s, total } : null;
   });
-  if (ledger.isPending || choices.isPending) return <Loading />;
-  if (ledger.error) return <ErrorText error={ledger.error} />;
+  useEffect(() => {
+    for (const p of past) if (p) setPage(p.s.page, Math.max(1, Math.ceil(p.total / PAGE)), true);
+  });
+  const whole = lists[0]!;
+  if (choices.isPending || (!party && whole.isPending)) return <Loading />;
+  const failed = lists.find((l) => l.error);
+  if (failed) return <ErrorText error={failed.error} />;
   if (choices.error) return <ErrorText error={choices.error} />;
-  const { boons, counts, totals } = ledger.data;
   const characters = choices.data;
-  const sorting = (label: string, by: LedgerSort): Pick<Column<BoonOut>, "header" | "label" | "sort"> => {
-    const way = search.sort === by ? (search.direction === "asc" ? "ascending" : "descending") : undefined;
-    return { header: <SortHeading label={label} sort={way} onSort={() => update(sortBy(search, by))} />, label, sort: way };
+  // The views' counts, within the search: a party's, both their sections'.
+  const counts: Partial<Record<BoonView, number>> = {};
+  for (const list of lists) for (const [view, n] of Object.entries(list.data?.counts ?? {})) counts[view as BoonView] = (counts[view as BoonView] ?? 0) + n;
+  const sorting =
+    (side?: BoonSide) =>
+    (label: string, by: LedgerSort): Pick<Column<BoonOut>, "header" | "label" | "sort"> => {
+      const now = side ? sideSort(search, side) : search.sort;
+      const way = now === by ? (search.direction === "asc" ? "ascending" : "descending") : undefined;
+      return { header: <SortHeading label={label} sort={way} onSort={() => update(sortBy({ ...search, sort: now }, by))} />, label, sort: way };
+    };
+  // A name on a boon goes to their own page (#980); on a phone, out of the boon's dialog.
+  const partyTo = (p: BoonOut["debtor"]) => {
+    const next = writeLedger(params, onParty(search, p));
+    if (!docked) next.delete("boon");
+    return `?${next}`;
   };
   // Boons just registered that the search hides: "Show them" clears it (#983).
   const reveal: Reveal = (made, game) => (made.every((b) => shows(search, b, game)) ? null : () => update(showing(search, made)));
   const register = (!harpy || harpy.add) && <RegisterBoons troupeId={troupeId} characters={characters} reveal={reveal} disabled={offline} />;
   // Exports (#986): this view, or the whole ledger; the Harpy's where the troupe lets them (#987).
-  const exports = (!harpy || harpy.export) && <BoonExportMenu troupeId={troupeId} query={query} disabled={offline} />;
-  const turn = (to: number) => {
-    setPage(to);
+  const exports = (!harpy || harpy.export) && <BoonExportMenu troupeId={troupeId} query={ledgerQuery(search)} disabled={offline} />;
+  const turn = (key: string, to: number) => {
+    setPage(key, to);
     const list = top.current;
     if (list && list.getBoundingClientRect().top < 0) list.scrollIntoView({ block: "start" });
   };
+  const empty = narrowed({ ...search, character: "", name: "" }) ? "No boons match." : search.view === "open" ? "None open." : "None here.";
 
   return (
     <div className="flex flex-col gap-4">
@@ -165,7 +229,11 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
       </div>
 
       <div ref={top} className="flex scroll-mt-4 flex-col gap-3">
-        <BoonTotals totals={totals} review={reviews && reviewTo ? { count: toReview, to: reviewTo } : null} search={search} show={update} />
+        {party ? (
+          <BoonPartyHeader troupeId={troupeId} party={party} back={`?${writeLedger(params, { ...search, character: "", name: "" })}`} auditTo="audits" offline={offline} />
+        ) : (
+          whole.data && <BoonTotals totals={whole.data.totals} review={reviews && reviewTo ? { count: toReview, to: reviewTo } : null} search={search} show={update} />
+        )}
         <BoonToolbar
           search={search}
           update={update}
@@ -186,14 +254,52 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
 
       <div className={docked && opened ? "grid grid-cols-[minmax(0,1fr)_20rem] items-start gap-4 xl:grid-cols-[minmax(0,1fr)_26rem]" : ""}>
         <div className="flex min-w-0 flex-col gap-4">
-          {total === 0 ? (
-            <Empty>{narrowed(search) ? "No boons match." : search.view === "open" ? "No open boons yet." : "None here."}</Empty>
-          ) : (
-            <>
-              <BoonTable key={search.view} boons={boons} busy={ledger.isPlaceholderData} sorting={sorting} opened={opened} onOpen={open} />
-              <Pager label="Pages of boons" page={page} size={PAGE} shown={boons.length} total={total} onPage={turn} />
-            </>
-          )}
+          {sections.map((s, i) => {
+            const list = lists[i]!;
+            const total = list.data?.total ?? 0;
+            const body = list.isPending ? (
+              list.fetchStatus === "paused" ? (
+                <Empty>These come with a signal.</Empty>
+              ) : (
+                <Loading compact />
+              )
+            ) : total === 0 ? (
+              <Empty>{s.side ? empty : narrowed(search) ? "No boons match." : search.view === "open" ? "No open boons yet." : "None here."}</Empty>
+            ) : (
+              <>
+                <BoonTable
+                  key={search.view}
+                  label={s.label ?? "Boons"}
+                  boons={list.data?.boons ?? []}
+                  busy={list.isPlaceholderData}
+                  sorting={sorting(s.side)}
+                  party={s.side}
+                  partyTo={partyTo}
+                  opened={opened}
+                  onOpen={open}
+                />
+                <Pager
+                  label={s.label ? `Pages of boons: ${s.label}` : "Pages of boons"}
+                  page={pageOf(s.page)}
+                  size={PAGE}
+                  shown={list.data?.boons.length ?? 0}
+                  total={total}
+                  onPage={(to) => turn(s.page, to)}
+                />
+              </>
+            );
+            if (!s.label) return <Fragment key={s.page}>{body}</Fragment>;
+            const headingId = `boon-section-${s.page}`;
+            return (
+              <section key={s.page} aria-labelledby={headingId} className="flex flex-col gap-2">
+                <SectionLabel as="h3" id={headingId}>
+                  {s.label}
+                  {list.data && ` (${count.format(total)})`}
+                </SectionLabel>
+                {body}
+              </section>
+            );
+          })}
         </div>
         {opened && (
           <BoonDetail
@@ -201,6 +307,7 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
             troupeId={troupeId}
             boonId={opened}
             characters={characters}
+            partyTo={partyTo}
             frame={(title, actions, body) => (
               <SidePanel title={title} actions={actions} docked={docked} onClose={() => open(null)}>
                 {body}
@@ -216,42 +323,59 @@ function Ledger({ troupeId, reviewTo }: { troupeId: string; reviewTo?: string })
 /**
  * The ledger's boons, one line each (#975), as the troupe's old sheet has them: who
  * owes whom, the kind, the night, the reason, and where it stands. A click on a row
- * opens it in the side panel (#979), and marks it. On a phone each row folds to
- * "Debtor owes Creditor", then its kind, night and reason.
+ * opens it in the side panel (#979), and marks it; a click on a name goes to that
+ * side's own page (#980, `partyTo`). On a phone each row folds to "Debtor owes
+ * Creditor", then its kind, night and reason. In a section of a party's own page,
+ * the side they are on (`party`) goes without saying, so only the other shows.
  */
 function BoonTable({
+  label,
   boons,
   busy,
   sorting,
+  party,
+  partyTo,
   opened,
   onOpen,
 }: {
+  label: string;
   boons: BoonOut[];
   busy: boolean;
   // A column's heading, which sorts by it (#976).
   sorting: (label: string, by: LedgerSort) => Pick<Column<BoonOut>, "header" | "label" | "sort">;
+  party?: BoonSide;
+  partyTo: (party: BoonOut["debtor"]) => string;
   // The boon open in the side panel, and opening one.
   opened: string | null;
   onOpen: (boonId: string) => void;
 }) {
   const dates = useDates();
-  const columns: Column<BoonOut>[] = [
-    {
-      key: "debtor",
-      ...sorting("Debtor", "debtor"),
-      phone: "title",
-      cell: (b) => (
+  const debtor: Column<BoonOut> = {
+    key: "debtor",
+    ...sorting("Debtor", "debtor"),
+    phone: "title",
+    cell: (b) =>
+      party ? (
+        <PartyName party={b.debtor} to={partyTo(b.debtor)} />
+      ) : (
         <span className="flex flex-wrap items-center gap-x-1.5">
-          <PartyName party={b.debtor} />
+          <PartyName party={b.debtor} to={partyTo(b.debtor)} />
           {/* A phone's first line has the creditor too: "Agnes owes Bram". */}
           <span className="text-mist lg:hidden">owes</span>
           <span className="flex max-w-full min-w-0 lg:hidden">
-            <PartyName party={b.creditor} disgraced={b.creditor_disgraced} />
+            <PartyName party={b.creditor} disgraced={b.creditor_disgraced} to={partyTo(b.creditor)} />
           </span>
         </span>
       ),
-    },
-    { key: "creditor", ...sorting("Creditor", "creditor"), phone: "detail", cell: (b) => <PartyName party={b.creditor} disgraced={b.creditor_disgraced} /> },
+  };
+  const creditor: Column<BoonOut> = {
+    key: "creditor",
+    ...sorting("Creditor", "creditor"),
+    phone: party ? "title" : "detail",
+    cell: (b) => <PartyName party={b.creditor} disgraced={b.creditor_disgraced} to={partyTo(b.creditor)} />,
+  };
+  const columns: Column<BoonOut>[] = [
+    ...(party === "debtor" ? [creditor] : party === "creditor" ? [debtor] : [debtor, creditor]),
     { key: "kind", ...sorting("Kind", "kind"), phone: "shown", bare: true, cell: (b) => <span className="whitespace-nowrap text-gold">{kindName(b.kind)}</span> },
     { key: "date", ...sorting("Date", "date"), phone: "shown", bare: true, cell: (b) => <span className="whitespace-nowrap">{dates.day(b.made_on)}</span> },
     {
@@ -291,7 +415,7 @@ function BoonTable({
   ];
   return (
     <DataTable
-      label="Boons"
+      label={label}
       columns={columns}
       rows={boons}
       rowKey={(b) => b.id}
@@ -306,17 +430,23 @@ function BoonTable({
 }
 
 /**
- * A side of a boon on one line, its name cut to fit: in italics for a name only,
+ * A side of a boon on one line, its name cut to fit, a link to their own page (#980;
+ * from lg up, where a phone's tap opens the row): in italics for a name only,
  * someone not in Horatio; with a quiet mark for one who is dead or off-field (as the
  * court knows it, for a Harpy); marked when they're a Boonbreaker (#717), or, as
  * the creditor, Disgraced (the sentence is in the detail).
  */
-function PartyName({ party, disgraced = false }: { party: BoonOut["debtor"]; disgraced?: boolean }) {
+function PartyName({ party, disgraced = false, to }: { party: BoonOut["debtor"]; disgraced?: boolean; to: string }) {
   return (
     <span className="flex max-w-full min-w-0 items-center gap-1">
-      <span className={`max-w-full min-w-0 truncate text-parchment lg:max-w-48 ${party.character_id ? "" : "italic"}`} title={party.name}>
+      <Link
+        to={to}
+        // On a phone a tap on the row opens the boon, whose detail links each name.
+        className={`max-w-full min-w-0 truncate text-parchment hover:text-gold hover:underline max-lg:pointer-events-none lg:max-w-48 ${party.character_id ? "" : "pr-0.5 italic"}`}
+        title={party.name}
+      >
         {party.name}
-      </span>
+      </Link>
       {party.left && <Badge className="shrink-0">{LEFT[party.left]}</Badge>}
       {party.boonbreaker && (
         <Badge tone="blood" className="shrink-0">

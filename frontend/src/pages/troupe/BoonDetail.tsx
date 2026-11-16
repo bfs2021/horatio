@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useContext, useState, type ReactNode } from "react";
+import { Link } from "react-router";
 import { api, unwrap } from "../../api/client";
 import type { BoonEventOut, BoonOut, CharacterChoice } from "../../api/types";
 import { partyIn } from "../../bonds";
@@ -94,11 +95,14 @@ export function BoonDetail({
   boonId,
   characters,
   frame = inline,
+  partyTo,
 }: {
   troupeId: string;
   boonId: string;
   characters: CharacterChoice[];
   frame?: DetailFrame;
+  /** In the ledger, where each side's name goes: their own page of it (#980). */
+  partyTo?: (party: BoonOut["debtor"]) => string;
 }) {
   const harpy = useContext(HarpyMode);
   const dates = useDates();
@@ -165,11 +169,20 @@ export function BoonDetail({
       <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
         {sides.map(({ side, party }) => {
           // A side written as text, in full where elsewhere it is cut to a line (#990).
-          if (party.character_id || shortName(party.name) === party.name) return null;
+          const long = !party.character_id && shortName(party.name) !== party.name;
+          if (!long && !partyTo) return null;
           return (
             <div key={side} className="contents">
               <dt className="text-mist">{side === "debtor" ? "Debtor" : "Creditor"}</dt>
-              <dd className="whitespace-pre-line italic wrap-anywhere">{party.name}</dd>
+              <dd className={`wrap-anywhere ${long ? "whitespace-pre-line" : ""} ${party.character_id ? "" : "italic"}`}>
+                {partyTo ? (
+                  <Link to={partyTo(party)} className="underline hover:text-gold">
+                    {party.name}
+                  </Link>
+                ) : (
+                  party.name
+                )}
+              </dd>
             </div>
           );
         })}

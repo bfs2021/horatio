@@ -808,6 +808,8 @@ test("in the cart, a second Retainer and a second Alternate Identity are each bo
   // And a second identity, by its own name.
   await part("Backgrounds").getByRole("button", { name: "Add" }).click();
   await p.getByLabel("Search Backgrounds").fill("Alternate");
+  // The panel lists it once checked; until then the only match is the one held on the sheet.
+  await expect(p.getByLabel("Search Backgrounds")).toHaveAttribute("placeholder", /you can take/);
   await p.getByRole("button", { name: /^Alternate Identity/ }).first().click();
   await p.getByPlaceholder("Such as Dr. Ellen Marsh, coroner").fill("Father Kell");
   await p.getByRole("button", { name: "Add to cart" }).click();

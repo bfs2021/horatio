@@ -1695,7 +1695,7 @@ test("in the Play View the Harpy keeps the ledger at a phone's width and a desk'
     await page.getByRole("button", { name: "About the boon ledger" }).click();
     const said = page.getByText(note);
     await expect(said).toBeVisible();
-    await expect.poll(async () => ((box) => (box ? box.x + box.width : Infinity))(await said.boundingBox())).toBeLessThanOrEqual(page.viewportSize()!.width);
+    await fits(page);
     await page.keyboard.press("Escape");
   };
 

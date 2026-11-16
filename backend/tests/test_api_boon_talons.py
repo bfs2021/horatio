@@ -1,8 +1,9 @@
 """Lesser Harpies, or talons (#689): the troupe's setting, the Harpy giving others access
 to the boon ledger as their character with what each may do (add, correct, settle,
-audit; #984), each permission alone against every boon endpoint, the access belonging
-to the office when the Harpy changes, staff seeing who has what and taking it away, and
-a Lesser Harpy never seeing what only staff see (MET: VTM p. 379)."""
+approve reported boons, audit; #984, #993), each permission alone against every boon
+endpoint, the access belonging to the office when the Harpy changes, staff seeing who
+has what and taking it away, a Lesser Harpy never seeing what only staff see (MET: VTM
+p. 379), and a boon with a Lesser Harpy on it never waiting for approval (#993)."""
 
 import json
 from collections.abc import Callable
@@ -157,7 +158,7 @@ def test_a_correct_only_lesser_harpy_corrects_but_never_settles_or_reviews(
     ]
 
 
-def test_a_settle_only_lesser_harpy_settles_and_reviews_but_never_corrects(
+def test_a_settle_only_lesser_harpy_settles_but_never_corrects_or_reviews(
     court: Talons,
 ) -> None:
     ok(court.setting(True))
@@ -169,12 +170,148 @@ def test_a_settle_only_lesser_harpy_settles_and_reviews_but_never_corrects(
 
     line = settled["events"][-1]
     assert (line["kind"], line["as_character"]) == ("settled", "Iris")
-    assert ok(iris.client.get(court.queue))["boons"] == []
+    # Reviewing is a right of its own now (#993).
+    assert iris.client.get(court.queue).status_code == 404
     assert court.edit(standing, by=iris, reason="New", note="Fixed").status_code == 403
     ledgers = court.ledgers(court.iris, iris)
     assert [(lg["can_edit"], lg["can_settle"], lg["can_review"]) for lg in ledgers] == [
-        (False, True, True)
+        (False, True, False)
     ]
+
+
+def test_a_review_only_lesser_harpy_accepts_and_rejects_but_never_edits_or_settles(
+    court: Talons,
+) -> None:
+    ok(court.setting(True))
+    hold(court)
+    iris = court.iris_player
+    standing = court.one(court.agnes, court.bram)
+    given = ok(court.give(court.iris, can_review=True))
+    assert given["talons"][0]["can_review"] is True
+    assert (
+        "harpy-688 as Hestia made Iris a Lesser Harpy, to see the ledger and approve reported"
+        " boons." in court.messages()
+    )
+    report(court, court.agnes, court.troupe.player, court.bram)
+    report(court, court.bram, court.other, court.agnes)
+    found = ok(iris.client.get(court.queue))
+    first, second = found["boons"]
+    # They approve, but don't say which kinds go straight in: that's the Harpy's.
+    assert found["sets_approval"] is False
+
+    accepted = ok(court.act(first, "accept", by=iris))
+    rejected = ok(court.act(second, "reject", by=iris, reason="Never happened"))
+
+    assert (accepted["state"], accepted["events"][-1]["as_character"]) == ("registered", "Iris")
+    assert rejected["state"] == "void"
+    assert court.edit(standing, by=iris, reason="New", note="Fixed").status_code == 403
+    assert court.act(standing, "settle", by=iris, how="called_in").status_code == 403
+    assert court.act(standing, "void", by=iris, note="No").status_code == 403
+    assert court.register(row(court.bram, court.agnes), by=iris).status_code == 403
+    ledgers = court.ledgers(court.iris, iris)
+    assert [(lg["can_edit"], lg["can_settle"], lg["can_review"]) for lg in ledgers] == [
+        (False, False, True)
+    ]
+
+
+def test_the_harpy_sets_the_kinds_that_go_straight_in_and_a_lesser_harpy_cannot(
+    court: Talons,
+) -> None:
+    ok(court.setting(True))
+    hold(court)
+    ok(court.give(court.iris, can_review=True, can_settle=True, can_edit=True))
+    kinds = f"/troupes/{court.troupe.id}/boon-auto-accept"
+
+    assert ok(court.harpy_player.client.get(court.queue))["sets_approval"] is True
+    changed = ok(court.harpy_player.client.put(kinds, json={"kinds": ["minor", "trivial"]}))
+
+    assert changed["auto_accept"] == ["trivial", "minor"]
+    assert (
+        "harpy-688 as Hestia set which boons players report go straight into the ledger:"
+        " trivial and minor boons." in court.messages()
+    )
+    refused = court.iris_player.client.put(kinds, json={"kinds": []})
+    assert refused.status_code == 403
+    # Given only the review queue, the Harpy still runs it, kinds and all; given none,
+    # staff run it alone.
+    ok(court.access("submissions"))
+    ok(court.harpy_player.client.put(kinds, json={"kinds": ["trivial"]}))
+    ok(court.access("none"))
+    assert court.harpy_player.client.put(kinds, json={"kinds": []}).status_code == 404
+    played = ok(court.troupe.player.client.get(f"/characters/{court.agnes}/play-boons"))
+    assert played["approver"] == "staff"
+    ok(court.access("full"))
+    played = ok(court.troupe.player.client.get(f"/characters/{court.agnes}/play-boons"))
+    assert played["approver"] == "harpy"
+
+
+def test_a_boon_with_a_lesser_harpy_on_either_side_is_never_held(court: Talons) -> None:
+    ok(court.setting(True))
+    hold(court)
+    ok(court.give(court.iris, can_add=True))
+    major = {"direction": "owes", "kind": "major", "made_on": "2026-10-03", "reason": "A debt"}
+
+    # A player whose character owes Iris, and Iris's own player, owed by Bram.
+    ok(
+        court.troupe.player.client.post(
+            f"/characters/{court.agnes}/play-boons",
+            json={**major, "other": {"character_id": court.iris}},
+        ),
+        201,
+    )
+    ok(
+        court.iris_player.client.post(
+            f"/characters/{court.iris}/play-boons",
+            json={**major, "direction": "owed", "other": {"character_id": court.bram}},
+        ),
+        201,
+    )
+    # The same boon between two others waits; so does one with the Harpy on it.
+    ok(
+        court.troupe.player.client.post(
+            f"/characters/{court.agnes}/play-boons",
+            json={**major, "other": {"character_id": court.bram}},
+        ),
+        201,
+    )
+    ok(
+        court.troupe.player.client.post(
+            f"/characters/{court.agnes}/play-boons",
+            json={**major, "other": {"character_id": court.hestia}},
+        ),
+        201,
+    )
+
+    standing = court.ledger("open")["boons"]
+    assert sorted((b["debtor"]["name"], b["creditor"]["name"]) for b in standing) == [
+        ("Agnes", "Iris"),
+        ("Bram", "Iris"),
+    ]
+    waiting = ok(court.troupe.storyteller.client.get(court.queue))["boons"]
+    assert sorted((b["creditor"]["name"], b["state"]) for b in waiting) == [
+        ("Bram", "pending"),
+        ("Hestia", "pending"),
+    ]
+    # Its log says no more than any other accepted automatically.
+    for boon in standing:
+        line = ok(court.get(boon))["events"][-1]
+        assert (line["kind"], line["note"], line["by"], line["as_character"]) == (
+            "accepted",
+            "Accepted automatically",
+            None,
+            None,
+        )
+    # Once Iris is no longer a Lesser Harpy, a boon with her waits like any other.
+    ok(court.harpy_player.client.delete(f"{court.talons}/{court.iris}"))
+    ok(
+        court.troupe.player.client.post(
+            f"/characters/{court.agnes}/play-boons",
+            json={**major, "other": {"character_id": court.iris}, "reason": "Later"},
+        ),
+        201,
+    )
+    later = ok(court.troupe.storyteller.client.get(court.queue))["boons"]
+    assert [b["state"] for b in later if b["reason"] == "Later"] == ["pending"]
 
 
 def test_audit_alone_is_kept_for_audits(court: Talons) -> None:
@@ -242,12 +379,16 @@ ENDPOINTS: dict[str, tuple[str, Call]] = {
     "reopen": ("settle", lambda c, p: c.act(closed(c), "reopen", by=p, note="It stands")),
     "status loss": ("settle", lambda c, p: c.act(standing(c), "status-loss", by=p, taken=False)),
     "Gallant": ("settle", lambda c, p: c.act(standing(c), "gallant", by=p, give=False)),
-    "the review queue": ("settle", lambda c, p: p.client.get(c.queue)),
-    "accept": ("settle", lambda c, p: c.act(pending(c), "accept", by=p)),
-    "reject": ("settle", lambda c, p: c.act(pending(c), "reject", by=p, reason="Not so")),
-    "flag": ("settle", lambda c, p: c.act(standing(c), "flags", by=p, note="Which night?")),
+    "the review queue": ("review", lambda c, p: p.client.get(c.queue)),
+    "accept": ("review", lambda c, p: c.act(pending(c), "accept", by=p)),
+    "accept all shown": (
+        "review",
+        lambda c, p: p.client.post(f"{c.path}/accept", json={"boon_ids": [pending(c)["id"]]}),
+    ),
+    "reject": ("review", lambda c, p: c.act(pending(c), "reject", by=p, reason="Not so")),
+    "flag": ("review", lambda c, p: c.act(standing(c), "flags", by=p, note="Which night?")),
     "clear a flag": (
-        "settle",
+        "review",
         lambda c, p: p.client.post(
             f"/troupes/{c.troupe.id}/boon-flags/{flagged(c)['id']}/clear", json={"note": ""}
         ),
@@ -256,6 +397,12 @@ ENDPOINTS: dict[str, tuple[str, Call]] = {
         "audit",
         lambda c, p: p.client.post(
             f"/troupes/{c.troupe.id}/boon-audits", json={"character_id": c.agnes}
+        ),
+    ),
+    "set the kinds that go straight in": (
+        "harpy",
+        lambda c, p: p.client.put(
+            f"/troupes/{c.troupe.id}/boon-auto-accept", json={"kinds": ["trivial"]}
         ),
     ),
     "declare a Boonbreaker": (
@@ -269,7 +416,7 @@ ENDPOINTS: dict[str, tuple[str, Call]] = {
 NOTHING_TO_ANSWER = {"status loss", "Gallant"}
 
 
-@pytest.mark.parametrize("right", ["add", "edit", "settle", "audit"])
+@pytest.mark.parametrize("right", ["add", "edit", "settle", "review", "audit"])
 def test_each_right_alone_reaches_its_endpoints_and_no_others(court: Talons, right: str) -> None:
     ok(court.setting(True))
     hold(court)

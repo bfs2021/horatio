@@ -8,6 +8,8 @@ import { Toggle } from "../../components/Toggle";
 import { SettingCard } from "../../components/SettingCard";
 import { ErrorText } from "../../components/ui";
 import { useAction } from "../../hooks";
+import { ApprovalKinds } from "./BoonApproval";
+import { approvalSummary } from "./boonApproval";
 import { TalonsSetting } from "./BoonTalons";
 
 /**
@@ -39,7 +41,9 @@ export function BoonLedgerSetting({ troupe, canEdit }: { troupe: TroupeOut; canE
         )
       )}
       {!canEdit && on && <p className="mt-2 text-sm">{PLAYERS_SEE.find((p) => p.value === troupe.boon_players_see)?.summary}</p>}
-      {!canEdit && on && troupe.boon_review && <p className="mt-1 text-sm">Boons players report wait for review before they stand.</p>}
+      {!canEdit && on && troupe.boon_review && (
+        <p className="mt-1 text-sm">Boons players report wait for review before they stand. {approvalSummary(troupe.boon_auto_accept ?? [])}</p>
+      )}
       {!canEdit && on && troupe.boons_judge_ban && (
         <p className="mt-1 text-sm">The ledger judges the Camarilla&apos;s ban on no boons registered with the Harpy.</p>
       )}
@@ -141,7 +145,8 @@ function PlayersSetting({ troupe }: { troupe: TroupeOut }) {
 /**
  * Whether boons players report wait for review (#687): off, they stand at once.
  * Either way the report is logged, and Horatio flags names that link to no character
- * and likely duplicates for review.
+ * and likely duplicates for review. While they wait, which kinds go straight in all
+ * the same (#993), as the To review tab's Approval settings say too.
  */
 function ReviewSetting({ troupe }: { troupe: TroupeOut }) {
   const toast = useToast();
@@ -157,8 +162,8 @@ function ReviewSetting({ troupe }: { troupe: TroupeOut }) {
         label="Boons players report wait for review"
         hint={
           <>
-            Staff accept each one, after an edit if it needs one, or don&apos;t accept it, with a reason its player sees. Off, they stand at once. Either way,
-            Horatio flags names that link to no character, and likely duplicates, under “To review” on the Boons screen.
+            Staff, or the Harpy given the review queue, accept each one, after an edit if it needs one, or don&apos;t accept it, with a reason its player sees.
+            Off, they stand at once. Either way, Horatio flags names that link to no character, and likely duplicates, under “To review” on the Boons screen.
           </>
         }
         checked={hold}
@@ -169,6 +174,12 @@ function ReviewSetting({ troupe }: { troupe: TroupeOut }) {
         }}
       />
       <ErrorText error={save.error} />
+      {hold && (troupe.boon_review ?? false) && (
+        <fieldset className="ml-1 flex flex-col gap-1 border-l border-ash/60 pl-3">
+          <legend className="text-mist">Boons that go straight in</legend>
+          <ApprovalKinds troupeId={troupe.id} kinds={troupe.boon_auto_accept ?? []} />
+        </fieldset>
+      )}
     </div>
   );
 }

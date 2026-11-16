@@ -2,17 +2,21 @@
 lets them stand at once; Horatio flags names that link to no character and likely
 duplicates, and staff flag boons by hand; staff accept, reject (with a reason the
 reporter sees) and clear flags; and a name is linked to a character on one boon or on
-every boon naming it."""
+every boon naming it. Kinds that go straight in all the same (#993), and pending boons
+kept out of the standings, the statistics, the exports and audits."""
 
+import io
 import json
 from collections.abc import Callable
 from typing import Any
 
+import openpyxl
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from tests.api_helpers import Person, Troupe
+from tests.test_api_boon_export import HEADER, rows
 from tests.test_api_boons import Ledger, named, row, who
 
 
@@ -83,10 +87,11 @@ def test_held_for_review_a_report_waits_and_staff_accept_it(ledger: Ledger) -> N
     assert [e["kind"] for e in accepted["events"]] == ["submitted", "accepted"]
     assert queue(ledger) == []
     assert [b["state"] for b in ledger.ledger("open")["boons"]] == ["registered"]
-    assert (
-        ok(ledger.troupe.player.client.get(f"/characters/{ledger.agnes}/play-boons"))["reports"]
-        == []
-    )
+    # The player's report now says it is in the ledger (#993).
+    reports = ok(ledger.troupe.player.client.get(f"/characters/{ledger.agnes}/play-boons"))[
+        "reports"
+    ]
+    assert [(r["state"], r["other"]) for r in reports] == [("accepted", "Bram")]
 
 
 def test_staff_registrations_stand_at_once_even_when_held(ledger: Ledger) -> None:
@@ -273,3 +278,168 @@ def test_staff_name_any_side_but_a_name_only_on_quick_entry_is_flagged(ledger: L
         201,
     )
     assert [flags_of(b) for b in queue(ledger)] == [["unmatched"]]
+
+
+# --- approval by kind (#993) --------------------------------------------------------------
+
+
+def kinds_go_in(ledger: Ledger, *kinds: str, by: Person | None = None) -> Any:
+    return (by or ledger.troupe.storyteller).client.put(
+        f"/troupes/{ledger.troupe.id}/boon-auto-accept", json={"kinds": list(kinds)}
+    )
+
+
+def reports_of(ledger: Ledger) -> list[dict[str, Any]]:
+    return ok(ledger.troupe.player.client.get(f"/characters/{ledger.agnes}/play-boons"))["reports"]
+
+
+def test_a_ticked_kind_goes_straight_in_and_any_other_waits(ledger: Ledger) -> None:
+    ok(hold(ledger, True))
+    review = ok(ledger.troupe.storyteller.client.get(f"/troupes/{ledger.troupe.id}/boon-review"))
+    assert (review["held"], review["auto_accept"], review["sets_approval"]) == (True, [], True)
+
+    assert ok(kinds_go_in(ledger, "trivial")) == {"held": True, "auto_accept": ["trivial"]}
+    assert (
+        "storyteller set which boons players report go straight into the ledger: trivial boons."
+        in ledger.messages()
+    )
+    assert kinds_go_in(ledger, "huge").status_code == 422
+    report(ledger, ledger.agnes, kind="trivial", reason="A favour")
+    shown = report(ledger, ledger.agnes, kind="major", reason="A life debt")
+
+    # The trivial boon is in the ledger, accepted by no one; the major one waits.
+    assert [(b["kind"], b["state"]) for b in ledger.ledger("open")["boons"]] == [
+        ("trivial", "registered")
+    ]
+    waiting = queue(ledger)
+    assert [(b["kind"], b["state"], b["reported_as"]) for b in waiting] == [
+        ("major", "pending", "Agnes")
+    ]
+    trivial = ledger.ledger("open")["boons"][0]
+    lines = ok(ledger.get(trivial))["events"]
+    assert [(e["kind"], e["note"], e["by"], e["as_character"]) for e in lines] == [
+        ("submitted", "Reported in the Play View.", "player", "Agnes"),
+        ("accepted", "Accepted automatically", None, None),
+    ]
+    assert "Accepted automatically: Agnes owes Bram a trivial boon." in ledger.messages()
+    # The player is told which is which, and that staff approve: the troupe gives its
+    # Harpy no access.
+    assert [(r["kind"], r["state"]) for r in shown["reports"]] == [
+        ("major", "pending"),
+        ("trivial", "accepted"),
+    ]
+    assert shown["approver"] == "staff"
+    # The troupe's settings say so too, and its settings share carries them.
+    troupe = ok(ledger.troupe.lead.client.get(f"/troupes/{ledger.troupe.id}"))
+    assert troupe["boon_auto_accept"] == ["trivial"]
+    shared = ok(ledger.troupe.lead.client.get(f"/troupes/{ledger.troupe.id}/settings-share"))
+    assert "boon_auto_accept" in json.dumps(shared["document"])
+
+
+def test_with_reports_not_held_nothing_waits_whatever_the_kinds(ledger: Ledger) -> None:
+    ok(kinds_go_in(ledger, "trivial"))
+    report(ledger, ledger.agnes, kind="major")
+    assert queue(ledger) == []
+    assert [b["kind"] for b in ledger.ledger("open")["boons"]] == ["major"]
+    # Nothing waited, so the report doesn't stay in the player's tab.
+    assert reports_of(ledger) == []
+
+
+def test_a_boon_that_goes_straight_in_is_still_flagged(ledger: Ledger) -> None:
+    ok(hold(ledger, True))
+    ok(kinds_go_in(ledger, "minor"))
+
+    report(ledger, ledger.agnes, other={"name": "Mysterious Stranger"})
+
+    [found] = queue(ledger)
+    assert (found["state"], found["flagged"], flags_of(found)) == (
+        "registered",
+        True,
+        ["unmatched"],
+    )
+
+
+def test_changing_the_kinds_never_touches_boons_already_waiting(ledger: Ledger) -> None:
+    ok(hold(ledger, True))
+    report(ledger, ledger.agnes)
+
+    ok(kinds_go_in(ledger, "minor", "trivial"))
+
+    assert [b["state"] for b in queue(ledger)] == ["pending"]
+    assert ok(kinds_go_in(ledger))["auto_accept"] == []
+    assert any(
+        m.endswith("go straight into the ledger: none: every one waits.")
+        for m in (ledger.messages())
+    )
+
+
+def test_only_those_who_run_the_queue_set_the_kinds(ledger: Ledger) -> None:
+    for person in (ledger.troupe.player, ledger.other):
+        assert kinds_go_in(ledger, "trivial", by=person).status_code in (403, 404)
+
+
+def test_accept_all_shown_accepts_those_that_still_wait(ledger: Ledger) -> None:
+    ok(hold(ledger, True))
+    report(ledger, ledger.agnes, reason="First")
+    report(ledger, ledger.agnes, reason="Second", kind="major")
+    standing = ledger.one(ledger.bram, ledger.agnes)
+    ids = [b["id"] for b in queue(ledger)]
+
+    done = ok(
+        ledger.troupe.storyteller.client.post(
+            f"{ledger.path}/accept", json={"boon_ids": [*ids, standing["id"]], "note": "At court"}
+        )
+    )
+
+    assert done == {"accepted": 2}
+    assert queue(ledger) == []
+    assert sorted(b["reason"] for b in ledger.ledger("open")["boons"]) == [
+        "First",
+        "Information",
+        "Second",
+    ]
+    assert ok(ledger.get({"id": ids[0]}))["events"][-1]["note"] == "At court"
+    assert (
+        ledger.troupe.player.client.post(f"{ledger.path}/accept", json={"boon_ids": ids})
+    ).status_code in (403, 404)
+
+
+def test_pending_boons_are_absent_from_standings_statistics_exports_and_audits(
+    ledger: Ledger,
+) -> None:
+    ok(hold(ledger, True))
+    ledger.one(ledger.bram, ledger.agnes, kind="trivial", reason="Standing")
+    report(ledger, ledger.agnes, kind="life", reason="Waiting", other={"name": "Lady Ash"})
+    staff = ledger.troupe.storyteller.client
+    assert [b["state"] for b in queue(ledger)] == ["pending"]
+
+    # The ledger's open view, and its totals, count only the standing boon.
+    assert [b["reason"] for b in ledger.ledger("open")["boons"]] == ["Standing"]
+    # The standings: no one on the pending boon, nothing of its kind; only its count.
+    standings = ok(staff.get(f"/troupes/{ledger.troupe.id}/boon-standings"))
+    assert {c["who"]["name"] for c in standings["characters"]} == {"Agnes", "Bram"}
+    assert {k["kind"]: k["count"] for k in standings["by_kind"]}["life"] == 0
+    assert standings["totals"]["pending"] == 1
+    # The statistics: the same.
+    statistics = ok(staff.get(f"/troupes/{ledger.troupe.id}/boon-statistics"))
+    assert {n["who"]["name"] for n in statistics["nodes"]} == {"Agnes", "Bram"}
+    assert sum(line["registered"] for line in statistics["by_entered"]) == 1
+    assert sum(line["registered"] for line in statistics["by_night"]) == 1
+    # Exports: every view, the pending one too, and the workbook.
+    for view in ("all", "pending"):
+        exported = rows(
+            staff.get(f"/troupes/{ledger.troupe.id}/boon-export", params={"view": view}), HEADER
+        )
+        assert [r["Reason"] for r in exported] == (["Standing"] if view == "all" else [])
+    workbook = staff.get(f"/troupes/{ledger.troupe.id}/boon-workbook")
+    assert workbook.status_code == 200, workbook.text
+    book = openpyxl.load_workbook(io.BytesIO(workbook.content))
+    cells = {str(c.value) for sheet in book.worksheets for line in sheet.iter_rows() for c in line}
+    assert "Standing" in cells
+    assert not {"Waiting", "Lady Ash"} & cells
+    # An audit of Agnes holds only what stands.
+    audit = ok(
+        staff.post(f"/troupes/{ledger.troupe.id}/boon-audits", json={"character_id": ledger.agnes}),
+        201,
+    )
+    assert (audit["owes"], [line["reason"] for line in audit["owed"]]) == ([], ["Standing"])

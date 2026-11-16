@@ -2989,7 +2989,8 @@ export interface paths {
          * Report Boon
          * @description A player reports a boon for their character, which goes in the troupe's ledger
          *     as theirs, done as the character: standing, or waiting for review where the troupe
-         *     holds reports for review (#687).
+         *     holds reports for review (#687), unless its kind goes straight in or a Lesser
+         *     Harpy is on it (#993).
          */
         post: operations["report_boon_api_characters__character_id__play_boons_post"];
         delete?: never;
@@ -8627,6 +8628,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/troupes/{troupe_id}/boon-auto-accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Auto Accept
+         * @description The kinds of boon a player reports that go straight into the ledger while the
+         *     troupe holds reports for review (#993): for whoever runs the queue, its running
+         *     staff or a Harpy given the queue or the full ledger, as their character; never a
+         *     Lesser Harpy. Boons already waiting stay waiting. Logged.
+         */
+        put: operations["set_auto_accept_api_troupes__troupe_id__boon_auto_accept_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/troupes/{troupe_id}/boon-ban": {
         parameters: {
             query?: never;
@@ -9085,6 +9109,27 @@ export interface paths {
          *     Harpy (#688) registers them as their character, with no staff note.
          */
         post: operations["register_api_troupes__troupe_id__boons_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/troupes/{troupe_id}/boons/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept All
+         * @description Accept several boons waiting for review at once: "Accept all shown" in the
+         *     queue (#993). Any that no longer waits is left as it is.
+         */
+        post: operations["accept_all_api_troupes__troupe_id__boons_accept_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -13677,6 +13722,21 @@ export interface components {
             /** Character Name */
             character_name: string;
         };
+        /** AcceptAllIn */
+        AcceptAllIn: {
+            /** Boon Ids */
+            boon_ids: string[];
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** AcceptAllOut */
+        AcceptAllOut: {
+            /** Accepted */
+            accepted: number;
+        };
         /** AcceptIn */
         AcceptIn: {
             /**
@@ -14600,6 +14660,11 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+        };
+        /** AutoAcceptIn */
+        AutoAcceptIn: {
+            /** Kinds */
+            kinds: ("trivial" | "minor" | "major" | "blood" | "life")[];
         };
         /** AwardableCharacter */
         AwardableCharacter: {
@@ -16204,6 +16269,13 @@ export interface components {
             boons: number;
             who: components["schemas"]["BoonStandingPartyOut"];
         };
+        /** BoonApprovalOut */
+        BoonApprovalOut: {
+            /** Auto Accept */
+            auto_accept: ("trivial" | "minor" | "major" | "blood" | "life")[];
+            /** Held */
+            held: boolean;
+        };
         /** BoonAuditChoice */
         BoonAuditChoice: {
             /**
@@ -16724,6 +16796,8 @@ export interface components {
             notify_on_trade: boolean;
             /** Reason */
             reason: string;
+            /** Reported As */
+            reported_as?: string | null;
             /** Settled How */
             settled_how: ("called_in" | "forgiven" | "ignored") | null;
             /** Staff Note */
@@ -16815,6 +16889,11 @@ export interface components {
         };
         /** BoonReviewOut */
         BoonReviewOut: {
+            /**
+             * Auto Accept
+             * @default []
+             */
+            auto_accept: ("trivial" | "minor" | "major" | "blood" | "life")[];
             /** Boons */
             boons: components["schemas"]["BoonOut"][];
             /**
@@ -16822,6 +16901,16 @@ export interface components {
              * @default []
              */
             characters: components["schemas"]["CharacterChoice-Output"][];
+            /**
+             * Held
+             * @default false
+             */
+            held: boolean;
+            /**
+             * Sets Approval
+             * @default false
+             */
+            sets_approval: boolean;
         };
         /** BoonSettleIn */
         BoonSettleIn: {
@@ -28173,6 +28262,12 @@ export interface components {
         /** PlayBoonsOut */
         PlayBoonsOut: {
             /**
+             * Approver
+             * @default staff
+             * @enum {string}
+             */
+            approver: "harpy" | "staff";
+            /**
              * Boonbreaker
              * @default false
              */
@@ -28318,8 +28413,9 @@ export interface components {
         /**
          * PlayReportOut
          * @description A boon the character's player reported that waits for review, or that wasn't
-         *     accepted lately, with the reason (#687). Shown to its player whatever else the
-         *     troupe lets them see: they reported it.
+         *     accepted lately, with the reason (#687); or, while the troupe holds reports, one
+         *     that went into the ledger lately, accepted or straight in (#993). Shown to its
+         *     player whatever else the troupe lets them see: they reported it.
          */
         PlayReportOut: {
             /**
@@ -28354,7 +28450,7 @@ export interface components {
              * State
              * @enum {string}
              */
-            state: "pending" | "rejected";
+            state: "pending" | "accepted" | "rejected";
         };
         /**
          * PlayStatusOut
@@ -34449,6 +34545,11 @@ export interface components {
              */
             can_export: boolean;
             /**
+             * Can Review
+             * @default false
+             */
+            can_review: boolean;
+            /**
              * Can Settle
              * @default false
              */
@@ -34467,6 +34568,11 @@ export interface components {
              * @default false
              */
             can_export: boolean;
+            /**
+             * Can Review
+             * @default false
+             */
+            can_review: boolean;
             /** Can Settle */
             can_settle: boolean;
             /**
@@ -35701,6 +35807,11 @@ export interface components {
              * @enum {string}
              */
             blood_bonds: "off" | "staff" | "players_report" | "players_manage";
+            /**
+             * Boon Auto Accept
+             * @default []
+             */
+            boon_auto_accept: ("trivial" | "minor" | "major" | "blood" | "life")[];
             /**
              * Boon Harpy
              * @default none
@@ -53984,6 +54095,41 @@ export interface operations {
             };
         };
     };
+    set_auto_accept_api_troupes__troupe_id__boon_auto_accept_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                troupe_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutoAcceptIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoonApprovalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     set_boon_ban_api_troupes__troupe_id__boon_ban_put: {
         parameters: {
             query?: never;
@@ -54801,6 +54947,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoonOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accept_all_api_troupes__troupe_id__boons_accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                troupe_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptAllIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptAllOut"];
                 };
             };
             /** @description Validation Error */

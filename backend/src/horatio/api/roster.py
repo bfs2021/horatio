@@ -951,6 +951,9 @@ MESSAGES: dict[str, str] = {
     "boon.voided": "{actor} made {debtor}'s {kind} boon to {creditor} void{because}.",
     "boon.reopened": "{actor} reopened {debtor}'s {kind} boon to {creditor}{because}.",
     "house.boon_review": "{actor} set boons players report to {setting}.",
+    "house.boon_auto_accept": "{actor}{acting} set which boons players report go straight into"
+    " the ledger: {kinds}.",
+    "boon.auto_accepted": "Accepted automatically: {debtor} owes {creditor} {what}.",
     "house.boon_harpy": "{actor} gave the Harpy {setting}.",
     "house.boon_harpy_standings": "{actor} {setting} the boon standings and statistics.",
     "house.boon_harpy_export": "{actor} {setting} the boon ledger.",

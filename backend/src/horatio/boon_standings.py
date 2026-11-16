@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Literal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from horatio import audit, boon_harpy, boons, court_knows, social_age, titles
@@ -129,7 +129,8 @@ class Row:
     debtor: str
     creditor: str
     kind: str
-    # pending, registered or settled; a void boon is never a row.
+    # registered or settled (pending, only as a test makes one); a void boon, or one
+    # still waiting for approval (#993), is never a row.
     state: str
     made_on: date
     settled_how: str | None = None
@@ -149,6 +150,9 @@ class Ledger:
     rows: list[Row]
     people: dict[str, Who]
     court_order: dict[str, int] = field(default_factory=dict[str, int])
+    # How many boons wait for approval (#993): counted, never rows, so no one on them
+    # shows anywhere in the standings or the statistics.
+    pending: int = 0
 
 
 def name_key(name: str) -> str:
@@ -160,7 +164,21 @@ def load(db: Session, troupe: Troupe, court: Collection[uuid.UUID] | None = None
     `court`, for a Harpy, each character's standing as the court knows it
     (horatio.court_knows): gone only if the Who's Who lists it, and why only when
     that says something in game."""
-    found = list(db.scalars(select(Boon).where(Boon.troupe_id == troupe.id, Boon.state != "void")))
+    found = list(
+        db.scalars(
+            select(Boon).where(
+                Boon.troupe_id == troupe.id, Boon.state.in_(("registered", "settled"))
+            )
+        )
+    )
+    pending = (
+        db.scalar(
+            select(func.count())
+            .select_from(Boon)
+            .where(Boon.troupe_id == troupe.id, Boon.state == "pending")
+        )
+        or 0
+    )
     ids = {c for b in found for c in (b.debtor_id, b.creditor_id) if c is not None}
     characters = {c.id: c for c in db.scalars(select(Character).where(Character.id.in_(ids)))}
     ages = social_age.standings(db, list(ids))
@@ -218,7 +236,7 @@ def load(db: Session, troupe: Troupe, court: Collection[uuid.UUID] | None = None
     ]
     held_titles = {t for w in people.values() for t in w.titles}
     ranked = sorted(held_titles, key=lambda n: titles.court_key(order, n))
-    return Ledger(rows, people, {t: i for i, t in enumerate(ranked)})
+    return Ledger(rows, people, {t: i for i, t in enumerate(ranked)}, pending)
 
 
 # --- what the standings say ---------------------------------------------------------------
@@ -432,7 +450,7 @@ def compute(
     def gone(r: Row) -> bool:
         return people[r.debtor].departed or people[r.creditor].departed
 
-    totals = Totals()
+    totals = Totals(pending=ledger.pending)
     for r in rows:
         if r.state == "pending":
             totals.pending += 1

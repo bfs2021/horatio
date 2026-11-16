@@ -9,6 +9,7 @@ from sqlalchemy import select
 
 from horatio import (
     audit,
+    boons,
     closing,
     handles,
     pictures,
@@ -143,6 +144,8 @@ class TroupeOut(BaseModel):
     boons_judge_ban: bool = False
     # Boons its players report wait for review before they stand (#687).
     boon_review: bool = False
+    # The kinds a player reports that go straight into the ledger all the same (#993).
+    boon_auto_accept: list[Literal["trivial", "minor", "major", "blood", "life"]] = []
     # The Harpy's access to the ledger (#688): none, the review queue, or all of it.
     boon_harpy: Literal["none", "submissions", "full"] = "none"
     # The Harpy with the full ledger also reads its boon standings and statistics (#749).
@@ -411,6 +414,7 @@ def one_out(
         boon_players_settle=troupe.boon_players_settle,
         boons_judge_ban=troupe.boons_judge_ban,
         boon_review=troupe.boon_review,
+        boon_auto_accept=[k for k in boons.KINDS if k in troupe.boon_auto_accept],  # type: ignore[misc]  # one of boons.KINDS
         boon_harpy=troupe.boon_harpy,  # type: ignore[arg-type]  # checked by the database
         boon_harpy_standings=troupe.boon_harpy_standings,
         boon_talons=troupe.boon_talons,

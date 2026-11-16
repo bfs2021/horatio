@@ -707,6 +707,13 @@ SETTINGS: dict[str, Setting] = {
             on_off,
         ),
         Setting(
+            "boon_auto_accept",
+            "at_game",
+            "Boons players report that go straight into the ledger",
+            list[Literal["trivial", "minor", "major", "blood", "life"]],
+            listing,
+        ),
+        Setting(
             "boons_judge_ban",
             "at_game",
             'Judge "No boons registered" from the boon ledger',
@@ -2452,6 +2459,7 @@ def apply_settings(target: Target, user: User, chosen: Sequence[tuple[str, Setti
             "boon_players_see",
             "boon_players_settle",
             "boon_review",
+            "boon_auto_accept",
             "boons_judge_ban",
             "boon_harpy",
             "boon_harpy_standings",

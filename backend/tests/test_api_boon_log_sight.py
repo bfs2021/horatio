@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from tests.api_helpers import Person, Troupe, sign_up
 from tests.test_api_boon_audits import Audits
-from tests.test_api_boon_harpy import ok
+from tests.test_api_boon_harpy import hold, ok, report
 from tests.test_api_boon_standings import at_home
 from tests.test_api_boons import named, row
 
@@ -86,6 +86,50 @@ def test_a_new_harpy_reads_nothing_the_harpy_before_them_changed(court: Sight) -
     assert notes(staff) == ["", "Hestia's private reasons", "Hugo's correction"]
     assert all(line["changes"] for line in staff[1:])
     assert court.log(theirs)[0]["as_character"] == "Hestia"
+
+
+def test_an_earlier_harpys_approvals_show_to_a_new_harpy_without_who_or_why(
+    court: Sight,
+) -> None:
+    """#993: accepting or rejecting a reported boon is a line like any other."""
+    hold(court)
+    ok(
+        court.troupe.storyteller.client.put(
+            f"/troupes/{court.troupe.id}/boon-auto-accept", json={"kinds": ["trivial"]}
+        )
+    )
+    hestia = court.harpy_player
+    for kind, reason in (("minor", "Accepted"), ("major", "Rejected"), ("trivial", "At once")):
+        report(court, court.agnes, court.troupe.player, court.bram, kind=kind, reason=reason)
+    waiting = {b["reason"]: b for b in ok(hestia.client.get(court.queue))["boons"]}
+    ok(court.act(waiting["Accepted"], "accept", by=hestia, note="Hestia vouches"))
+    ok(court.act(waiting["Rejected"], "reject", by=hestia, reason="Hestia doubts it"))
+    at_once = next(b for b in court.ledger("all")["boons"] if b["reason"] == "At once")
+    assert court.log(waiting["Accepted"], by=hestia)[-1]["as_character"] == "Hestia"
+
+    # The title passes to Hugo.
+    court.give_title(court.hestia, [])
+    court.give_title(court.hugo, ["Harpy"])
+    hugo = court.hugo_player
+
+    # He reads that it was reported and accepted, not by whom nor Hestia's note; the
+    # rejection, a later line of an earlier Harpy's, not at all. The player's report shows.
+    accepted = court.log(waiting["Accepted"], by=hugo)
+    assert [(e["kind"], e["as_character"], e["note"]) for e in accepted] == [
+        ("submitted", "Agnes", "Reported in the Play View."),
+        ("accepted", None, ""),
+    ]
+    rejected = court.log(waiting["Rejected"], by=hugo)
+    assert kinds(rejected) == ["submitted"]
+    assert "Hestia doubts it" not in json.dumps(rejected)
+    # What went straight in says so to any Harpy: no one did it.
+    assert [(e["kind"], e["note"]) for e in court.log(at_once, by=hugo)][-1] == (
+        "accepted",
+        "Accepted automatically",
+    )
+    # Staff see all of it.
+    staff = court.log(waiting["Accepted"])
+    assert (staff[-1]["as_character"], staff[-1]["note"]) == ("Hestia", "Hestia vouches")
 
 
 def test_a_harpy_who_regains_the_title_starts_again(court: Sight) -> None:

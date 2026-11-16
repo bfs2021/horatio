@@ -227,8 +227,8 @@ With **NPCs** or **Everyone** shown, choose **New NPC**:
 1. Give it a **Name** and choose its **Kind** (a vampire, a ghoul, a mortal and others, or a custom kind you describe).
 2. Choose its **Form**:
    - **Sheeted**: a full sheet. **Quick build** sets ratings directly, with a running tally of what the NPC is worth (its merits at what they'd cost a player character, and its flaws giving up to the troupe's budget for them); **Use step-by-step creation** builds it as a player would.
-   - **Stock**: no sheet, only a rating and a few specialisations, as the book's Stock NPCs have.
-3. Choose **Quick build**, **Use step-by-step creation** or **Make Stock NPC**.
+   - **Stock**: no sheet, only a rating and a few specialisations, as the book's Stock NPCs have. Choose its **Rating**, from 1 to the kind's highest.
+3. Choose **Quick build**, **Use step-by-step creation** or **Make Stock NPC**. A Stock NPC opens on [its own page](#stock-npcs), to add its specialisations and notes.
 
 In the quick build, a trait the NPC holds can carry a detail, as a player's can:
 - **A merit that applies to something:** a merit like Thaumaturgic Expertise needs its choice, here which path it makes in-clan. Until that's made, it shows **Choose what it applies to** under the merit, and the NPC's sheet lists it under **Against the rules**. Choose from its list (the NPC's own paths come first) and choose **Set**.

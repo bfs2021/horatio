@@ -607,8 +607,23 @@ test("storytellers make NPCs of other kinds, sheeted or Stock, and filter the li
   await p.getByLabel("Kind", { exact: true }).selectOption("werewolf");
   await expect(p.getByText("Supernatural · Rage 10, up to 3 a turn, regains 1 every five turns · pp. 494–495")).toBeVisible();
   await p.getByRole("radio", { name: "Stock" }).click();
-  await p.getByLabel("Rating").fill("3");
+  // The rating is a drop-down of 1 to the kind's highest, at 1 to begin with, so Make Stock NPC is ready (#1040).
+  const rating = p.getByLabel("Rating");
+  await expect(rating).toHaveValue("1");
+  await expect(rating.getByRole("option")).toHaveText(["1", "2", "3", "4", "5"]);
+  await expect(p.getByRole("button", { name: "Make Stock NPC" })).toBeEnabled();
+  // A Blood Brother goes up to 20; back to a werewolf, a rating of 12 comes down to 5.
+  await p.getByLabel("Kind", { exact: true }).selectOption("blood_brother");
+  await rating.selectOption("12");
+  await p.getByLabel("Kind", { exact: true }).selectOption("werewolf");
+  await expect(rating).toHaveValue("5");
+  await rating.selectOption("3");
   await p.getByRole("button", { name: "Make Stock NPC" }).click();
+  // It opens its own page, with the rating chosen.
+  await expect(p.getByRole("heading", { name: "Bites-the-Hand", level: 1 })).toBeVisible();
+  await expect(p).toHaveURL(new RegExp(`/troupes/${troupeId}/npcs/`));
+  await expect(p.getByLabel("Rating")).toHaveValue("3");
+  await p.goto(`/troupes/${troupeId}/characters?show=npcs`);
   const wolf = p.getByRole("row", { name: "Bites-the-Hand" });
   // On a phone the kind, form and rating fold in under the name.
   const shows = (row: typeof wolf, text: string | RegExp) => row.getByText(text, { exact: true }).filter({ visible: true });
@@ -624,6 +639,7 @@ test("storytellers make NPCs of other kinds, sheeted or Stock, and filter the li
   await p.keyboard.press("Escape");
 
   // A sheeted mage goes to its quick build, on the Vampire sheet.
+  await p.getByRole("button", { name: "New NPC" }).click();
   await p.getByLabel("Name").fill("Sarah Juniper");
   await p.getByLabel("Kind", { exact: true }).selectOption("mage");
   await p.getByRole("radio", { name: "Sheeted" }).click();
@@ -668,9 +684,8 @@ test("storytellers build a Stock NPC from the NPCs tab and see the book's stat b
   await p.getByLabel("Name").fill("Gnashes-the-Moon");
   await p.getByLabel("Kind", { exact: true }).selectOption("werewolf");
   await p.getByRole("radio", { name: "Stock" }).click();
-  await p.getByLabel("Rating").fill("3");
+  await p.getByLabel("Rating").selectOption("3");
   await p.getByRole("button", { name: "Make Stock NPC" }).click();
-  await p.getByRole("row", { name: "Gnashes-the-Moon" }).getByRole("link", { name: "Gnashes-the-Moon", exact: true }).click();
   await expect(p.getByRole("heading", { name: "Gnashes-the-Moon" })).toBeVisible();
 
   const add = async (choice: string) => {

@@ -23,9 +23,12 @@ class BoonTalon(Record):
     can_add: Mapped[bool] = mapped_column(default=False, server_default="false")
     # Correct boons: edit what one says, and link a name on it to a character.
     can_edit: Mapped[bool] = mapped_column(default=False, server_default="false")
-    # Settle and move boons: trade, pass on, settle, void and reopen them, answer a
-    # status loss or Gallant, and review what players report (#984).
+    # Settle and move boons: trade, pass on, settle, void and reopen them, and answer a
+    # status loss or Gallant (#984).
     can_settle: Mapped[bool] = mapped_column(default=False, server_default="false")
+    # Approve reported boons: accept or reject what players report, and raise and clear
+    # flags, in the review queue (#993).
+    can_review: Mapped[bool] = mapped_column(default=False, server_default="false")
     # Audit a character's boons (#690).
     can_audit: Mapped[bool] = mapped_column(default=False, server_default="false")
     # Export the ledger as they see it, while the troupe lets the Harpy (#987).

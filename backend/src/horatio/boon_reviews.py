@@ -4,7 +4,20 @@ the review queue, for its running staff (and the Harpy, #688).
 A troupe may hold the boons its players report (#686) for review: they wait,
 pending, until staff accept them, edit and accept them, or reject them with a reason
 their reporter sees. Off, they stand at once. Either way the report is logged. What
-staff register themselves stands at once: they are the reviewers.
+staff register themselves stands at once: they are the reviewers. So does what the
+Harpy or a Lesser Harpy registers.
+
+**Approval by kind** (#993). While reports wait, the troupe says which kinds go
+straight into the ledger all the same (`boon_auto_accept`, none to start with): a
+reported boon of a kind ticked there is accepted at once, its log saying "Accepted
+automatically" with no one as its actor; any other waits. So does a boon with one of
+the troupe's Lesser Harpies on either side (a character with access to the ledger now,
+horatio.boon_talons): it never waits, whatever its kind, and its log says no more
+than any other accepted automatically, so it doesn't tell who the talons are. Whoever
+runs the queue sets the kinds (`sets_approval`): its staff, and a Harpy given the
+queue or the full ledger, never a Lesser Harpy. Changing them never touches a boon
+already waiting. Who approves (`can_review`): staff, the Harpy given the queue or
+more, and a Lesser Harpy the Harpy lets approve reported boons.
 
 Horatio flags a new boon for review, whoever entered it:
 - a side named by a name only that matches no character's link: "unmatched", saying
@@ -23,17 +36,28 @@ The review queue is every pending boon and every boon with a flag still raised.
 """
 
 import uuid
-from collections.abc import Iterable, Sequence
+from collections.abc import Collection, Iterable, Sequence
 from datetime import UTC, datetime
 
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from horatio import audit, boon_harpy, boons, notifications
-from horatio.models import Boon, BoonEvent, BoonFlag, Character, Troupe, TroupeMembership, User
+from horatio.models import (
+    Boon,
+    BoonEvent,
+    BoonFlag,
+    BoonTalon,
+    Character,
+    Troupe,
+    TroupeMembership,
+    User,
+)
 from horatio.sheets import conflict, unprocessable
 
 FLAGS = {"unmatched": "Name not linked", "duplicate": "Likely duplicate", "hand": "Flagged"}
+# The note on the log line of a reported boon that went straight in (#993).
+AUTOMATIC = "Accepted automatically"
 
 
 def held(troupe: Troupe) -> bool:
@@ -56,10 +80,130 @@ def set_review(db: Session, user: User, troupe: Troupe, hold: bool) -> None:
 
 
 def can_review(db: Session, user: User, troupe: Troupe) -> bool:
-    """Who reviews the troupe's boons: its running staff and the custodian, and a
-    Harpy where the troupe gives them the review queue or more (horatio.boon_harpy,
-    #688)."""
+    """Who reviews the troupe's boons: its running staff and the custodian, a Harpy
+    where the troupe gives them the review queue or more (horatio.boon_harpy, #688),
+    and a Lesser Harpy the Harpy lets approve reported boons (#993)."""
     return boon_harpy.keeper(db, user, troupe, "submissions") is not None
+
+
+def approver(troupe: Troupe) -> str:
+    """Who a player is told approves what they report: "harpy" where the troupe gives
+    its Harpy the review queue or more, else "staff". Never a Lesser Harpy by name."""
+    return "staff" if troupe.boon_harpy == "none" else "harpy"
+
+
+# --- approval by kind (#993) --------------------------------------------------------------
+
+
+def auto_accepts(troupe: Troupe) -> list[str]:
+    """The kinds a player reports that go straight into the ledger, lightest first."""
+    return [k for k in boons.KINDS if k in troupe.boon_auto_accept]
+
+
+def sets_approval(db: Session, user: User, troupe: Troupe) -> boon_harpy.Keeper | None:
+    """Who may say which kinds go straight in, and as whom: whoever runs the queue,
+    its running staff, or a Harpy given the queue or the full ledger. Never a Lesser
+    Harpy."""
+    keeper = boon_harpy.keeper(db, user, troupe, "submissions")
+    return keeper if keeper is not None and keeper.role != "talon" else None
+
+
+def set_auto_accept(
+    db: Session,
+    user: User,
+    troupe: Troupe,
+    kinds: Iterable[str],
+    as_character: Character | None = None,
+) -> None:
+    """The kinds a player reports that go straight into the ledger. Logged, with the
+    character it was done as, if it changes. Boons already waiting stay waiting."""
+    wanted = set(kinds)
+    if wanted - set(boons.KINDS):
+        raise unprocessable(f"A boon is one of {', '.join(boons.KINDS)}.")
+    chosen = [k for k in boons.KINDS if k in wanted]
+    if chosen == auto_accepts(troupe):
+        return
+    troupe.boon_auto_accept = chosen
+    names = [boons.KINDS[k].lower() for k in chosen]
+    audit.record(
+        db,
+        user,
+        "house.boon_auto_accept",
+        troupe_id=troupe.id,
+        acting=f" as {as_character.name}" if as_character is not None else "",
+        kinds=f"{', '.join(names[:-1])} and {names[-1]} boons"
+        if len(names) > 1
+        else f"{names[0]} boons"
+        if names
+        else "none: every one waits",
+    )
+
+
+def talons_on(db: Session, troupe: Troupe) -> set[uuid.UUID]:
+    """The troupe's Lesser Harpies now: characters with access to its ledger, while the
+    Harpy may give it (horatio.boon_talons)."""
+    from horatio import boon_talons  # imports horatio.boon_harpy, as this module does
+
+    if not boon_talons.enabled(troupe):
+        return set()
+    return set(db.scalars(select(BoonTalon.character_id).where(BoonTalon.troupe_id == troupe.id)))
+
+
+def waits(troupe: Troupe, boon: Boon, talons: Collection[uuid.UUID]) -> bool:
+    """Whether a boon a player just reported waits for approval: while the troupe holds
+    reports, unless its kind goes straight in or a Lesser Harpy (`talons`) is on it."""
+    if not held(troupe) or boon.kind in troupe.boon_auto_accept:
+        return False
+    return boon.debtor_id not in talons and boon.creditor_id not in talons
+
+
+def accept_automatically(db: Session, made: Sequence[Boon]) -> None:
+    """Boons a player just reported, accepted at once: each stands, its log saying
+    "Accepted automatically", done by no one, and never why. Logged once."""
+    if not made:
+        return
+    for boon in made:
+        must_wait(boon, "accepted")
+        boon.state = "registered"
+        db.flush()
+        line = BoonEvent(
+            boon_id=boon.id,
+            kind="accepted",
+            note=AUTOMATIC,
+            changes={"state": ["Pending", "Standing"]},
+            actor_id=None,
+            as_character_id=None,
+            # Horatio's doing, which shows as the ledger's state changing does (#992).
+            role="staff",
+        )
+        db.add(line)
+    boons.log(db, None, "boon.auto_accepted", made[0], what=boons.a_boon(made[0].kind, len(made)))
+    db.flush()
+
+
+def report(
+    db: Session,
+    user: User,
+    troupe: Troupe,
+    debtor: boons.Party,
+    creditor: boons.Party,
+    terms: boons.Terms,
+    count: int,
+    note: str,
+    character: Character,
+) -> list[Boon]:
+    """Boons a player reports for their character, as it: standing at once, or, where
+    the troupe holds reports, waiting for approval unless they go straight in
+    (`waits`). Each boon is judged on its own, so a report of several kinds would be
+    split by them."""
+    hold = held(troupe)
+    made = boons.register(
+        db, user, troupe, debtor, creditor, terms, count, note, as_character=character, pending=hold
+    )
+    if hold:
+        talons = talons_on(db, troupe)
+        accept_automatically(db, [b for b in made if not waits(troupe, b, talons)])
+    return made
 
 
 # --- flags --------------------------------------------------------------------------------
@@ -253,6 +397,41 @@ def accept(
     boons.event(db, user, boon, "accepted", note, {"state": ("Pending", "Standing")}, as_character)
     boons.log(db, user, "boon.accepted", boon, reason=note)
     clear_flags(db, user, raised(db, [boon.id]), note or "Accepted.", logged=False)
+
+
+def accept_all(
+    db: Session,
+    user: User,
+    found: Sequence[Boon],
+    note: str = "",
+    as_character: Character | None = None,
+) -> int:
+    """Accept every boon given that waits for review, as `accept` does each: "Accept
+    all shown" (#993). Any that no longer waits is left as it is. Returns how many
+    were accepted."""
+    done = 0
+    for boon in found:
+        if boon.state == "pending":
+            accept(db, user, boon, note, as_character)
+            done += 1
+    return done
+
+
+def reported_as(db: Session, boon_ids: Iterable[uuid.UUID]) -> dict[uuid.UUID, Character]:
+    """The character each boon was reported as, in the Play View, if it was."""
+    ids = list(boon_ids)
+    if not ids:
+        return {}
+    found: dict[uuid.UUID, Character] = {}
+    rows = db.execute(
+        select(BoonEvent.boon_id, Character)
+        .join(Character, Character.id == BoonEvent.as_character_id)
+        .where(BoonEvent.boon_id.in_(ids), BoonEvent.kind == "submitted")
+        .order_by(BoonEvent.created_at, BoonEvent.id)
+    ).all()
+    for boon_id, character in rows:
+        found.setdefault(boon_id, character)
+    return found
 
 
 def reporter(db: Session, boon: Boon) -> tuple[uuid.UUID | None, Character | None]:

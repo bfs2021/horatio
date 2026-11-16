@@ -511,6 +511,25 @@ def test_one_taken_through_the_cart_meets_its_own_check_with_its_free_dots(troup
     assert (resources["rating"], resources["free_rating"]) == (2, 2)
 
 
+def test_the_lists_of_what_can_be_taken_count_its_own_free_dots(troupe: Troupe) -> None:
+    # Offered as the cart would take it (#1032); one that only needs Resources is not.
+    old_money(troupe)
+    made(troupe, name="Old Debts", effects=OLD_MONEY[1:])
+    character_id = homed(troupe)
+    assert trait(troupe.player, character_id, "Resources") is None
+
+    path = f"/characters/{character_id}/unavailable"
+    for as_if in ("sheet", "empty"):
+        found = troupe.player.client.get(path, params={"category": "merits", "as_if": as_if})
+        assert found.status_code == 200, found.text
+        assert "Old Money" not in found.json(), as_if
+        assert found.json()["Old Debts"].startswith("Old Debts: needs Resources 1"), as_if
+    planned = troupe.player.client.post(path, json={"categories": ["merits"], "changes": []})
+    assert planned.status_code == 200, planned.text
+    assert "Old Money" not in planned.json()["merits"]
+    assert "Old Debts" in planned.json()["merits"]
+
+
 def test_blocks_the_rules_cannot_use_are_refused_in_plain_words(troupe: Troupe) -> None:
     refused = make(
         troupe,

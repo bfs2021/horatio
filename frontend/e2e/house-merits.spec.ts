@@ -205,7 +205,10 @@ test("a house merit's effects: the ST builds Old Money from blocks, previews it,
   const part = (title: string) => p.locator("section").filter({ has: p.getByRole("heading", { name: title, exact: true }) });
   await part("Merits and Flaws").getByRole("button", { name: "Add" }).click();
   await p.getByLabel("Search Merits").fill("Old Money");
+  // Listed once checked, as one she can take: its free dots meet its own "needs Resources 1".
   await expect(p.getByRole("button", { name: /^Old Money/ })).toContainText(`What it does: ${summary}`);
+  await expect(p.getByRole("button", { name: /^Old Money/ })).toBeEnabled();
+  await expect(p.getByText(/you can't/)).toHaveCount(0);
   await p.getByRole("button", { name: /^Old Money/ }).click();
   await p.getByRole("button", { name: "Add to cart" }).click();
   await p.getByRole("button", { name: "Spend XP" }).click();

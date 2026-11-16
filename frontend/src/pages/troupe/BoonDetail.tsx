@@ -249,6 +249,10 @@ function sideNotes(party: BoonOut["debtor"], side: "debtor" | "creditor"): { key
   return notes;
 }
 
+// A reported boon that went straight in (#993): Horatio's line, done by no one.
+const AUTOMATIC = "Accepted automatically";
+const automatic = (e: BoonEventOut) => e.kind === "accepted" && !e.by && !e.as_character && e.note === AUTOMATIC;
+
 /**
  * A boon's log, oldest first, as a timeline: what was done, when, by whom (as their
  * character, for a Harpy, a Lesser Harpy or a player), and the note. What each line
@@ -262,13 +266,13 @@ function BoonLog({ boon }: { boon: BoonOut }) {
       {(boon.events ?? []).map((e) => (
         <li key={e.id} className="relative">
           <span aria-hidden className="absolute top-1 -left-[calc(1rem+4.5px)] size-2 rounded-full border border-ash bg-dusk" />
-          <span className="text-parchment">{eventName(e.kind)}</span>
+          <span className="text-parchment">{automatic(e) ? AUTOMATIC : eventName(e.kind)}</span>
           <span className="text-mist">
             {" "}
             · {dates.dateTime(e.at)}
             {e.by ? ` · ${e.by}${e.as_character ? ` as ${e.as_character}` : ""}` : e.as_character ? ` · ${e.as_character}` : ""}
           </span>
-          {e.note && <span> · {e.note}</span>}
+          {e.note && !automatic(e) && <span> · {e.note}</span>}
           {e.changes && e.changes.length > 0 && <Changes changes={e.changes} />}
         </li>
       ))}

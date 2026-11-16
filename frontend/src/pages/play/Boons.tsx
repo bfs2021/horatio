@@ -11,7 +11,7 @@ import { useToast } from "../../components/Toast";
 import { Badge, Button, Card, ErrorText, Field, Input, Loaded, Select } from "../../components/ui";
 import { useDates } from "../../dates";
 import { useAction } from "../../hooks";
-import { playerSettles, reportedText, reportLine, settledText, standingFirst, type PlayerSettles } from "./boons";
+import { playerSettles, reportedText, reportLine, reportState, settledText, standingFirst, type Approver, type PlayerSettles } from "./boons";
 
 /** Picked in "Who" for someone not on the list: an NPC, or a character of another domain. */
 const SOMEONE_ELSE = "someone-else";
@@ -45,7 +45,7 @@ export function BoonsTab({ characterId, name, online }: { characterId: string; n
               <HarpyCard key={h.troupe_id} characterId={characterId} name={name} ledger={h} online={online} />
             ))}
             <Report characterId={characterId} name={name} boons={boons} online={online} />
-            {boons.reports && boons.reports.length > 0 && <Reports reports={boons.reports} name={name} troupe={boons.troupe_name} />}
+            {boons.reports && boons.reports.length > 0 && <Reports reports={boons.reports} name={name} approver={boons.approver ?? "staff"} />}
             {boons.owes && <Side title={`${name} owes`} empty={`${name} owes no boons in the ledger.`} boons={boons.owes} owes name={name} characterId={characterId} online={online} />}
             {boons.owed && (
               <Side title={`Owed to ${name}`} empty={`No boons in the ledger are owed to ${name}.`} boons={boons.owed} owes={false} name={name} characterId={characterId} online={online} />
@@ -102,7 +102,7 @@ function HarpyCard({ characterId, name, ledger, online }: { characterId: string;
   const reviews = ledger.can_review ?? true;
   const ledgerPage = `/play/characters/${characterId}/ledger`;
   const does = talon
-    ? `You keep the troupe's boon ledger as far as the Harpy lets you: see it${ledger.can_add ? ", add boons" : ""}${ledger.can_edit ? ", edit and settle them, and review what players report" : ""}.`
+    ? `You keep the troupe's boon ledger as far as the Harpy lets you: see it${ledger.can_add ? ", add boons" : ""}${ledger.can_edit ? ", correct them" : ""}${ledger.can_settle ? ", settle them" : ""}${reviews ? ", approve what players report" : ""}.`
     : full
       ? "You keep the troupe's boon ledger: register, edit and settle boons, and review what players report."
       : "You review the boons players report.";
@@ -195,7 +195,7 @@ function Report({ characterId, name, boons, online }: { characterId: string; nam
       },
       {
         onSuccess: ({ body, waits }) => {
-          toast({ message: reportedText(name, otherName, body.direction, body.kind, body.count ?? 1, boons.troupe_name, waits) });
+          toast({ message: reportedText(name, otherName, body.direction, body.kind, body.count ?? 1, boons.troupe_name, waits, boons.approver ?? "staff") });
           setDraft(fresh(today));
           if (!formOnly) setOpen(false);
         },
@@ -452,8 +452,8 @@ function Settle({ boon, characterId, online, done }: { boon: PlayBoonOut; charac
   );
 }
 
-/** The player's reports that wait for review, or weren't accepted lately, with why (#687). */
-function Reports({ reports, name, troupe }: { reports: PlayReportOut[]; name: string; troupe: string }) {
+/** The player's reports that wait for approval, went into the ledger lately, or weren't accepted lately, with why (#687, #993). */
+function Reports({ reports, name, approver }: { reports: PlayReportOut[]; name: string; approver: Approver }) {
   const dates = useDates();
   return (
     <Card title="Your reports" dense>
@@ -465,8 +465,8 @@ function Reports({ reports, name, troupe }: { reports: PlayReportOut[]; name: st
               <span className="text-mist"> · {dates.day(r.made_on)}</span>
             </p>
             {r.reason && <p className="text-mist">{r.reason}</p>}
-            {r.state === "pending" ? (
-              <p className="text-xs text-mist">Waiting for {troupe}&apos;s staff to review it.</p>
+            {r.state !== "rejected" ? (
+              <p className="text-xs text-mist">{reportState(r, approver)}</p>
             ) : (
               <p className="text-xs text-blood-bright">Not accepted{r.rejected_at ? `, ${dates.date(r.rejected_at)}` : ""}: {r.rejected_because}</p>
             )}

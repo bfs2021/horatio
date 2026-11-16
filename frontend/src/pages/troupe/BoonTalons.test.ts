@@ -13,10 +13,15 @@ describe("a talon's row", () => {
 });
 
 describe("what a talon may do", () => {
-  const can = { can_add: true, can_edit: false, can_settle: false, can_audit: false, can_export: true };
+  const can = { can_add: true, can_edit: false, can_settle: false, can_review: false, can_audit: false, can_export: true };
 
   it("names exporting only while the troupe lets the Harpy export (#987)", () => {
     expect(what(can, true)).toBe("sees the ledger, adds boons and exports the ledger");
     expect(what(can, false)).toBe("sees the ledger and adds boons");
+  });
+
+  it("names approving reported boons apart from settling them (#993)", () => {
+    expect(what({ ...can, can_settle: true, can_review: true }, false)).toBe("sees the ledger, adds boons, settles them and approves reported boons");
+    expect(what({ ...can, can_add: false, can_review: true }, false)).toBe("sees the ledger and approves reported boons");
   });
 });

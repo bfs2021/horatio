@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PlayBoonOut } from "../../api/types";
 import { datesFor } from "../../dates";
-import { aBoon, playerSettles, reportedText, reportLine, settledText, standingFirst } from "./boons";
+import { aBoon, playerSettles, reportedText, reportLine, reportState, settledText, standingFirst } from "./boons";
 
 const boon = (over: Partial<PlayBoonOut>): PlayBoonOut => ({
   id: "b1",
@@ -52,11 +52,16 @@ describe("the Play View's boons", () => {
     expect(aBoon("trivial", 3)).toBe("3 trivial boons");
     expect(reportedText("Agnes", "Bram", "owes", "minor", 1, "Elysium")).toBe("Reported to Elysium's ledger: Agnes owes Bram a minor boon.");
     expect(reportedText("Agnes", "The Moon", "owed", "blood", 2, "Elysium")).toBe("Reported to Elysium's ledger: The Moon owes Agnes 2 blood boons.");
-    expect(reportedText("Agnes", "Bram", "owes", "minor", 1, "Elysium", true)).toBe("Sent to Elysium's staff for review: Agnes owes Bram a minor boon.");
+    expect(reportedText("Agnes", "Bram", "owes", "minor", 1, "Elysium", true)).toBe("Waiting for staff's approval: Agnes owes Bram a minor boon.");
+    expect(reportedText("Agnes", "Bram", "owes", "minor", 1, "Elysium", true, "harpy")).toBe("Waiting for the Harpy's approval: Agnes owes Bram a minor boon.");
   });
 
   it("words a report waiting for review (#687)", () => {
     expect(reportLine({ direction: "owes", other: "Bram", kind: "minor" }, "Agnes")).toBe("Agnes owes Bram a minor boon");
+    // Where it stands, naming no one but the Harpy, or staff (#993).
+    expect(reportState({ state: "pending" }, "harpy")).toBe("Waiting for the Harpy's approval.");
+    expect(reportState({ state: "pending" }, "staff")).toBe("Waiting for staff's approval.");
+    expect(reportState({ state: "accepted" }, "harpy")).toBe("In the ledger.");
     expect(reportLine({ direction: "owed", other: "The Moon", kind: "major" }, "Agnes")).toBe("The Moon owes Agnes a major boon");
   });
 });

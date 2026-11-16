@@ -29,6 +29,9 @@ class BoonTalon(Record):
     # Approve reported boons: accept or reject what players report, and raise and clear
     # flags, in the review queue (#993).
     can_review: Mapped[bool] = mapped_column(default=False, server_default="false")
+    # Told of each boon players report, while they may approve them (#1018): their own
+    # choice, on when given access, and again when given the right to approve.
+    told_of_reports: Mapped[bool] = mapped_column(default=True, server_default="true")
     # Audit a character's boons (#690).
     can_audit: Mapped[bool] = mapped_column(default=False, server_default="false")
     # Export the ledger as they see it, while the troupe lets the Harpy (#987).

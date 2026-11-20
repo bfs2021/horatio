@@ -315,6 +315,9 @@ MESSAGES: dict[str, str] = {
     "troupe.leave.home": "{character} left {troupe} as its home troupe, and has no home troupe"
     " now.",
     "troupe.leave.visit": "{character} stopped visiting {troupe}.",
+    # The custodian-visible entry for a PC that was never in a troupe: deletion
+    # records it with the character's kind, which picks this wording (#1063).
+    "character.deleted.pc": "{actor} deleted {character}.",
     "character.deleted": "{character} was deleted by its player.",
     "character.imported": "{actor} imported {character} from a backup file {whence}; parts"
     " left out: {left_out}.",

@@ -262,3 +262,45 @@ def test_every_logged_action_has_wording() -> None:
         a for a in recorded if a not in worded and not any(w.startswith(f"{a}.") for w in worded)
     }
     assert not unworded
+
+
+def test_deleting_a_character_never_in_a_troupe_records_a_custodian_event(
+    troupe: Troupe, session: Session
+) -> None:
+    character_id = new_character(troupe, troupe.player, "Shark Fighter")
+    response = troupe.player.client.delete(f"/characters/{character_id}")
+    assert response.status_code == 204, response.text
+    entries = search(troupe.custodian, q="Shark")["entries"]
+    assert "player deleted Shark Fighter." in [e["message"] for e in entries]
+    deleted = [e for e in entries if e["action"] == "character.deleted"]
+    assert len(deleted) == 1
+    assert deleted[0]["character_name"] == "Shark Fighter"
+    assert deleted[0]["troupe_id"] is None and deleted[0]["troupe_name"] is None
+    event = session.scalars(
+        select(AuditEvent).where(AuditEvent.action == "character.deleted")
+    ).one()
+    assert event.troupe_id is None
+    assert event.data["kind"] == "pc"
+    assert event.data["splat"] == "vampire"
+    assert event.data["creation_complete"] is True
+    assert datetime.fromisoformat(event.data["created"])
+
+
+def test_deleting_a_character_that_was_in_a_troupe_records_each_troupes_entry(
+    troupe: Troupe, session: Session
+) -> None:
+    character_id = new_character(troupe, troupe.player, "Agnes")
+    joined = troupe.player.client.post(
+        f"/characters/{character_id}/troupes", json={"troupe_id": troupe.id}
+    )
+    assert joined.status_code == 201, joined.text
+    left = troupe.player.client.delete(f"/characters/{character_id}/troupes/{troupe.id}")
+    assert left.status_code == 204, left.text
+    deleted = troupe.player.client.delete(f"/characters/{character_id}")
+    assert deleted.status_code == 204, deleted.text
+    events = session.scalars(
+        select(AuditEvent).where(AuditEvent.action == "character.deleted")
+    ).all()
+    assert [str(e.troupe_id) for e in events] == [troupe.id]
+    # The per-troupe entries already reach the custodian's search: no extra one.
+    assert all("kind" not in e.data for e in events)

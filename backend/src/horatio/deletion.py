@@ -75,11 +75,12 @@ def delete_character(db: Session, player: User, character: Character) -> None:
         raise conflict("Remove the character from every troupe before deleting it.")
 
     name = character.name
-    for troupe_id in db.scalars(
+    troupe_ids = db.scalars(
         select(TroupeMembership.troupe_id)
         .where(TroupeMembership.character_id == character.id)
         .distinct()
-    ):
+    ).all()
+    for troupe_id in troupe_ids:
         audit.record(
             db,
             player,
@@ -87,6 +88,22 @@ def delete_character(db: Session, player: User, character: Character) -> None:
             troupe_id=troupe_id,
             character_id=character.id,
             character_name=name,
+        )
+    if not troupe_ids:
+        # It was never in a troupe, so no troupe's log tells anyone it existed, let
+        # alone that it is gone (#1063). The custodian's log records the deletion
+        # itself, with enough to tell what was deleted: the character picker lists
+        # only live characters, so its name has to be found as words.
+        audit.record(
+            db,
+            player,
+            "npc.deleted" if character.kind == "npc" else "character.deleted",
+            character_id=character.id,
+            character_name=name,
+            kind=character.kind,
+            splat=character.splat,
+            creation_complete=character.creation_completed_at is not None,
+            created=character.created_at.isoformat(),
         )
     db.flush()
 
